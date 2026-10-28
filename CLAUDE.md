@@ -91,7 +91,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > - Execution model: enrichment runs in a **separate background runner** (own `QThread`, like the backup sequencer), after catalog creation — never inside create/update. Stoppable, pausable, resumable, incremental; search and explore keep working.
 > - Privacy: **local by default** (Ollama). Commercial providers only when explicitly enabled per collection or per job, with a warning and a cost estimate before anything is sent.
 > - Approved tools: **ffmpeg/ffprobe, whisper.cpp, poppler**, invoked as **external programs** (`QProcess`), not linked. Missing tool → that enrichment is skipped with a clear status. LLM and embeddings over HTTP with `Qt6::Network`; no vector-index library.
-> - Unchanged in the fork: user-visible text rules (per-string approval, 30 languages), message presentation, Memory-mode parity, file safety, docs requirements.
+> - **User-visible text in the fork (decided 2026-10-28):** new strings are written in English while building a step, reusing existing K2/K3 strings where they fit, and the fork owner approves them **all together at the end of each step, before the commit**; translations run after that approval. Existing strings are still never changed without per-string approval.
+> - Unchanged in the fork: 30 languages, message presentation, Memory-mode parity, file safety, docs requirements.
 > - Local macOS build: Homebrew Qt 6.12 + KF6 6.22 built into `~/kf6`. Configure with `-DCMAKE_PREFIX_PATH="$HOME/kf6;/opt/homebrew" -DBUILD_QT_QUICK=ON -DBUILD_QT_WIDGETS=OFF`; run with `QML_IMPORT_PATH=$HOME/kf6/lib/qml QT_PLUGIN_PATH=$HOME/kf6/lib/plugins`.
 
 ## Project Overview
