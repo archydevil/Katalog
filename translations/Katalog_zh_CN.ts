@@ -600,7 +600,7 @@ Choose a different name.</source>
     <message>
         <location line="+1"/>
         <source>Index for search by meaning</source>
-        <translation type="unfinished"></translation>
+        <translation>按含义搜索的索引</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1460,7 +1460,7 @@ Choose a different name.</source>
         <location line="-1755"/>
         <location line="+1568"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>活动</translation>
     </message>
     <message>
         <location line="-1555"/>
@@ -6583,7 +6583,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-14"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>活动</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -6631,22 +6631,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location filename="../qt_quick/PageActivity.qml" line="+27"/>
         <source>On this computer</source>
-        <translation type="unfinished"></translation>
+        <translation>在本机上</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the local network</source>
-        <translation type="unfinished"></translation>
+        <translation>在局域网上</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the Internet</source>
-        <translation type="unfinished"></translation>
+        <translation>在互联网上</translation>
     </message>
     <message>
         <location line="+39"/>
         <source>Nothing running</source>
-        <translation type="unfinished"></translation>
+        <translation>没有正在运行的任务</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6662,22 +6662,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+3"/>
         <source>File %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>文件 %1/%2</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Estimated end %1</source>
-        <translation type="unfinished"></translation>
+        <translation>预计结束 %1</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>%1 cores</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 核</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Waiting: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>等待中：%1</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -6699,13 +6699,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <location line="+135"/>
         <location line="+42"/>
         <source>CPU</source>
-        <translation type="unfinished"></translation>
+        <translation>CPU</translation>
     </message>
     <message>
         <location line="-175"/>
         <location line="+134"/>
         <source>GPU</source>
-        <translation type="unfinished"></translation>
+        <translation>GPU</translation>
     </message>
     <message>
         <location line="-132"/>
@@ -6716,109 +6716,109 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-131"/>
         <source>%1 of %2 GB</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 / %2 GB</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Swap</source>
-        <translation type="unfinished"></translation>
+        <translation>交换内存</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Memory pressure</source>
-        <translation type="unfinished"></translation>
+        <translation>内存压力</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Power</source>
-        <translation type="unfinished"></translation>
+        <translation>电源</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Mains</source>
-        <translation type="unfinished"></translation>
+        <translation>交流电源</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Battery</source>
-        <translation type="unfinished"></translation>
+        <translation>电池</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Source drive</source>
-        <translation type="unfinished"></translation>
+        <translation>源驱动器</translation>
     </message>
     <message>
         <location line="+2"/>
         <location line="+178"/>
         <source>Connected</source>
-        <translation type="unfinished"></translation>
+        <translation>已连接</translation>
     </message>
     <message>
         <location line="-178"/>
         <location line="+178"/>
         <source>Not connected</source>
-        <translation type="unfinished"></translation>
+        <translation>未连接</translation>
     </message>
     <message>
         <location line="-176"/>
         <source>Data sent</source>
-        <translation type="unfinished"></translation>
+        <translation>已发送数据</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Nothing sent</source>
-        <translation type="unfinished"></translation>
+        <translation>未发送任何数据</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Right now</source>
-        <translation type="unfinished"></translation>
+        <translation>当前</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Checking what is already done</source>
-        <translation type="unfinished"></translation>
+        <translation>正在检查已完成的内容</translation>
     </message>
     <message>
         <location line="+29"/>
         <source>Since this session started</source>
-        <translation type="unfinished"></translation>
+        <translation>自本次会话开始以来</translation>
     </message>
     <message>
         <location line="+75"/>
         <source>Programs</source>
-        <translation type="unfinished"></translation>
+        <translation>程序</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Models in memory</source>
-        <translation type="unfinished"></translation>
+        <translation>内存中的模型</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>Images: %1 · Texts: %2 · Search by meaning: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>图片：%1 · 文本：%2 · 按含义搜索：%3</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Tools</source>
-        <translation type="unfinished"></translation>
+        <translation>工具</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Previews and clips</source>
-        <translation type="unfinished"></translation>
+        <translation>预览和片段</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Durations</source>
-        <translation type="unfinished"></translation>
+        <translation>时长</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Text of PDF files</source>
-        <translation type="unfinished"></translation>
+        <translation>PDF 文件的文本</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6828,22 +6828,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+14"/>
         <source>Not found</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Log</source>
-        <translation type="unfinished"></translation>
+        <translation>日志</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>%1 tokens/s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 词元/秒</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>No step finished in this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>本次会话中尚无已完成的步骤。</translation>
     </message>
 </context>
 <context>

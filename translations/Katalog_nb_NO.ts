@@ -600,7 +600,7 @@ Velg et annet navn.</translation>
     <message>
         <location line="+1"/>
         <source>Index for search by meaning</source>
-        <translation type="unfinished"></translation>
+        <translation>Indeks for søk etter betydning</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1460,7 +1460,7 @@ Velg et annet navn.</translation>
         <location line="-1755"/>
         <location line="+1568"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktivitet</translation>
     </message>
     <message>
         <location line="-1555"/>
@@ -6583,7 +6583,7 @@ Kontroller at kildemappen (%1) er riktig, eller at enheten er montert i kildemap
     <message>
         <location line="-14"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktivitet</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -6631,22 +6631,22 @@ Kontroller at kildemappen (%1) er riktig, eller at enheten er montert i kildemap
     <message>
         <location filename="../qt_quick/PageActivity.qml" line="+27"/>
         <source>On this computer</source>
-        <translation type="unfinished"></translation>
+        <translation>På denne datamaskinen</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the local network</source>
-        <translation type="unfinished"></translation>
+        <translation>På det lokale nettverket</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the Internet</source>
-        <translation type="unfinished"></translation>
+        <translation>På Internett</translation>
     </message>
     <message>
         <location line="+39"/>
         <source>Nothing running</source>
-        <translation type="unfinished"></translation>
+        <translation>Ingenting kjører</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6662,22 +6662,22 @@ Kontroller at kildemappen (%1) er riktig, eller at enheten er montert i kildemap
     <message>
         <location line="+3"/>
         <source>File %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Fil %1 av %2</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Estimated end %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Forventet slutt: %1</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>%1 cores</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 kjerner</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Waiting: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Venter: %1</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -6699,13 +6699,13 @@ Kontroller at kildemappen (%1) er riktig, eller at enheten er montert i kildemap
         <location line="+135"/>
         <location line="+42"/>
         <source>CPU</source>
-        <translation type="unfinished"></translation>
+        <translation>CPU</translation>
     </message>
     <message>
         <location line="-175"/>
         <location line="+134"/>
         <source>GPU</source>
-        <translation type="unfinished"></translation>
+        <translation>GPU</translation>
     </message>
     <message>
         <location line="-132"/>
@@ -6716,109 +6716,109 @@ Kontroller at kildemappen (%1) er riktig, eller at enheten er montert i kildemap
     <message>
         <location line="-131"/>
         <source>%1 of %2 GB</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 av %2 GB</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Swap</source>
-        <translation type="unfinished"></translation>
+        <translation>Vekselminne</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Memory pressure</source>
-        <translation type="unfinished"></translation>
+        <translation>Minnepress</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Power</source>
-        <translation type="unfinished"></translation>
+        <translation>Strøm</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Mains</source>
-        <translation type="unfinished"></translation>
+        <translation>Strømnett</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Battery</source>
-        <translation type="unfinished"></translation>
+        <translation>Batteri</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Source drive</source>
-        <translation type="unfinished"></translation>
+        <translation>Kildestasjon</translation>
     </message>
     <message>
         <location line="+2"/>
         <location line="+178"/>
         <source>Connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Tilkoblet</translation>
     </message>
     <message>
         <location line="-178"/>
         <location line="+178"/>
         <source>Not connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Ikke tilkoblet</translation>
     </message>
     <message>
         <location line="-176"/>
         <source>Data sent</source>
-        <translation type="unfinished"></translation>
+        <translation>Sendte data</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Nothing sent</source>
-        <translation type="unfinished"></translation>
+        <translation>Ingenting sendt</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Right now</source>
-        <translation type="unfinished"></translation>
+        <translation>Akkurat nå</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Checking what is already done</source>
-        <translation type="unfinished"></translation>
+        <translation>Sjekker hva som allerede er gjort</translation>
     </message>
     <message>
         <location line="+29"/>
         <source>Since this session started</source>
-        <translation type="unfinished"></translation>
+        <translation>Siden denne økten startet</translation>
     </message>
     <message>
         <location line="+75"/>
         <source>Programs</source>
-        <translation type="unfinished"></translation>
+        <translation>Programmer</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Models in memory</source>
-        <translation type="unfinished"></translation>
+        <translation>Modeller i minnet</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>Images: %1 · Texts: %2 · Search by meaning: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilder: %1 · Tekster: %2 · Søk etter betydning: %3</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Verktøy</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Previews and clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Forhåndsvisninger og klipp</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Durations</source>
-        <translation type="unfinished"></translation>
+        <translation>Varigheter</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Text of PDF files</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst fra PDF-filer</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6828,22 +6828,22 @@ Kontroller at kildemappen (%1) er riktig, eller at enheten er montert i kildemap
     <message>
         <location line="+14"/>
         <source>Not found</source>
-        <translation type="unfinished"></translation>
+        <translation>Ikke funnet</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Logg</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>%1 tokens/s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 tokens/s</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>No step finished in this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ingen trinn er fullført i denne økten.</translation>
     </message>
 </context>
 <context>

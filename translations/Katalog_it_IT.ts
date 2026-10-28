@@ -600,7 +600,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+1"/>
         <source>Index for search by meaning</source>
-        <translation type="unfinished"></translation>
+        <translation>Indice per la ricerca per significato</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1460,7 +1460,7 @@ Scegliere un nome diverso.</translation>
         <location line="-1755"/>
         <location line="+1568"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>Attività</translation>
     </message>
     <message>
         <location line="-1555"/>
@@ -6583,7 +6583,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="-14"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>Attività</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -6631,22 +6631,22 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location filename="../qt_quick/PageActivity.qml" line="+27"/>
         <source>On this computer</source>
-        <translation type="unfinished"></translation>
+        <translation>Su questo computer</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the local network</source>
-        <translation type="unfinished"></translation>
+        <translation>Sulla rete locale</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the Internet</source>
-        <translation type="unfinished"></translation>
+        <translation>Su Internet</translation>
     </message>
     <message>
         <location line="+39"/>
         <source>Nothing running</source>
-        <translation type="unfinished"></translation>
+        <translation>Niente in corso</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6662,22 +6662,22 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="+3"/>
         <source>File %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>File %1 di %2</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Estimated end %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Fine stimata alle %1</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>%1 cores</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 core</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Waiting: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>In attesa: %1</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -6699,13 +6699,13 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
         <location line="+135"/>
         <location line="+42"/>
         <source>CPU</source>
-        <translation type="unfinished"></translation>
+        <translation>CPU</translation>
     </message>
     <message>
         <location line="-175"/>
         <location line="+134"/>
         <source>GPU</source>
-        <translation type="unfinished"></translation>
+        <translation>GPU</translation>
     </message>
     <message>
         <location line="-132"/>
@@ -6716,109 +6716,109 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="-131"/>
         <source>%1 of %2 GB</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 di %2 GB</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Swap</source>
-        <translation type="unfinished"></translation>
+        <translation>Swap</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Memory pressure</source>
-        <translation type="unfinished"></translation>
+        <translation>Pressione della memoria</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Power</source>
-        <translation type="unfinished"></translation>
+        <translation>Alimentazione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Mains</source>
-        <translation type="unfinished"></translation>
+        <translation>Rete elettrica</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Battery</source>
-        <translation type="unfinished"></translation>
+        <translation>Batteria</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Source drive</source>
-        <translation type="unfinished"></translation>
+        <translation>Unità sorgente</translation>
     </message>
     <message>
         <location line="+2"/>
         <location line="+178"/>
         <source>Connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Connesso</translation>
     </message>
     <message>
         <location line="-178"/>
         <location line="+178"/>
         <source>Not connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Non connesso</translation>
     </message>
     <message>
         <location line="-176"/>
         <source>Data sent</source>
-        <translation type="unfinished"></translation>
+        <translation>Dati inviati</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Nothing sent</source>
-        <translation type="unfinished"></translation>
+        <translation>Nulla inviato</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Right now</source>
-        <translation type="unfinished"></translation>
+        <translation>In questo momento</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Checking what is already done</source>
-        <translation type="unfinished"></translation>
+        <translation>Verifica di ciò che è già stato fatto</translation>
     </message>
     <message>
         <location line="+29"/>
         <source>Since this session started</source>
-        <translation type="unfinished"></translation>
+        <translation>Dall'inizio di questa sessione</translation>
     </message>
     <message>
         <location line="+75"/>
         <source>Programs</source>
-        <translation type="unfinished"></translation>
+        <translation>Programmi</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Models in memory</source>
-        <translation type="unfinished"></translation>
+        <translation>Modelli in memoria</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>Images: %1 · Texts: %2 · Search by meaning: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Immagini: %1 · Testi: %2 · Ricerca per significato: %3</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Strumenti</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Previews and clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Anteprime e clip</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Durations</source>
-        <translation type="unfinished"></translation>
+        <translation>Durate</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Text of PDF files</source>
-        <translation type="unfinished"></translation>
+        <translation>Testo dei file PDF</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6828,22 +6828,22 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="+14"/>
         <source>Not found</source>
-        <translation type="unfinished"></translation>
+        <translation>Non trovato</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Registro</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>%1 tokens/s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 token/s</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>No step finished in this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nessun passaggio completato in questa sessione.</translation>
     </message>
 </context>
 <context>

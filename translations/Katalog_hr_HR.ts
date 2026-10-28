@@ -600,7 +600,7 @@ Odaberite drugi naziv.</translation>
     <message>
         <location line="+1"/>
         <source>Index for search by meaning</source>
-        <translation type="unfinished"></translation>
+        <translation>Indeks za pretraživanje po značenju</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1460,7 +1460,7 @@ Odaberite drugi naziv.</translation>
         <location line="-1755"/>
         <location line="+1568"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktivnost</translation>
     </message>
     <message>
         <location line="-1555"/>
@@ -6583,7 +6583,7 @@ Provjerite je li izvorna mapa (%1) ispravna ili je li uređaj montiran u izvornu
     <message>
         <location line="-14"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktivnost</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -6631,22 +6631,22 @@ Provjerite je li izvorna mapa (%1) ispravna ili je li uređaj montiran u izvornu
     <message>
         <location filename="../qt_quick/PageActivity.qml" line="+27"/>
         <source>On this computer</source>
-        <translation type="unfinished"></translation>
+        <translation>Na ovom računalu</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the local network</source>
-        <translation type="unfinished"></translation>
+        <translation>U lokalnoj mreži</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the Internet</source>
-        <translation type="unfinished"></translation>
+        <translation>Na internetu</translation>
     </message>
     <message>
         <location line="+39"/>
         <source>Nothing running</source>
-        <translation type="unfinished"></translation>
+        <translation>Ništa nije u tijeku</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6662,22 +6662,22 @@ Provjerite je li izvorna mapa (%1) ispravna ili je li uređaj montiran u izvornu
     <message>
         <location line="+3"/>
         <source>File %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Datoteka %1 od %2</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Estimated end %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Procijenjeni završetak: %1</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>%1 cores</source>
-        <translation type="unfinished"></translation>
+        <translation>Jezgre: %1</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Waiting: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Na čekanju: %1</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -6699,13 +6699,13 @@ Provjerite je li izvorna mapa (%1) ispravna ili je li uređaj montiran u izvornu
         <location line="+135"/>
         <location line="+42"/>
         <source>CPU</source>
-        <translation type="unfinished"></translation>
+        <translation>CPU</translation>
     </message>
     <message>
         <location line="-175"/>
         <location line="+134"/>
         <source>GPU</source>
-        <translation type="unfinished"></translation>
+        <translation>GPU</translation>
     </message>
     <message>
         <location line="-132"/>
@@ -6716,109 +6716,109 @@ Provjerite je li izvorna mapa (%1) ispravna ili je li uređaj montiran u izvornu
     <message>
         <location line="-131"/>
         <source>%1 of %2 GB</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 od %2 GB</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Swap</source>
-        <translation type="unfinished"></translation>
+        <translation>Prostor za izmjenjivanje</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Memory pressure</source>
-        <translation type="unfinished"></translation>
+        <translation>Pritisak na memoriju</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Power</source>
-        <translation type="unfinished"></translation>
+        <translation>Napajanje</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Mains</source>
-        <translation type="unfinished"></translation>
+        <translation>Električna mreža</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Battery</source>
-        <translation type="unfinished"></translation>
+        <translation>Baterija</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Source drive</source>
-        <translation type="unfinished"></translation>
+        <translation>Izvorni disk</translation>
     </message>
     <message>
         <location line="+2"/>
         <location line="+178"/>
         <source>Connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Povezano</translation>
     </message>
     <message>
         <location line="-178"/>
         <location line="+178"/>
         <source>Not connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Nije povezano</translation>
     </message>
     <message>
         <location line="-176"/>
         <source>Data sent</source>
-        <translation type="unfinished"></translation>
+        <translation>Poslani podaci</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Nothing sent</source>
-        <translation type="unfinished"></translation>
+        <translation>Ništa nije poslano</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Right now</source>
-        <translation type="unfinished"></translation>
+        <translation>Upravo sada</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Checking what is already done</source>
-        <translation type="unfinished"></translation>
+        <translation>Provjera onoga što je već obavljeno</translation>
     </message>
     <message>
         <location line="+29"/>
         <source>Since this session started</source>
-        <translation type="unfinished"></translation>
+        <translation>Od početka ove sesije</translation>
     </message>
     <message>
         <location line="+75"/>
         <source>Programs</source>
-        <translation type="unfinished"></translation>
+        <translation>Programi</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Models in memory</source>
-        <translation type="unfinished"></translation>
+        <translation>Modeli u memoriji</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>Images: %1 · Texts: %2 · Search by meaning: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Slike: %1 · Tekstovi: %2 · Pretraživanje po značenju: %3</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Alati</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Previews and clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Pregledi i isječci</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Durations</source>
-        <translation type="unfinished"></translation>
+        <translation>Trajanja</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Text of PDF files</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekst PDF datoteka</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6828,22 +6828,22 @@ Provjerite je li izvorna mapa (%1) ispravna ili je li uređaj montiran u izvornu
     <message>
         <location line="+14"/>
         <source>Not found</source>
-        <translation type="unfinished"></translation>
+        <translation>Nije pronađeno</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisnik</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>%1 tokens/s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 tokena/s</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>No step finished in this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>U ovoj sesiji nije dovršen nijedan korak.</translation>
     </message>
 </context>
 <context>

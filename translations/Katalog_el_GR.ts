@@ -600,7 +600,7 @@ Choose a different name.</source>
     <message>
         <location line="+1"/>
         <source>Index for search by meaning</source>
-        <translation type="unfinished"></translation>
+        <translation>Ευρετήριο για αναζήτηση κατά νόημα</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1460,7 +1460,7 @@ Choose a different name.</source>
         <location line="-1755"/>
         <location line="+1568"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>Δραστηριότητα</translation>
     </message>
     <message>
         <location line="-1555"/>
@@ -6584,7 +6584,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-14"/>
         <source>Activity</source>
-        <translation type="unfinished"></translation>
+        <translation>Δραστηριότητα</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -6632,22 +6632,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location filename="../qt_quick/PageActivity.qml" line="+27"/>
         <source>On this computer</source>
-        <translation type="unfinished"></translation>
+        <translation>Σε αυτόν τον υπολογιστή</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the local network</source>
-        <translation type="unfinished"></translation>
+        <translation>Στο τοπικό δίκτυο</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>On the Internet</source>
-        <translation type="unfinished"></translation>
+        <translation>Στο διαδίκτυο</translation>
     </message>
     <message>
         <location line="+39"/>
         <source>Nothing running</source>
-        <translation type="unfinished"></translation>
+        <translation>Τίποτα σε εξέλιξη</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6663,22 +6663,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+3"/>
         <source>File %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Αρχείο %1 από %2</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Estimated end %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Εκτιμώμενη λήξη: %1</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>%1 cores</source>
-        <translation type="unfinished"></translation>
+        <translation>Πυρήνες: %1</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Waiting: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Σε αναμονή: %1</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -6700,13 +6700,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <location line="+135"/>
         <location line="+42"/>
         <source>CPU</source>
-        <translation type="unfinished"></translation>
+        <translation>CPU</translation>
     </message>
     <message>
         <location line="-175"/>
         <location line="+134"/>
         <source>GPU</source>
-        <translation type="unfinished"></translation>
+        <translation>GPU</translation>
     </message>
     <message>
         <location line="-132"/>
@@ -6717,109 +6717,109 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-131"/>
         <source>%1 of %2 GB</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 από %2 GB</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Swap</source>
-        <translation type="unfinished"></translation>
+        <translation>Μνήμη swap</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Memory pressure</source>
-        <translation type="unfinished"></translation>
+        <translation>Πίεση μνήμης</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Power</source>
-        <translation type="unfinished"></translation>
+        <translation>Τροφοδοσία</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Mains</source>
-        <translation type="unfinished"></translation>
+        <translation>Ρεύμα δικτύου</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Battery</source>
-        <translation type="unfinished"></translation>
+        <translation>Μπαταρία</translation>
     </message>
     <message>
         <location line="+3"/>
         <source>Source drive</source>
-        <translation type="unfinished"></translation>
+        <translation>Μονάδα δίσκου προέλευσης</translation>
     </message>
     <message>
         <location line="+2"/>
         <location line="+178"/>
         <source>Connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Συνδεδεμένο</translation>
     </message>
     <message>
         <location line="-178"/>
         <location line="+178"/>
         <source>Not connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Μη συνδεδεμένο</translation>
     </message>
     <message>
         <location line="-176"/>
         <source>Data sent</source>
-        <translation type="unfinished"></translation>
+        <translation>Απεσταλμένα δεδομένα</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Nothing sent</source>
-        <translation type="unfinished"></translation>
+        <translation>Δεν στάλθηκε τίποτα</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Right now</source>
-        <translation type="unfinished"></translation>
+        <translation>Αυτή τη στιγμή</translation>
     </message>
     <message>
         <location line="+9"/>
         <source>Checking what is already done</source>
-        <translation type="unfinished"></translation>
+        <translation>Έλεγχος όσων έχουν ήδη γίνει</translation>
     </message>
     <message>
         <location line="+29"/>
         <source>Since this session started</source>
-        <translation type="unfinished"></translation>
+        <translation>Από την έναρξη αυτής της συνεδρίας</translation>
     </message>
     <message>
         <location line="+75"/>
         <source>Programs</source>
-        <translation type="unfinished"></translation>
+        <translation>Προγράμματα</translation>
     </message>
     <message>
         <location line="+28"/>
         <source>Models in memory</source>
-        <translation type="unfinished"></translation>
+        <translation>Μοντέλα στη μνήμη</translation>
     </message>
     <message>
         <location line="+23"/>
         <source>Images: %1 · Texts: %2 · Search by meaning: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Εικόνες: %1 · Κείμενα: %2 · Αναζήτηση κατά νόημα: %3</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Εργαλεία</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Previews and clips</source>
-        <translation type="unfinished"></translation>
+        <translation>Προεπισκοπήσεις και αποσπάσματα</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Durations</source>
-        <translation type="unfinished"></translation>
+        <translation>Διάρκειες</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Text of PDF files</source>
-        <translation type="unfinished"></translation>
+        <translation>Κείμενο αρχείων PDF</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6829,22 +6829,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+14"/>
         <source>Not found</source>
-        <translation type="unfinished"></translation>
+        <translation>Δεν βρέθηκε</translation>
     </message>
     <message>
         <location line="+11"/>
         <source>Log</source>
-        <translation type="unfinished"></translation>
+        <translation>Ημερολόγιο</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>%1 tokens/s</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 tokens/s</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>No step finished in this session.</source>
-        <translation type="unfinished"></translation>
+        <translation>Κανένα βήμα δεν ολοκληρώθηκε σε αυτή τη συνεδρία.</translation>
     </message>
 </context>
 <context>
