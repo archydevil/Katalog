@@ -2784,6 +2784,7 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
     if (analysis == QLatin1String("transcript")) return tr("Transcript");
     if (analysis == QLatin1String("segments"))   return tr("Topic segments");
     if (analysis == QLatin1String("clusters"))   return tr("Topic clusters");
+    if (analysis == QLatin1String("embeddings")) return tr("Index for search by meaning");
     return analysis;
 }
 //----------------------------------------------------------------------
@@ -2921,6 +2922,7 @@ void AppManager::startNextEnrichment()
         if (!error.isEmpty())
             qWarning() << "Enrichment not started for device" << next << ":" << error;
     }
+    updateMonitoring();   // stops sampling when nothing runs and the page is closed
 }
 //----------------------------------------------------------------------
 void AppManager::stopEnrichment()
