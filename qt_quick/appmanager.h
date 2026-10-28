@@ -76,6 +76,7 @@
 #include <QElapsedTimer>
 
 class BackupJobStoppable;
+class MdiEnrichmentJob;
 class QThread;
 
 class AppManager : public QObject
@@ -142,6 +143,11 @@ class AppManager : public QObject
     // Memory-mode Explore load, reported in the activity panel (EXP-F28, OPQ-F19)
     Q_PROPERTY(bool    exploreLoadIsRunning READ getExploreLoadIsRunning NOTIFY exploreLoadStateChanged)
     Q_PROPERTY(QString exploreStatusText    READ getExploreStatusText    NOTIFY exploreStatusTextChanged)
+    // Enrichment runner (fork, SpecMediaIntelligence.md MDI-F9..F17)
+    Q_PROPERTY(bool    mdiIsRunning  READ getMdiIsRunning  NOTIFY mdiStateChanged)
+    Q_PROPERTY(bool    mdiIsPaused   READ getMdiIsPaused   NOTIFY mdiStateChanged)
+    Q_PROPERTY(QString mdiStatusText READ getMdiStatusText NOTIFY mdiStatusTextChanged)
+    Q_PROPERTY(int     mdiRevision   READ getMdiRevision   NOTIFY mdiRevisionChanged)
     Q_PROPERTY(bool    searchIsPaused    READ getSearchIsPaused    NOTIFY searchStateChanged)
     Q_PROPERTY(QString searchStatusText  READ getSearchStatusText  NOTIFY searchStatusTextChanged)
     // Search results footer filters (SpecSearchResultsFilters.md). Both narrow
@@ -415,6 +421,23 @@ public slots:
     Q_INVOKABLE QString      getCreateSetting(const QString &key) const;
     Q_INVOKABLE void         setCreateSetting(const QString &key, const QVariant &value);
 
+    // Enrichment (fork, SpecMediaIntelligence.md). deviceId is the catalog's device.
+    bool    getMdiIsRunning()  const { return m_mdiJob != nullptr; }
+    bool    getMdiIsPaused()   const { return m_mdiIsPaused; }
+    QString getMdiStatusText() const { return m_mdiStatusText; }
+    int     getMdiRevision()   const { return m_mdiRevision; }
+    Q_INVOKABLE QVariantMap  getEnrichmentProfile(int deviceId);
+    Q_INVOKABLE bool         saveEnrichmentProfile(int deviceId, const QVariantMap &profile);
+    Q_INVOKABLE QString      startEnrichment(int deviceId);
+    Q_INVOKABLE void         stopEnrichment();
+    Q_INVOKABLE void         setEnrichmentPaused(bool paused);
+    Q_INVOKABLE QVariantMap  getEnrichmentTools();
+    // Explore / details: revision is passed only to re-evaluate the bindings
+    Q_INVOKABLE QString      mdiPreviewUrl(int catalogId, const QString &fullPath, int revision = 0);
+    Q_INVOKABLE bool         mdiHasData(int catalogId, const QString &fullPath, int revision = 0);
+    Q_INVOKABLE QVariantList mdiDetails(int catalogId, const QString &fullPath);
+    Q_INVOKABLE QString      localFileUrl(const QString &path) const;
+
     // Storage pre-selection for Create page (used by DeviceTreeComboBox storageOnly mode)
     Q_INVOKABLE int getDefaultStorageId() const;
 
@@ -632,6 +655,10 @@ signals:
     void searchStateChanged();
     void exploreLoadStateChanged();
     void exploreStatusTextChanged();
+    void mdiStateChanged();
+    void mdiStatusTextChanged();
+    void mdiRevisionChanged();
+    void enrichmentFinished(const QVariantMap &summary);
     // End of a Memory-mode Explore load: the open's result, or stopped
     void exploreCatalogOpened(const QVariantMap &info);
     // The latest open requested during a load, to run now that it has ended
@@ -750,6 +777,26 @@ private:
     int     m_lastCreateRequestDeviceId = 0;
     QHash<int, QVariantMap> m_pendingEnrichmentProfiles;
     void    savePendingEnrichmentProfile(int deviceId);
+
+    // Enrichment runner: one job at a time, the others wait in order (MDI-F16)
+    MdiEnrichmentJob *m_mdiJob      = nullptr;
+    QThread          *m_mdiThread   = nullptr;
+    bool              m_mdiIsPaused = false;
+    QString           m_mdiStatusText;
+    QString           m_mdiCatalogName;
+    QList<int>        m_mdiWaiting;
+    int               m_mdiRevision = 0;
+    bool              m_mdiRevisionPending = false;
+    bool              m_mdiQuitHooked = false;
+    // Explore display cache of the catalog shown, keyed by full path
+    int                          m_mdiIndexCatalogId = -1;
+    int                          m_mdiIndexRevision  = -1;
+    QHash<QString, QVariantMap>  m_mdiIndex;
+    QString mdiDataPath() const;
+    bool    openMdiMainConnection();
+    void    refreshMdiIndex(int catalogId);
+    void    startNextEnrichment();
+    QString mdiAnalysisLabel(const QString &analysis) const;
     DeviceUpdateManager    *m_deviceUpdateManager    = nullptr;
     CatalogProgressManager *m_catalogProgressManager = nullptr;
     CollectionImporter     *m_importer               = nullptr;

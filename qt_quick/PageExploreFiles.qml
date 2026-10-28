@@ -467,7 +467,14 @@ Item {
                             verticalCenter: parent.verticalCenter
                             leftMargin: 6
                         }
+                        // A preview made by the enrichment runner replaces
+                        // the type icon (fork, MDI-F44); it is read from the
+                        // destination drive, so it shows with the source offline
+                        readonly property string previewUrl:
+                            column === 0 && entryType === "file"
+                            ? appManager1.mdiPreviewUrl(root.catalogId, fullPath, appManager1.mdiRevision) : ""
                         source: {
+                            if (previewUrl !== "") return previewUrl
                             if (entryType === "folder") return "folder"
                             switch (fileType) {
                                 case "audio":  return "audio-x-mpeg"
@@ -609,6 +616,17 @@ Item {
             onTriggered: metadataDialog.showFor(root.catalogId,
                                                 root._activeFileName,
                                                 root._activeFolderPath)
+        }
+
+        Controls.MenuItem {
+            text: qsTr("Show analysis")
+            icon.name: "view-preview"
+            readonly property bool hasAnalysis:
+                root._activeEntryType === "file" && root.catalogId > 0 &&
+                appManager1.mdiHasData(root.catalogId, root._activeFilePath, appManager1.mdiRevision)
+            visible: hasAnalysis
+            height:  hasAnalysis ? implicitHeight : 0
+            onTriggered: mdiDetailsDialog.showFor(root.catalogId, root._activeFilePath, root._activeFileName)
         }
 
         Controls.MenuSeparator {
@@ -921,4 +939,5 @@ Item {
 
     // ── Metadata dialog ───────────────────────────────────────────────────
     MetadataDialog { id: metadataDialog }
+    MdiDetailsDialog { id: mdiDetailsDialog }
 }

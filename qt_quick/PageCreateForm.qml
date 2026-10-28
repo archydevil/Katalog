@@ -11,12 +11,12 @@ ColumnLayout {
     // Empty-dir confirmation is a Yes/No decision → modal dialog lives in Main.qml
     signal emptyDirConfirmNeeded()
 
-    // Standard form or wizard (fork, SpecMediaIntelligence.md MDI-F1). The wizard's
-    // Source step is this form's "Catalog definition" section, so the values
-    // common to both modes are the same fields and survive a switch.
+    // Standard form or wizard (fork, SpecMediaIntelligence.md MDI-F1). The wizard
+    // is one page: this form's "Catalog definition" section, then the enrichment
+    // options, so the values common to both modes are the same fields.
     property string mode: "standard"
     readonly property bool wizardMode:  mode === "wizard"
-    readonly property bool showSource:  !wizardMode || createWizard.step === 0
+    readonly property bool showSource:  true
     readonly property bool showOptions: !wizardMode
 
     function setMode(newMode) {
@@ -35,17 +35,14 @@ ColumnLayout {
     function triggerCreate() {
         createValidationMessage.visible = false
         if (create_lineEdit_NewCatalogName.text.trim() === "") {
-            createWizard.step = 0
             showValidationMessage(qsTr("Provide a name for this new catalog."))
             return
         }
         if (create_lineEdit_NewCatalogPath.text.trim() === "") {
-            createWizard.step = 0
             showValidationMessage(qsTr("Provide a path for this new catalog."))
             return
         }
         if (create_storageComboBox.selectedDeviceId <= 0) {
-            createWizard.step = 0
             showValidationMessage(qsTr("Select a Storage for this new catalog.\n(Selection panel on the left and dropdown list)"))
             return
         }
@@ -58,27 +55,23 @@ ColumnLayout {
         doCreate()
     }
 
-    // Wizard-only checks (MDI-F6); the offending step is shown with the message
+    // Wizard-only checks (MDI-F6)
     function validateWizard() {
         var source      = appManager1.normalizeSourcePath(create_lineEdit_NewCatalogPath.text)
         var destination = appManager1.normalizeSourcePath(createWizard.destinationPath)
         if (destination === "") {
-            createWizard.step = 1
             showValidationMessage(qsTr("Provide a destination path for the previews and derived data."))
             return false
         }
         if (!appManager1.isPathWritable(destination)) {
-            createWizard.step = 1
             showValidationMessage(qsTr("Select a destination path that can be written to."))
             return false
         }
         if (appManager1.isPathInside(destination, source)) {
-            createWizard.step = 1
             showValidationMessage(qsTr("Select a destination path outside the source path."))
             return false
         }
         if (!createWizard.anyFileType() && createWizard.anyPreview()) {
-            createWizard.step = 2
             showValidationMessage(qsTr("Select at least one file type, or turn off all previews."))
             return false
         }
@@ -220,18 +213,6 @@ ColumnLayout {
         visible: false
     }
 
-    CreateWizard {
-        id: createWizard
-        visible: pageCreateForm.wizardMode
-        Layout.fillWidth: true
-        Layout.leftMargin:  Kirigami.Units.gridUnit
-        Layout.rightMargin: Kirigami.Units.gridUnit
-        Layout.topMargin:   Kirigami.Units.gridUnit
-        sourcePath:  appManager1.normalizeSourcePath(create_lineEdit_NewCatalogPath.text)
-        storageName: create_storageComboBox.selectedDeviceName
-        catalogName: create_lineEdit_NewCatalogName.text.trim()
-        onChoiceEdited: createValidationMessage.visible = false
-    }
 
     // ════════════════════════════════════════════════════════════════════════════
     // Master GridLayout - 2 columns shared across all sections
@@ -245,7 +226,6 @@ ColumnLayout {
 
         // ── Section 1: Required ───────────────────────────────────────────────
         RowLayout {
-            visible: !pageCreateForm.wizardMode
             Layout.columnSpan: 2
             Layout.topMargin: Kirigami.Units.smallSpacing
             Layout.fillWidth: true
@@ -567,28 +547,25 @@ ColumnLayout {
         Item { Layout.columnSpan: 2; Layout.preferredHeight: Kirigami.Units.gridUnit; visible: pageCreateForm.showOptions }
     }
 
-    // ── Wizard navigation ─────────────────────────────────────────────────────
+    // ── Wizard: enrichment options and Create ─────────────────────────────────
+    CreateWizard {
+        id: createWizard
+        visible: pageCreateForm.wizardMode
+        Layout.fillWidth: true
+        Layout.leftMargin:  Kirigami.Units.gridUnit
+        Layout.rightMargin: Kirigami.Units.gridUnit
+        onChoiceEdited: createValidationMessage.visible = false
+    }
+
     RowLayout {
         visible: pageCreateForm.wizardMode
         Layout.fillWidth: true
         Layout.leftMargin:   Kirigami.Units.gridUnit
         Layout.rightMargin:  Kirigami.Units.gridUnit
+        Layout.topMargin:    Kirigami.Units.largeSpacing
         Layout.bottomMargin: Kirigami.Units.gridUnit
         Item { Layout.fillWidth: true }
         Controls.Button {
-            text: qsTr("Back")
-            icon.name: "go-previous"
-            enabled: createWizard.step > 0
-            onClicked: createWizard.step--
-        }
-        Controls.Button {
-            visible: createWizard.step < createWizard.stepCount - 1
-            text: qsTr("Next")
-            icon.name: "go-next"
-            onClicked: createWizard.step++
-        }
-        Controls.Button {
-            visible: createWizard.step === createWizard.stepCount - 1
             text: qsTr("Create")
             icon.name: "document-save"
             onClicked: pageCreateForm.triggerCreate()

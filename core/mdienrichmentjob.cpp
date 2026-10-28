@@ -63,11 +63,14 @@ namespace {
 // Prompt versions take part in the parameters, so a changed prompt re-runs
 // its analysis on the next job (MDI-F54).
 const QString kCaptionPrompt = QStringLiteral("caption-v1");
-const QString kSummaryPrompt = QStringLiteral("summary-v1");
+const QString kSummaryPrompt = QStringLiteral("summary-v2");
 
 // Text sent to the model is cut to this length: long documents are summarised
-// from their beginning.
-constexpr int kMaxTextChars = 24000;
+// from their beginning. The context window is sized for it: with Ollama's
+// default window a long transcript is cut and the answer is no longer JSON.
+constexpr int kMaxTextChars  = 24000;
+constexpr int kContextTokens = 16384;
+constexpr int kAnswerTokens  = 1024;
 
 constexpr int kThumbnailSize = 320;   // longest side, MDI-F29
 
@@ -319,9 +322,12 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
     const QJsonObject image = s.value("image").toObject();
     const QJsonObject video = s.value("video").toObject();
     const QJsonObject audio = s.value("audio").toObject();
+    // Profiles saved before the AI options existed have no "ai" key: both
+    // analyses are on for them, as they are by default in the form.
     const QJsonObject ai    = s.value("ai").toObject();
-    const bool caption = ai.value("imageCaption").toBool();
-    const bool summary = ai.value("summary").toBool();
+    // The K3 form writes "caption"; "imageCaption" is accepted as well
+    const bool caption = ai.value("imageCaption").toBool(ai.value("caption").toBool(true));
+    const bool summary = ai.value("summary").toBool(true);
 
     QStringList list;
     if (file.fileType == QLatin1String("image")) {
@@ -696,11 +702,15 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSummary(const FileItem &file)
     const bool truncated = text.size() > kMaxTextChars;
     text.truncate(kMaxTextChars);
 
+    // Output language = the source's language (D-Q4); the model follows the
+    // prompt's language unless told twice.
     const QString prompt = QStringLiteral(
-        "You summarise %1 for a personal media catalog. Write in the language of the text. "
+        "You summarise %1 for a personal media catalog. Write the summary, the excerpts and the tags "
+        "in the SAME LANGUAGE AS THE TEXT (an Italian text gets an Italian summary). "
         "Answer as JSON only: {\"summary\": \"3 to 5 sentences\", "
         "\"excerpts\": [\"up to 4 short key passages quoted verbatim\"], "
-        "\"tags\": [\"3 to 10 lowercase keywords\"], \"language\": \"ISO 639-1 code\"}.\n\nTEXT:\n%2")
+        "\"tags\": [\"3 to 10 lowercase keywords\"], \"language\": \"ISO 639-1 code\"}.\n\nTEXT:\n%2"
+        "\n\nRemember: same language as the TEXT, JSON only.")
         .arg(isTranscript ? QStringLiteral("the transcript of a recording") : QStringLiteral("a document"), text);
 
     QString err;
@@ -776,7 +786,9 @@ QJsonObject MdiEnrichmentJob::askOllama(const QString &model, const QString &pro
     body["format"] = "json";
     body["stream"] = false;
     body["think"]  = false;
-    body["options"] = QJsonObject{{"temperature", 0.2}};
+    body["options"] = QJsonObject{{"temperature", 0.2},
+                                  {"num_ctx", kContextTokens},
+                                  {"num_predict", kAnswerTokens}};
     if (!imagePaths.isEmpty()) {
         QJsonArray images;
         for (const QString &p : imagePaths) {
@@ -814,6 +826,12 @@ QJsonObject MdiEnrichmentJob::askOllama(const QString &model, const QString &pro
         const QJsonObject envelope = QJsonDocument::fromJson(reply->readAll()).object();
         const QString text = envelope.value("response").toString();
         result = QJsonDocument::fromJson(text.toUtf8()).object();
+        if (result.isEmpty()) {
+            // Some answers wrap the object in prose or a code fence
+            const int first = text.indexOf('{'), last = text.lastIndexOf('}');
+            if (first >= 0 && last > first)
+                result = QJsonDocument::fromJson(text.mid(first, last - first + 1).toUtf8()).object();
+        }
         if (result.isEmpty())
             *error = envelope.contains("error") ? envelope.value("error").toString()
                                                 : QStringLiteral("answer is not JSON");

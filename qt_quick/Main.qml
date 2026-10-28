@@ -1915,6 +1915,80 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    // Enrichment of an existing catalog (fork, SpecMediaIntelligence.md MDI-F8, Q9):
+    // the wizard's options, filled from the catalog's profile when it has one
+    Kirigami.Dialog {
+        id: enrichmentDialog
+        property int    deviceId:   -1
+        property string sourcePath: ""
+
+        function openFor(id, path, name) {
+            deviceId   = id
+            sourcePath = path
+            title      = qsTr("Analyze") + " — " + name
+            enrichmentValidation.visible = false
+            var profile = appManager1.getEnrichmentProfile(id)
+            if (profile.settings)
+                enrichmentOptions.loadProfile(profile)
+            else
+                enrichmentOptions.restoreSettings()
+            open()
+        }
+        function showError(message) {
+            enrichmentValidation.text    = message
+            enrichmentValidation.visible = true
+        }
+        function start() {
+            var destination = appManager1.normalizeSourcePath(enrichmentOptions.destinationPath)
+            if (destination === "")
+                return showError(qsTr("Provide a destination path for the previews and derived data."))
+            if (!appManager1.isPathWritable(destination))
+                return showError(qsTr("Select a destination path that can be written to."))
+            if (appManager1.isPathInside(destination, sourcePath))
+                return showError(qsTr("Select a destination path outside the source path."))
+            if (!enrichmentOptions.anyFileType() && enrichmentOptions.anyPreview())
+                return showError(qsTr("Select at least one file type, or turn off all previews."))
+            enrichmentOptions.rememberSettings()
+            appManager1.saveEnrichmentProfile(deviceId, enrichmentOptions.buildProfile())
+            var error = appManager1.startEnrichment(deviceId)
+            if (error !== "")
+                return showError(error)
+            close()
+        }
+
+        width: Math.min(root.width - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 38)
+        preferredHeight: Kirigami.Units.gridUnit * 34
+        standardButtons: Kirigami.Dialog.Cancel
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Analyze")
+                icon.name: "tools-wizard"
+                onTriggered: enrichmentDialog.start()
+            }
+        ]
+
+        contentItem: Controls.ScrollView {
+            contentWidth: availableWidth
+            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
+            ColumnLayout {
+                width: parent.width
+                Kirigami.InlineMessage {
+                    id: enrichmentValidation
+                    Layout.fillWidth: true
+                    type: Kirigami.MessageType.Warning
+                    showCloseButton: true
+                    visible: false
+                }
+                CreateWizard {
+                    id: enrichmentOptions
+                    Layout.fillWidth: true
+                    Layout.margins: Kirigami.Units.largeSpacing
+                    onChoiceEdited: enrichmentValidation.visible = false
+                }
+            }
+        }
+    }
+
     // Create empty-source confirmation (Yes/No decision → modal)
     Controls.Dialog {
         id: createEmptyDirDialog
@@ -2437,6 +2511,15 @@ Kirigami.ApplicationWindow {
         padding: 0
 
         actions: [
+            // Enrich the catalog shown (fork, SpecMediaIntelligence.md MDI-F8, Q9)
+            Kirigami.Action {
+                text: qsTr("Analyze")
+                icon.name: "tools-wizard"
+                enabled: exploreFolders.openedDeviceId > 0
+                onTriggered: enrichmentDialog.openFor(exploreFolders.openedDeviceId,
+                                                      exploreFiles.catalogPath,
+                                                      exploreFiles.catalogName)
+            },
             Kirigami.Action {
                 id: pageExploreEscapeAction
                 text: qsTr("Close")

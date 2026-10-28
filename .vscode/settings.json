@@ -62,5 +62,6 @@
         "MD025": {
             "front_matter_title": ""
         }
-    }
+    },
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/compile_commands.json"
 }

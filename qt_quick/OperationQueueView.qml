@@ -63,6 +63,28 @@ Controls.ToolBar {
     // lingering for five seconds would say nothing.
     visible: busy || (lingering && root.statusText.length > 0)
              || appManager1.operationQueue.length > 0
+             || appManager1.mdiIsRunning || root.mdiLingering
+
+    // The enrichment runner is not a queue operation (MDI-C3): it has its own
+    // row, shown alongside whatever the queue runs (MDI-F17), with the same tail.
+    property bool mdiLingering: false
+    Timer {
+        id: mdiLingerTimer
+        interval: root.completionLinger
+        onTriggered: root.mdiLingering = false
+    }
+    Connections {
+        target: appManager1
+        function onMdiStateChanged() {
+            if (appManager1.mdiIsRunning) {
+                root.mdiLingering = false
+                mdiLingerTimer.stop()
+            } else {
+                root.mdiLingering = true
+                mdiLingerTimer.restart()
+            }
+        }
+    }
     height: visible ? implicitHeight : 0
 
     // Positioned by the caller against the page area, so no drawer compensation
@@ -118,6 +140,41 @@ Controls.ToolBar {
                     else
                         appManager1.stopDeviceUpdate()
                 }
+            }
+        }
+
+        // ── Enrichment runner (MDI-F17) ──────────────────────────────────
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Kirigami.Units.smallSpacing
+            visible: appManager1.mdiIsRunning || root.mdiLingering
+
+            Controls.BusyIndicator {
+                running: appManager1.mdiIsRunning && !appManager1.mdiIsPaused
+                opacity: appManager1.mdiIsRunning ? 1 : 0
+                Layout.leftMargin: Kirigami.Units.largeSpacing
+                implicitWidth:  Kirigami.Units.gridUnit * 1.2
+                implicitHeight: Kirigami.Units.gridUnit * 1.2
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                text: appManager1.mdiStatusText.replace(/^(&nbsp;)+/, "")
+                textFormat: Text.StyledText
+                elide: Text.ElideRight
+            }
+            Controls.Button {
+                visible: appManager1.mdiIsRunning
+                text: appManager1.mdiIsPaused ? qsTr("Resume") : qsTr("Pause")
+                icon.name: appManager1.mdiIsPaused ? "media-playback-start" : "media-playback-pause"
+                flat: true
+                onClicked: appManager1.setEnrichmentPaused(!appManager1.mdiIsPaused)
+            }
+            Controls.Button {
+                visible: appManager1.mdiIsRunning
+                text: qsTr("Stop")
+                icon.name: "process-stop"
+                flat: true
+                onClicked: appManager1.stopEnrichment()
             }
         }
 

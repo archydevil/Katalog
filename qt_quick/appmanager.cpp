@@ -17,6 +17,9 @@
 #include "core/storage.h"
 #include "core/foldertreeloader.h"
 #include "core/mdiprofile.h"
+#include "core/mdidata.h"
+#include "core/mdienrichmentjob.h"
+#include <QThread>
 #include <QThread>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -1253,6 +1256,8 @@ bool AppManager::reconnectToDatabase()
 
     // Pending wizard profiles belong to the collection being left
     m_pendingEnrichmentProfiles.clear();
+    m_mdiWaiting.clear();          // waiting enrichments name devices of that collection
+    m_mdiIndexCatalogId = -1;      // previews are re-read from the new collection folder
 
     QSqlError err = DatabaseManager::reconnect(conn, collection);
     if (err.type() != QSqlError::NoError) {
@@ -2637,6 +2642,11 @@ void AppManager::savePendingEnrichmentProfile(int deviceId)
     }
     if (collection->databaseMode == "Memory")
         MdiProfile::saveTableToFile(m_connectionName, collection->folder);
+
+    // The enrichment job is added only once the creation has completed (MDI-F7)
+    const QString error = startEnrichment(deviceId);
+    if (!error.isEmpty())
+        qWarning() << "savePendingEnrichmentProfile: enrichment not started:" << error;
 }
 //----------------------------------------------------------------------
 bool AppManager::isPathWritable(const QString &path) const
@@ -2689,6 +2699,293 @@ void AppManager::setCreateSetting(const QString &key, const QVariant &value)
     QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
     settings.setValue("Create/" + key, value);
     settings.sync();
+}
+//----------------------------------------------------------------------
+// Enrichment (fork, SpecMediaIntelligence.md)
+//----------------------------------------------------------------------
+namespace {
+const QString kMdiMainConnection = QStringLiteral("mdi_main");
+const QStringList kMdiAnalysisOrder = {
+    QStringLiteral("thumbnail"), QStringLiteral("poster"), QStringLiteral("keyframes"),
+    QStringLiteral("clip_video"), QStringLiteral("clip_audio"), QStringLiteral("waveform"),
+    QStringLiteral("caption"), QStringLiteral("summary")
+};
+}
+//----------------------------------------------------------------------
+QString AppManager::mdiDataPath() const
+{
+    return MdiData::filePath(collection->folder);
+}
+//----------------------------------------------------------------------
+bool AppManager::openMdiMainConnection()
+{
+    // Read side of mdi_data.db on the main thread; the runner has its own
+    // connection on its thread (MDI-C4). Reopened when the collection changes.
+    const QString path = mdiDataPath();
+    if (QSqlDatabase::contains(kMdiMainConnection)) {
+        QSqlDatabase db = QSqlDatabase::database(kMdiMainConnection, false);
+        if (db.isOpen() && db.databaseName() == path)
+            return true;
+        MdiData::close(kMdiMainConnection);
+    }
+    return MdiData::open(kMdiMainConnection, path);
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::getEnrichmentProfile(int deviceId)
+{
+    MdiProfile profile;
+    if (!profile.load(m_connectionName, deviceId))
+        return QVariantMap();
+    return QVariantMap{ { QStringLiteral("destinationPath"), profile.destinationPath },
+                        { QStringLiteral("settings"),        profile.settings.toVariantMap() } };
+}
+//----------------------------------------------------------------------
+bool AppManager::saveEnrichmentProfile(int deviceId, const QVariantMap &values)
+{
+    MdiProfile profile;
+    profile.deviceId        = deviceId;
+    profile.destinationPath = values.value(QStringLiteral("destinationPath")).toString();
+    profile.settings        = QJsonObject::fromVariantMap(values.value(QStringLiteral("settings")).toMap());
+    if (!profile.save(m_connectionName))
+        return false;
+    if (collection->databaseMode == "Memory")
+        MdiProfile::saveTableToFile(m_connectionName, collection->folder);
+    return true;
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::getEnrichmentTools()
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    QVariantMap tools;
+    tools[QStringLiteral("ffmpeg")]    = MdiEnrichmentJob::findTool(QStringLiteral("ffmpeg"),    settings.value("MediaIntelligence/FfmpegPath").toString());
+    tools[QStringLiteral("ffprobe")]   = MdiEnrichmentJob::findTool(QStringLiteral("ffprobe"),   settings.value("MediaIntelligence/FfprobePath").toString());
+    tools[QStringLiteral("pdftotext")] = MdiEnrichmentJob::findTool(QStringLiteral("pdftotext"), settings.value("MediaIntelligence/PdftotextPath").toString());
+    tools[QStringLiteral("ollamaUrl")]   = settings.value("MediaIntelligence/OllamaUrl", QStringLiteral("http://localhost:11434")).toString();
+    tools[QStringLiteral("visionModel")] = settings.value("MediaIntelligence/VisionModel", QStringLiteral("gemma4")).toString();
+    tools[QStringLiteral("textModel")]   = settings.value("MediaIntelligence/TextModel",   QStringLiteral("gemma4")).toString();
+    return tools;
+}
+//----------------------------------------------------------------------
+QString AppManager::mdiAnalysisLabel(const QString &analysis) const
+{
+    if (analysis == QLatin1String("thumbnail"))  return tr("Thumbnail");
+    if (analysis == QLatin1String("poster"))     return tr("Poster frame");
+    if (analysis == QLatin1String("keyframes"))  return tr("Keyframe strip");
+    if (analysis == QLatin1String("clip_video")) return tr("Video") + QStringLiteral(" · ") + tr("Clip");
+    if (analysis == QLatin1String("clip_audio")) return tr("Audio") + QStringLiteral(" · ") + tr("Clip");
+    if (analysis == QLatin1String("waveform"))   return tr("Waveform");
+    if (analysis == QLatin1String("caption"))    return tr("Caption and tags");
+    if (analysis == QLatin1String("summary"))    return tr("Summary and excerpts");
+    return analysis;
+}
+//----------------------------------------------------------------------
+QString AppManager::startEnrichment(int deviceId)
+{
+    // One job at a time; a request for another catalog waits its turn and a
+    // catalog already running or waiting is not added twice (MDI-F16)
+    if (m_mdiJob) {
+        if (!m_mdiWaiting.contains(deviceId))
+            m_mdiWaiting.append(deviceId);
+        return QString();
+    }
+
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog"))
+        return tr("Selected device is not a catalog");
+
+    MdiProfile profile;
+    if (!profile.load(m_connectionName, deviceId))
+        return tr("Provide a destination path for the previews and derived data.");
+    if (!isPathWritable(profile.destinationPath))
+        return tr("Select a destination path that can be written to.");
+
+    const QVariantMap tools = getEnrichmentTools();
+    MdiEnrichmentJob::Config config;
+    config.catalogId       = device.externalID;
+    config.catalogName     = device.name;
+    config.dataDbPath      = mdiDataPath();
+    config.destinationPath = profile.destinationPath;
+    config.settings        = profile.settings;
+    config.ffmpegPath      = tools.value(QStringLiteral("ffmpeg")).toString();
+    config.ffprobePath     = tools.value(QStringLiteral("ffprobe")).toString();
+    config.pdftotextPath   = tools.value(QStringLiteral("pdftotext")).toString();
+    config.ollamaUrl       = tools.value(QStringLiteral("ollamaUrl")).toString();
+    config.visionModel     = tools.value(QStringLiteral("visionModel")).toString();
+    config.textModel       = tools.value(QStringLiteral("textModel")).toString();
+    config.uiLanguageName  = QLocale::languageToString(QLocale(getCurrentLanguage()).language());
+
+    // Read on this thread, with the collection connection (Memory: from the .idx)
+    const QList<MdiEnrichmentJob::FileItem> files =
+        MdiEnrichmentJob::listCatalogFiles(m_connectionName, device.externalID,
+                                           collection->databaseMode, device.catalog->filePath);
+
+    m_mdiCatalogName = device.name;
+    m_mdiIsPaused    = false;
+    m_mdiJob    = new MdiEnrichmentJob(config, files);
+    m_mdiThread = new QThread();
+    m_mdiJob->moveToThread(m_mdiThread);
+
+    auto status = [this](const QString &state) {
+        return StatusBarMessageBuilder().setOperation(tr("Enrichment")).setStatus(state)
+                                        .setDeviceContext(1, 1, m_mdiCatalogName);
+    };
+    m_mdiStatusText = status(tr("In Progress")).build();
+    emit mdiStatusTextChanged();
+
+    connect(m_mdiThread, &QThread::started, m_mdiJob, &MdiEnrichmentJob::run);
+    connect(m_mdiJob, &MdiEnrichmentJob::progress, this,
+            [this, status](int fileIndex, int fileCount, const QString &analysis, const QString &filePath) {
+        m_mdiStatusText = status(m_mdiIsPaused ? tr("Paused") : tr("In Progress"))
+                              .setProcess(mdiAnalysisLabel(analysis), fileIndex, fileCount)
+                              .setCurrentItem(filePath)
+                              .build();
+        emit mdiStatusTextChanged();
+    });
+    connect(m_mdiJob, &MdiEnrichmentJob::datumCommitted, this, [this](const QString &, const QString &) {
+        // Coalesced: Explore re-reads its previews at most once a second
+        if (!m_mdiRevisionPending) {
+            m_mdiRevisionPending = true;
+            QTimer::singleShot(1000, this, [this]() {
+                m_mdiRevisionPending = false;
+                m_mdiRevision++;
+                emit mdiRevisionChanged();
+            });
+        }
+    });
+    connect(m_mdiJob, &MdiEnrichmentJob::finished, this, [this, status](const QVariantMap &summary) {
+        const bool stopped = summary.value(QStringLiteral("stopped")).toBool();
+        StatusBarMessageBuilder builder = status(stopped ? tr("Cancelled") : tr("Completed"));
+        builder.setResult(tr("Completed"), summary.value(QStringLiteral("completed")).toInt());
+        m_mdiStatusText = builder.build();
+        emit mdiStatusTextChanged();
+        m_mdiJob = nullptr;           // deleted with its thread
+        m_mdiIsPaused = false;
+        m_mdiRevision++;
+        emit mdiRevisionChanged();
+        emit mdiStateChanged();
+        emit enrichmentFinished(summary);
+        QTimer::singleShot(0, this, &AppManager::startNextEnrichment);
+    });
+    connect(m_mdiJob,    &MdiEnrichmentJob::finished, m_mdiThread, &QThread::quit);
+    connect(m_mdiThread, &QThread::finished, m_mdiJob,    &QObject::deleteLater);
+    connect(m_mdiThread, &QThread::finished, m_mdiThread, &QObject::deleteLater);
+    connect(m_mdiThread, &QThread::finished, this, [this]() { m_mdiThread = nullptr; });
+
+    // The runner must not outlive the application (MDI-C7: processes ended on exit)
+    if (!m_mdiQuitHooked) {
+        m_mdiQuitHooked = true;
+        connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+            if (m_mdiJob)
+                m_mdiJob->requestStop();
+            if (m_mdiThread) {
+                m_mdiThread->quit();
+                m_mdiThread->wait(5000);
+            }
+        });
+    }
+
+    m_mdiThread->start();
+    emit mdiStateChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+void AppManager::startNextEnrichment()
+{
+    while (!m_mdiJob && !m_mdiWaiting.isEmpty()) {
+        const int next = m_mdiWaiting.takeFirst();
+        const QString error = startEnrichment(next);
+        if (!error.isEmpty())
+            qWarning() << "Enrichment not started for device" << next << ":" << error;
+    }
+}
+//----------------------------------------------------------------------
+void AppManager::stopEnrichment()
+{
+    m_mdiWaiting.clear();
+    if (m_mdiJob)
+        m_mdiJob->requestStop();
+}
+//----------------------------------------------------------------------
+void AppManager::setEnrichmentPaused(bool paused)
+{
+    if (!m_mdiJob || m_mdiIsPaused == paused)
+        return;
+    m_mdiIsPaused = paused;
+    m_mdiJob->setPaused(paused);
+    m_mdiStatusText = StatusBarMessageBuilder().setOperation(tr("Enrichment"))
+                          .setStatus(paused ? tr("Paused") : tr("In Progress"))
+                          .setDeviceContext(1, 1, m_mdiCatalogName).build();
+    emit mdiStatusTextChanged();
+    emit mdiStateChanged();
+}
+//----------------------------------------------------------------------
+void AppManager::refreshMdiIndex(int catalogId)
+{
+    if (catalogId == m_mdiIndexCatalogId && m_mdiIndexRevision == m_mdiRevision)
+        return;
+    m_mdiIndexCatalogId = catalogId;
+    m_mdiIndexRevision  = m_mdiRevision;
+    m_mdiIndex.clear();
+    if (catalogId > 0 && QFileInfo::exists(mdiDataPath()) && openMdiMainConnection())
+        m_mdiIndex = MdiData::catalogIndex(kMdiMainConnection, catalogId);
+}
+//----------------------------------------------------------------------
+QString AppManager::mdiPreviewUrl(int catalogId, const QString &fullPath, int revision)
+{
+    Q_UNUSED(revision)
+    refreshMdiIndex(catalogId);
+    const QString thumbnail = m_mdiIndex.value(fullPath).value(QStringLiteral("thumbnail")).toString();
+    // Offline drive: the preview lives on the destination drive, which may be
+    // disconnected too; then the file-type icon shows instead (MDI-F45)
+    if (thumbnail.isEmpty() || !QFileInfo::exists(thumbnail))
+        return QString();
+    return QUrl::fromLocalFile(thumbnail).toString();
+}
+//----------------------------------------------------------------------
+bool AppManager::mdiHasData(int catalogId, const QString &fullPath, int revision)
+{
+    Q_UNUSED(revision)
+    refreshMdiIndex(catalogId);
+    return m_mdiIndex.value(fullPath).value(QStringLiteral("hasData")).toBool();
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::mdiDetails(int catalogId, const QString &fullPath)
+{
+    QVariantList list;
+    if (!QFileInfo::exists(mdiDataPath()) || !openMdiMainConnection())
+        return list;
+    QList<MdiData::Datum> data = MdiData::forFile(kMdiMainConnection, catalogId, fullPath);
+    std::sort(data.begin(), data.end(), [](const MdiData::Datum &a, const MdiData::Datum &b) {
+        return kMdiAnalysisOrder.indexOf(a.analysis) < kMdiAnalysisOrder.indexOf(b.analysis);
+    });
+    for (const MdiData::Datum &d : data) {
+        QVariantList files;
+        for (const QString &f : d.derivedFiles) {
+            const QString absolute = QDir(d.derivedRoot).filePath(f);
+            files.append(QVariantMap{ { QStringLiteral("path"),   absolute },
+                                      { QStringLiteral("url"),    QUrl::fromLocalFile(absolute).toString() },
+                                      { QStringLiteral("exists"), QFileInfo::exists(absolute) } });
+        }
+        list.append(QVariantMap{
+            { QStringLiteral("analysis"), d.analysis },
+            { QStringLiteral("label"),    mdiAnalysisLabel(d.analysis) },
+            { QStringLiteral("outcome"),  d.outcome },
+            { QStringLiteral("reason"),   d.reason },
+            { QStringLiteral("value"),    d.value.toVariantMap() },
+            { QStringLiteral("files"),    files },
+            { QStringLiteral("model"),    d.model },
+            { QStringLiteral("tool"),     d.tool },
+            { QStringLiteral("date"),     d.date }
+        });
+    }
+    return list;
+}
+//----------------------------------------------------------------------
+QString AppManager::localFileUrl(const QString &path) const
+{
+    return QUrl::fromLocalFile(path).toString();
 }
 //----------------------------------------------------------------------
 void AppManager::onCatalogCreationCompleted(const QList<qint64> &results)

@@ -4,27 +4,17 @@ import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import QtQuick.Dialogs
 
-// Wizard mode of the Create page (fork, SpecMediaIntelligence.md MDI-F1..F6).
-// Step 0 (Source) is the "Catalog definition" section of PageCreateForm, shown
-// by the page itself; this component holds the steps after it. It only collects
-// choices: the page validates, navigates and creates through the standard entry
-// point.
+// Enrichment options (fork, SpecMediaIntelligence.md MDI-F2..F6): where the
+// derived files go, which file types, which previews and which AI analyses.
+// One page, no steps. Used by the Create page in wizard mode, below the
+// standard form's "Catalog definition", and by the enrichment dialog for a
+// catalog that already exists. It only collects choices; the caller validates
+// and starts the work.
 ColumnLayout {
     id: createWizard
     spacing: Kirigami.Units.smallSpacing
 
-    // Filled by PageCreateForm for the summary
-    property string sourcePath:  ""
-    property string storageName: ""
-    property string catalogName: ""
-
-    property int step: 0                 // 0 = Source (shown by the page)
-    readonly property int stepCount: 5   // Source, Destination, File types, Previews, Summary
-    readonly property var stepTitles: [
-        qsTr("Source"), qsTr("Destination path"), qsTr("File types"), qsTr("Previews"), qsTr("Summary")
-    ]
-
-    signal choiceEdited()                // hides the page's validation message (MDI-F6)
+    signal choiceEdited()                // hides the caller's validation message (MDI-F6)
 
     // ── Choices ───────────────────────────────────────────────────────────────
     property alias destinationPath: wizard_lineEdit_Destination.text
@@ -49,6 +39,10 @@ ColumnLayout {
     property int  audioClipDuration:   30
     property bool audioWaveform:       false
 
+    // MDI-F5: local provider analyses
+    property bool aiCaption: true          // images and video poster frames
+    property bool aiSummary: true          // documents and recording transcripts
+
     readonly property var clipModel: [
         { text: qsTr("Off"),     value: "off"     },
         { text: qsTr("Full"),    value: "full"    },
@@ -61,6 +55,7 @@ ColumnLayout {
     function anyPreview() {
         return imageThumbnail || videoPosterFrame || videoKeyframeStrip
             || videoClip !== "off" || audioClip !== "off" || audioWaveform
+            || aiCaption || aiSummary
     }
     function selectedTypes() {
         var t = []
@@ -71,14 +66,8 @@ ColumnLayout {
         if (typeOther) t.push("Other")
         return t
     }
-    function clipText(value) {
-        for (var i = 0; i < clipModel.length; i++)
-            if (clipModel[i].value === value) return clipModel[i].text
-        return value
-    }
-    function onOff(flag) { return flag ? qsTr("On") : qsTr("Off") }
 
-    // Profile saved with the catalog once its creation completes (MDI-F7, F8)
+    // Profile saved with the catalog (MDI-F7, F8)
     function buildProfile() {
         return {
             destinationPath: appManager1.normalizeSourcePath(destinationPath),
@@ -99,9 +88,37 @@ ColumnLayout {
                     clipStart:    audioClipStart,
                     clipDuration: audioClipDuration,
                     waveform:     audioWaveform
-                }
+                },
+                ai: { caption: aiCaption, summary: aiSummary }
             }
         }
+    }
+
+    // Fills the form from a saved profile (enrichment dialog)
+    function loadProfile(profile) {
+        if (!profile || !profile.settings) return
+        var s = profile.settings
+        if (profile.destinationPath) destinationPath = profile.destinationPath
+        var types = s.fileTypes || []
+        typeImage = types.indexOf("Image") >= 0
+        typeVideo = types.indexOf("Video") >= 0
+        typeAudio = types.indexOf("Audio") >= 0
+        typeText  = types.indexOf("Text")  >= 0
+        typeOther = types.indexOf("Other") >= 0
+        var im = s.image || {}, v = s.video || {}, a = s.audio || {}, ai = s.ai || {}
+        imageThumbnail     = im.thumbnail !== false
+        videoPosterFrame   = v.posterFrame !== false
+        videoKeyframeStrip = v.keyframeStrip === true
+        videoKeyframeCount = v.keyframeCount || 8
+        videoClip          = v.clip || "off"
+        videoClipStart     = v.clipStart || 0
+        videoClipDuration  = v.clipDuration || 30
+        audioClip          = a.clip || "off"
+        audioClipStart     = a.clipStart || 0
+        audioClipDuration  = a.clipDuration || 30
+        audioWaveform      = a.waveform === true
+        aiCaption          = ai.caption !== false
+        aiSummary          = ai.summary !== false
     }
 
     function restoreSettings() {
@@ -119,195 +136,189 @@ ColumnLayout {
         }
     }
 
-    // ── Step header ───────────────────────────────────────────────────────────
+    component SectionHeader: RowLayout {
+        property alias text: sectionLabel.text
+        Layout.fillWidth: true
+        Layout.topMargin: Kirigami.Units.largeSpacing
+        spacing: Kirigami.Units.largeSpacing
+        Controls.Label { id: sectionLabel; color: applicationWindow().titleColor }
+        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
+    }
+
+    // ── Destination path ──────────────────────────────────────────────────────
+    SectionHeader { text: qsTr("Destination path"); Layout.topMargin: 0 }
     RowLayout {
         Layout.fillWidth: true
-        spacing: Kirigami.Units.largeSpacing
-        Controls.Label {
-            text: createWizard.stepTitles[createWizard.step]
-            color: applicationWindow().titleColor
-        }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-        Controls.Label {
-            text: qsTr("Step %1 of %2").arg(createWizard.step + 1).arg(createWizard.stepCount)
-            opacity: 0.7
-        }
-    }
-
-    // ── Step 1: Destination path ──────────────────────────────────────────────
-    GridLayout {
-        visible: createWizard.step === 1
-        Layout.fillWidth: true
-        columns: 2
-        columnSpacing: Kirigami.Units.largeSpacing
-        rowSpacing: Kirigami.Units.smallSpacing
-
-        Controls.Label { text: qsTr("Destination path"); opacity: 0.7 }
-        RowLayout {
+        Controls.TextField {
+            id: wizard_lineEdit_Destination
             Layout.fillWidth: true
-            Controls.TextField {
-                id: wizard_lineEdit_Destination
-                Layout.fillWidth: true
-                placeholderText: qsTr("Path for previews and derived data")
-                onTextChanged: createWizard.choiceEdited()
-                onEditingFinished: text = appManager1.normalizeSourcePath(text)
-            }
-            IconButton {
-                icon.name: "folder-open"
-                text: qsTr("Select the path")
-                onClicked: applicationWindow().openFreshDialog(destinationDialogComponent,
-                                                               wizard_lineEdit_Destination.text.trim())
-            }
+            placeholderText: qsTr("Path for previews and derived data")
+            onTextChanged: createWizard.choiceEdited()
+            onEditingFinished: text = appManager1.normalizeSourcePath(text)
+        }
+        IconButton {
+            icon.name: "folder-open"
+            text: qsTr("Select the path")
+            onClicked: applicationWindow().openFreshDialog(destinationDialogComponent,
+                                                           wizard_lineEdit_Destination.text.trim())
         }
     }
 
-    // ── Step 2: File types ────────────────────────────────────────────────────
-    ColumnLayout {
-        visible: createWizard.step === 2
+    // ── File types ────────────────────────────────────────────────────────────
+    SectionHeader { text: qsTr("File types") }
+    Flow {
         Layout.fillWidth: true
         spacing: Kirigami.Units.smallSpacing
-        Controls.CheckBox { text: qsTr("Image"); checked: createWizard.typeImage; onToggled: { createWizard.typeImage = checked; createWizard.choiceEdited() } }
-        Controls.CheckBox { text: qsTr("Video"); checked: createWizard.typeVideo; onToggled: { createWizard.typeVideo = checked; createWizard.choiceEdited() } }
-        Controls.CheckBox { text: qsTr("Audio"); checked: createWizard.typeAudio; onToggled: { createWizard.typeAudio = checked; createWizard.choiceEdited() } }
-        Controls.CheckBox { text: qsTr("Text");  checked: createWizard.typeText;  onToggled: { createWizard.typeText  = checked; createWizard.choiceEdited() } }
-        Controls.CheckBox { text: qsTr("Other"); checked: createWizard.typeOther; onToggled: { createWizard.typeOther = checked; createWizard.choiceEdited() } }
+        Repeater {
+            model: [
+                { key: "typeImage", text: qsTr("Image"), icon: "image-jpeg"      },
+                { key: "typeVideo", text: qsTr("Video"), icon: "video-mp4"       },
+                { key: "typeAudio", text: qsTr("Audio"), icon: "audio-x-mpeg"    },
+                { key: "typeText",  text: qsTr("Text"),  icon: "view-list-text"  },
+                { key: "typeOther", text: qsTr("Other"), icon: "document-open"   }
+            ]
+            delegate: Controls.Button {
+                required property var modelData
+                text: modelData.text
+                icon.name: modelData.icon
+                checkable: true
+                checked: createWizard[modelData.key]
+                onToggled: { createWizard[modelData.key] = checked; createWizard.choiceEdited() }
+            }
+        }
     }
 
-    // ── Step 3: Previews ──────────────────────────────────────────────────────
+    // ── Previews ──────────────────────────────────────────────────────────────
+    SectionHeader { text: qsTr("Previews") }
     GridLayout {
-        visible: createWizard.step === 3
         Layout.fillWidth: true
         columns: 2
         columnSpacing: Kirigami.Units.largeSpacing
         rowSpacing: Kirigami.Units.smallSpacing
 
         // Image
-        Controls.Label { text: qsTr("Image"); color: applicationWindow().titleColor; Layout.columnSpan: 2 }
-        Controls.Label { text: qsTr("Thumbnail"); opacity: 0.7 }
-        Controls.CheckBox { checked: createWizard.imageThumbnail; onToggled: { createWizard.imageThumbnail = checked; createWizard.choiceEdited() } }
+        Kirigami.Icon { source: "image-jpeg"; implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth; visible: createWizard.typeImage }
+        Controls.Switch {
+            visible: createWizard.typeImage
+            text: qsTr("Thumbnail")
+            checked: createWizard.imageThumbnail
+            onToggled: { createWizard.imageThumbnail = checked; createWizard.choiceEdited() }
+        }
 
         // Video
-        Controls.Label { text: qsTr("Video"); color: applicationWindow().titleColor; Layout.columnSpan: 2; Layout.topMargin: Kirigami.Units.smallSpacing }
-        Controls.Label { text: qsTr("Poster frame"); opacity: 0.7 }
-        Controls.CheckBox { checked: createWizard.videoPosterFrame; onToggled: { createWizard.videoPosterFrame = checked; createWizard.choiceEdited() } }
-        Controls.Label { text: qsTr("Keyframe strip"); opacity: 0.7 }
-        Controls.CheckBox { checked: createWizard.videoKeyframeStrip; onToggled: { createWizard.videoKeyframeStrip = checked; createWizard.choiceEdited() } }
-        Controls.Label { text: qsTr("Number of frames"); opacity: 0.7; visible: createWizard.videoKeyframeStrip }
-        Controls.SpinBox {
-            visible: createWizard.videoKeyframeStrip
-            from: 2; to: 32
-            value: createWizard.videoKeyframeCount
-            onValueModified: createWizard.videoKeyframeCount = value
-        }
-        Controls.Label { text: qsTr("Clip"); opacity: 0.7 }
-        ComboBoxFitted {
-            textRole: "text"; valueRole: "value"
-            model: createWizard.clipModel
-            currentIndex: indexOfValue(createWizard.videoClip)
-            onActivated: { createWizard.videoClip = currentValue; createWizard.choiceEdited() }
-        }
-        Controls.Label { text: qsTr("Start (seconds)"); opacity: 0.7; visible: createWizard.videoClip === "partial" }
-        Controls.SpinBox {
-            visible: createWizard.videoClip === "partial"
-            from: 0; to: 86400; editable: true
-            value: createWizard.videoClipStart
-            onValueModified: createWizard.videoClipStart = value
-        }
-        Controls.Label { text: qsTr("Duration (seconds)"); opacity: 0.7; visible: createWizard.videoClip === "partial" }
-        Controls.SpinBox {
-            visible: createWizard.videoClip === "partial"
-            from: 1; to: 86400; editable: true
-            value: createWizard.videoClipDuration
-            onValueModified: createWizard.videoClipDuration = value
-        }
-
-        // Audio
-        Controls.Label { text: qsTr("Audio"); color: applicationWindow().titleColor; Layout.columnSpan: 2; Layout.topMargin: Kirigami.Units.smallSpacing }
-        Controls.Label { text: qsTr("Clip"); opacity: 0.7 }
-        ComboBoxFitted {
-            textRole: "text"; valueRole: "value"
-            model: createWizard.clipModel
-            currentIndex: indexOfValue(createWizard.audioClip)
-            onActivated: { createWizard.audioClip = currentValue; createWizard.choiceEdited() }
-        }
-        Controls.Label { text: qsTr("Start (seconds)"); opacity: 0.7; visible: createWizard.audioClip === "partial" }
-        Controls.SpinBox {
-            visible: createWizard.audioClip === "partial"
-            from: 0; to: 86400; editable: true
-            value: createWizard.audioClipStart
-            onValueModified: createWizard.audioClipStart = value
-        }
-        Controls.Label { text: qsTr("Duration (seconds)"); opacity: 0.7; visible: createWizard.audioClip === "partial" }
-        Controls.SpinBox {
-            visible: createWizard.audioClip === "partial"
-            from: 1; to: 86400; editable: true
-            value: createWizard.audioClipDuration
-            onValueModified: createWizard.audioClipDuration = value
-        }
-        Controls.Label { text: qsTr("Waveform"); opacity: 0.7 }
-        Controls.CheckBox { checked: createWizard.audioWaveform; onToggled: { createWizard.audioWaveform = checked; createWizard.choiceEdited() } }
-    }
-
-    // ── Step 4: Summary ───────────────────────────────────────────────────────
-    GridLayout {
-        visible: createWizard.step === 4
-        Layout.fillWidth: true
-        columns: 2
-        columnSpacing: Kirigami.Units.largeSpacing
-        rowSpacing: Kirigami.Units.smallSpacing
-
-        Controls.Label { text: qsTr("Source path"); opacity: 0.7 }
-        Controls.Label { text: createWizard.sourcePath; elide: Text.ElideMiddle; Layout.fillWidth: true }
-        Controls.Label { text: qsTr("Storage"); opacity: 0.7 }
-        Controls.Label { text: createWizard.storageName; elide: Text.ElideRight; Layout.fillWidth: true }
-        Controls.Label { text: qsTr("Catalog name"); opacity: 0.7 }
-        Controls.Label { text: createWizard.catalogName; elide: Text.ElideRight; Layout.fillWidth: true }
-        Controls.Label { text: qsTr("Destination path"); opacity: 0.7 }
-        Controls.Label { text: createWizard.destinationPath; elide: Text.ElideMiddle; Layout.fillWidth: true }
-
-        Controls.Label { text: qsTr("File types"); opacity: 0.7 }
-        Controls.Label {
+        Kirigami.Icon { source: "video-mp4"; implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth; visible: createWizard.typeVideo; Layout.alignment: Qt.AlignTop; Layout.topMargin: Kirigami.Units.smallSpacing }
+        Flow {
+            visible: createWizard.typeVideo
             Layout.fillWidth: true
-            wrapMode: Text.WordWrap
-            text: {
-                var names = []
-                if (createWizard.typeImage) names.push(qsTr("Image"))
-                if (createWizard.typeVideo) names.push(qsTr("Video"))
-                if (createWizard.typeAudio) names.push(qsTr("Audio"))
-                if (createWizard.typeText)  names.push(qsTr("Text"))
-                if (createWizard.typeOther) names.push(qsTr("Other"))
-                return names.join(", ")
+            spacing: Kirigami.Units.largeSpacing
+            Controls.Switch {
+                text: qsTr("Poster frame")
+                checked: createWizard.videoPosterFrame
+                onToggled: { createWizard.videoPosterFrame = checked; createWizard.choiceEdited() }
+            }
+            Row {
+                spacing: Kirigami.Units.smallSpacing
+                Controls.Switch {
+                    text: qsTr("Keyframe strip")
+                    checked: createWizard.videoKeyframeStrip
+                    onToggled: { createWizard.videoKeyframeStrip = checked; createWizard.choiceEdited() }
+                }
+                Controls.SpinBox {
+                    visible: createWizard.videoKeyframeStrip
+                    from: 2; to: 32
+                    value: createWizard.videoKeyframeCount
+                    onValueModified: createWizard.videoKeyframeCount = value
+                    Controls.ToolTip.text: qsTr("Number of frames")
+                    Controls.ToolTip.visible: hovered
+                }
+            }
+            Row {
+                spacing: Kirigami.Units.smallSpacing
+                Controls.Label { text: qsTr("Clip"); anchors.verticalCenter: parent.verticalCenter }
+                ComboBoxFitted {
+                    textRole: "text"; valueRole: "value"
+                    model: createWizard.clipModel
+                    currentIndex: indexOfValue(createWizard.videoClip)
+                    onActivated: { createWizard.videoClip = currentValue; createWizard.choiceEdited() }
+                }
+                Controls.SpinBox {
+                    visible: createWizard.videoClip === "partial"
+                    from: 0; to: 86400; editable: true
+                    value: createWizard.videoClipStart
+                    onValueModified: createWizard.videoClipStart = value
+                    Controls.ToolTip.text: qsTr("Start (seconds)")
+                    Controls.ToolTip.visible: hovered
+                }
+                Controls.SpinBox {
+                    visible: createWizard.videoClip === "partial"
+                    from: 1; to: 86400; editable: true
+                    value: createWizard.videoClipDuration
+                    onValueModified: createWizard.videoClipDuration = value
+                    Controls.ToolTip.text: qsTr("Duration (seconds)")
+                    Controls.ToolTip.visible: hovered
+                }
             }
         }
 
-        Controls.Label { text: qsTr("Previews"); color: applicationWindow().titleColor; Layout.columnSpan: 2; Layout.topMargin: Kirigami.Units.smallSpacing }
-        Controls.Label { text: qsTr("Image") + " · " + qsTr("Thumbnail"); opacity: 0.7 }
-        Controls.Label { text: createWizard.onOff(createWizard.imageThumbnail) }
-        Controls.Label { text: qsTr("Video") + " · " + qsTr("Poster frame"); opacity: 0.7 }
-        Controls.Label { text: createWizard.onOff(createWizard.videoPosterFrame) }
-        Controls.Label { text: qsTr("Video") + " · " + qsTr("Keyframe strip"); opacity: 0.7 }
-        Controls.Label {
-            text: createWizard.videoKeyframeStrip
-                  ? createWizard.onOff(true) + " · " + qsTr("Number of frames") + " " + createWizard.videoKeyframeCount
-                  : createWizard.onOff(false)
+        // Audio
+        Kirigami.Icon { source: "audio-x-mpeg"; implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth; visible: createWizard.typeAudio; Layout.alignment: Qt.AlignTop; Layout.topMargin: Kirigami.Units.smallSpacing }
+        Flow {
+            visible: createWizard.typeAudio
+            Layout.fillWidth: true
+            spacing: Kirigami.Units.largeSpacing
+            Controls.Switch {
+                text: qsTr("Waveform")
+                checked: createWizard.audioWaveform
+                onToggled: { createWizard.audioWaveform = checked; createWizard.choiceEdited() }
+            }
+            Row {
+                spacing: Kirigami.Units.smallSpacing
+                Controls.Label { text: qsTr("Clip"); anchors.verticalCenter: parent.verticalCenter }
+                ComboBoxFitted {
+                    textRole: "text"; valueRole: "value"
+                    model: createWizard.clipModel
+                    currentIndex: indexOfValue(createWizard.audioClip)
+                    onActivated: { createWizard.audioClip = currentValue; createWizard.choiceEdited() }
+                }
+                Controls.SpinBox {
+                    visible: createWizard.audioClip === "partial"
+                    from: 0; to: 86400; editable: true
+                    value: createWizard.audioClipStart
+                    onValueModified: createWizard.audioClipStart = value
+                    Controls.ToolTip.text: qsTr("Start (seconds)")
+                    Controls.ToolTip.visible: hovered
+                }
+                Controls.SpinBox {
+                    visible: createWizard.audioClip === "partial"
+                    from: 1; to: 86400; editable: true
+                    value: createWizard.audioClipDuration
+                    onValueModified: createWizard.audioClipDuration = value
+                    Controls.ToolTip.text: qsTr("Duration (seconds)")
+                    Controls.ToolTip.visible: hovered
+                }
+            }
         }
-        Controls.Label { text: qsTr("Video") + " · " + qsTr("Clip"); opacity: 0.7 }
-        Controls.Label {
-            text: createWizard.clipText(createWizard.videoClip)
-                  + (createWizard.videoClip === "partial"
-                     ? " · " + qsTr("Start (seconds)") + " " + createWizard.videoClipStart
-                       + " · " + qsTr("Duration (seconds)") + " " + createWizard.videoClipDuration
-                     : "")
-        }
-        Controls.Label { text: qsTr("Audio") + " · " + qsTr("Clip"); opacity: 0.7 }
-        Controls.Label {
-            text: createWizard.clipText(createWizard.audioClip)
-                  + (createWizard.audioClip === "partial"
-                     ? " · " + qsTr("Start (seconds)") + " " + createWizard.audioClipStart
-                       + " · " + qsTr("Duration (seconds)") + " " + createWizard.audioClipDuration
-                     : "")
-        }
-        Controls.Label { text: qsTr("Audio") + " · " + qsTr("Waveform"); opacity: 0.7 }
-        Controls.Label { text: createWizard.onOff(createWizard.audioWaveform) }
+    }
+
+    // ── AI analysis (local model, MDI-F5) ─────────────────────────────────────
+    SectionHeader { text: qsTr("AI analysis") }
+    Controls.Switch {
+        enabled: createWizard.typeImage || createWizard.typeVideo
+        text: qsTr("Caption and tags")
+        checked: createWizard.aiCaption
+        onToggled: { createWizard.aiCaption = checked; createWizard.choiceEdited() }
+    }
+    Controls.Switch {
+        enabled: createWizard.typeText || createWizard.typeAudio || createWizard.typeVideo
+        text: qsTr("Summary and excerpts")
+        checked: createWizard.aiSummary
+        onToggled: { createWizard.aiSummary = checked; createWizard.choiceEdited() }
+    }
+    Controls.Label {
+        Layout.fillWidth: true
+        wrapMode: Text.WordWrap
+        opacity: 0.7
+        text: qsTr("Analysed on this computer by the local model (%1). Nothing is sent to the internet.")
+                  .arg(appManager1.getEnrichmentTools().visionModel)
     }
 }
