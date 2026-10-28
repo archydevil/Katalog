@@ -54,6 +54,7 @@
 #include <QWaitCondition>
 #include <QVector>
 #include <atomic>
+#include <functional>
 
 class QProcess;
 
@@ -124,6 +125,16 @@ signals:
     // Counts per outcome: completed, unchanged, skipped, failed; "stopped": bool; "error": text
     void finished(const QVariantMap &summary);
 
+    // What runs, where, for the Activity page. One "start" and one "end" per
+    // analysis that runs, "progress" in between when the tool reports it:
+    //   event: "start" | "progress" | "end"
+    //   analysis, filePath, fileIndex, fileCount (as progress())
+    //   tool ("ffmpeg", "whisper.cpp", "ollama"), model, where ("local", "local-network", "remote")
+    //   start:    startedAt (ISO time)
+    //   progress: progress (0..1), detail (e.g. "9 / 15 min")
+    //   end:      outcome, reason, durationMs, tokensPerSecond (AI analyses, when known)
+    void activity(const QVariantMap &step);
+
 private:
     struct Result {
         QString     outcome = QStringLiteral("completed");
@@ -156,7 +167,9 @@ private:
     QString findTranscript(const FileItem &file) const;
     double  probeDuration(const QString &path);
     bool    runTool(const QString &program, const QStringList &args, QByteArray *output, QString *error,
-                    int timeoutMs = -1);
+                    int timeoutMs = -1,
+                    const std::function<void(const QString &)> &onErrorLine = {});
+    QVariantMap stepInfo(const QString &analysis) const;   // tool, model, where
     QJsonObject askOllama(const QString &model, const QString &prompt, const QStringList &imagePaths, QString *error);
     QJsonObject askOllamaOnce(const QString &model, const QString &prompt, const QStringList &imagePaths, QString *error);
 
@@ -169,6 +182,11 @@ private:
     QString         m_connectionName;
     QString         m_ffmpegVersion;
     bool            m_segmentsChanged = false;
+    // Current step, for progress reports from inside an analysis
+    QString         m_stepAnalysis;
+    QString         m_stepFile;
+    int             m_stepIndex = 0;
+    double          m_lastTokensPerSecond = -1;
 
     std::atomic<bool> m_stop{false};
     std::atomic<bool> m_paused{false};

@@ -53,6 +53,7 @@
 #include <QUrl>
 #include <QThread>
 #include <QSet>
+#include <QRegularExpression>
 #include <QDebug>
 #include <algorithm>
 #include <cmath>
@@ -338,7 +339,32 @@ void MdiEnrichmentJob::run()
             }
 
             emit progress(i + 1, fileCount, analysis, file.fullPath);
+            m_stepAnalysis = analysis;
+            m_stepFile     = file.fullPath;
+            m_stepIndex    = i + 1;
+            m_lastTokensPerSecond = -1;
+            QVariantMap step = stepInfo(analysis);
+            step[QStringLiteral("analysis")]  = analysis;
+            step[QStringLiteral("filePath")]  = file.fullPath;
+            step[QStringLiteral("fileIndex")] = i + 1;
+            step[QStringLiteral("fileCount")] = fileCount;
+            QVariantMap started = step;
+            started[QStringLiteral("event")]     = QStringLiteral("start");
+            started[QStringLiteral("startedAt")] = QDateTime::currentDateTime().toString(Qt::ISODate);
+            emit activity(started);
+            QElapsedTimer stepClock;
+            stepClock.start();
+
             Result r = runAnalysis(analysis, file);
+
+            QVariantMap ended = step;
+            ended[QStringLiteral("event")]      = QStringLiteral("end");
+            ended[QStringLiteral("outcome")]    = m_stop.load() ? QStringLiteral("stopped") : r.outcome;
+            ended[QStringLiteral("reason")]     = r.reason;
+            ended[QStringLiteral("durationMs")] = stepClock.elapsed();
+            if (m_lastTokensPerSecond > 0)
+                ended[QStringLiteral("tokensPerSecond")] = m_lastTokensPerSecond;
+            emit activity(ended);
             if (m_stop.load())
                 break;   // the abandoned step is not recorded (MDI-F10)
 
@@ -380,7 +406,27 @@ void MdiEnrichmentJob::run()
     // none exist yet (MDI-F37; scope per catalog, D-Q3)
     if (!m_stop.load() && m_segmentsChanged) {
         emit progress(fileCount, fileCount, QStringLiteral("clusters"), m_config.catalogName);
+        QVariantMap step = stepInfo(QStringLiteral("clusters"));
+        step[QStringLiteral("analysis")]  = QStringLiteral("clusters");
+        step[QStringLiteral("filePath")]  = m_config.catalogName;
+        step[QStringLiteral("fileIndex")] = fileCount;
+        step[QStringLiteral("fileCount")] = fileCount;
+        QVariantMap started = step;
+        started[QStringLiteral("event")]     = QStringLiteral("start");
+        started[QStringLiteral("startedAt")] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        emit activity(started);
+        QElapsedTimer stepClock;
+        stepClock.start();
+        m_lastTokensPerSecond = -1;
         Result r = makeClusters();
+        QVariantMap ended = step;
+        ended[QStringLiteral("event")]      = QStringLiteral("end");
+        ended[QStringLiteral("outcome")]    = m_stop.load() ? QStringLiteral("stopped") : r.outcome;
+        ended[QStringLiteral("reason")]     = r.reason;
+        ended[QStringLiteral("durationMs")] = stepClock.elapsed();
+        if (m_lastTokensPerSecond > 0)
+            ended[QStringLiteral("tokensPerSecond")] = m_lastTokensPerSecond;
+        emit activity(ended);
         if (!m_stop.load() && r.outcome != QLatin1String("none")) {
             MdiData::Datum d;
             d.catalogId    = m_config.catalogId;
@@ -412,6 +458,35 @@ void MdiEnrichmentJob::run()
     summary[QStringLiteral("failed")]    = failed;
     summary[QStringLiteral("stopped")]   = m_stop.load();
     emit finished(summary);
+}
+
+//----------------------------------------------------------------------
+QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
+{
+    QVariantMap info;
+    const QString ollamaWhere = providerClass(QUrl(m_config.ollamaUrl));
+    if (analysis == QLatin1String("caption")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("ollama");
+        info[QStringLiteral("model")] = m_config.visionModel;
+        info[QStringLiteral("where")] = ollamaWhere;
+    } else if (analysis == QLatin1String("summary") || analysis == QLatin1String("segments")
+               || analysis == QLatin1String("clusters")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("ollama");
+        info[QStringLiteral("model")] = m_config.textModel;
+        info[QStringLiteral("where")] = ollamaWhere;
+    } else if (analysis == QLatin1String("embeddings")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("ollama");
+        info[QStringLiteral("model")] = m_config.embedModel;
+        info[QStringLiteral("where")] = ollamaWhere;
+    } else if (analysis == QLatin1String("transcript")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("whisper.cpp");
+        info[QStringLiteral("model")] = QFileInfo(m_config.whisperModelPath).fileName();
+        info[QStringLiteral("where")] = QStringLiteral("local");
+    } else {
+        info[QStringLiteral("tool")]  = QStringLiteral("ffmpeg");
+        info[QStringLiteral("where")] = QStringLiteral("local");
+    }
+    return info;
 }
 
 //----------------------------------------------------------------------
@@ -911,9 +986,27 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
     const int limit = qMax(m_config.toolTimeoutMs, int(qMin(duration * 2000.0, 6.0 * 3600 * 1000)));
     const QString outBase = tmp.filePath(QStringLiteral("transcript"));
     const QString threads = QString::number(qMax(1, QThread::idealThreadCount() - 1));
+    // whisper reports "progress = NN%" on its error output (-pp)
+    auto onLine = [this, duration](const QString &line) {
+        const QRegularExpressionMatch m = QRegularExpression(QStringLiteral("progress\\s*=\\s*(\\d+)%")).match(line);
+        if (!m.hasMatch())
+            return;
+        const double fraction = m.captured(1).toDouble() / 100.0;
+        QVariantMap step = stepInfo(QStringLiteral("transcript"));
+        step[QStringLiteral("event")]     = QStringLiteral("progress");
+        step[QStringLiteral("analysis")]  = QStringLiteral("transcript");
+        step[QStringLiteral("filePath")]  = m_stepFile;
+        step[QStringLiteral("fileIndex")] = m_stepIndex;
+        step[QStringLiteral("fileCount")] = m_files.size();
+        step[QStringLiteral("progress")]  = fraction;
+        if (duration > 0)
+            step[QStringLiteral("detail")] = QStringLiteral("%1 / %2 min").arg(qRound(duration * fraction / 60.0))
+                                                                          .arg(qRound(duration / 60.0));
+        emit activity(step);
+    };
     if (!runTool(m_config.whisperPath, {"-m", m_config.whisperModelPath, "-f", wav, "-l", "auto",
-                                        "-t", threads, "-oj", "-of", outBase, "-np"},
-                 nullptr, &err, limit)) {
+                                        "-t", threads, "-oj", "-of", outBase, "-np", "-pp"},
+                 nullptr, &err, limit, onLine)) {
         r.outcome = QStringLiteral("failed");
         r.reason  = err;
         return r;
@@ -1314,7 +1407,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeEmbeddings(const FileItem &file)
 
 //----------------------------------------------------------------------
 bool MdiEnrichmentJob::runTool(const QString &program, const QStringList &args, QByteArray *output, QString *error,
-                               int timeoutMs)
+                               int timeoutMs, const std::function<void(const QString &)> &onErrorLine)
 {
     const int limit = timeoutMs > 0 ? timeoutMs : m_config.toolTimeoutMs;
     // Program path + argument list, never a shell (MDI-C7)
@@ -1330,8 +1423,20 @@ bool MdiEnrichmentJob::runTool(const QString &program, const QStringList &args, 
     QElapsedTimer clock;
     clock.start();
     QByteArray out;
+    QByteArray errTail;   // kept for the failure reason when lines are consumed
+    auto drainErrors = [&]() {
+        if (!onErrorLine)
+            return;
+        errTail += process.readAllStandardError();
+        int nl;
+        while ((nl = errTail.indexOf('\n')) >= 0) {
+            onErrorLine(QString::fromUtf8(errTail.left(nl)));
+            errTail.remove(0, nl + 1);
+        }
+    };
     while (!process.waitForFinished(200)) {
         out += process.readAllStandardOutput();
+        drainErrors();
         if (m_stop.load() || clock.elapsed() > limit) {
             process.kill();
             process.waitForFinished(2000);
@@ -1340,11 +1445,12 @@ bool MdiEnrichmentJob::runTool(const QString &program, const QStringList &args, 
         }
     }
     out += process.readAllStandardOutput();
+    drainErrors();
     if (output)
         *output = out;
 
     if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        const QString stderrText = QString::fromUtf8(process.readAllStandardError()).trimmed();
+        const QString stderrText = QString::fromUtf8(errTail + process.readAllStandardError()).trimmed();
         *error = stderrText.isEmpty() ? QStringLiteral("exit code %1").arg(process.exitCode())
                                       : stderrText.section('\n', -1);
         return false;
@@ -1422,6 +1528,9 @@ QJsonObject MdiEnrichmentJob::askOllamaOnce(const QString &model, const QString 
         const QByteArray raw = reply->readAll();
         QJsonParseError envelopeError;
         const QJsonObject envelope = QJsonDocument::fromJson(raw, &envelopeError).object();
+        const double evalNs = envelope.value("eval_duration").toDouble();
+        if (evalNs > 0)
+            m_lastTokensPerSecond = qRound(envelope.value("eval_count").toDouble() * 10e9 / evalNs) / 10.0;
         const QString text = envelope.value("response").toString();
         QJsonParseError answerError;
         result = QJsonDocument::fromJson(text.toUtf8(), &answerError).object();

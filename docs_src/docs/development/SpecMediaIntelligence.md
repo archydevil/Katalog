@@ -89,6 +89,16 @@ did not see the replies itself).
 | D17 | **Derived-data store (`Q6`).** Derived data lives in its own SQLite file, `mdi_data.db`, in the collection folder, for File and Memory modes; WAL journal mode and a busy timeout. The runner writes it on its own thread and connection; the UI reads it through a separate main-thread connection. The enrichment profile stays in the collection database (Memory mode: `mdi_profile.csv`). Hosted mode is still open (`Q11`). |
 | D18 | **Work split.** The core part (`core/mdidata.*`, `core/mdienrichmentjob.*`) is implemented by another session; the K3 part (`qt_quick/`) by the main session. `core/mdistore.*` is an earlier, unused draft that is not compiled; deleting it is the fork owner's decision. |
 
+D19–D21 were decided by the fork owner on **2026-10-28**, in the main session,
+answering explicit questions, and reported to the specifications agent by the
+main agent (the agent did not see the replies itself).
+
+| # | Decision (2026-10-28, fork owner) |
+| --- | ------------------------ |
+| D19 | **Activity page.** A new K3 page, *Activity*, in the side menu, is approved. It amends `MDI-C18` ("No new Page") for this page only. Purpose: say clearly, at every moment, what is running, where (local / local network / remote), with which resources and for what. Inspired by the fork owner's own omegamind Control Center. Content: a status line; resource tiles; a "right now" card; a tools card; the enrichment queue; a log of finished steps (`MDI-F61`–`F69`). The bottom activity panel stays, as a compact summary that opens the page. |
+| D20 | **Redesign scope.** Redesigned now: the Activity page (D19); the Create page, as a single page of cards — Source, Destination, What to make, AI — replacing the step wizard; Explore, with thumbnail tiles and *Analyze* at hand. Search, Devices and Settings are unchanged for now. The Create and Explore redesigns have no requirement rows yet (`Q18`). |
+| D21 | **Resource history.** CPU, GPU and memory history charts cover the current session only; nothing is persisted. |
+
 ---
 
 ## Scope at a glance
@@ -105,7 +115,9 @@ semantic search mode; storage of every derived datum with provenance in new
 (the core schema stays 3.0, D5), kept in their own file `mdi_data.db` in File
 and Memory modes (D17), Hosted mode still open (`Q11`); starting
 enrichment on existing catalogs (D8); the interaction with the catalog's
-*Include metadata* level.
+*Include metadata* level; an *Activity* page with a core resource monitor and
+per-step activity reporting from the runner (D19, D21); the card layout of the
+Create page and the thumbnail tiles of Explore (D20, rows pending, `Q18`).
 
 **Later phase (in scope, `[Backlog]`):** text and Office documents beyond PDF;
 characterising information for applications and other files.
@@ -195,6 +207,31 @@ characterising information for applications and other files.
 | MDI-F17 | Enrichment progress is shown in the activity panel, as its own row, distinct from the queue's running entry, so it is visible alongside a running creation, update or search. It shows the standard status message (`MDI-C16`) with operation, status, catalog context, the current analysis as process title, count of total, time to completion and current file, and carries Pause/Resume and Stop. | [Planned — part implemented in Phase A] |
 | MDI-F18 | When a job ends, its summary line reports, per analysis: completed, unchanged, skipped (tool or model missing), failed. A *Report* action lists each failed file with the analysis and the reason. The report is kept for the session. | [Planned — part implemented in Phase A] |
 | MDI-F19 | Before a job starts, the destination path's free space is checked against an estimate of the derived files' size. With insufficient space the job does not start and the summary reports it; when free space exceeds the estimate by less than 10 %, it starts and the summary warns. | [Planned] |
+| MDI-F74 | **Per-step activity reporting.** For each analysis step, the runner reports its start (analysis, file, tool and its version, model, where it runs — local / local-network / remote with the endpoint host) and its end (duration, outcome completed / failed / skipped, and the reason when not completed). These reports feed the Activity page (`MDI-F64`, `MDI-F67`) and are built with the standard builder (`MDI-C16`). | [Planned] |
+| MDI-F75 | **Progress inside a step.** During a transcription step, the runner reports the audio minutes transcribed out of the file's total. During a model call, it reports tokens per second when the provider returns token counts. | [Planned] |
+
+### Activity page {#activity}
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F61 | K3 has an *Activity* page, reachable from the side menu, that shows at every moment what is running, where it runs (local / local network / remote), with which resources and for what (D19). With nothing running it says so. | [Planned] |
+| MDI-F62 | **Status line.** The page shows, for the running enrichment job: the catalog, *file N of M*, the estimated end time, and Pause/Resume and Stop, which act as `MDI-F10` and `MDI-F11`. | [Planned] |
+| MDI-F63 | **Resource tiles.** The page shows tiles for: CPU; GPU; memory used of total; swap; memory pressure; power source; whether the source drive of the running job is connected; data egress, which reads "nothing sent" unless a remote or local-network provider is in use by the running job, and then names the provider's host. A value the resource monitor cannot obtain on the platform is shown as unavailable (`MDI-F70`). | [Planned] |
+| MDI-F64 | **"Right now" card.** The page shows the analysis step in progress: analysis, file, tool and model, where it runs, its progress, and a detail where available — audio minutes done of total for a transcription, tokens per second for a model call (`MDI-F74`, `MDI-F75`). | [Planned] |
+| MDI-F65 | **Tools card.** The page shows `ffmpeg`, `ffprobe`, `pdftotext`, `whisper.cpp` with its model, and Ollama with the models currently loaded in its memory and their size (`MDI-F72`), each as found with its version, or not found (`MDI-F20`). | [Planned] |
+| MDI-F66 | **Enrichment queue.** The page lists the enrichment jobs waiting, in run order (`MDI-F16`). | [Planned] |
+| MDI-F67 | **Log of finished steps.** The page lists finished analysis steps, newest first, each with time, analysis, file, duration, outcome and, when not completed, the reason (`MDI-F74`). How long the log is kept is `Q16`. | [Planned] |
+| MDI-F68 | **Resource history.** The page shows CPU, GPU and memory history charts covering the current session only; the history is not persisted and starts empty at each launch (D21). | [Planned] |
+| MDI-F69 | The bottom activity panel keeps its enrichment row (`MDI-F17`) as a compact summary; activating it opens the Activity page. | [Planned] |
+
+### Resource monitor {#resource-monitor}
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F70 | A resource monitor in `core/` takes a snapshot periodically, on its own thread, of: CPU use; GPU use; memory used and total; swap used; memory pressure; power source; and whether a given device path is connected. A value it cannot obtain on the platform is reported as unavailable, never as zero or a guess. The sampling interval is `Q17`. | [Planned] |
+| MDI-F71 | The resource monitor reports Katalog's child processes (external tools started by the runner) each with its CPU and memory use. | [Planned] |
+| MDI-F72 | The resource monitor reports the models Ollama has loaded in memory, with their size, by querying the configured Ollama endpoint's `/api/ps`; the query sends no content and is subject to `MDI-C11`. When Ollama is unreachable it reports that, and the other values are unaffected. | [Planned] |
+| MDI-F73 | Windows: values the monitor cannot obtain without a platform-specific API are reported as unavailable and shown as unavailable (`MDI-F63`); nothing fails because of them. | [Planned] |
 
 ### External tools {#tools}
 
@@ -322,9 +359,10 @@ characterising information for applications and other files.
 | MDI-C15 | **`mdi_` tables outside the core schema (D5).** The core schema stays 3.0: this fork MUST NOT change the core schema version, never stamps 3.1, and MUST NOT edit `runMigration_3_0`. The new tables (at least: enrichment profile, enrichment job, derived datum with provenance, derived file, transcript passage, topic segment, topic cluster and membership, embedding) all have the prefix `mdi_`. The enrichment profile table (`mdi_profile`) and a `mdi_schema` record are in the collection database; the derived-data tables and their own `mdi_schema` record are in `mdi_data.db` (D17, `MDI-C4`). Their own version ("media intelligence schema version 1") is stored separately from the core schema version, in a single-row `mdi_schema` table or equivalent. A separate migration creates the `mdi_` tables when they are absent and upgrades them when their version is older; it is idempotent and touches only `mdi_` tables. No 3.0 table or column is altered, added to or removed. File and Memory modes add the new `mdi_data.db` to the collection folder; Memory mode also adds `mdi_profile.csv`. No existing file format changes. | [Planned — part implemented in Phase A] |
 | MDI-C16 | Every progress and status message is built with `StatusBarMessageBuilder` (`SpecProgressReport.md`); no raw status string. | [Implemented — Phase A] |
 | MDI-C17 | **User-visible text.** New strings are written in English while a step is built, reusing existing K2/K3 strings wherever they fit; the fork owner approves all of a step's new strings together at the end of the step, before its commit, and translations run after that approval (D16). Existing strings are never changed without per-string approval. Copy states what is needed, without "Please" or orders. Blocking validation uses `Kirigami.InlineMessage`; decisions (egress confirmation, deletions) use modal dialogs; transient success uses `showPassiveNotification`. No string is approved by this spec; approved strings are listed under *User-visible text*. | [Implemented — process, D16] |
-| MDI-C18 | **UI structure.** No new Page: the wizard is a mode of the existing `PageCreateForm.qml`, derived data is shown inside the existing Explore and Search results pages, provider and tool settings inside the existing Settings page. Creating any new `.qml`, `.cpp` or `.h` file needs the user's explicit request first. | [Planned] |
+| MDI-C18 | **UI structure.** No new Page: the wizard is a mode of the existing `PageCreateForm.qml`, derived data is shown inside the existing Explore and Search results pages, provider and tool settings inside the existing Settings page. Creating any new `.qml`, `.cpp` or `.h` file needs the user's explicit request first. **Exception (D19, 2026-10-28):** the *Activity* page (`MDI-F61`) is approved as a new Page; this exception covers that page only. | [Planned] |
 | MDI-C19 | **Cross-platform.** Tools are resolved with the platform's executable suffix; paths are built with Qt path functions. Derived-file names are short identifiers, not source names, so they stay within Windows path limits and cannot collide. No platform-specific API is used in phases A–D. | [Planned — part implemented in Phase A] |
 | MDI-C20 | HTTP requests have a time limit (default 120 s, configurable) and are aborted on Stop. A provider response that cannot be parsed into the expected fields is recorded as a failed datum with the reason, never stored as a result. | [Planned — part implemented in Phase B] |
+| MDI-C21 | **Resource monitor sources.** The resource monitor (`MDI-F70`) obtains its values on macOS through the external programs `ps`, `vm_stat`, `sysctl`, `memory_pressure`, `ioreg` and `pmset`; on Linux by reading `/proc` and running `ps`; Ollama's loaded models through its `/api/ps` over `Qt6::Network`. Programs are started as `MDI-C7` requires; no library is linked (`MDI-C8`). On Windows no platform-specific API is used; values not obtainable otherwise are unavailable (`MDI-F73`). The monitor runs on its own thread and never on the UI thread or the runner's thread. | [Planned] |
 
 ---
 
@@ -337,6 +375,7 @@ characterising information for applications and other files.
 | **C** | Transcripts, topic segments, topic clusters. | `MDI-F35`–`F38` |
 | **D** | Embeddings and semantic search. | `MDI-F47`–`F51` |
 | **E** | Other documents; applications and other files. | `MDI-F42`, `F43` (`[Backlog]`) |
+| **Activity** | Activity page, core resource monitor, per-step activity reporting from the runner (D19, D21). Not bound to the A–E order. | `MDI-F61`–`F75`, `MDI-C21` |
 
 A phase starts only when the previous one is implemented, and each phase starts
 with the core design approval required by `MDI-C14` and the string approvals of
@@ -540,6 +579,12 @@ What is built, per row (rows not listed are not started):
 | `MDI-C15` | `mdi_schema` + `mdi_profile` in the collection database; `mdi_schema`, `mdi_datum`, `mdi_embedding` in `mdi_data.db`. | Transcript passages, segments and clusters are JSON values of `mdi_datum`, not their own tables, and there is no job or derived-file table: the table list of `MDI-C15` is not met as written (fork owner to decide). |
 | `MDI-C19`, `C20` | Derived-file names are hashes; HTTP limit 120 s, aborted on Stop, unparsable answers recorded as failed. | Executable suffix not verified; configurable HTTP limit. |
 
+Core of `MDI-F35`–`F38` (whisper transcripts, topic segments, catalog clusters)
+and `MDI-F47`–`F49` (semantic index of summaries, captions, segments and
+passages) implemented and tested headless, as reported by the main agent:
+commits `cae1cc1e` and `83ccce70`. Core implemented; UI wiring partial (see the
+"Still planned" column above).
+
 ### Known gaps
 
 - Settings UI for tool paths and models (`MDI-F20`, `MDI-F23`).
@@ -589,6 +634,9 @@ What is built, per row (rows not listed are not started):
 | Q8 | Semantic search and search history; which other criteria (file type, size, date) combine with semantic mode. | Phase D |
 | Q11 | Hosted mode: where derived data is stored (D17 covers File and Memory modes only), and with several machines one shared destination path or one per machine (`MDI-C6`). | Deferred |
 | Q14 | Performance target for semantic search (collection size and response time) (`MDI-C9`). | Phase D |
+| Q16 | How long the Activity log of finished steps is kept: current session only, or across restarts (`MDI-F67`). Provenance (`MDI-F52`) is kept either way. | Before the Activity page is built |
+| Q17 | Sampling interval of the resource monitor, and whether it runs while the Activity page is closed (`MDI-F70`). | Before the resource monitor is built |
+| Q18 | Requirement rows for the Create page cards (Source, Destination, What to make, AI) and the Explore thumbnail tiles with *Analyze* at hand (D20); whether the cards keep the Standard / Wizard switch of `MDI-F1`. | Before either redesign is built |
 
 ### Decided 2026-10-28 (kept for traceability)
 
@@ -663,6 +711,15 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-C11** — With default settings, a network monitor shows connections to `localhost` only during a full job.
 - **MDI-C13** — Use a commercial provider once with a session key and once with an environment-variable key: search every `.ini`, the database and logs for the key: absent; after restart a session key must be entered again.
 - **MDI-C15** — Open a 3.0 collection: the `mdi_` tables and the `mdi_` version record exist, the core schema version is still 3.0, every 3.0 table and column is unchanged; open it again: the `mdi_` migration changes nothing. In File and Memory modes `mdi_data.db` appears in the collection folder; in Memory mode `mdi_profile.csv` too.
+- **MDI-F61 / F69** — Open *Activity* from the side menu and from the activity panel's enrichment row: the same page opens. With nothing running it says so.
+- **MDI-F62** — During a job: catalog, *file N of M* and the estimated end are shown; Pause and Stop act as in the activity panel.
+- **MDI-F63 / F73** — With the local provider only: egress reads "nothing sent". On Windows, values the monitor cannot obtain read unavailable, nothing else fails. Disconnect the source drive: its tile changes.
+- **MDI-F64 / F75** — Transcribe a long recording: the card shows transcript, file, `whisper.cpp` and its model, local, and audio minutes done of total, rising. During a caption: tokens per second appear.
+- **MDI-F65 / F72** — With a model loaded in Ollama: the tools card lists it with its size. Stop Ollama: it reads unreachable; the other tiles keep updating.
+- **MDI-F66** — Add jobs for two catalogs: both appear in run order.
+- **MDI-F67 / F74** — Include a corrupt video: its step appears in the log with duration, outcome *failed* and the reason.
+- **MDI-F68** — Watch the charts during a job, restart Katalog: the charts start empty.
+- **MDI-F70 / F71 / C21** — During a transcription, the child-process list shows the tool with CPU and memory; on macOS and Linux CPU, memory and swap match the system monitor; no linked library added.
 
 ---
 
@@ -690,3 +747,4 @@ target spec is edited.
 | `SpecDevicesPage.md` | Catalog deletion text (`MDI-F57`); the location of *Clear derived data*, profile editing and starting enrichment on the catalog's page (`MDI-F8`, D8). |
 | `SpecExplore.md` (D8) | In addition to the row above: profile editing and starting enrichment from Explore (`MDI-F8`). |
 | `SpecK3Deployment.md` | State that this fork's builds do not bundle external tools or models; they are user-installed and detected (`MDI-F20`, D9). Bundling and licence review deferred. |
+| `SpecOperationQueue.md` (D19) | `OPQ-C16` note: the enrichment row of the activity panel opens the Activity page (`MDI-F69`); the panel itself is unchanged otherwise. |
