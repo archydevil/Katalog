@@ -2766,6 +2766,7 @@ QVariantMap AppManager::getEnrichmentTools()
     tools[QStringLiteral("ollamaUrl")]   = settings.value("MediaIntelligence/OllamaUrl", QStringLiteral("http://localhost:11434")).toString();
     tools[QStringLiteral("visionModel")] = settings.value("MediaIntelligence/VisionModel", QStringLiteral("gemma4")).toString();
     tools[QStringLiteral("textModel")]   = settings.value("MediaIntelligence/TextModel",   QStringLiteral("gemma4")).toString();
+    tools[QStringLiteral("embedModel")]  = settings.value("MediaIntelligence/EmbedModel",  QStringLiteral("bge-m3")).toString();
     return tools;
 }
 //----------------------------------------------------------------------
@@ -2822,6 +2823,7 @@ QString AppManager::startEnrichment(int deviceId)
     config.ollamaUrl       = tools.value(QStringLiteral("ollamaUrl")).toString();
     config.visionModel     = tools.value(QStringLiteral("visionModel")).toString();
     config.textModel       = tools.value(QStringLiteral("textModel")).toString();
+    config.embedModel      = tools.value(QStringLiteral("embedModel")).toString();
     config.uiLanguageName  = QLocale::languageToString(QLocale(getCurrentLanguage()).language());
 
     // Read on this thread, with the collection connection (Memory: from the .idx)
@@ -3003,6 +3005,74 @@ QVariantMap AppManager::mdiClusters(int catalogId)
     result[QStringLiteral("model")] = data.first().model;
     result[QStringLiteral("date")]  = data.first().date;
     return result;
+}
+//----------------------------------------------------------------------
+QString AppManager::runSemanticSearch(const QString &query, bool onlyMeaning)
+{
+    m_semanticResults.clear();
+    m_semanticActive = true;
+    m_semanticOnly   = onlyMeaning;
+
+    QString error;
+    const QVariantMap tools = getEnrichmentTools();
+    const QString model = tools.value(QStringLiteral("embedModel")).toString();
+    if (query.trimmed().isEmpty() || !QFileInfo::exists(mdiDataPath()) || !openMdiMainConnection()) {
+        emit semanticResultsChanged();
+        return error;
+    }
+
+    // The query is embedded by the local model only (MDI-F50 applies to remote ones)
+    const QList<QVector<float>> vectors = MdiEnrichmentJob::embedTexts(
+        tools.value(QStringLiteral("ollamaUrl")).toString(), model, { query.trimmed() }, &error);
+    if (vectors.isEmpty()) {
+        emit semanticResultsChanged();
+        return error.isEmpty() ? QStringLiteral("embeddings") : error;
+    }
+
+    // Only the catalogs of the Selection (MDI-F48); none listed = all catalogs
+    QList<int> catalogIds;
+    if (selectedDevice && selectedDevice->type != QLatin1String("All")) {
+        Device scope;
+        scope.ID = selectedDevice->ID;
+        scope.loadDevice(m_connectionName);
+        if (scope.type == QLatin1String("Catalog"))
+            catalogIds.append(scope.externalID);
+        scope.loadSubDeviceList(m_connectionName);
+        for (const auto &row : scope.deviceListTable) {
+            if (row.type != QLatin1String("Catalog"))
+                continue;
+            Device catalogDevice;
+            catalogDevice.ID = row.ID;
+            catalogDevice.loadDevice(m_connectionName);
+            if (!catalogIds.contains(catalogDevice.externalID))
+                catalogIds.append(catalogDevice.externalID);
+        }
+        if (catalogIds.isEmpty())
+            catalogIds.append(-1);   // a selection without catalogs matches nothing
+    }
+
+    const QVariantList found = MdiData::semanticSearch(kMdiMainConnection, catalogIds, vectors.first(), model);
+    for (const QVariant &v : found) {
+        QVariantMap row = v.toMap();
+        const QFileInfo info(row.value(QStringLiteral("fullPath")).toString());
+        row[QStringLiteral("fileName")]   = info.fileName();
+        row[QStringLiteral("folderPath")] = info.absolutePath();
+        row[QStringLiteral("preview")]    = mdiPreviewUrl(row.value(QStringLiteral("catalogId")).toInt(),
+                                                          info.filePath(), m_mdiRevision);
+        m_semanticResults.append(row);
+    }
+    emit semanticResultsChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+void AppManager::clearSemanticResults()
+{
+    if (!m_semanticActive && m_semanticResults.isEmpty())
+        return;
+    m_semanticResults.clear();
+    m_semanticActive = false;
+    m_semanticOnly   = false;
+    emit semanticResultsChanged();
 }
 //----------------------------------------------------------------------
 QString AppManager::localFileUrl(const QString &path) const

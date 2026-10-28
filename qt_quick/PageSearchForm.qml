@@ -148,6 +148,8 @@ ColumnLayout {
 
         // Reset fileNameCriteria
         search_checkBox_FileNameCriteria.checked = true
+        search_checkBox_MeaningCriteria.checked = false
+        search_TextField_Meaning.text = ""
         search_TextField_FileNameText.clearAll()
         search_ComboBox_TextCriteriaWith.currentIndex = 0
         search_ComboBox_TextCriteriaIn.currentIndex = 0
@@ -233,8 +235,24 @@ ColumnLayout {
     }
 
     function executeSearch() {
-        getCriteria()
-        appManager1.executeSearch()
+        // By meaning (fork, MDI-F47): its own list on the Results page. The
+        // table search runs too when any other criterion is set.
+        var meaning = search_checkBox_MeaningCriteria.checked
+                      && search_TextField_Meaning.text.trim() !== ""
+        var others  = search_checkBox_FileNameCriteria.checked || checkBoxFileAttributesCriteria.checked
+                      || search_checkBox_FileMetadata.checked || search_checkBox_FolderCriteria.checked
+                      || search_checkBox_Duplicates.checked   || search_checkBox_Differences.checked
+        if (meaning) {
+            var error = appManager1.runSemanticSearch(search_TextField_Meaning.text, !others)
+            if (error !== "")
+                applicationWindow().showPassiveNotification(qsTr("The local model is not reachable: %1").arg(error), "long")
+        } else {
+            appManager1.clearSemanticResults()
+        }
+        if (!meaning || others) {
+            getCriteria()
+            appManager1.executeSearch()
+        }
     }
 
     function openHistorySheet() {
@@ -649,6 +667,35 @@ ColumnLayout {
 
     Controls.Label { text: ""}
 
+
+    // ── Section 0: By meaning (fork, SpecMediaIntelligence.md MDI-F47) ─────────
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: pageSearchForm.sectionMargin
+        Layout.topMargin: Kirigami.Units.smallSpacing
+        spacing: Kirigami.Units.largeSpacing
+        Controls.CheckBox {
+            id: search_checkBox_MeaningCriteria
+            checked: false
+            text: qsTr("By meaning")
+            Binding { target: search_checkBox_MeaningCriteria.contentItem; property: "color"; value: applicationWindow().titleColor }
+        }
+        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
+    }
+    RowLayout {
+        visible: search_checkBox_MeaningCriteria.checked
+        Layout.topMargin: Kirigami.Units.smallSpacing
+        Layout.leftMargin: pageSearchForm.sectionMargin
+        Layout.fillWidth: true
+        Layout.maximumWidth: pageSearchForm.width - pageSearchForm.sectionMargin
+        Controls.Label { text: qsTr("text"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset }
+        Controls.TextField {
+            id: search_TextField_Meaning
+            Layout.fillWidth: true
+            placeholderText: qsTr("Describe what you are looking for")
+            onAccepted: pageSearchForm.searchRequested()
+        }
+    }
 
     // ── Section 1: File name ──────────────────────────────────────────────────
     RowLayout {

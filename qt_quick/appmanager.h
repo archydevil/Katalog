@@ -148,6 +148,10 @@ class AppManager : public QObject
     Q_PROPERTY(bool    mdiIsPaused   READ getMdiIsPaused   NOTIFY mdiStateChanged)
     Q_PROPERTY(QString mdiStatusText READ getMdiStatusText NOTIFY mdiStatusTextChanged)
     Q_PROPERTY(int     mdiRevision   READ getMdiRevision   NOTIFY mdiRevisionChanged)
+    // Search by meaning (fork, MDI-F47..F51): its own result list, beside the table
+    Q_PROPERTY(QVariantList semanticResults READ getSemanticResults NOTIFY semanticResultsChanged)
+    Q_PROPERTY(bool         semanticActive  READ getSemanticActive  NOTIFY semanticResultsChanged)
+    Q_PROPERTY(bool         semanticOnly    READ getSemanticOnly    NOTIFY semanticResultsChanged)
     Q_PROPERTY(bool    searchIsPaused    READ getSearchIsPaused    NOTIFY searchStateChanged)
     Q_PROPERTY(QString searchStatusText  READ getSearchStatusText  NOTIFY searchStatusTextChanged)
     // Search results footer filters (SpecSearchResultsFilters.md). Both narrow
@@ -437,6 +441,12 @@ public slots:
     Q_INVOKABLE bool         mdiHasData(int catalogId, const QString &fullPath, int revision = 0);
     Q_INVOKABLE QVariantList mdiDetails(int catalogId, const QString &fullPath);
     Q_INVOKABLE QVariantMap  mdiClusters(int catalogId);
+    QVariantList getSemanticResults() const { return m_semanticResults; }
+    bool         getSemanticActive()  const { return m_semanticActive; }
+    bool         getSemanticOnly()    const { return m_semanticOnly; }
+    // Empty on success, else the reason; onlyMeaning: no other criterion was set
+    Q_INVOKABLE QString      runSemanticSearch(const QString &query, bool onlyMeaning);
+    Q_INVOKABLE void         clearSemanticResults();
     Q_INVOKABLE QString      localFileUrl(const QString &path) const;
 
     // Storage pre-selection for Create page (used by DeviceTreeComboBox storageOnly mode)
@@ -660,6 +670,7 @@ signals:
     void mdiStatusTextChanged();
     void mdiRevisionChanged();
     void enrichmentFinished(const QVariantMap &summary);
+    void semanticResultsChanged();
     // End of a Memory-mode Explore load: the open's result, or stopped
     void exploreCatalogOpened(const QVariantMap &info);
     // The latest open requested during a load, to run now that it has ended
@@ -798,6 +809,9 @@ private:
     void    refreshMdiIndex(int catalogId);
     void    startNextEnrichment();
     QString mdiAnalysisLabel(const QString &analysis) const;
+    QVariantList m_semanticResults;
+    bool         m_semanticActive = false;
+    bool         m_semanticOnly   = false;
     DeviceUpdateManager    *m_deviceUpdateManager    = nullptr;
     CatalogProgressManager *m_catalogProgressManager = nullptr;
     CollectionImporter     *m_importer               = nullptr;
