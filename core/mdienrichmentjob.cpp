@@ -71,6 +71,7 @@ const QString kClustersPrompt = QStringLiteral("clusters-v1");
 
 // Transcript text sent per segmentation request
 constexpr int kSegmentChunkChars = 20000;
+constexpr int kMinSegmentWords   = 150;
 
 // Text sent to the model is cut to this length: long documents are summarised
 // from their beginning. The context window is sized for it: with Ollama's
@@ -370,7 +371,7 @@ void MdiEnrichmentJob::run()
         if (!m_stop.load() && r.outcome != QLatin1String("none")) {
             MdiData::Datum d;
             d.catalogId    = m_config.catalogId;
-            d.fullPath     = QString();   // the catalog itself
+            d.fullPath     = QStringLiteral("");   // the catalog itself (empty, not NULL)
             d.analysis     = QStringLiteral("clusters");
             d.outcome      = r.outcome;
             d.reason       = r.reason;
@@ -969,6 +970,16 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSegments(const FileItem &file)
     }
     if (duration <= 0)
         duration = passages.last().toObject().value("end").toDouble();
+
+    // A few words (ambient sound, a short clip) make no topics
+    int words = 0;
+    for (const QJsonValue &v : passages)
+        words += v.toObject().value("text").toString().split(' ', Qt::SkipEmptyParts).size();
+    if (words < kMinSegmentWords) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("transcript too short");
+        return r;
+    }
 
     // Timecoded lines, split into chunks the model can take in one request
     QStringList chunks;
