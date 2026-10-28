@@ -3037,15 +3037,12 @@ QString AppManager::runSemanticSearch(const QString &query, bool onlyMeaning)
         scope.loadDevice(m_connectionName);
         if (scope.type == QLatin1String("Catalog"))
             catalogIds.append(scope.externalID);
-        scope.loadSubDeviceList(m_connectionName);
-        for (const auto &row : scope.deviceListTable) {
-            if (row.type != QLatin1String("Catalog"))
-                continue;
-            Device catalogDevice;
-            catalogDevice.ID = row.ID;
-            catalogDevice.loadDevice(m_connectionName);
-            if (!catalogIds.contains(catalogDevice.externalID))
-                catalogIds.append(catalogDevice.externalID);
+        // Same scope as the table search: the active catalogs under the selection
+        const QList<Device*> catalogs = Device::getActiveCatalogList(m_connectionName, scope.ID);
+        for (Device *catalogDevice : catalogs) {
+            if (!catalogIds.contains(catalogDevice->externalID))
+                catalogIds.append(catalogDevice->externalID);
+            delete catalogDevice;
         }
         if (catalogIds.isEmpty())
             catalogIds.append(-1);   // a selection without catalogs matches nothing
