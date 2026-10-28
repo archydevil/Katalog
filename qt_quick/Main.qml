@@ -808,6 +808,12 @@ Kirigami.ApplicationWindow {
     // Any other page: if already in stack → navigate there (preserving pages above it,
     //                 e.g. SearchResults stays when navigating to Search).
     //                 If not in stack → clear col 1+, push at col 1.
+    // From the activity panel at the bottom (fork, MDI-F61)
+    function showActivityPage() {
+        appManager1.setLastPage("Activity")
+        root.showPage(pageActivity)
+    }
+
     function showPage(page) {
         // Close any open layer so main content is visible
         if (pageStack.layers.depth > 1)
@@ -1096,6 +1102,12 @@ Kirigami.ApplicationWindow {
                 onTriggered: { appManager1.setLastPage("Tags"); root.showPage(pageTags) }
             },
             Kirigami.Action {
+                // What runs, where, with which resources (fork, MDI-F61)
+                icon.name: "utilities-system-monitor"
+                text: qsTr("Activity")
+                onTriggered: { appManager1.setLastPage("Activity"); root.showPage(pageActivity) }
+            },
+            Kirigami.Action {
                 icon.name: "configure"
                 text: qsTr("Settings")
                 onTriggered: { appManager1.setLastPage("Settings"); root.showLayer(settingsPageComponent) }
@@ -1244,7 +1256,8 @@ Kirigami.ApplicationWindow {
                 "Create":     pageCreate,
                 "Statistics": pageStatistics,
                 "Tags":       pageTags,
-                "Backup":     pageBackup
+                "Backup":     pageBackup,
+                "Activity":   pageActivity
             }
             if (last !== "Selection" && pageMap[last])
                 root.showPage(pageMap[last])
@@ -2651,6 +2664,27 @@ Kirigami.ApplicationWindow {
                     Math.min(exploreSplit.width - exploreSplit.filesMinimum - 1, treeWidth))
             }
             onReleased: exploreSplit.saveDivision()
+        }
+    }
+
+    //Pages - Activity (fork, SpecMediaIntelligence.md MDI-F61..F75)
+    ScrollablePageFitted {
+        id: pageActivity
+        property Kirigami.Action escapeAction: pageActivityEscapeAction  // Esc (KBS-F1)
+        visible: false
+        title: qsTr("Activity")
+        // The monitor samples only while the page is shown (or a job runs)
+        onVisibleChanged: pageActivity_form.setShown(visible)
+        actions: [
+            Kirigami.Action {
+                id: pageActivityEscapeAction
+                text: qsTr("Close")
+                icon.name: "view-close"
+                onTriggered: root.closeFeaturePage(pageActivity)
+            }
+        ]
+        PageActivity {
+            id: pageActivity_form
         }
     }
 

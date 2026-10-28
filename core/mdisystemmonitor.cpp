@@ -201,6 +201,10 @@ void MdiSystemMonitor::sampleNow()
         const QString command = f.mid(4).join(' ');
         const QString name = QFileInfo(command).fileName();
         cpuSum += cpu;
+        // The monitor's own sampling programs are not part of the work
+        static const QStringList samplers = {"ps", "vm_stat", "sysctl", "memory_pressure", "ioreg", "pmset"};
+        if (ppid == m_appPid && samplers.contains(name))
+            continue;
         if (pid == m_appPid || ppid == m_appPid) {
             QVariantMap p;
             p[QStringLiteral("pid")]   = pid;

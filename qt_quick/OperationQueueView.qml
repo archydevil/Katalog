@@ -163,6 +163,13 @@ Controls.ToolBar {
                 elide: Text.ElideRight
             }
             Controls.Button {
+                // The compact summary opens the full Activity page (MDI-F61)
+                text: qsTr("Activity")
+                icon.name: "utilities-system-monitor"
+                flat: true
+                onClicked: applicationWindow().showActivityPage()
+            }
+            Controls.Button {
                 visible: appManager1.mdiIsRunning
                 text: appManager1.mdiIsPaused ? qsTr("Resume") : qsTr("Pause")
                 icon.name: appManager1.mdiIsPaused ? "media-playback-start" : "media-playback-pause"
