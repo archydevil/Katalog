@@ -31,6 +31,7 @@
 
 #include "core/searchjobstoppable.h"
 #include "core/mdifts.h"
+#include "core/filechecksum.h"
 #include "core/catalogmanager.h"
 #include "core/catalogdifferenceengine.h"
 #include "core/filemetadata.h"
@@ -1180,6 +1181,30 @@ void SearchJobStoppable::processDuplicates(const QString &connectionName)
 
     if (!shouldContinue()) return;
 
+    // Fork: the quick hash (mdi_data.db) is the checksum key when available
+    // (owner's decision, SpecMediaIntelligence.md). It goes only into the
+    // scratch table filetemp; the file table and its SHA-256 are untouched.
+    // Keys are prefixed "q:" so a quick hash never equals a SHA-256; a file
+    // without a quick hash keeps its SHA-256, as before.
+    const bool quickKeys = searchDuplicatesOnChecksum && !m_mdiDataPath.isEmpty()
+                           && MdiFts::attach(connectionName, m_mdiDataPath);
+    QSqlQuery quickQuery(QSqlDatabase::database(connectionName));
+    if (quickKeys)
+        quickQuery.prepare(QLatin1String(R"(
+            SELECT json_extract(datum_value, '$.hash') FROM mdi.mdi_datum
+            WHERE datum_catalog_id = :catalog_id AND datum_full_path = :full_path
+              AND datum_analysis = 'quickhash' AND datum_outcome = 'completed'
+        )"));
+    auto checksumKey = [&](int catalogId, const QString &fullPath, const QString &sha256) -> QString {
+        if (!quickKeys)
+            return sha256;
+        quickQuery.bindValue(":catalog_id", catalogId);
+        quickQuery.bindValue(":full_path", fullPath);
+        if (quickQuery.exec() && quickQuery.next() && !quickQuery.value(0).toString().isEmpty())
+            return QStringLiteral("q:") + quickQuery.value(0).toString();
+        return sha256;
+    };
+
     // Prepare query to load file info
     QSqlQuery insertQuery(QSqlDatabase::database(connectionName));
     QString insertSQL = QLatin1String(R"(
@@ -1222,7 +1247,10 @@ void SearchJobStoppable::processDuplicates(const QString &connectionName)
         insertQuery.bindValue(":file_date_updated", index(i, 2).data().toString());
         insertQuery.bindValue(":file_catalog", index(i, 4).data().toString());
         insertQuery.bindValue(":file_catalog_id", index(i, 5).data().toString());
-        insertQuery.bindValue(":checksum_sha256", index(i, 17).data().toString());
+        insertQuery.bindValue(":checksum_sha256",
+                              checksumKey(index(i, 5).data().toInt(),
+                                          index(i, 3).data().toString() + "/" + index(i, 0).data().toString(),
+                                          index(i, 17).data().toString()));
         insertQuery.exec();
     }
 
@@ -1337,6 +1365,55 @@ void SearchJobStoppable::processDuplicates(const QString &connectionName)
     duplicatesQuery.exec();
 
     if (!shouldContinue()) return;
+
+    // Fork: deep verification of quick-hash groups with the full SHA-256.
+    // Only the candidates are re-keyed: their stored SHA-256, else computed
+    // when the file is reachable, else they keep their quick hash
+    // (unverifiable, the disk is not connected). The same query runs again.
+    if (quickKeys && searchDuplicatesChecksumEqual && searchDuplicatesChecksumVerify) {
+        struct Candidate { QString name, size, date, folder, catalog; int catalogId; };
+        QList<Candidate> candidates;
+        while (duplicatesQuery.next())
+            candidates.append({duplicatesQuery.value(0).toString(), duplicatesQuery.value(1).toString(),
+                               duplicatesQuery.value(2).toString(), duplicatesQuery.value(3).toString(),
+                               duplicatesQuery.value(4).toString(), duplicatesQuery.value(5).toInt()});
+        QSqlQuery storedSha(QSqlDatabase::database(connectionName));
+        storedSha.prepare(QStringLiteral("SELECT checksum_sha256 FROM file WHERE file_catalog_id = :c AND file_full_path = :p"));
+        deleteQuery.exec("DELETE FROM filetemp");
+        for (int i = 0; i < candidates.size() && shouldContinue(); ++i) {
+            const Candidate &c = candidates.at(i);
+            const QString fullPath = c.folder + "/" + c.name;
+            QString key;
+            storedSha.bindValue(":c", c.catalogId);
+            storedSha.bindValue(":p", fullPath);
+            if (storedSha.exec() && storedSha.next())
+                key = storedSha.value(0).toString();
+            if (key.isEmpty() && QFileInfo::exists(fullPath)) {
+                key = FileChecksum::calculateChecksum(fullPath, QCryptographicHash::Sha256,
+                    [this](qint64, qint64) {
+                        QCoreApplication::processEvents();
+                        if (!shouldContinue())
+                            throw 0;   // calculateChecksum stops and returns empty
+                    });
+            }
+            if (key.isEmpty())
+                key = checksumKey(c.catalogId, fullPath, QString());
+            insertQuery.bindValue(":file_name", c.name);
+            insertQuery.bindValue(":file_size", c.size);
+            insertQuery.bindValue(":file_folder_path", c.folder);
+            insertQuery.bindValue(":file_date_updated", c.date);
+            insertQuery.bindValue(":file_catalog", c.catalog);
+            insertQuery.bindValue(":file_catalog_id", c.catalogId);
+            insertQuery.bindValue(":checksum_sha256", key);
+            insertQuery.exec();
+            if (i % progressRefreshRate == 0) {
+                emit searchProgress((i * 100) / qMax(1, int(candidates.size())));
+                waitIfPaused();
+            }
+        }
+        if (!shouldContinue()) return;
+        duplicatesQuery.exec();
+    }
 
     // Recapture file results for stats
     fileNames.clear();

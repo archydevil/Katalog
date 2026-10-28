@@ -29,6 +29,7 @@
 #include "core/mdienrichmentjob.h"
 #include "core/mdidata.h"
 #include "core/mdifts.h"
+#include "core/filechecksum.h"
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -323,6 +324,7 @@ void MdiEnrichmentJob::run()
         // nothing is overwritten, so it stays browsable offline (MDI-F44).
         if (!QFileInfo::exists(file.fullPath)) {
             skipped += analyses.size();
+            ++m_unreachable;
             continue;
         }
 
@@ -482,6 +484,13 @@ void MdiEnrichmentJob::run()
         }
     }
 
+    // The quick-hash pass is complete for this catalog state when every file
+    // was reached (a disconnected drive leaves it pending for next time)
+    const bool hashesWanted = m_config.quickHashOnly
+                              || m_config.settings.value("checksum").toObject().value("quick").toBool(true);
+    if (!m_stop.load() && m_unreachable == 0 && hashesWanted && !m_config.catalogStamp.isEmpty())
+        MdiData::setPassStamp(m_connectionName, m_config.catalogId, QStringLiteral("quickhash"), m_config.catalogStamp);
+
     MdiData::close(m_connectionName);
 
     summary[QStringLiteral("completed")] = completed;
@@ -514,6 +523,9 @@ QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
         info[QStringLiteral("tool")]  = QStringLiteral("whisper.cpp");
         info[QStringLiteral("model")] = QFileInfo(m_config.whisperModelPath).fileName();
         info[QStringLiteral("where")] = QStringLiteral("local");
+    } else if (analysis == QLatin1String("quickhash") || analysis == QLatin1String("snippet")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("katalog");
+        info[QStringLiteral("where")] = QStringLiteral("local");
     } else {
         info[QStringLiteral("tool")]  = QStringLiteral("ffmpeg");
         info[QStringLiteral("where")] = QStringLiteral("local");
@@ -525,11 +537,19 @@ QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
 QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
 {
     const QJsonObject s = m_config.settings;
+
+    // Quick hash: every file, whatever its type (duplicates across disks)
+    QStringList hashes;
+    if (m_config.quickHashOnly || s.value("checksum").toObject().value("quick").toBool(true))
+        hashes << QStringLiteral("quickhash");
+    if (m_config.quickHashOnly)
+        return hashes;
+
     bool typeSelected = false;
     for (const QJsonValue &t : s.value("fileTypes").toArray())
         typeSelected = typeSelected || lowerType(t.toString()) == file.fileType;
     if (!typeSelected)
-        return {};
+        return hashes;
 
     const QJsonObject image = s.value("image").toObject();
     const QJsonObject video = s.value("video").toObject();
@@ -574,7 +594,7 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
     // Last: indexes what the analyses above produced (MDI-F47)
     if (embeddings && !list.isEmpty())
         list << QStringLiteral("embeddings");
-    return list;
+    return hashes + list;
 }
 
 QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
@@ -590,6 +610,8 @@ QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
         p["format"] = thumbnailSuffix().mid(1);
     } else if (analysis == QLatin1String("snippet")) {
         p["chars"] = kSnippetChars;
+    } else if (analysis == QLatin1String("quickhash")) {
+        p["method"] = QStringLiteral("blake2b-256 size+3x64KiB");
     } else if (analysis == QLatin1String("clip_video") || analysis == QLatin1String("clip_audio")) {
         const QJsonObject o = s.value(analysis == QLatin1String("clip_video") ? "video" : "audio").toObject();
         p["mode"]     = o.value("clip").toString();
@@ -626,7 +648,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     // Previews need ffmpeg; caption and summary check their own inputs (MDI-F21)
     const bool isPreview = analysis != QLatin1String("summary") && analysis != QLatin1String("caption")
                         && analysis != QLatin1String("segments") && analysis != QLatin1String("embeddings")
-                        && analysis != QLatin1String("snippet");
+                        && analysis != QLatin1String("snippet") && analysis != QLatin1String("quickhash");
     if (isPreview && m_config.ffmpegPath.isEmpty()) {
         Result r;
         r.outcome = QStringLiteral("skipped");
@@ -645,6 +667,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     if (analysis == QLatin1String("segments"))   return makeSegments(file);
     if (analysis == QLatin1String("embeddings")) return makeEmbeddings(file);
     if (analysis == QLatin1String("snippet"))    return makeSnippet(file);
+    if (analysis == QLatin1String("quickhash"))  return makeQuickHash(file);
     Result r;
     r.outcome = QStringLiteral("skipped");
     r.reason  = QStringLiteral("unknown analysis");
@@ -694,6 +717,20 @@ bool MdiEnrichmentJob::finishThumbnail(const QString &jpegPath, const QString &t
         return false;
     }
     return true;
+}
+
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeQuickHash(const FileItem &file)
+{
+    Result r;
+    r.tool = QStringLiteral("katalog");
+    const QString hash = FileChecksum::computeQuickHash(file.fullPath);
+    if (hash.isEmpty()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = QStringLiteral("file not readable");
+        return r;
+    }
+    r.value["hash"] = hash;
+    return r;
 }
 
 MdiEnrichmentJob::Result MdiEnrichmentJob::makeSnippet(const FileItem &file)

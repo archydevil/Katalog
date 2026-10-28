@@ -76,6 +76,11 @@ public:
     // connection (main thread); mdi_data.db is attached to it.
     static QList<QVariantMap> staleCatalogs(const QString &connectionName, const QString &mdiDbPath);
 
+    // Catalogs whose pass (e.g. "quickhash") has not completed on their
+    // current state: [{deviceId, catalogId, name, stamp, sourcePath}]
+    static QList<QVariantMap> catalogsNeedingPass(const QString &connectionName, const QString &mdiDbPath,
+                                                  const QString &pass);
+
     // Text derived for a file (snippet, summary, caption, tags), for the index
     static QString derivedText(const QString &mdiConnectionName, int catalogId, const QString &fullPath);
 

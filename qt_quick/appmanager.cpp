@@ -1268,6 +1268,7 @@ bool AppManager::reconnectToDatabase()
     m_pendingEnrichmentProfiles.clear();
     // The index being built belongs to it too
     stopFtsIndexing();
+    m_quickHashWaiting.clear();
     m_mdiWaiting.clear();          // waiting enrichments name devices of that collection
     m_mdiIndexCatalogId = -1;      // previews are re-read from the new collection folder
 
@@ -2799,6 +2800,7 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
     if (analysis == QLatin1String("embeddings")) return tr("Index for search by meaning");
     if (analysis == QLatin1String("snippet"))    return tr("Text snippet");
     if (analysis == QLatin1String("fts"))        return tr("Instant search index");
+    if (analysis == QLatin1String("quickhash"))  return tr("Quick hash");
     return analysis;
 }
 //----------------------------------------------------------------------
@@ -2841,6 +2843,36 @@ QString AppManager::startEnrichment(int deviceId)
     config.textModel       = tools.value(QStringLiteral("textModel")).toString();
     config.embedModel      = tools.value(QStringLiteral("embedModel")).toString();
     config.uiLanguageName  = QLocale::languageToString(QLocale(getCurrentLanguage()).language());
+    return launchMdiJob(device, config);
+}
+//----------------------------------------------------------------------
+QString AppManager::startQuickHash(int deviceId)
+{
+    // A quick-hash pass waits behind any running job (MDI-F16)
+    if (m_mdiJob) {
+        if (!m_quickHashWaiting.contains(deviceId))
+            m_quickHashWaiting.append(deviceId);
+        return QString();
+    }
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog"))
+        return tr("Selected device is not a catalog");
+
+    const QVariantMap tools = getEnrichmentTools();
+    MdiEnrichmentJob::Config config;
+    config.catalogId     = device.externalID;
+    config.catalogName   = device.name;
+    config.dataDbPath    = mdiDataPath();
+    config.quickHashOnly = true;
+    config.ollamaUrl     = tools.value(QStringLiteral("ollamaUrl")).toString();
+    return launchMdiJob(device, config);
+}
+//----------------------------------------------------------------------
+QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config)
+{
+    config.catalogStamp = MdiFts::stamp(device.catalog->dateUpdated);
 
     // Read on this thread, with the collection connection (Memory: from the .idx)
     const QList<MdiEnrichmentJob::FileItem> files =
@@ -2937,12 +2969,19 @@ void AppManager::startNextEnrichment()
         if (!error.isEmpty())
             qWarning() << "Enrichment not started for device" << next << ":" << error;
     }
+    while (!m_mdiJob && !m_quickHashWaiting.isEmpty()) {
+        const int next = m_quickHashWaiting.takeFirst();
+        const QString error = startQuickHash(next);
+        if (!error.isEmpty())
+            qWarning() << "Quick hash not started for device" << next << ":" << error;
+    }
     updateMonitoring();   // stops sampling when nothing runs and the page is closed
 }
 //----------------------------------------------------------------------
 void AppManager::stopEnrichment()
 {
     m_mdiWaiting.clear();
+    m_quickHashWaiting.clear();
     if (m_mdiJob)
         m_mdiJob->requestStop();
 }
@@ -3091,8 +3130,24 @@ QVariantMap AppManager::mdiToolsInfo()
     return info;
 }
 //----------------------------------------------------------------------
+void AppManager::scheduleQuickHashes()
+{
+    // Right after a creation or an update, while the disk is still connected:
+    // every catalog whose quick hashes do not cover its current state, when
+    // its source is reachable (owner's decision; SQLite collections)
+    if (collection->databaseMode == QLatin1String("Hosted"))
+        return;
+    for (const QVariantMap &c : MdiFts::catalogsNeedingPass(m_connectionName, mdiDataPath(), QStringLiteral("quickhash"))) {
+        const QString source = c.value(QStringLiteral("sourcePath")).toString();
+        if (source.isEmpty() || !QFileInfo::exists(source))
+            continue;
+        startQuickHash(c.value(QStringLiteral("deviceId")).toInt());
+    }
+}
+//----------------------------------------------------------------------
 void AppManager::scheduleFtsIndexing()
 {
+    scheduleQuickHashes();
     if (collection->databaseMode == QLatin1String("Hosted"))
         return;   // FTS5 is SQLite only; Hosted searches as before
     if (m_ftsThread) {

@@ -126,6 +126,8 @@ ColumnLayout {
         newSearch1.properties = {"searchDuplicatesOnDate":         search_checkBox_DuplicatesOnDate.checked};
         newSearch1.properties = {"searchDuplicatesOnChecksum":     search_checkBox_DuplicatesOnChecksum.checked};
         newSearch1.properties = {"searchDuplicatesChecksumEqual":  search_comboBox_DuplicateChecksumSign.currentIndex === 0};
+        newSearch1.properties = {"searchDuplicatesChecksumVerify": search_checkBox_DuplicatesChecksumVerify.checked
+                                                                   && search_checkBox_DuplicatesChecksumVerify.enabled};
         newSearch1.properties = {"duplicatesCompareDevices":       search_radioButton_DuplicatesCompareTwoDevices.checked};
         newSearch1.properties = {"duplicatesDeviceID1":            search_comboBox_DuplicatesDevice1.selectedDeviceId};
         newSearch1.properties = {"duplicatesDeviceID2":            search_comboBox_DuplicatesDevice2.selectedDeviceId};
@@ -1371,6 +1373,15 @@ ColumnLayout {
                                     && !search_checkBox_DuplicatesOnDate.checked)
                                 search_checkBox_DuplicatesOnChecksum.checked = true
                         }
+                    }
+                    // Fork: the checksum key is the quick hash when available;
+                    // this confirms the groups with the full SHA-256
+                    Controls.CheckBox {
+                        id: search_checkBox_DuplicatesChecksumVerify
+                        checked: false
+                        text: qsTr("Verify with full checksum")
+                        enabled: search_checkBox_DuplicatesOnChecksum.checked
+                                 && search_comboBox_DuplicateChecksumSign.currentIndex === 0
                     }
                 }
             }

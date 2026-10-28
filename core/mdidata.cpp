@@ -33,6 +33,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QDir>
+#include <QDateTime>
 #include <QMap>
 #include <algorithm>
 #include <cstring>
@@ -128,6 +129,17 @@ bool MdiData::open(const QString &connectionName, const QString &dbPath)
     )"));
     if (!ok)
         qWarning() << "MdiData::open: table creation failed:" << q.lastError().text();
+
+    // Catalog-wide passes and the catalog state they completed on
+    q.exec(QLatin1String(R"(
+        CREATE TABLE IF NOT EXISTS mdi_pass (
+            pass_catalog_id INTEGER NOT NULL,
+            pass_name       TEXT    NOT NULL,
+            pass_stamp      TEXT,
+            pass_date       TEXT,
+            PRIMARY KEY (pass_catalog_id, pass_name)
+        )
+    )"));
 
     // Semantic search index (MDI-F47): float32 vectors as BLOBs
     q.exec(QLatin1String(R"(
@@ -394,6 +406,27 @@ QVariantList MdiData::semanticSearch(const QString &connectionName, const QList<
         files[it.value()] = f;
     }
     return files;
+}
+
+QString MdiData::passStamp(const QString &connectionName, int catalogId, const QString &pass)
+{
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    q.prepare(QStringLiteral("SELECT pass_stamp FROM mdi_pass WHERE pass_catalog_id = :id AND pass_name = :name"));
+    q.bindValue(":id", catalogId);
+    q.bindValue(":name", pass);
+    return q.exec() && q.next() ? q.value(0).toString() : QString();
+}
+
+void MdiData::setPassStamp(const QString &connectionName, int catalogId, const QString &pass, const QString &stamp)
+{
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    q.prepare(QStringLiteral("INSERT OR REPLACE INTO mdi_pass (pass_catalog_id, pass_name, pass_stamp, pass_date) "
+                             "VALUES (:id, :name, :stamp, :date)"));
+    q.bindValue(":id", catalogId);
+    q.bindValue(":name", pass);
+    q.bindValue(":stamp", stamp);
+    q.bindValue(":date", QDateTime::currentDateTime().toString(Qt::ISODate));
+    q.exec();
 }
 
 QStringList MdiData::clearCatalog(const QString &connectionName, int catalogId)

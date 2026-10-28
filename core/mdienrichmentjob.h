@@ -88,6 +88,8 @@ public:
         QString     uiLanguageName = QStringLiteral("English");   // captions of images
         int         toolTimeoutMs = 10 * 60 * 1000;               // MDI-F22
         int         httpTimeoutMs = 120 * 1000;                   // MDI-C20
+        bool        quickHashOnly = false;   // a pass computing only the quick hash
+        QString     catalogStamp;            // catalog state the passes complete on
     };
 
     MdiEnrichmentJob(const Config &config, const QList<FileItem> &files, QObject *parent = nullptr);
@@ -162,6 +164,7 @@ private:
     Result makeClusters();
     Result makeEmbeddings(const FileItem &file);
     Result makeSnippet(const FileItem &file);
+    Result makeQuickHash(const FileItem &file);
     // ffmpeg writes a JPEG frame; this stores it as the thumbnail (WebP when possible)
     bool   finishThumbnail(const QString &jpegPath, const QString &targetPath, QString *error);
     QString transcriptText(const FileItem &file);   // from this catalog's transcript datum
@@ -185,6 +188,7 @@ private:
     QString         m_connectionName;
     QString         m_ffmpegVersion;
     bool            m_segmentsChanged = false;
+    int             m_unreachable = 0;   // sources not reachable in this run
     // Current step, for progress reports from inside an analysis
     QString         m_stepAnalysis;
     QString         m_stepFile;

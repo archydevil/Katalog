@@ -1005,6 +1005,7 @@ void Search::copyFrom(const Search* other)
     differencesDeviceID2 = other->differencesDeviceID2;
     searchDuplicatesOnChecksum = other->searchDuplicatesOnChecksum;
     searchDuplicatesChecksumEqual = other->searchDuplicatesChecksumEqual;
+    searchDuplicatesChecksumVerify = other->searchDuplicatesChecksumVerify;
     differencesOnChecksum = other->differencesOnChecksum;
     differencesChecksumEqual = other->differencesChecksumEqual;
 

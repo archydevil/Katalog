@@ -57,6 +57,17 @@ public:
                                      QCryptographicHash::Algorithm algorithm,
                                      std::function<void(qint64, qint64)> progressCallback = nullptr);
 
+    // Fast partial hash (fork): identifies a file for duplicate detection
+    // without reading it whole. Up to kQuickHashFullLimit bytes the whole file
+    // is hashed; above, the exact size (8 bytes, little-endian) followed by
+    // 64 KB at the start, 64 KB from the middle (size / 2) and the last 64 KB.
+    // Hex result; empty when the file cannot be read. Not a content checksum:
+    // two files can only be called identical by the full checksum.
+    static constexpr qint64 kQuickHashChunk     = 64 * 1024;
+    static constexpr qint64 kQuickHashFullLimit = 3 * kQuickHashChunk;   // 192 KB
+    static QString computeQuickHash(const QString &filePath,
+                                    QCryptographicHash::Algorithm algorithm = QCryptographicHash::Blake2b_256);
+
     // Update existing file record with checksum
     static bool updateFileChecksum(const QString &connectionName,
                                    int catalogId,

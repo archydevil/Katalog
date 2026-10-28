@@ -98,6 +98,7 @@ public:
             map["searchDuplicatesOnDate"]         = searchDuplicatesOnDate;
             map["searchDuplicatesOnChecksum"]     = searchDuplicatesOnChecksum;
             map["searchDuplicatesChecksumEqual"]  = searchDuplicatesChecksumEqual;
+            map["searchDuplicatesChecksumVerify"] = searchDuplicatesChecksumVerify;
             map["duplicatesCompareDevices"]       = duplicatesCompareDevices;
             map["duplicatesDeviceID1"]            = duplicatesDeviceID1;
             map["duplicatesDeviceID2"]            = duplicatesDeviceID2;
@@ -238,6 +239,7 @@ public:
             if (map.contains("searchDuplicatesOnDate"))        { searchDuplicatesOnDate       = map["searchDuplicatesOnDate"].toBool(); }
             if (map.contains("searchDuplicatesOnChecksum"))    { searchDuplicatesOnChecksum   = map["searchDuplicatesOnChecksum"].toBool(); }
             if (map.contains("searchDuplicatesChecksumEqual")) { searchDuplicatesChecksumEqual= map["searchDuplicatesChecksumEqual"].toBool(); }
+            if (map.contains("searchDuplicatesChecksumVerify")) { searchDuplicatesChecksumVerify = map["searchDuplicatesChecksumVerify"].toBool(); }
             if (map.contains("duplicatesCompareDevices"))      { duplicatesCompareDevices     = map["duplicatesCompareDevices"].toBool(); }
             if (map.contains("duplicatesDeviceID1"))           { duplicatesDeviceID1          = map["duplicatesDeviceID1"].toInt(); }
             if (map.contains("duplicatesDeviceID2"))           { duplicatesDeviceID2          = map["duplicatesDeviceID2"].toInt(); }

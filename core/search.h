@@ -156,6 +156,10 @@ public:
     int differencesDeviceID2;
     bool searchDuplicatesOnChecksum;
     bool searchDuplicatesChecksumEqual;  // true = "=", false = "≠"
+    // Fork: with the quick hash as the checksum key (K3), confirm each group of
+    // duplicates with the full SHA-256 (stored, or computed when the file is
+    // reachable). Session only: not saved in the search history.
+    bool searchDuplicatesChecksumVerify = false;
     bool differencesOnChecksum;
     bool differencesChecksumEqual;       // true = "=", false = "≠"
     bool searchOnFolderCriteria;

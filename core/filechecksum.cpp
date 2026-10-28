@@ -30,6 +30,7 @@
 */
 
 #include "filechecksum.h"
+#include <QtEndian>
 #include "catalog.h"
 #include <QFile>
 #include <QFileInfo>
@@ -76,6 +77,39 @@ bool FileChecksum::calculateAndStore(const QString &filePath,
 }
 
 //-----------------------------------------------------------------------------------------------------
+QString FileChecksum::computeQuickHash(const QString &filePath, QCryptographicHash::Algorithm algorithm)
+{
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly))
+        return QString();
+
+    const qint64 size = file.size();
+    QCryptographicHash hash(algorithm);
+
+    if (size <= kQuickHashFullLimit) {
+        const QByteArray all = file.readAll();
+        if (all.size() != size)
+            return QString();
+        hash.addData(all);
+        return QString::fromLatin1(hash.result().toHex());
+    }
+
+    // Size first: files that differ only in length never share a hash
+    const quint64 sizeLE = qToLittleEndian(quint64(size));
+    hash.addData(QByteArrayView(reinterpret_cast<const char *>(&sizeLE), sizeof(sizeLE)));
+
+    // Start, middle and end; three reads, whatever the file's size
+    for (const qint64 offset : {qint64(0), size / 2, size - kQuickHashChunk}) {
+        if (!file.seek(offset))
+            return QString();
+        const QByteArray chunk = file.read(kQuickHashChunk);
+        if (chunk.size() != kQuickHashChunk)
+            return QString();
+        hash.addData(chunk);
+    }
+    return QString::fromLatin1(hash.result().toHex());
+}
+
 QString FileChecksum::calculateChecksum(const QString &filePath,
                                         QCryptographicHash::Algorithm algorithm,
                                         std::function<void(qint64, qint64)> progressCallback)

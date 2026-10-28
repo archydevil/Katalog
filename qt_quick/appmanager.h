@@ -77,7 +77,7 @@
 #include <QElapsedTimer>
 
 class BackupJobStoppable;
-class MdiEnrichmentJob;
+#include "core/mdienrichmentjob.h"   // Config is passed by value
 class QThread;
 
 class MdiSystemMonitor;
@@ -849,6 +849,11 @@ private:
     std::atomic<bool> m_ftsStop{false};
     bool              m_ftsPending = false;
     void    scheduleFtsIndexing();
+    // Quick hash (fork): pass right after creation/update, all files, on by default
+    QList<int>        m_quickHashWaiting;
+    QString           startQuickHash(int deviceId);
+    void              scheduleQuickHashes();
+    QString           launchMdiJob(Device &device, MdiEnrichmentJob::Config config);
     void    stopFtsIndexing();
     QString mdiAnalysisLabel(const QString &analysis) const;
     QVariantList m_semanticResults;

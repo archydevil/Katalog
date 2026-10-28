@@ -111,6 +111,11 @@ public:
                                        const QVector<float> &query, const QString &model,
                                        int maxFiles = 30, int hitsPerFile = 3, double minScore = 0.35);
 
+    // Catalog-wide passes (e.g. "quickhash"): the catalog state they completed on
+    static QString passStamp(const QString &connectionName, int catalogId, const QString &pass);
+    static void    setPassStamp(const QString &connectionName, int catalogId, const QString &pass,
+                                const QString &stamp);
+
     // Removes the catalog's data and returns the derived files it recorded (absolute)
     static QStringList clearCatalog(const QString &connectionName, int catalogId);
 };

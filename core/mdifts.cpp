@@ -310,6 +310,41 @@ QList<QVariantMap> MdiFts::staleCatalogs(const QString &connectionName, const QS
     return list;
 }
 
+QList<QVariantMap> MdiFts::catalogsNeedingPass(const QString &connectionName, const QString &mdiDbPath,
+                                               const QString &pass)
+{
+    QList<QVariantMap> list;
+    const bool attached = attach(connectionName, mdiDbPath);
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    if (!q.exec(QLatin1String(R"(
+            SELECT d.device_id, d.device_external_id, d.device_name, c.catalog_date_updated, d.device_path
+            FROM device d JOIN catalog c ON c.catalog_id = d.device_external_id
+            WHERE d.device_type = 'Catalog'
+        )")))
+        return list;
+    QSqlQuery state(QSqlDatabase::database(connectionName));
+    if (attached)
+        state.prepare(QStringLiteral("SELECT pass_stamp FROM mdi.mdi_pass WHERE pass_catalog_id = :id AND pass_name = :name"));
+    while (q.next()) {
+        const int catalogId = q.value(1).toInt();
+        const QString s = stamp(q.value(3).toString());
+        if (attached) {
+            state.bindValue(":id", catalogId);
+            state.bindValue(":name", pass);
+            if (state.exec() && state.next() && state.value(0).toString() == s)
+                continue;
+        }
+        QVariantMap c;
+        c[QStringLiteral("deviceId")]   = q.value(0).toInt();
+        c[QStringLiteral("catalogId")]  = catalogId;
+        c[QStringLiteral("name")]       = q.value(2).toString();
+        c[QStringLiteral("stamp")]      = s;
+        c[QStringLiteral("sourcePath")] = q.value(4).toString();
+        list.append(c);
+    }
+    return list;
+}
+
 QString MdiFts::derivedText(const QString &mdiConnectionName, int catalogId, const QString &fullPath)
 {
     QHash<QString, QJsonObject> byAnalysis;
