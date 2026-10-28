@@ -1,35 +1,42 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
+>
 > **PROMPT SHORTHANDS:**
+>
 > - **K2** at the start of a prompt → Katalog 2, the Qt Widgets version (`qt_widgets/`)
 > - **K3** at the start of a prompt → Katalog 3, the Qt Quick / QML / Kirigami version (`qt_quick/`)
-
+>
 > **CRITICAL — File access boundary:**
+>
 > - **Full access:** `/home/stephane/Documents/Informatique/Katalog/_Source_Katalog/` — always allowed, no restrictions.
 > - **Forbidden:** any other path under `/home/` — never access, read, search, or browse.
 > - **System files** (e.g. `/usr/include/KF6/`, `/usr/lib/`, etc.) — request explicit user authorization before accessing, for debugging purposes only.
-
+>
 > **CRITICAL — File safety:**
+>
 > - **NEVER delete any file** without the user explicitly and unambiguously saying to delete it.
-
+>
 > **CRITICAL — Specifications gate:**
+>
 > - Before implementing any feature-scope change, new request, or non-trivial bug fix, obtain a verdict from the `specifications` agent (`.claude/agents/specifications.md`).
 > - Proceed only on **IN SPEC**. **VIOLATES CONSTRAINT** and **NOT IN SPEC** require explicit user approval and a spec update *first* — the `docs_src/docs/Spec*.md` file, not the chat, is the record of what is authorised.
 > - The current code is **never** a source of requirements: it may contain unauthorised or buggy behaviour. Only `Spec*.md` defines what Katalog is required to do.
-
+>
 > **CRITICAL — Core class changes:**
+>
 > - **NEVER add or modify methods in `core/` classes** without explicit user approval first.
 > - Before proposing a new core method, always check: does the equivalent SQL/logic already exist in K2's UI layer? If so, state where it is and ask for approval to move it to core.
 > - The core library was deliberately cleaned up (all SQL moved from K2 UI to core) before K3 was started. Any further change to `core/` is a deliberate architectural decision and must be approved in advance.
-
+>
 > **CRITICAL — UI structure:**
+>
 > - **NEVER create a new source file** (`.cpp`, `.h`, `.qml`) for a new tab (Katalog2), section, or Page (Katalog3) without the user explicitly requesting it.
 > - If unsure where new code belongs, **ask before creating new files**.
 > - **K2 UI is in maintenance mode:** keep K2 changes minimal (bug fixes, small tweaks). New major UI features are designed and built in K3 only, and only after the full K2 feature set has been migrated to K3.
-
+>
 > **CRITICAL — K3 migration process:**
+>
 > - **K3 is a portage of K2, not a new design.** Almost every K3 page/feature already exists in K2. Before proposing or asking anything about a K3 feature, **assume K2 already implements it and go find it.** Investigate the K2 *why / what / how* first, then propose the best portage. **Do NOT ask the user open design questions (e.g. multiple-choice on behavior, persistence, or triggers) for behavior that K2 already defines** — read K2, state what it does, and propose the matching K3 portage. Only ask the user when K2 and K3 architectures genuinely diverge (e.g. K2 side-panel vs K3 page-stack) and a real decision remains.
 > - **K2 ↔ K3 naming can diverge — search by concept, not just by label.** The biggest trap: the **K3 "Selection" page is K2's "Filters" panel.** All K2 objects are named `Filters_*` / `splitter_widget_Filters` and the code lives in `qt_widgets/mainwindow_tab_filters.cpp` (header: *"methods for the SELECTION panel"*, doc `docs/Features/Selection`). Searching K2 for "Selection" will NOT find it. When you can't locate a K2 equivalent by name, search by the file's documented purpose and the `docs/Features/<Page>` mapping before concluding it's new.
 >   - **Selection panel show/hide (reference example):** K2 has a collapsible Selection panel. `mainwindow_tab_filters.cpp:38-54` — Hide hides `splitter_widget_Filters` + shows `main_widget_ShowFilters` and writes `Settings/ShowHideFilters = "go-next"`; Show reverses it with `"go-previous"`. Restored on startup at `mainwindow_setup.cpp:293-301`. Persistence is in **`collection->settingsFilePath`** via `QSettings(collection->settingsFilePath, QSettings::IniFormat)` — the collection's `.ini`, not the default app QSettings.
@@ -39,21 +46,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 >   2. **Destructive actions** — every Clear/Delete/Keep button must have a confirmation dialog matching K2
 >   3. **Lifecycle hooks** — any side-effect K2 triggers on search start, search complete, or save (e.g. saving to history table, persisting to CSV) must be replicated in K3
 >   4. **Restore/apply** — clicking a history/saved entry must restore all criteria, not just the visible ones
-
+>
 > **CRITICAL — User-visible text:**
+>
 > - **Never add, change, or delete any user-visible string** (`tr`/`qsTr`/label/message) without quoting the exact before/after and getting explicit per-string approval — even if trivial or a side effect. Matching is byte-for-byte: one character drops the string to English across all 30 languages. Porting K2→K3: copy the K2 source verbatim. Full architecture & rationale: `.claude/agents/translations.md`.
 > - If a layout is too wide, solve it with layout changes only. Never shorten label text as a workaround.
 > - K3 labels must stay in sync with K2 unless the user explicitly requests a change in both.
 > - **Before writing any K3 user-visible text** (labels, status messages, progress reports, dialog text, tooltips, notifications) **always read the K2 equivalent first** and reuse its exact `tr()` string. Creating a new string when K2 already has one wastes a translation slot across 30 languages.
 > - **Progress/status messages in K3 MUST follow `SpecProgressReport.md`** (`docs_src/docs/SpecProgressReport.md`). Every status bar message must use `StatusBarMessageBuilder`. NEVER write a raw string where the builder is the specification. Read the spec before implementing any progress or status message.
 > - **No "Please" / no imperative orders to the user.** State what is *needed*, do not give a command. Write requirement-style copy in sentence case, e.g. `"Select or enter a tag name."`, `"Provide a name for this new catalog."` — never `"Please enter a tag name."`. This applies to all user-visible text (validation, dialogs, tooltips, status). When porting a K2 string that uses "Please", reword to the requirement form (this is the one allowed deviation from verbatim K2 copy — still needs per-string approval).
-
+>
 > **CRITICAL — Message presentation (K3 / Kirigami):** Pick the channel by whether the user must act, per Kirigami HIG and `docs_src/docs/SpecValidationRules.md`:
+>
 > - **Blocking form-validation errors** (missing/invalid field stopping an action) → `Kirigami.InlineMessage` (`MessageType.Warning`) anchored at the top of the form, `showCloseButton: true`, hidden again when the offending field is edited. NEVER a modal dialog or passive notification for validation.
 > - **Transient success/info** ("Copied to clipboard", "Catalog created") → `showPassiveNotification`.
 > - **Decisions requiring a choice** (Yes/No, destructive confirmation) → modal `Controls.Dialog` / `Kirigami.PromptDialog`.
-
+>
 > **CRITICAL — Version context:**
+>
 > - Last **released** version: **2.12** (schema 2.12 is shipped — its migrations are frozen, do NOT edit them in place)
 > - **K3 3.0 beta1 is released** — portable builds only (Linux, Windows, macOS), published on SourceForge only. It is in users' hands: K3 behaviour changes now have real testers, and bug reports arrive from **Windows and macOS**, not only from the Linux/KDE development machine. When diagnosing a K3 report, consider platform-specific behaviour (window manager, QSettings backend, icon theme, Qt Quick Controls style) before assuming a logic bug.
 > - beta1 writes its own settings file `katalog3_prerelease_settings.ini` (see `AppManager::initiateApp`). Testers already have one on disk, so a change to what K3 persists must stay readable for an existing beta1 file — state the impact on beta testers up front.
@@ -62,6 +72,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > - `DatabaseManager::runMigrations` calls `Database::runMigration_3_0` only when `schemaVersion < 3.0`. Its steps stay harmless to repeat (beta databases may already have some of them). A step added there now would **not** reach databases already stamped 3.0 — any further schema change needs a new versioned migration, decided with the user first.
 >
 > **Steps in `runMigration_3_0` (the 2.12 → 3.0 migration):**
+>
 > - Resets `device.device_order` to 0 (never populated before; harmless to repeat only while no feature stores a non-zero order).
 > - Adds `device_mapping.mapping_source_collection`, `device.device_comment`, `storage.storage_user_id` (back-filled from `storage_id`), `device_mapping.mapping_include_empty_dirs` when missing.
 > - Drops the v1.22 tables `statistics_catalog`, `statistics_storage`, `virtual_storage`, `virtual_storage_catalog`, `device_catalog` if they exist (never created or used since 2.0).
@@ -70,6 +81,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > - Drops `catalog.catalog_file_count`, `catalog.catalog_total_file_size`, `storage.storage_total_space`, `storage.storage_free_space`, `storage.storage_location` when present (the device holds totals and space).
 > - Drops `search.search_location` (never given a value), `search.search_storage` and `search.search_catalog` (pre-2.6 scope text, replaced by `selected_device_ID_list`) when present. Collections older than 2.6 are expected to be opened with 2.12 first (release-note advice).
 > - Drops `storage.storage_name` and `catalog.catalog_storage` when present (dead v1.xx name copies; `device_name` is the only name — `SpecStorageIdentity.md` STI-C13/C16). Memory-mode files keep their slots, written empty.
+>
+> **FORK — archydevil/Katalog (decided by the fork owner, 2026-10-28):**
+>
+> - This repo is a personal fork (`origin` = archydevil/Katalog, `upstream` = StephaneCouturier/Katalog). Fork work happens on `work/dev-fork`, branched from `upstream/katalog_development`. The media intelligence feature set is **fork-only** — it is not proposed upstream.
+> - **Media intelligence** (previews, transcription with timecoded segments and clusters, image captions/tags, document summaries/excerpts, offline previews, semantic search, LLM providers) is authorised by `docs_src/docs/development/SpecMediaIntelligence.md`. That spec is the record; the specifications gate still applies to anything outside it.
+> - The K2-parity prerequisite ("new major UI features only after the full K2 feature set has been migrated to K3") does **not** block this feature set in the fork. It is K3 only; K2 stays untouched.
+> - New source files, `core/` methods and the schema migration that the spec lists are approved by the spec itself; anything the spec does not list still needs approval first.
+> - Execution model: enrichment runs in a **separate background runner** (own `QThread`, like the backup sequencer), after catalog creation — never inside create/update. Stoppable, pausable, resumable, incremental; search and explore keep working.
+> - Privacy: **local by default** (Ollama). Commercial providers only when explicitly enabled per collection or per job, with a warning and a cost estimate before anything is sent.
+> - Approved tools: **ffmpeg/ffprobe, whisper.cpp, poppler**, invoked as **external programs** (`QProcess`), not linked. Missing tool → that enrichment is skipped with a clear status. LLM and embeddings over HTTP with `Qt6::Network`; no vector-index library.
+> - Unchanged in the fork: user-visible text rules (per-string approval, 30 languages), message presentation, Memory-mode parity, file safety, docs requirements.
+> - Local macOS build: Homebrew Qt 6.12 + KF6 6.22 built into `~/kf6`. Configure with `-DCMAKE_PREFIX_PATH="$HOME/kf6;/opt/homebrew" -DBUILD_QT_QUICK=ON -DBUILD_QT_WIDGETS=OFF`; run with `QML_IMPORT_PATH=$HOME/kf6/lib/qml QT_PLUGIN_PATH=$HOME/kf6/lib/plugins`.
 
 ## Project Overview
 
@@ -102,7 +125,7 @@ ninja translations_lrelease
 ### Three-Part Structure
 
 | Directory | Role |
-|-----------|------|
+| ----------- | ------ |
 | `core/` | UI-agnostic business logic, compiled as `katalog-core` static library |
 | `qt_widgets/` | K2 — Qt Widgets / KXmlGui UI, linked against `katalog-core` |
 | `qt_quick/` | K3 — Qt Quick / QML / Kirigami UI, linked against `katalog-core` |
@@ -110,7 +133,7 @@ ninja translations_lrelease
 ### Core Module Organization (`core/`)
 
 | Component | Files | Purpose |
-|-----------|-------|---------|
+| ----------- | ------- | --------- |
 | Data Models | `collection`, `device`, `catalog`, `storage`, `database` | Domain objects and SQLite persistence |
 | Search | `search`, `searchjob`, `searchjobstoppable`, `searchmanager`, `searchprogressmanager`, `searchresultsthrottler` | Search criteria, execution, cancellation, progress |
 | Catalog Ops | `catalogjob`, `catalogjobstoppable`, `catalogmanager`, `catalogprogressmanager` | Catalog creation and updates |
@@ -143,6 +166,7 @@ The main window (`mainwindow.h/cpp`) is split across multiple implementation fil
 The two-layer separation is enforced for future **QtQuick compatibility**. The goal is that core can be reused without modification if the UI is ever ported from Qt Widgets to QtQuick/QML.
 
 **What belongs in `src/core/`:**
+
 - All SQL queries (`QSqlQuery`) — wrap in methods on the relevant domain class (`Catalog`, `Device`, `Collection`, `Tag`, `FileMetadata`, etc.)
 - All domain object operations: creating, inserting, updating, deleting `Device`, `Catalog`, `Storage`, `Tag`, etc. — even if they don't contain raw SQL
 - File I/O for data files
@@ -151,6 +175,7 @@ The two-layer separation is enforced for future **QtQuick compatibility**. The g
 - Progress callbacks via `std::function<bool(int, int, QString)>`
 
 **What belongs in `src/` (UI layer only):**
+
 - Widget construction, layout, signal/slot wiring
 - `tr()` translations and all user-visible strings
 - HTML/CSS generation for display
@@ -159,6 +184,7 @@ The two-layer separation is enforced for future **QtQuick compatibility**. The g
 - Calling core methods and refreshing UI from their results
 
 **Enforcement rules:**
+
 - `core/` files must **never** include Qt Widgets headers (`QWidget`, `QDialog`, `QMessageBox`, etc.)
 - `qt_widgets/mainwindow_tab_*.cpp` files must **not** contain raw `QSqlQuery` — delegate to a core method instead
 - `qt_widgets/mainwindow_tab_*.cpp` files must **not** call domain mutating methods directly (`insertDevice()`, `deleteDevice()`, `generateNextDeviceID()`, `saveDevice()`, `insertPhysicalStorageGroup()`, etc.) — wrap multi-step domain operations in a single core method
@@ -167,6 +193,7 @@ The two-layer separation is enforced for future **QtQuick compatibility**. The g
 - **When reviewing any `mainwindow_tab_*.cpp` method:** ask "does this touch domain objects or the database?" — if yes, it belongs in core regardless of whether it uses raw SQL
 
 **Reference implementations (established patterns):**
+
 - Single-row DB lookup: `Catalog::getFileChecksum(fileName, folderPath)` → `QString`
 - Aggregate query: `Device::getMaxHierarchyDepth(connectionName)` → `int`
 - Model self-loading: `Tag::loadFromDatabase(connectionName, filterName)`
@@ -176,7 +203,7 @@ The two-layer separation is enforced for future **QtQuick compatibility**. The g
 ### K3 UI Layer Organization (`qt_quick/`)
 
 | File / Directory | Role |
-|-----------------|------|
+| ----------------- | ------ |
 | `main.cpp` | App entry point — creates AppManager, registers QML types, sets context properties |
 | `appmanager.h/cpp` | Central QML context object: exposes core to QML via Q_PROPERTY / Q_INVOKABLE / signals |
 | `adapters/search.h/cpp` | QML-visible Search adapter inheriting `SearchJobStoppable` |
@@ -189,6 +216,7 @@ The two-layer separation is enforced for future **QtQuick compatibility**. The g
 | `version.h.in` | CMake-generated version header |
 
 **K3 build commands:**
+
 ```bash
 cd qt_quick
 mkdir -p build/Debug && cd build/Debug
@@ -197,11 +225,13 @@ ninja
 ```
 
 **K3 current state (alpha 1):**
+
 - Working: Open Collection (Memory/File/SQLite/Hosted), device selection, search, about, alpha warning
 - Placeholder pages: Devices, Explore, Create, Statistics, Tags
 - `AppManager` carries too much orchestration logic (reconnect, settings management) that should eventually move to a core `DatabaseManager` — acceptable for now
 
 **K3 / K2 key differences:**
+
 - K3 uses live `reconnectToDatabase()` — no app restart needed when switching collection
 - K2 saves settings + restarts; K3 saves settings + reconnects in-place
 - Settings `.ini` keys are intentionally aligned so both versions share the same settings file
@@ -211,9 +241,11 @@ ninja
 ## Dependencies
 
 **Qt6 Components:**
+
 - Core, Widgets, Gui, Sql (SQLite), Charts, Network, LinguistTools
 
 **KDE Frameworks 6:**
+
 - CoreAddons, XmlGui, Config, FileMetaData, Completion
 
 ### KDE / KF6 Usage Rules
@@ -224,11 +256,12 @@ ninja
 
 ## Database
 
-Multiple connection modes: file (SQLite file), memory (SQLite), hosted (Mariadb/MySQL). Schema versioning handles migrations. Memeory mode: Separate files for: devices, catalogs, storage, statistics, search history.
+Multiple connection modes: file (SQLite file), memory (SQLite), hosted (MariaDB/MySQL). Schema versioning handles migrations. Memory mode: Separate files for: devices, catalogs, storage, statistics, search history.
 
 ### Memory Mode Caveat
 
 **IMPORTANT:** In Memory database mode, catalog data (files, folders) is NOT pre-loaded in the in-memory database. It must be explicitly loaded from CSV/idx files before querying. When writing code that queries the `file`, `filetemp`, or `folder` tables, always check `collection->databaseMode == "Memory"` and call the appropriate load method first:
+
 - `catalog->loadFoldersToTable()` — loads folder data from `.folders.idx` into the `folder` table
 - `catalog->loadCatalogFileListToTable(mutex, stopRequested)` — loads file data from `.idx` into the `file` table
 
@@ -239,6 +272,7 @@ In File/Hosted mode, the data is already in the SQLite database and no pre-loadi
 **30 languages** supported. Translation files in `src/translations/`. Uses Qt Linguist (lupdate/lrelease). Files compiled to `.qm` format and bundled via `translations.qrc`.
 
 **Rules:**
+
 - **Do not change existing `tr()` strings** — any change breaks all 30 translations at once
 - **Reuse existing messages** wherever semantically appropriate before creating new ones
 - All new user-visible strings must be wrapped in `tr()`; run `ninja translations_lupdate` after adding them
@@ -259,4 +293,4 @@ All documentation pages must follow the design guidelines in `docs_src/docs/deve
 - **When updating or creating a feature page, provide translations for all languages: French (`i18n/fr/`) and Czech (`i18n/cs/`)**
 - Update the `Version` badge to the current release version whenever a translated page is updated
 - Development and Specification pages are **English only** — do not create FR/CS translations for them
-- Published site: https://stephanecouturier.github.io/Katalog/
+- Published site: <https://stephanecouturier.github.io/Katalog/>
