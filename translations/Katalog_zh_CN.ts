@@ -868,7 +868,7 @@ Choose a different name.</source>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>位于</translation>
+        <translation>开启</translation>
     </message>
     <message>
         <location line="+53"/>

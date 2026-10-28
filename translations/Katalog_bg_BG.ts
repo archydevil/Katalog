@@ -868,7 +868,7 @@ Choose a different name.</source>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>На</translation>
+        <translation>Вкл.</translation>
     </message>
     <message>
         <location line="+53"/>

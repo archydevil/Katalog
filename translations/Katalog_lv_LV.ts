@@ -868,7 +868,7 @@ Izvēlieties citu nosaukumu.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Atrašanās vietā</translation>
+        <translation>Ieslēgts</translation>
     </message>
     <message>
         <location line="+53"/>

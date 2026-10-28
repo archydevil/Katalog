@@ -868,7 +868,7 @@ Pilih nama lain.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Pada</translation>
+        <translation>Hidup</translation>
     </message>
     <message>
         <location line="+53"/>

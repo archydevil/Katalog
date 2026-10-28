@@ -868,7 +868,7 @@ Izaberite drugi naziv.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Na</translation>
+        <translation>Uključeno</translation>
     </message>
     <message>
         <location line="+53"/>

@@ -868,7 +868,7 @@ Alegeți alt nume.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Pe</translation>
+        <translation>Activat</translation>
     </message>
     <message>
         <location line="+53"/>

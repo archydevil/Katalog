@@ -868,7 +868,7 @@ Valitse toinen nimi.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Kohteessa</translation>
+        <translation>Päällä</translation>
     </message>
     <message>
         <location line="+53"/>

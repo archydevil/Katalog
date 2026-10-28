@@ -868,7 +868,7 @@ Vali teine nimi.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Asukohas</translation>
+        <translation>Sees</translation>
     </message>
     <message>
         <location line="+53"/>

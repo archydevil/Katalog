@@ -868,7 +868,7 @@ Kies een andere naam.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Op</translation>
+        <translation>Aan</translation>
     </message>
     <message>
         <location line="+53"/>

@@ -868,7 +868,7 @@ Elija un nombre diferente.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>En</translation>
+        <translation>Activado</translation>
     </message>
     <message>
         <location line="+53"/>

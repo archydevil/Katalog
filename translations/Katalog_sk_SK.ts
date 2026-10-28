@@ -868,7 +868,7 @@ Zvoľte iný názov.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Na</translation>
+        <translation>Zapnuté</translation>
     </message>
     <message>
         <location line="+53"/>

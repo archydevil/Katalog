@@ -868,7 +868,7 @@ Pasirinkite kitą pavadinimą.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Vietoje</translation>
+        <translation>Įjungta</translation>
     </message>
     <message>
         <location line="+53"/>

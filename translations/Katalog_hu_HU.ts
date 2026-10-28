@@ -868,7 +868,7 @@ Válasszon másik nevet.</translation>
     <message>
         <location line="+24"/>
         <source>On</source>
-        <translation>Itt</translation>
+        <translation>Be</translation>
     </message>
     <message>
         <location line="+53"/>
