@@ -28,14 +28,13 @@ The script is idempotent: re-running it skips .ts files that already
 contain K3 contexts.
 """
 
-import os
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 QML_DIR = REPO_ROOT / "qt_quick"
-TRANS_DIR = REPO_ROOT / "translations"
+TRANS_DIR: Path = REPO_ROOT / "translations"
 
 
 def k3_cpp_contexts():
@@ -70,7 +69,7 @@ def extract_qml_strings():
         context = qml_file.stem          # e.g. "PageSearchForm"
         content = qml_file.read_text(encoding="utf-8")
         sources = []
-        seen    = set()
+        seen = set()
         for m in re.finditer(r'qsTr\("((?:[^"\\]|\\.)*)"\)', content):
             s = m.group(1)
             if s and s not in seen:
@@ -115,12 +114,14 @@ def get_known_translations(tree_root, k3_context_names):
                 continue
             for msg in ctx.findall("message"):
                 src = msg.find("source")
-                tr  = msg.find("translation")
-                if (src is not None and src.text
-                        and tr  is not None and tr.text
-                        and tr.get("type") != "unfinished"
-                        and src.text not in known):
-                    known[src.text] = tr.text
+                tr = msg.find("translation")
+                if src is None or not src.text:
+                    continue
+                if tr is None or not tr.text:
+                    continue
+                if tr.get("type") == "unfinished" or src.text in known:
+                    continue
+                known[src.text] = tr.text
     return known
 
 
@@ -133,7 +134,7 @@ def _esc(text):
 
 def build_context_block(context_name, sources, known_tr):
     """Return the XML text for a new <context> element."""
-    lines = [f"<context>", f"    <name>{context_name}</name>"]
+    lines = ["<context>", f"    <name>{context_name}</name>"]
     for src in sources:
         lines.append("    <message>")
         lines.append(f"        <source>{_esc(src)}</source>")
@@ -154,15 +155,14 @@ def refresh_existing_contexts(content, k3_context_names, known_tr):
     count = 0
 
     def repl_ctx(cmatch):
-        nonlocal count
-        block  = cmatch.group(0)
+        block = cmatch.group(0)
         name_m = re.search(r"<name>(.*?)</name>", block, re.S)
         if not name_m or name_m.group(1) not in k3_context_names:
             return block
 
         def repl_msg(mmatch):
             nonlocal count
-            msg   = mmatch.group(0)
+            msg = mmatch.group(0)
             src_m = re.search(r"<source>(.*?)</source>", msg, re.S)
             if not src_m:
                 return msg
@@ -201,15 +201,15 @@ def process_ts(ts_path, k3_strings):
     root = tree.getroot()
 
     existing_contexts = {
-        ctx.find("name").text
+        name.text
         for ctx in root.findall("context")
-        if ctx.find("name") is not None
+        if (name := ctx.find("name")) is not None
     }
 
     # QML contexts plus the K3 C++ adapter contexts, so an adapter string
     # K2 already translated is bridged instead of staying unfinished.
     k3_context_names = set(k3_strings.keys()) | k3_cpp_contexts()
-    known_tr   = get_known_translations(root, k3_context_names)
+    known_tr = get_known_translations(root, k3_context_names)
     new_blocks = []
 
     for ctx_name, sources in k3_strings.items():
@@ -221,7 +221,7 @@ def process_ts(ts_path, k3_strings):
     # 1. Append any brand-new K3 contexts (with K2 matches pre-filled).
     if new_blocks:
         insertion = "\n" + "\n".join(new_blocks) + "\n"
-        content   = content.replace("</TS>", insertion + "</TS>")
+        content = content.replace("</TS>", insertion + "</TS>")
 
     # 2. Refresh already-present K3 contexts: fill unfinished entries that K2
     #    a translation is now known for (fixes the former add-only limitation).
@@ -235,13 +235,14 @@ def process_ts(ts_path, k3_strings):
 
 
 def main():
+    """Add missing K3 contexts and fill unfinished K3 entries in every Katalog_*.ts."""
     k3_strings = extract_qml_strings()
     total = sum(len(v) for v in k3_strings.values())
     print(f"K3 QML: {len(k3_strings)} contexts, {total} strings\n")
 
     updated = 0
     skipped = 0
-    total_added     = 0
+    total_added = 0
     total_refreshed = 0
     for ts_file in sorted(TRANS_DIR.glob("Katalog_*.ts")):
         added, refreshed = process_ts(ts_file, k3_strings)
@@ -249,7 +250,7 @@ def main():
             print(f"  updated : {ts_file.name}  "
                   f"(+{added} context(s), {refreshed} entry(ies) filled)")
             updated += 1
-            total_added     += added
+            total_added += added
             total_refreshed += refreshed
         else:
             print(f"  skipped : {ts_file.name}  (nothing left to fill)")
