@@ -88,6 +88,44 @@ Kirigami.Dialog {
                 asynchronous: true
             }
 
+            // ── Technical data (ffprobe) ───────────────────────────────────
+            ColumnLayout {
+                id: mediaBox
+                readonly property var e: mdiDetailsDialog.entry("mediainfo")
+                readonly property var v: e && e.value.video ? e.value.video : null
+                readonly property var a: e && e.value.audio ? e.value.audio : null
+                visible: e !== null && e.outcome === "completed"
+                Layout.fillWidth: true
+                spacing: 2
+                Kirigami.Heading { level: 4; text: parent.e ? parent.e.label : "" }
+                // Codec names and units are technical notation, the same in every language
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    visible: mediaBox.v !== null
+                    text: mediaBox.v ? [String(mediaBox.v.codec).toUpperCase(),
+                                        mediaBox.v.width + " × " + mediaBox.v.height,
+                                        mediaBox.v.fps + " fps"].join(" · ") : ""
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    visible: mediaBox.a !== null
+                    text: mediaBox.a ? [String(mediaBox.a.codec).toUpperCase(),
+                                        mediaBox.a.sampleRate + " Hz",
+                                        mediaBox.a.channels + " ch"].join(" · ") : ""
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    opacity: 0.8
+                    text: mediaBox.e ? qsTr("Duration") + " " + mdiDetailsDialog.timecode(Number(mediaBox.e.value.duration))
+                                       + (mediaBox.e.value.bitrate > 0
+                                          ? " · " + (Math.round(mediaBox.e.value.bitrate / 100000) / 10) + " Mbit/s" : "")
+                                     : ""
+                }
+            }
+
             // ── Caption and tags ──────────────────────────────────────────
             ColumnLayout {
                 id: captionBox
@@ -147,6 +185,63 @@ Kirigami.Dialog {
                 Controls.Label { text: parent.e ? mdiDetailsDialog.provenance(parent.e) : ""; opacity: 0.6; font: Kirigami.Theme.smallFont }
             }
 
+            // ── Text snippet (first characters, offline search) ───────────
+            ColumnLayout {
+                readonly property var e: mdiDetailsDialog.entry("snippet")
+                visible: e !== null && e.outcome === "completed"
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.smallSpacing
+                Kirigami.Heading { level: 4; text: parent.e ? parent.e.label : "" }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    text: parent.e ? parent.e.value.text + (parent.e.value.truncated ? " …" : "") : ""
+                    opacity: 0.9
+                }
+            }
+
+            // ── Archive contents, read without extracting ─────────────────
+            ColumnLayout {
+                id: archiveBox
+                readonly property var e: mdiDetailsDialog.entry("archive")
+                visible: e !== null && e.outcome === "completed"
+                Layout.fillWidth: true
+                spacing: 2
+                Kirigami.Heading { level: 4; text: parent.e ? parent.e.label : "" }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    opacity: 0.8
+                    text: archiveBox.e ? String(archiveBox.e.value.format).toUpperCase()
+                                         + " · " + qsTr("Files") + " " + archiveBox.e.value.count
+                                         + " · " + qsTr("Size") + " " + appManager1.formatDataSize(archiveBox.e.value.totalSize)
+                                       : ""
+                }
+                Repeater {
+                    // The first entries; the full list stays searchable offline
+                    model: archiveBox.e && archiveBox.e.value.entries ? archiveBox.e.value.entries.slice(0, 300) : []
+                    delegate: RowLayout {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        Kirigami.Icon {
+                            source: modelData.dir ? "folder" : "document-open"
+                            implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth
+                        }
+                        Controls.Label { text: modelData.path; Layout.fillWidth: true; wrapMode: Text.WrapAnywhere }
+                        Controls.Label {
+                            visible: !modelData.dir
+                            text: appManager1.formatDataSize(modelData.size || 0)
+                            opacity: 0.7
+                        }
+                    }
+                }
+                Controls.Label {
+                    visible: archiveBox.e !== null && archiveBox.e.value.count > 300
+                    text: "…"
+                    opacity: 0.7
+                }
+            }
+
             // ── Keyframe strip, with timecodes ────────────────────────────
             ColumnLayout {
                 id: keyframesBox
@@ -155,11 +250,44 @@ Kirigami.Dialog {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.smallSpacing
                 Kirigami.Heading { level: 4; text: parent.e ? parent.e.label : "" }
+                // Contact sheet: one image, frames side by side; value.frames
+                // gives each frame's position and timecode
+                Item {
+                    id: sheetItem
+                    readonly property bool isSheet: keyframesBox.e !== null && keyframesBox.e.value.sheet === true
+                    readonly property var frames: isSheet && keyframesBox.e.value.frames ? keyframesBox.e.value.frames : []
+                    visible: isSheet
+                    Layout.fillWidth: true
+                    implicitHeight: sheetImage.paintedHeight + Kirigami.Units.gridUnit
+                    Image {
+                        id: sheetImage
+                        width: parent.width
+                        source: sheetItem.isSheet && keyframesBox.e.files.length > 0 && keyframesBox.e.files[0].exists
+                                ? keyframesBox.e.files[0].url : ""
+                        fillMode: Image.PreserveAspectFit
+                        horizontalAlignment: Image.AlignLeft
+                        asynchronous: true
+                    }
+                    Repeater {
+                        model: sheetItem.frames
+                        delegate: Controls.Label {
+                            required property var modelData
+                            readonly property real scale: sheetImage.sourceSize.width > 0
+                                                          ? sheetImage.paintedWidth / sheetImage.sourceSize.width : 0
+                            x: modelData.x * scale + 2
+                            y: sheetImage.paintedHeight + 2
+                            text: mdiDetailsDialog.timecode(Number(modelData.t))
+                            font: Kirigami.Theme.smallFont
+                            opacity: 0.7
+                        }
+                    }
+                }
                 Flow {
+                    visible: !sheetItem.isSheet
                     Layout.fillWidth: true
                     spacing: Kirigami.Units.smallSpacing
                     Repeater {
-                        model: keyframesBox.e ? keyframesBox.e.files : []
+                        model: keyframesBox.e && !sheetItem.isSheet ? keyframesBox.e.files : []
                         delegate: Column {
                             required property var modelData
                             required property int index

@@ -78,6 +78,7 @@
 #include <K7Zip>
 #include <KArchiveDirectory>
 #include <KArchiveFile>
+#include <KCompressionDevice>
 #endif
 
 namespace {
@@ -1086,28 +1087,35 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeArchiveListing(const FileItem &fi
         r.reason  = QStringLiteral("compressed tar too large to list");
         return r;
     }
+    std::unique_ptr<QIODevice> device;   // outlives the archive reading it
     std::unique_ptr<KArchive> archive;
     if (kind == QLatin1String("zip"))
         archive = std::make_unique<KZip>(file.fullPath);
     else if (kind == QLatin1String("7z"))
         archive = std::make_unique<K7Zip>(file.fullPath);
-    else {
-        // The compression is named from the suffix: MIME detection by
-        // content is not reliable on every platform
+    else
+        archive = std::make_unique<KTar>(file.fullPath);   // compression detected by KArchive
+    bool opened = archive->open(QIODevice::ReadOnly);
+    if (!opened && kind == QLatin1String("tar")) {
+        // Second attempt with the decompressor named by the suffix
         const QString lower = file.fullPath.toLower();
-        QString mime = QStringLiteral("application/x-tar");
+        KCompressionDevice::CompressionType type = KCompressionDevice::None;
         if (lower.endsWith(QLatin1String(".gz")) || lower.endsWith(QLatin1String(".tgz")))
-            mime = QStringLiteral("application/x-compressed-tar");
-        else if (lower.endsWith(QLatin1String(".bz2")) || lower.endsWith(QLatin1String(".tbz"))
-                 || lower.endsWith(QLatin1String(".tbz2")))
-            mime = QStringLiteral("application/x-bzip-compressed-tar");
+            type = KCompressionDevice::GZip;
+        else if (lower.endsWith(QLatin1String(".bz2")) || lower.endsWith(QLatin1String(".tbz")) || lower.endsWith(QLatin1String(".tbz2")))
+            type = KCompressionDevice::BZip2;
         else if (lower.endsWith(QLatin1String(".xz")) || lower.endsWith(QLatin1String(".txz")))
-            mime = QStringLiteral("application/x-xz-compressed-tar");
+            type = KCompressionDevice::Xz;
         else if (lower.endsWith(QLatin1String(".zst")))
-            mime = QStringLiteral("application/x-zstd-compressed-tar");
-        archive = std::make_unique<KTar>(file.fullPath, mime);
+            type = KCompressionDevice::Zstd;
+        if (type != KCompressionDevice::None) {
+            archive.reset();
+            device = std::make_unique<KCompressionDevice>(file.fullPath, type);
+            archive = std::make_unique<KTar>(device.get());
+            opened = archive->open(QIODevice::ReadOnly);
+        }
     }
-    if (!archive->open(QIODevice::ReadOnly)) {
+    if (!opened) {
         r.outcome = QStringLiteral("failed");
         r.reason  = archive->errorString().isEmpty() ? QStringLiteral("archive not readable") : archive->errorString();
         return r;

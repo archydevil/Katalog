@@ -30,7 +30,7 @@ ColumnLayout {
     property bool imageThumbnail:      true
     property bool videoPosterFrame:    true
     property bool videoKeyframeStrip:  false
-    property int  videoKeyframeCount:  8
+    property int  videoKeyframeCount:  4
     property string videoClip:         "off"   // off / full / partial
     property int  videoClipStart:      0
     property int  videoClipDuration:   30
@@ -112,7 +112,7 @@ ColumnLayout {
         imageThumbnail     = im.thumbnail !== false
         videoPosterFrame   = v.posterFrame !== false
         videoKeyframeStrip = v.keyframeStrip === true
-        videoKeyframeCount = v.keyframeCount || 8
+        videoKeyframeCount = v.keyframeCount || 4
         videoClip          = v.clip || "off"
         videoClipStart     = v.clipStart || 0
         videoClipDuration  = v.clipDuration || 30

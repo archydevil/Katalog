@@ -2723,7 +2723,8 @@ const QStringList kMdiAnalysisOrder = {
     QStringLiteral("thumbnail"), QStringLiteral("poster"), QStringLiteral("keyframes"),
     QStringLiteral("clip_video"), QStringLiteral("clip_audio"), QStringLiteral("waveform"),
     QStringLiteral("caption"), QStringLiteral("transcript"), QStringLiteral("segments"),
-    QStringLiteral("summary")
+    QStringLiteral("summary"), QStringLiteral("mediainfo"), QStringLiteral("snippet"),
+    QStringLiteral("archive"), QStringLiteral("quickhash"), QStringLiteral("embeddings")
 };
 }
 //----------------------------------------------------------------------
@@ -2801,6 +2802,8 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
     if (analysis == QLatin1String("snippet"))    return tr("Text snippet");
     if (analysis == QLatin1String("fts"))        return tr("Instant search index");
     if (analysis == QLatin1String("quickhash"))  return tr("Quick hash");
+    if (analysis == QLatin1String("mediainfo"))  return tr("Technical data");
+    if (analysis == QLatin1String("archive"))    return tr("Archive contents");
     return analysis;
 }
 //----------------------------------------------------------------------
