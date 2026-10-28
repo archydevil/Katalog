@@ -2521,6 +2521,15 @@ Kirigami.ApplicationWindow {
                                                       exploreFiles.catalogName)
             },
             Kirigami.Action {
+                text: qsTr("Topic clusters")
+                icon.name: "view-group"
+                readonly property bool available:
+                    exploreFiles.catalogId > 0 && appManager1.mdiRevision >= 0
+                    && Object.keys(appManager1.mdiClusters(exploreFiles.catalogId)).length > 0
+                visible: available
+                onTriggered: exploreFiles.showClusters()
+            },
+            Kirigami.Action {
                 id: pageExploreEscapeAction
                 text: qsTr("Close")
                 icon.name: "view-close"

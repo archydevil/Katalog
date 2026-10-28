@@ -77,6 +77,8 @@ public:
         QString     ffmpegPath;
         QString     ffprobePath;
         QString     pdftotextPath;
+        QString     whisperPath;         // whisper-cli (whisper.cpp)
+        QString     whisperModelPath;    // ggml model file
         QString     ollamaUrl = QStringLiteral("http://localhost:11434");
         QString     visionModel = QStringLiteral("gemma4");
         QString     textModel   = QStringLiteral("gemma4");
@@ -94,6 +96,10 @@ public:
 
     // Finds a tool on the usual locations and the search path; empty when absent (MDI-F20)
     static QString findTool(const QString &name, const QString &configuredPath = QString());
+
+    // A whisper.cpp ggml model: the configured file, else the largest
+    // ggml-*.bin in ~/whisper-models or the Homebrew share folder; empty when none
+    static QString findWhisperModel(const QString &configuredPath = QString());
 
     void requestStop();
     void setPaused(bool paused);
@@ -130,11 +136,17 @@ private:
     Result makeWaveform(const FileItem &file);
     Result makeCaption(const FileItem &file);
     Result makeSummary(const FileItem &file);
+    Result makeTranscript(const FileItem &file);
+    Result makeSegments(const FileItem &file);
+    // Catalog-level: groups the catalog's topic segments (MDI-F37, scope per catalog)
+    Result makeClusters();
+    QString transcriptText(const FileItem &file);   // from this catalog's transcript datum
 
     QString extractText(const QString &path, QString *tool, QString *reason);
     QString findTranscript(const FileItem &file) const;
     double  probeDuration(const QString &path);
-    bool    runTool(const QString &program, const QStringList &args, QByteArray *output, QString *error);
+    bool    runTool(const QString &program, const QStringList &args, QByteArray *output, QString *error,
+                    int timeoutMs = -1);
     QJsonObject askOllama(const QString &model, const QString &prompt, const QStringList &imagePaths, QString *error);
     QJsonObject askOllamaOnce(const QString &model, const QString &prompt, const QStringList &imagePaths, QString *error);
 
@@ -146,6 +158,7 @@ private:
     QList<FileItem> m_files;
     QString         m_connectionName;
     QString         m_ffmpegVersion;
+    bool            m_segmentsChanged = false;
 
     std::atomic<bool> m_stop{false};
     std::atomic<bool> m_paused{false};

@@ -84,6 +84,9 @@ public:
     // Every datum of one file, for the details view
     static QList<Datum> forFile(const QString &connectionName, int catalogId, const QString &fullPath);
 
+    // Completed data of one analysis across a catalog (e.g. every "segments")
+    static QList<Datum> forCatalog(const QString &connectionName, int catalogId, const QString &analysis);
+
     // Removes the catalog's data and returns the derived files it recorded (absolute)
     static QStringList clearCatalog(const QString &connectionName, int catalogId);
 };

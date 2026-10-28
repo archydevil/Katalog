@@ -12,11 +12,24 @@ Kirigami.Dialog {
 
     property string fileLabel: ""
     property var    entries:   []      // appManager1.mdiDetails(): {analysis, label, outcome, reason, value, files, model, tool, date}
+    property var    clusters:  null    // appManager1.mdiClusters(): catalog-level topic clusters
 
     function showFor(catalogId, fullPath, fileName) {
+        clusters  = null
         entries   = appManager1.mdiDetails(catalogId, fullPath)
         fileLabel = fileName
+        title     = qsTr("Show analysis")
         open()
+    }
+    function showClusters(catalogId, catalogName) {
+        entries   = []
+        clusters  = appManager1.mdiClusters(catalogId)
+        fileLabel = catalogName
+        title     = qsTr("Topic clusters")
+        open()
+    }
+    function fileName(path) {
+        return path.substring(Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")) + 1)
     }
 
     function entry(analysis) {
@@ -42,7 +55,6 @@ Kirigami.Dialog {
         return who + (e.date !== "" ? " · " + e.date.replace("T", " ") : "")
     }
 
-    title: qsTr("Show analysis")
     width: Math.min(applicationWindow().width - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 40)
     preferredHeight: Kirigami.Units.gridUnit * 36
     standardButtons: Kirigami.Dialog.Close
@@ -167,6 +179,104 @@ Kirigami.Dialog {
                                 font: Kirigami.Theme.smallFont
                                 opacity: 0.7
                             }
+                        }
+                    }
+                }
+            }
+
+            // ── Topic segments, by timecode (MDI-F36, F38) ────────────────
+            ColumnLayout {
+                id: segmentsBox
+                readonly property var e: mdiDetailsDialog.entry("segments")
+                visible: e !== null && e.outcome === "completed"
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.smallSpacing
+                Kirigami.Heading { level: 4; text: segmentsBox.e ? segmentsBox.e.label : "" }
+                Repeater {
+                    model: segmentsBox.e && segmentsBox.e.value.segments ? segmentsBox.e.value.segments : []
+                    delegate: ColumnLayout {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: 2
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            font.bold: true
+                            text: mdiDetailsDialog.timecode(modelData.start) + " – "
+                                  + mdiDetailsDialog.timecode(modelData.end) + "  " + (modelData.title || "")
+                        }
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            text: modelData.summary || ""
+                        }
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: Kirigami.Units.smallSpacing
+                            Repeater {
+                                model: modelData.topics || []
+                                delegate: Kirigami.Chip { required property var modelData; text: modelData; closable: false; checkable: false }
+                            }
+                        }
+                    }
+                }
+                Controls.Label { text: segmentsBox.e ? mdiDetailsDialog.provenance(segmentsBox.e) : ""; opacity: 0.6; font: Kirigami.Theme.smallFont }
+            }
+
+            // ── Transcript with timecodes (MDI-F35) ───────────────────────
+            ColumnLayout {
+                id: transcriptBox
+                readonly property var e: mdiDetailsDialog.entry("transcript")
+                property bool expanded: false
+                visible: e !== null && e.outcome === "completed"
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.smallSpacing
+                RowLayout {
+                    Layout.fillWidth: true
+                    Kirigami.Heading { level: 4; text: transcriptBox.e ? transcriptBox.e.label : "" }
+                    Item { Layout.fillWidth: true }
+                    IconButton {
+                        text: transcriptBox.expanded ? qsTr("Collapse") : qsTr("Expand")
+                        icon.name: transcriptBox.expanded ? "go-up" : "go-down"
+                        flat: true
+                        onClicked: transcriptBox.expanded = !transcriptBox.expanded
+                    }
+                }
+                Repeater {
+                    model: transcriptBox.expanded && transcriptBox.e && transcriptBox.e.value.passages
+                           ? transcriptBox.e.value.passages : []
+                    delegate: Controls.Label {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        text: "<span style='opacity:0.6'>" + mdiDetailsDialog.timecode(modelData.start) + "</span>  " + modelData.text
+                        textFormat: Text.StyledText
+                    }
+                }
+                Controls.Label { text: transcriptBox.e ? mdiDetailsDialog.provenance(transcriptBox.e) : ""; opacity: 0.6; font: Kirigami.Theme.smallFont }
+            }
+
+            // ── Catalog topic clusters (MDI-F37) ──────────────────────────
+            Repeater {
+                model: mdiDetailsDialog.clusters && mdiDetailsDialog.clusters.clusters
+                       ? mdiDetailsDialog.clusters.clusters : []
+                delegate: ColumnLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    spacing: 2
+                    Kirigami.Heading { level: 4; text: modelData.label || ""; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+                    Controls.Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: modelData.description || "" }
+                    Repeater {
+                        model: modelData.members || []
+                        delegate: Controls.Label {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.leftMargin: Kirigami.Units.largeSpacing
+                            elide: Text.ElideRight
+                            opacity: 0.8
+                            text: mdiDetailsDialog.fileName(modelData.fullPath) + "  "
+                                  + mdiDetailsDialog.timecode(modelData.start) + " – "
+                                  + mdiDetailsDialog.timecode(modelData.end) + "  " + (modelData.title || "")
                         }
                     }
                 }

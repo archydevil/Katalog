@@ -42,6 +42,8 @@ ColumnLayout {
     // MDI-F5: local provider analyses
     property bool aiCaption: true          // images and video poster frames
     property bool aiSummary: true          // documents and recording transcripts
+    property bool aiTranscript: true       // audio and video, local whisper.cpp
+    property bool aiSegments:   true       // timecoded topic segments; needs the transcript
 
     readonly property var clipModel: [
         { text: qsTr("Off"),     value: "off"     },
@@ -55,7 +57,7 @@ ColumnLayout {
     function anyPreview() {
         return imageThumbnail || videoPosterFrame || videoKeyframeStrip
             || videoClip !== "off" || audioClip !== "off" || audioWaveform
-            || aiCaption || aiSummary
+            || aiCaption || aiSummary || aiTranscript || aiSegments
     }
     function selectedTypes() {
         var t = []
@@ -89,7 +91,8 @@ ColumnLayout {
                     clipDuration: audioClipDuration,
                     waveform:     audioWaveform
                 },
-                ai: { caption: aiCaption, summary: aiSummary }
+                ai: { caption: aiCaption, summary: aiSummary,
+                      transcript: aiTranscript || aiSegments, segments: aiSegments }
             }
         }
     }
@@ -119,6 +122,8 @@ ColumnLayout {
         audioWaveform      = a.waveform === true
         aiCaption          = ai.caption !== false
         aiSummary          = ai.summary !== false
+        aiTranscript       = ai.transcript !== false
+        aiSegments         = ai.segments !== false
     }
 
     function restoreSettings() {
@@ -313,6 +318,26 @@ ColumnLayout {
         text: qsTr("Summary and excerpts")
         checked: createWizard.aiSummary
         onToggled: { createWizard.aiSummary = checked; createWizard.choiceEdited() }
+    }
+    Controls.Switch {
+        enabled: createWizard.typeAudio || createWizard.typeVideo
+        text: qsTr("Transcript")
+        checked: createWizard.aiTranscript || createWizard.aiSegments
+        onToggled: {
+            createWizard.aiTranscript = checked
+            if (!checked) createWizard.aiSegments = false   // segments are cut from the transcript
+            createWizard.choiceEdited()
+        }
+    }
+    Controls.Switch {
+        enabled: createWizard.typeAudio || createWizard.typeVideo
+        text: qsTr("Topic segments")
+        checked: createWizard.aiSegments
+        onToggled: {
+            createWizard.aiSegments = checked
+            if (checked) createWizard.aiTranscript = true
+            createWizard.choiceEdited()
+        }
     }
     Controls.Label {
         Layout.fillWidth: true

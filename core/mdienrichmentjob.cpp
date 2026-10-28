@@ -52,7 +52,9 @@
 #include <QHostAddress>
 #include <QUrl>
 #include <QThread>
+#include <QSet>
 #include <QDebug>
+#include <algorithm>
 
 #include <KFileMetaData/ExtractorCollection>
 #include <KFileMetaData/Extractor>
@@ -64,6 +66,11 @@ namespace {
 // its analysis on the next job (MDI-F54).
 const QString kCaptionPrompt = QStringLiteral("caption-v1");
 const QString kSummaryPrompt = QStringLiteral("summary-v3");
+const QString kSegmentsPrompt = QStringLiteral("segments-v1");
+const QString kClustersPrompt = QStringLiteral("clusters-v1");
+
+// Transcript text sent per segmentation request
+constexpr int kSegmentChunkChars = 20000;
 
 // Text sent to the model is cut to this length: long documents are summarised
 // from their beginning. The context window is sized for it: with Ollama's
@@ -93,6 +100,35 @@ QString providerClass(const QUrl &url)
             || address.isInSubnet(QHostAddress(QStringLiteral("192.168.0.0")), 16)))
         return QStringLiteral("local-network");
     return QStringLiteral("remote");
+}
+
+// "h:mm:ss", "mm:ss", "ss" or a number of seconds
+double parseTimecode(const QJsonValue &value)
+{
+    if (value.isDouble())
+        return value.toDouble();
+    const QStringList parts = value.toString().trimmed().split(':');
+    double seconds = 0.0;
+    for (const QString &part : parts)
+        seconds = seconds * 60.0 + part.toDouble();
+    return seconds;
+}
+
+QString formatTimecode(double seconds)
+{
+    const qint64 s = qint64(seconds);
+    return QStringLiteral("%1:%2:%3").arg(s / 3600)
+        .arg((s / 60) % 60, 2, 10, QLatin1Char('0'))
+        .arg(s % 60, 2, 10, QLatin1Char('0'));
+}
+
+QString srtTime(double seconds)
+{
+    const qint64 ms = qint64(seconds * 1000.0);
+    return QStringLiteral("%1:%2:%3,%4").arg(ms / 3600000, 2, 10, QLatin1Char('0'))
+        .arg((ms / 60000) % 60, 2, 10, QLatin1Char('0'))
+        .arg((ms / 1000) % 60, 2, 10, QLatin1Char('0'))
+        .arg(ms % 1000, 3, 10, QLatin1Char('0'));
 }
 
 QJsonArray stringArray(const QJsonValue &value)
@@ -187,6 +223,24 @@ QString MdiEnrichmentJob::findTool(const QString &name, const QString &configure
 }
 
 //----------------------------------------------------------------------
+QString MdiEnrichmentJob::findWhisperModel(const QString &configuredPath)
+{
+    if (!configuredPath.isEmpty() && QFileInfo::exists(configuredPath))
+        return configuredPath;
+    const QStringList dirs = {
+        QDir::homePath() + QStringLiteral("/whisper-models"),
+        QStringLiteral("/opt/homebrew/share/whisper-cpp"),
+        QStringLiteral("/usr/local/share/whisper-cpp"),
+    };
+    QFileInfo best;
+    for (const QString &d : dirs)
+        for (const QFileInfo &f : QDir(d).entryInfoList({QStringLiteral("ggml-*.bin")}, QDir::Files))
+            if (!best.exists() || f.size() > best.size())
+                best = f;
+    return best.exists() ? best.absoluteFilePath() : QString();
+}
+
+//----------------------------------------------------------------------
 void MdiEnrichmentJob::requestStop()
 {
     m_stop = true;
@@ -230,6 +284,13 @@ void MdiEnrichmentJob::run()
 
     const QString derivedRoot = QDir(m_config.destinationPath).filePath(QStringLiteral("katalog_mdi"));
     const int fileCount = m_files.size();
+
+    // Clusters are computed when segments changed, or when segments exist
+    // without clusters (first run after an upgrade, or a stopped run)
+    const bool hasClusters = !MdiData::forCatalog(m_connectionName, m_config.catalogId,
+                                                  QStringLiteral("clusters")).isEmpty();
+    m_segmentsChanged = !hasClusters && !MdiData::forCatalog(m_connectionName, m_config.catalogId,
+                                                             QStringLiteral("segments")).isEmpty();
 
     for (int i = 0; i < fileCount && !m_stop.load(); ++i) {
         const FileItem &file = m_files.at(i);
@@ -292,10 +353,40 @@ void MdiEnrichmentJob::run()
             d.date          = QDateTime::currentDateTime().toString(Qt::ISODate);
             MdiData::upsert(m_connectionName, d);
             emit datumCommitted(file.fullPath, analysis);
+            if (analysis == QLatin1String("segments") && r.outcome == QLatin1String("completed"))
+                m_segmentsChanged = true;
 
             if (r.outcome == QLatin1String("completed"))      ++completed;
             else if (r.outcome == QLatin1String("skipped"))   ++skipped;
             else                                              ++failed;
+        }
+    }
+
+    // Catalog-level clusters, when this run produced new topic segments or
+    // none exist yet (MDI-F37; scope per catalog, D-Q3)
+    if (!m_stop.load() && m_segmentsChanged) {
+        emit progress(fileCount, fileCount, QStringLiteral("clusters"), m_config.catalogName);
+        Result r = makeClusters();
+        if (!m_stop.load() && r.outcome != QLatin1String("none")) {
+            MdiData::Datum d;
+            d.catalogId    = m_config.catalogId;
+            d.fullPath     = QString();   // the catalog itself
+            d.analysis     = QStringLiteral("clusters");
+            d.outcome      = r.outcome;
+            d.reason       = r.reason;
+            d.value        = r.value;
+            d.model        = r.model;
+            const QUrl url(m_config.ollamaUrl);
+            d.provider      = QStringLiteral("ollama");
+            d.providerClass = providerClass(url);
+            d.endpointHost  = url.host();
+            d.params       = analysisParams(QStringLiteral("clusters"));
+            d.date         = QDateTime::currentDateTime().toString(Qt::ISODate);
+            MdiData::upsert(m_connectionName, d);
+            emit datumCommitted(QString(), d.analysis);
+            if (r.outcome == QLatin1String("completed")) ++completed;
+            else if (r.outcome == QLatin1String("skipped")) ++skipped;
+            else ++failed;
         }
     }
 
@@ -328,6 +419,9 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
     // The K3 form writes "caption"; "imageCaption" is accepted as well
     const bool caption = ai.value("imageCaption").toBool(ai.value("caption").toBool(true));
     const bool summary = ai.value("summary").toBool(true);
+    // Topic segments need the transcript, which is selected with them (MDI-F5)
+    const bool segments   = ai.value("segments").toBool(true);
+    const bool transcript = segments || ai.value("transcript").toBool(true);
 
     QStringList list;
     if (file.fileType == QLatin1String("image")) {
@@ -338,13 +432,17 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
         if (video.value("keyframeStrip").toBool()) list << QStringLiteral("keyframes");
         if (video.value("clip").toString(QStringLiteral("off")) != QLatin1String("off"))
             list << QStringLiteral("clip_video");
-        if (caption) list << QStringLiteral("caption");
-        if (summary) list << QStringLiteral("summary");
+        if (transcript) list << QStringLiteral("transcript");
+        if (caption)    list << QStringLiteral("caption");
+        if (summary)    list << QStringLiteral("summary");
+        if (segments)   list << QStringLiteral("segments");
     } else if (file.fileType == QLatin1String("audio")) {
         if (audio.value("clip").toString(QStringLiteral("off")) != QLatin1String("off"))
             list << QStringLiteral("clip_audio");
         if (audio.value("waveform").toBool()) list << QStringLiteral("waveform");
+        if (transcript)                       list << QStringLiteral("transcript");
         if (summary)                          list << QStringLiteral("summary");
+        if (segments)                         list << QStringLiteral("segments");
     } else if (file.fileType == QLatin1String("text")) {
         if (summary) list << QStringLiteral("summary");
     }
@@ -375,6 +473,15 @@ QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
     } else if (analysis == QLatin1String("summary")) {
         p["model"]  = m_config.textModel;
         p["prompt"] = kSummaryPrompt;
+    } else if (analysis == QLatin1String("transcript")) {
+        p["model"]    = QFileInfo(m_config.whisperModelPath).fileName();
+        p["language"] = QStringLiteral("auto");
+    } else if (analysis == QLatin1String("segments")) {
+        p["model"]  = m_config.textModel;
+        p["prompt"] = kSegmentsPrompt;
+    } else if (analysis == QLatin1String("clusters")) {
+        p["model"]  = m_config.textModel;
+        p["prompt"] = kClustersPrompt;
     }
     return p;
 }
@@ -382,7 +489,8 @@ QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
 MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, const FileItem &file)
 {
     // Previews need ffmpeg; caption and summary check their own inputs (MDI-F21)
-    const bool isPreview = analysis != QLatin1String("summary") && analysis != QLatin1String("caption");
+    const bool isPreview = analysis != QLatin1String("summary") && analysis != QLatin1String("caption")
+                        && analysis != QLatin1String("segments");
     if (isPreview && m_config.ffmpegPath.isEmpty()) {
         Result r;
         r.outcome = QStringLiteral("skipped");
@@ -397,6 +505,8 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     if (analysis == QLatin1String("waveform"))   return makeWaveform(file);
     if (analysis == QLatin1String("caption"))    return makeCaption(file);
     if (analysis == QLatin1String("summary"))    return makeSummary(file);
+    if (analysis == QLatin1String("transcript")) return makeTranscript(file);
+    if (analysis == QLatin1String("segments"))   return makeSegments(file);
     Result r;
     r.outcome = QStringLiteral("skipped");
     r.reason  = QStringLiteral("unknown analysis");
@@ -681,18 +791,26 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSummary(const FileItem &file)
 
     QString source = file.fullPath;
     bool isTranscript = false;
+    QString text, tool, reason;
     if (file.fileType == QLatin1String("audio") || file.fileType == QLatin1String("video")) {
+        // A transcript next to the recording first (often revised by hand),
+        // else the one whisper made in this catalog
+        isTranscript = true;
         source = findTranscript(file);
         if (source.isEmpty()) {
-            r.outcome = QStringLiteral("skipped");
-            r.reason  = QStringLiteral("no transcript");
-            return r;
+            text = transcriptText(file);
+            if (text.isEmpty()) {
+                r.outcome = QStringLiteral("skipped");
+                r.reason  = QStringLiteral("no transcript");
+                return r;
+            }
+            tool = QStringLiteral("whisper");
         }
-        isTranscript = true;
     }
 
-    QString tool, reason;
-    QString text = extractText(source, &tool, &reason).simplified();
+    if (text.isEmpty())
+        text = extractText(source, &tool, &reason);
+    text = text.simplified();
     r.tool = tool;
     if (text.isEmpty()) {
         r.outcome = QStringLiteral("skipped");
@@ -727,13 +845,293 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSummary(const FileItem &file)
     r.value["language"] = answer.value("language").toString();
     r.value["truncated"] = truncated;
     if (isTranscript)
-        r.value["source"] = source;
+        r.value["source"] = source.isEmpty() ? QStringLiteral("whisper") : source;
     return r;
 }
 
 //----------------------------------------------------------------------
-bool MdiEnrichmentJob::runTool(const QString &program, const QStringList &args, QByteArray *output, QString *error)
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
 {
+    Result r;
+    if (m_config.whisperPath.isEmpty() || m_config.whisperModelPath.isEmpty()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = m_config.whisperPath.isEmpty() ? QStringLiteral("whisper not found")
+                                                   : QStringLiteral("whisper model not found");
+        return r;
+    }
+    if (m_config.ffmpegPath.isEmpty()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("ffmpeg not found");
+        return r;
+    }
+    r.tool = QStringLiteral("whisper.cpp");
+    r.model = QString();   // local program, not an AI provider over HTTP
+
+    QTemporaryDir tmp;
+    if (!tmp.isValid()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = QStringLiteral("no temporary folder");
+        return r;
+    }
+    // whisper.cpp reads 16 kHz mono PCM
+    const QString wav = tmp.filePath(QStringLiteral("audio.wav"));
+    const double duration = probeDuration(file.fullPath);
+    QString err;
+    if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error", "-i", file.fullPath,
+                                       "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", wav},
+                 nullptr, &err)) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = err;
+        return r;
+    }
+
+    // A long recording takes longer than the default limit: allow twice its length
+    const int limit = qMax(m_config.toolTimeoutMs, int(qMin(duration * 2000.0, 6.0 * 3600 * 1000)));
+    const QString outBase = tmp.filePath(QStringLiteral("transcript"));
+    const QString threads = QString::number(qMax(1, QThread::idealThreadCount() - 1));
+    if (!runTool(m_config.whisperPath, {"-m", m_config.whisperModelPath, "-f", wav, "-l", "auto",
+                                        "-t", threads, "-oj", "-of", outBase, "-np"},
+                 nullptr, &err, limit)) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = err;
+        return r;
+    }
+
+    QFile json(outBase + QStringLiteral(".json"));
+    if (!json.open(QIODevice::ReadOnly)) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = QStringLiteral("whisper wrote no output");
+        return r;
+    }
+    const QJsonObject doc = QJsonDocument::fromJson(json.readAll()).object();
+    QJsonArray passages;
+    QString srt;
+    int n = 0;
+    for (const QJsonValue &v : doc.value("transcription").toArray()) {
+        const QJsonObject o = v.toObject();
+        const QString text = o.value("text").toString().trimmed();
+        if (text.isEmpty())
+            continue;
+        const double start = o.value("offsets").toObject().value("from").toDouble() / 1000.0;
+        const double end   = o.value("offsets").toObject().value("to").toDouble() / 1000.0;
+        passages.append(QJsonObject{{"start", start}, {"end", end}, {"text", text}});
+        srt += QStringLiteral("%1\n%2 --> %3\n%4\n\n").arg(++n).arg(srtTime(start), srtTime(end), text);
+    }
+    if (passages.isEmpty()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("no speech found");
+        return r;
+    }
+
+    // Subtitles file, so the transcript opens in any player at its timecodes
+    const QString rel = derivedRelative(file, QStringLiteral("transcript"), QStringLiteral(".srt"));
+    QFile out(absoluteDerived(rel));
+    if (out.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        out.write(srt.toUtf8());
+        out.close();
+        r.derivedFiles << rel;
+    }
+    r.value["language"] = doc.value("result").toObject().value("language").toString();
+    r.value["passages"] = passages;
+    r.value["duration"] = duration;
+    return r;
+}
+
+QString MdiEnrichmentJob::transcriptText(const FileItem &file)
+{
+    for (const MdiData::Datum &d : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath)) {
+        if (d.analysis != QLatin1String("transcript") || d.outcome != QLatin1String("completed"))
+            continue;
+        QStringList parts;
+        for (const QJsonValue &p : d.value.value("passages").toArray())
+            parts << p.toObject().value("text").toString();
+        return parts.join(' ');
+    }
+    return QString();
+}
+
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeSegments(const FileItem &file)
+{
+    Result r;
+    r.model = m_config.textModel;
+
+    QJsonArray passages;
+    double duration = 0.0;
+    for (const MdiData::Datum &d : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath))
+        if (d.analysis == QLatin1String("transcript") && d.outcome == QLatin1String("completed")) {
+            passages = d.value.value("passages").toArray();
+            duration = d.value.value("duration").toDouble();
+        }
+    if (passages.isEmpty()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("no transcript");
+        return r;
+    }
+    if (duration <= 0)
+        duration = passages.last().toObject().value("end").toDouble();
+
+    // Timecoded lines, split into chunks the model can take in one request
+    QStringList chunks;
+    QString current;
+    for (const QJsonValue &v : passages) {
+        const QJsonObject p = v.toObject();
+        const QString line = QStringLiteral("[%1] %2\n").arg(formatTimecode(p.value("start").toDouble()),
+                                                             p.value("text").toString());
+        if (current.size() + line.size() > kSegmentChunkChars && !current.isEmpty()) {
+            chunks << current;
+            current.clear();
+        }
+        current += line;
+    }
+    if (!current.isEmpty())
+        chunks << current;
+
+    QList<QJsonObject> segments;
+    for (const QString &chunk : chunks) {
+        if (m_stop.load())
+            break;
+        const QString prompt = QStringLiteral(
+            "You split the timecoded transcript of a recording into topic segments for a personal media catalog. "
+            "Each line starts with its timecode [h:mm:ss]. Make consecutive segments, each covering one topic, "
+            "typically 1 to 10 minutes long, that together cover the whole transcript below. "
+            "Write titles, summaries and topics in the SAME LANGUAGE AS THE TRANSCRIPT. "
+            "Answer as JSON only: {\"segments\": [{\"start\": \"h:mm:ss\", \"end\": \"h:mm:ss\", "
+            "\"title\": \"short title\", \"summary\": \"1 or 2 sentences\", "
+            "\"topics\": [\"2 to 5 lowercase keywords\"]}]}.\n\nTRANSCRIPT:\n%1"
+            "\n\nRemember: same language as the TRANSCRIPT, JSON only.").arg(chunk);
+        QString err;
+        const QJsonObject answer = askOllama(m_config.textModel, prompt, {}, &err);
+        const QJsonArray found = answer.value("segments").toArray();
+        if (found.isEmpty()) {
+            r.outcome = QStringLiteral("failed");
+            r.reason  = err.isEmpty() ? QStringLiteral("no segments in the model answer") : err;
+            return r;
+        }
+        for (const QJsonValue &v : found) {
+            const QJsonObject o = v.toObject();
+            const QString title = o.value("title").toString().trimmed();
+            if (title.isEmpty())
+                continue;
+            segments.append(QJsonObject{
+                {"start",   parseTimecode(o.value("start"))},
+                {"end",     parseTimecode(o.value("end"))},
+                {"title",   title},
+                {"summary", o.value("summary").toString().trimmed()},
+                {"topics",  stringArray(o.value("topics"))},
+            });
+        }
+    }
+    if (segments.isEmpty()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = QStringLiteral("no segments in the model answer");
+        return r;
+    }
+
+    // Contiguous ranges (MDI-F38): sorted, each ends where the next starts
+    std::sort(segments.begin(), segments.end(), [](const QJsonObject &a, const QJsonObject &b) {
+        return a.value("start").toDouble() < b.value("start").toDouble();
+    });
+    QJsonArray out;
+    for (int i = 0; i < segments.size(); ++i) {
+        QJsonObject s = segments[i];
+        const double start = qBound(0.0, s.value("start").toDouble(), duration);
+        const double end   = i + 1 < segments.size() ? segments[i + 1].value("start").toDouble() : duration;
+        if (end <= start)
+            continue;
+        s["start"] = start;
+        s["end"]   = end;
+        out.append(s);
+    }
+    r.value["segments"] = out;
+    return r;
+}
+
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeClusters()
+{
+    Result r;
+    r.model = m_config.textModel;
+
+    // Every segment of the catalog, with an id the model refers to
+    struct Ref { QString fullPath; int index; QJsonObject segment; };
+    QList<Ref> refs;
+    QString lines;
+    for (const MdiData::Datum &d : MdiData::forCatalog(m_connectionName, m_config.catalogId, QStringLiteral("segments"))) {
+        const QJsonArray segs = d.value.value("segments").toArray();
+        for (int i = 0; i < segs.size(); ++i) {
+            const QJsonObject s = segs.at(i).toObject();
+            const QString id = QStringLiteral("S%1").arg(refs.size() + 1);
+            QStringList topics;
+            for (const QJsonValue &t : s.value("topics").toArray())
+                topics << t.toString();
+            lines += QStringLiteral("%1 | %2 | %3 — %4 [%5]\n").arg(id, QFileInfo(d.fullPath).fileName(),
+                         s.value("title").toString(), s.value("summary").toString(), topics.join(", "));
+            refs.append({d.fullPath, i, s});
+        }
+    }
+    if (refs.size() < 2) {
+        r.outcome = QStringLiteral("none");   // nothing to group: no datum written
+        return r;
+    }
+    lines.truncate(kMaxTextChars);
+
+    const QString prompt = QStringLiteral(
+        "Below are topic segments (id | file | title — summary [topics]) from recordings of one catalog. "
+        "Group segments that deal with the same subject into detailed thematic clusters, across files. "
+        "Each segment belongs to at most one cluster; a cluster has at least 2 segments. "
+        "Write labels and descriptions in the SAME LANGUAGE AS THE SEGMENTS. "
+        "Answer as JSON only: {\"clusters\": [{\"label\": \"short label\", "
+        "\"description\": \"1 or 2 sentences\", \"members\": [\"S1\", \"S7\"]}]}.\n\nSEGMENTS:\n%1").arg(lines);
+    QString err;
+    const QJsonObject answer = askOllama(m_config.textModel, prompt, {}, &err);
+    const QJsonArray found = answer.value("clusters").toArray();
+    if (found.isEmpty()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = err.isEmpty() ? QStringLiteral("no clusters in the model answer") : err;
+        return r;
+    }
+
+    QSet<int> used;
+    QJsonArray clusters;
+    for (const QJsonValue &v : found) {
+        const QJsonObject c = v.toObject();
+        QJsonArray members;
+        for (const QJsonValue &m : c.value("members").toArray()) {
+            const int k = m.toString().mid(1).toInt() - 1;
+            if (k < 0 || k >= refs.size() || used.contains(k))
+                continue;   // unknown id, or already in a cluster (MDI-F37)
+            used.insert(k);
+            const Ref &ref = refs.at(k);
+            members.append(QJsonObject{
+                {"fullPath", ref.fullPath},
+                {"segment",  ref.index},
+                {"start",    ref.segment.value("start")},
+                {"end",      ref.segment.value("end")},
+                {"title",    ref.segment.value("title")},
+            });
+        }
+        if (members.size() < 2 || c.value("label").toString().trimmed().isEmpty())
+            continue;
+        clusters.append(QJsonObject{
+            {"label",       c.value("label").toString().trimmed()},
+            {"description", c.value("description").toString().trimmed()},
+            {"members",     members},
+        });
+    }
+    if (clusters.isEmpty()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = QStringLiteral("no usable cluster in the model answer");
+        return r;
+    }
+    r.value["clusters"] = clusters;
+    r.value["segmentCount"] = refs.size();
+    return r;
+}
+
+//----------------------------------------------------------------------
+bool MdiEnrichmentJob::runTool(const QString &program, const QStringList &args, QByteArray *output, QString *error,
+                               int timeoutMs)
+{
+    const int limit = timeoutMs > 0 ? timeoutMs : m_config.toolTimeoutMs;
     // Program path + argument list, never a shell (MDI-C7)
     QProcess process;
     process.setProgram(program);
@@ -749,7 +1147,7 @@ bool MdiEnrichmentJob::runTool(const QString &program, const QStringList &args, 
     QByteArray out;
     while (!process.waitForFinished(200)) {
         out += process.readAllStandardOutput();
-        if (m_stop.load() || clock.elapsed() > m_config.toolTimeoutMs) {
+        if (m_stop.load() || clock.elapsed() > limit) {
             process.kill();
             process.waitForFinished(2000);
             *error = m_stop.load() ? QStringLiteral("stopped") : QStringLiteral("time limit reached");

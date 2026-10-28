@@ -436,6 +436,7 @@ public slots:
     Q_INVOKABLE QString      mdiPreviewUrl(int catalogId, const QString &fullPath, int revision = 0);
     Q_INVOKABLE bool         mdiHasData(int catalogId, const QString &fullPath, int revision = 0);
     Q_INVOKABLE QVariantList mdiDetails(int catalogId, const QString &fullPath);
+    Q_INVOKABLE QVariantMap  mdiClusters(int catalogId);
     Q_INVOKABLE QString      localFileUrl(const QString &path) const;
 
     // Storage pre-selection for Create page (used by DeviceTreeComboBox storageOnly mode)

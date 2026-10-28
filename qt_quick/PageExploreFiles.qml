@@ -940,4 +940,5 @@ Item {
     // ── Metadata dialog ───────────────────────────────────────────────────
     MetadataDialog { id: metadataDialog }
     MdiDetailsDialog { id: mdiDetailsDialog }
+    function showClusters() { mdiDetailsDialog.showClusters(root.catalogId, root.catalogName) }
 }

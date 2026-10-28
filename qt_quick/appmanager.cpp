@@ -2708,7 +2708,8 @@ const QString kMdiMainConnection = QStringLiteral("mdi_main");
 const QStringList kMdiAnalysisOrder = {
     QStringLiteral("thumbnail"), QStringLiteral("poster"), QStringLiteral("keyframes"),
     QStringLiteral("clip_video"), QStringLiteral("clip_audio"), QStringLiteral("waveform"),
-    QStringLiteral("caption"), QStringLiteral("summary")
+    QStringLiteral("caption"), QStringLiteral("transcript"), QStringLiteral("segments"),
+    QStringLiteral("summary")
 };
 }
 //----------------------------------------------------------------------
@@ -2760,6 +2761,8 @@ QVariantMap AppManager::getEnrichmentTools()
     tools[QStringLiteral("ffmpeg")]    = MdiEnrichmentJob::findTool(QStringLiteral("ffmpeg"),    settings.value("MediaIntelligence/FfmpegPath").toString());
     tools[QStringLiteral("ffprobe")]   = MdiEnrichmentJob::findTool(QStringLiteral("ffprobe"),   settings.value("MediaIntelligence/FfprobePath").toString());
     tools[QStringLiteral("pdftotext")] = MdiEnrichmentJob::findTool(QStringLiteral("pdftotext"), settings.value("MediaIntelligence/PdftotextPath").toString());
+    tools[QStringLiteral("whisper")]   = MdiEnrichmentJob::findTool(QStringLiteral("whisper-cli"), settings.value("MediaIntelligence/WhisperPath").toString());
+    tools[QStringLiteral("whisperModel")] = MdiEnrichmentJob::findWhisperModel(settings.value("MediaIntelligence/WhisperModelPath").toString());
     tools[QStringLiteral("ollamaUrl")]   = settings.value("MediaIntelligence/OllamaUrl", QStringLiteral("http://localhost:11434")).toString();
     tools[QStringLiteral("visionModel")] = settings.value("MediaIntelligence/VisionModel", QStringLiteral("gemma4")).toString();
     tools[QStringLiteral("textModel")]   = settings.value("MediaIntelligence/TextModel",   QStringLiteral("gemma4")).toString();
@@ -2776,6 +2779,9 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
     if (analysis == QLatin1String("waveform"))   return tr("Waveform");
     if (analysis == QLatin1String("caption"))    return tr("Caption and tags");
     if (analysis == QLatin1String("summary"))    return tr("Summary and excerpts");
+    if (analysis == QLatin1String("transcript")) return tr("Transcript");
+    if (analysis == QLatin1String("segments"))   return tr("Topic segments");
+    if (analysis == QLatin1String("clusters"))   return tr("Topic clusters");
     return analysis;
 }
 //----------------------------------------------------------------------
@@ -2811,6 +2817,8 @@ QString AppManager::startEnrichment(int deviceId)
     config.ffmpegPath      = tools.value(QStringLiteral("ffmpeg")).toString();
     config.ffprobePath     = tools.value(QStringLiteral("ffprobe")).toString();
     config.pdftotextPath   = tools.value(QStringLiteral("pdftotext")).toString();
+    config.whisperPath     = tools.value(QStringLiteral("whisper")).toString();
+    config.whisperModelPath = tools.value(QStringLiteral("whisperModel")).toString();
     config.ollamaUrl       = tools.value(QStringLiteral("ollamaUrl")).toString();
     config.visionModel     = tools.value(QStringLiteral("visionModel")).toString();
     config.textModel       = tools.value(QStringLiteral("textModel")).toString();
@@ -2981,6 +2989,20 @@ QVariantList AppManager::mdiDetails(int catalogId, const QString &fullPath)
         });
     }
     return list;
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::mdiClusters(int catalogId)
+{
+    // Catalog-level datum: empty file path, analysis "clusters" (MDI-F37)
+    if (!QFileInfo::exists(mdiDataPath()) || !openMdiMainConnection())
+        return QVariantMap();
+    const QList<MdiData::Datum> data = MdiData::forCatalog(kMdiMainConnection, catalogId, QStringLiteral("clusters"));
+    if (data.isEmpty())
+        return QVariantMap();
+    QVariantMap result = data.first().value.toVariantMap();
+    result[QStringLiteral("model")] = data.first().model;
+    result[QStringLiteral("date")]  = data.first().date;
+    return result;
 }
 //----------------------------------------------------------------------
 QString AppManager::localFileUrl(const QString &path) const

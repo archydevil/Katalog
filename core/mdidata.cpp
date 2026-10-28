@@ -246,6 +246,25 @@ QList<MdiData::Datum> MdiData::forFile(const QString &connectionName, int catalo
     return list;
 }
 
+QList<MdiData::Datum> MdiData::forCatalog(const QString &connectionName, int catalogId, const QString &analysis)
+{
+    QList<Datum> list;
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    q.prepare(QLatin1String(R"(
+        SELECT * FROM mdi_datum
+        WHERE datum_catalog_id = :catalog_id AND datum_analysis = :analysis
+          AND datum_outcome = 'completed'
+        ORDER BY datum_full_path
+    )"));
+    q.bindValue(":catalog_id", catalogId);
+    q.bindValue(":analysis",   analysis);
+    if (!q.exec())
+        return list;
+    while (q.next())
+        list.append(readDatum(q));
+    return list;
+}
+
 QStringList MdiData::clearCatalog(const QString &connectionName, int catalogId)
 {
     QStringList derived;
