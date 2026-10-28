@@ -37,6 +37,8 @@ set(CORE_HEADERS
     statistics.h
     mdischema.h
     mdiprofile.h
+    mdidata.h
+    mdienrichmentjob.h
 )
 
 set(CORE_SOURCES
@@ -78,6 +80,8 @@ set(CORE_SOURCES
     statistics.cpp
     mdischema.cpp
     mdiprofile.cpp
+    mdidata.cpp
+    mdienrichmentjob.cpp
 )
 
 add_library(katalog-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
