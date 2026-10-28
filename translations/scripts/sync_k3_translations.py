@@ -34,7 +34,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-QML_DIR   = REPO_ROOT / "qt_quick"
+QML_DIR = REPO_ROOT / "qt_quick"
 TRANS_DIR = REPO_ROOT / "translations"
 
 
