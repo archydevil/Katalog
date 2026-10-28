@@ -161,6 +161,9 @@ private:
     // Catalog-level: groups the catalog's topic segments (MDI-F37, scope per catalog)
     Result makeClusters();
     Result makeEmbeddings(const FileItem &file);
+    Result makeSnippet(const FileItem &file);
+    // ffmpeg writes a JPEG frame; this stores it as the thumbnail (WebP when possible)
+    bool   finishThumbnail(const QString &jpegPath, const QString &targetPath, QString *error);
     QString transcriptText(const FileItem &file);   // from this catalog's transcript datum
 
     QString extractText(const QString &path, QString *tool, QString *reason);

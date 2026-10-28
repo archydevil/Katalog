@@ -103,6 +103,15 @@ public:
      */
     void setMemoryModeEnabled(bool enabled) { memoryModeEnabled = enabled; }
 
+    /**
+     * @brief Fork: path of the collection's mdi_data.db, which holds the
+     *        instant-search index (SpecMediaIntelligence.md). When set and the
+     *        catalog's index is current, the file query is prefiltered with it.
+     *        Empty (the default, and K2) means the search runs as before.
+     */
+    void setMdiDataPath(const QString &path) { m_mdiDataPath = path; }
+    int  ftsPrefilteredCatalogs = 0;   // catalogs searched through the index in the last search
+
 protected:
     /**
      * @brief Search for files in a catalog
@@ -138,6 +147,7 @@ private:
     void waitIfPaused();
 
     QString m_connectionName;
+    QString m_mdiDataPath;
     QAtomicInt m_stopRequested{0};
     QAtomicInt m_paused{0};
     mutable QMutex m_pauseMutex;

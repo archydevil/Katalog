@@ -20,6 +20,7 @@
 #include "core/mdidata.h"
 #include "core/mdienrichmentjob.h"
 #include "core/mdisystemmonitor.h"
+#include "core/mdifts.h"
 #include <QThread>
 #include <QThread>
 #include <QJsonDocument>
@@ -253,6 +254,8 @@ void AppManager::executeSearch()
 
     // Memory mode requires CSV loading during search
     searchObject->setMemoryModeEnabled(collection->databaseMode == "Memory");
+    // Instant-search prefilter (fork, D5): SQLite collections only
+    searchObject->setMdiDataPath(collection->databaseMode == QLatin1String("Hosted") ? QString() : mdiDataPath());
 
     // Capture device path at search time so Results page shows the right device
     searchObject->devicePath = Device::getDevicePath(selectedDevice->ID, m_connectionName);
@@ -480,6 +483,10 @@ QString AppManager::startDatabase()
     emit databaseModeChanged();
     emit recentCollectionsChanged();
     qInfo() << "Katalog" << currentVersion << "– database ready:" << collection->databaseMode;
+    // Instant-search index for catalogs not indexed yet (fork, D5), once the
+    // window is up; the background pass is stopped before the application ends
+    QTimer::singleShot(3000, this, &AppManager::scheduleFtsIndexing);
+    connect(qApp, &QCoreApplication::aboutToQuit, this, &AppManager::stopFtsIndexing, Qt::UniqueConnection);
     return "startDatabase: No Error";
 }
 //----------------------------------------------------------------------
@@ -1257,6 +1264,8 @@ bool AppManager::reconnectToDatabase()
 
     // Pending wizard profiles belong to the collection being left
     m_pendingEnrichmentProfiles.clear();
+    // The index being built belongs to it too
+    stopFtsIndexing();
     m_mdiWaiting.clear();          // waiting enrichments name devices of that collection
     m_mdiIndexCatalogId = -1;      // previews are re-read from the new collection folder
 
@@ -1295,6 +1304,7 @@ bool AppManager::reconnectToDatabase()
     // collection name through this signal, and the rollback path above reconnects
     // without going through saveToRecentCollections().
     emit recentCollectionsChanged();
+    QTimer::singleShot(1000, this, &AppManager::scheduleFtsIndexing);
     return true;
 }
 
@@ -2785,6 +2795,8 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
     if (analysis == QLatin1String("segments"))   return tr("Topic segments");
     if (analysis == QLatin1String("clusters"))   return tr("Topic clusters");
     if (analysis == QLatin1String("embeddings")) return tr("Index for search by meaning");
+    if (analysis == QLatin1String("snippet"))    return tr("Text snippet");
+    if (analysis == QLatin1String("fts"))        return tr("Instant search index");
     return analysis;
 }
 //----------------------------------------------------------------------
@@ -2904,6 +2916,7 @@ QString AppManager::startEnrichment(int deviceId)
                 m_monitorThread->quit();
                 m_monitorThread->wait(3000);
             }
+            stopFtsIndexing();
         });
     }
 
@@ -3074,6 +3087,73 @@ QVariantMap AppManager::mdiToolsInfo()
     info[QStringLiteral("textModel")]   = tools.value(QStringLiteral("textModel"));
     info[QStringLiteral("embedModel")]  = tools.value(QStringLiteral("embedModel"));
     return info;
+}
+//----------------------------------------------------------------------
+void AppManager::scheduleFtsIndexing()
+{
+    if (collection->databaseMode == QLatin1String("Hosted"))
+        return;   // FTS5 is SQLite only; Hosted searches as before
+    if (m_ftsThread) {
+        m_ftsPending = true;   // run again when the current pass ends
+        return;
+    }
+    const QList<QVariantMap> stale = MdiFts::staleCatalogs(m_connectionName, mdiDataPath());
+    if (stale.isEmpty())
+        return;
+
+    const QString mdiPath  = mdiDataPath();
+    const QString mode     = collection->databaseMode;
+    const QString dbPath   = collection->databaseFilePath;
+    m_ftsStop = false;
+    m_ftsThread = QThread::create([this, stale, mdiPath, mode, dbPath]() {
+        for (const QVariantMap &c : stale) {
+            if (m_ftsStop.load())
+                break;
+            QElapsedTimer clock;
+            clock.start();
+            QString error;
+            const bool ok = MdiFts::rebuildCatalog(mdiPath, c.value(QStringLiteral("catalogId")).toInt(),
+                                                   c.value(QStringLiteral("stamp")).toString(), mode, dbPath,
+                                                   c.value(QStringLiteral("filePath")).toString(), &error, &m_ftsStop);
+            // Reported on the Activity page like an enrichment step
+            QVariantMap step;
+            step[QStringLiteral("event")]      = QStringLiteral("end");
+            step[QStringLiteral("analysis")]   = QStringLiteral("fts");
+            step[QStringLiteral("filePath")]   = QString();
+            step[QStringLiteral("catalog")]    = c.value(QStringLiteral("name"));
+            step[QStringLiteral("tool")]       = QStringLiteral("sqlite fts5");
+            step[QStringLiteral("where")]      = QStringLiteral("local");
+            step[QStringLiteral("outcome")]    = ok ? QStringLiteral("completed") : QStringLiteral("failed");
+            step[QStringLiteral("reason")]     = error;
+            step[QStringLiteral("durationMs")] = clock.elapsed();
+            QMetaObject::invokeMethod(this, [this, step]() {
+                QVariantMap entry = step;
+                entry[QStringLiteral("label")]    = mdiAnalysisLabel(QStringLiteral("fts"));
+                entry[QStringLiteral("fileName")] = step.value(QStringLiteral("catalog"));
+                entry[QStringLiteral("time")]     = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
+                m_mdiStepLog.prepend(entry);
+                emit mdiStepLogChanged();
+            }, Qt::QueuedConnection);
+        }
+    });
+    connect(m_ftsThread, &QThread::finished, this, [this]() {
+        m_ftsThread->deleteLater();
+        m_ftsThread = nullptr;
+        if (m_ftsPending && !m_ftsStop.load()) {
+            m_ftsPending = false;
+            scheduleFtsIndexing();
+        }
+    });
+    m_ftsThread->start(QThread::LowPriority);
+}
+//----------------------------------------------------------------------
+void AppManager::stopFtsIndexing()
+{
+    m_ftsPending = false;
+    if (!m_ftsThread)
+        return;
+    m_ftsStop = true;
+    m_ftsThread->wait(10000);   // rebuilds commit in batches and check the flag between them
 }
 //----------------------------------------------------------------------
 void AppManager::refreshMdiIndex(int catalogId)
@@ -3755,6 +3835,9 @@ void AppManager::finishRunningOperation()
     m_hasRunningOperation = false;
     emitQueueChanged();
     scheduleNextOperation();
+    // A created or updated catalog gets its instant-search index refreshed
+    if (!m_hasRunningOperation)
+        scheduleFtsIndexing();
 }
 //----------------------------------------------------------------------
 void AppManager::scheduleNextOperation()

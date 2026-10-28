@@ -2,6 +2,7 @@
 #define APPMANAGER_H
 
 #include <QObject>
+#include <atomic>
 #include <QMutex>
 #include <QDebug>
 
@@ -841,6 +842,14 @@ private:
     QString           m_mdiSourcePath;   // catalog source, to tell whether it is connected
     void    updateMonitoring();
     void    onMdiActivity(const QVariantMap &step);
+
+    // Instant-search index (fork, D5): rebuilt in the background, one catalog
+    // at a time, for the catalogs whose index is missing or stale
+    QThread          *m_ftsThread = nullptr;
+    std::atomic<bool> m_ftsStop{false};
+    bool              m_ftsPending = false;
+    void    scheduleFtsIndexing();
+    void    stopFtsIndexing();
     QString mdiAnalysisLabel(const QString &analysis) const;
     QVariantList m_semanticResults;
     bool         m_semanticActive = false;

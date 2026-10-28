@@ -30,6 +30,7 @@
 *///
 
 #include "core/searchjobstoppable.h"
+#include "core/mdifts.h"
 #include "core/catalogmanager.h"
 #include "core/catalogdifferenceengine.h"
 #include "core/filemetadata.h"
@@ -98,6 +99,7 @@ void SearchJobStoppable::searchFiles(Device *selectedDevice)
     }
 
     // Clear previous results
+    ftsPrefilteredCatalogs = 0;
     clearResults();
 
     // Add this debug check to see if there's leftover data
@@ -604,8 +606,33 @@ void SearchJobStoppable::searchFilesInCatalog(Device *device, QMutex &mutex, boo
         }
     }
 
+    // Fork: instant-search prefilter (SpecMediaIntelligence.md, D5). The FTS
+    // match is a superset of what the regex below accepts (same terms, no
+    // case, substring), and the regex still checks every row, so the results
+    // are those of the full scan. Skipped whenever that cannot be guaranteed:
+    // regex criteria, a term under 3 characters, no index or a stale one.
+    QString ftsQuery;
+    if (!m_mdiDataPath.isEmpty() && searchOnFileName && device->catalog
+        && MdiFts::attach(m_connectionName, m_mdiDataPath)
+        && MdiFts::isCurrent(m_connectionName, QStringLiteral("mdi"), device->externalID,
+                             MdiFts::stamp(device->catalog->dateUpdated.toString("yyyy-MM-dd hh:mm:ss")))) {
+        ftsQuery = MdiFts::matchQuery(searchText, selectedTextCriteria,
+                                      selectedSearchIn == SEARCH_IN_FILE_NAMES);
+        if (!ftsQuery.isEmpty())
+            getFilesQuerySQL += QLatin1String(R"(
+    AND file_full_path IN (SELECT d.doc_full_path FROM mdi.mdi_fts_doc d
+                           WHERE d.doc_catalog_id = :fts_catalog_id
+                             AND d.doc_id IN (SELECT rowid FROM mdi.mdi_fts WHERE mdi_fts MATCH :fts_query))
+)");
+    }
+
     getFilesQuery.prepare(getFilesQuerySQL);
     getFilesQuery.bindValue(":file_catalog_id", device->externalID);
+    if (!ftsQuery.isEmpty()) {
+        getFilesQuery.bindValue(":fts_catalog_id", device->externalID);
+        getFilesQuery.bindValue(":fts_query", ftsQuery);
+        ++ftsPrefilteredCatalogs;
+    }
 
     if (searchOnFileCriteria && searchOnSize) {
         getFilesQuery.bindValue(":file_size_min", selectedMinimumSize * sizeMultiplierMin);
