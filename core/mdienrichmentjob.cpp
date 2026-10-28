@@ -63,14 +63,14 @@ namespace {
 // Prompt versions take part in the parameters, so a changed prompt re-runs
 // its analysis on the next job (MDI-F54).
 const QString kCaptionPrompt = QStringLiteral("caption-v1");
-const QString kSummaryPrompt = QStringLiteral("summary-v2");
+const QString kSummaryPrompt = QStringLiteral("summary-v3");
 
 // Text sent to the model is cut to this length: long documents are summarised
 // from their beginning. The context window is sized for it: with Ollama's
 // default window a long transcript is cut and the answer is no longer JSON.
 constexpr int kMaxTextChars  = 24000;
 constexpr int kContextTokens = 16384;
-constexpr int kAnswerTokens  = 1024;
+constexpr int kAnswerTokens  = 2048;
 
 constexpr int kThumbnailSize = 320;   // longest side, MDI-F29
 
@@ -708,7 +708,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSummary(const FileItem &file)
         "You summarise %1 for a personal media catalog. Write the summary, the excerpts and the tags "
         "in the SAME LANGUAGE AS THE TEXT (an Italian text gets an Italian summary). "
         "Answer as JSON only: {\"summary\": \"3 to 5 sentences\", "
-        "\"excerpts\": [\"up to 4 short key passages quoted verbatim\"], "
+        "\"excerpts\": [\"up to 4 key passages quoted verbatim, each under 30 words\"], "
         "\"tags\": [\"3 to 10 lowercase keywords\"], \"language\": \"ISO 639-1 code\"}.\n\nTEXT:\n%2"
         "\n\nRemember: same language as the TEXT, JSON only.")
         .arg(isTranscript ? QStringLiteral("the transcript of a recording") : QStringLiteral("a document"), text);
@@ -772,6 +772,19 @@ bool MdiEnrichmentJob::runTool(const QString &program, const QStringList &args, 
 QJsonObject MdiEnrichmentJob::askOllama(const QString &model, const QString &prompt,
                                         const QStringList &imagePaths, QString *error)
 {
+    // A long answer occasionally comes back as broken JSON: one more try, then
+    // the datum is recorded as failed (MDI-C20).
+    QJsonObject result = askOllamaOnce(model, prompt, imagePaths, error);
+    if (result.isEmpty() && !m_stop.load() && error->startsWith(QLatin1String("answer is not JSON"))) {
+        error->clear();
+        result = askOllamaOnce(model, prompt, imagePaths, error);
+    }
+    return result;
+}
+
+QJsonObject MdiEnrichmentJob::askOllamaOnce(const QString &model, const QString &prompt,
+                                            const QStringList &imagePaths, QString *error)
+{
     const QUrl base(m_config.ollamaUrl);
     // Content goes only to a local endpoint until the egress confirmation of
     // MDI-F24 exists.
@@ -823,18 +836,33 @@ QJsonObject MdiEnrichmentJob::askOllama(const QString &model, const QString &pro
                : clock.elapsed() > m_config.httpTimeoutMs ? QStringLiteral("time limit reached")
                : reply->errorString();
     } else {
-        const QJsonObject envelope = QJsonDocument::fromJson(reply->readAll()).object();
+        const QByteArray raw = reply->readAll();
+        QJsonParseError envelopeError;
+        const QJsonObject envelope = QJsonDocument::fromJson(raw, &envelopeError).object();
         const QString text = envelope.value("response").toString();
-        result = QJsonDocument::fromJson(text.toUtf8()).object();
+        QJsonParseError answerError;
+        result = QJsonDocument::fromJson(text.toUtf8(), &answerError).object();
         if (result.isEmpty()) {
             // Some answers wrap the object in prose or a code fence
             const int first = text.indexOf('{'), last = text.lastIndexOf('}');
             if (first >= 0 && last > first)
                 result = QJsonDocument::fromJson(text.mid(first, last - first + 1).toUtf8()).object();
         }
+        if (result.isEmpty() && answerError.error == QJsonParseError::UnterminatedObject) {
+            // The model sometimes stops before closing the object: close it
+            for (const char *tail : {"}", "\"}", "]}", "\"]}"}) {
+                result = QJsonDocument::fromJson((text.trimmed() + QLatin1String(tail)).toUtf8()).object();
+                if (!result.isEmpty())
+                    break;
+            }
+        }
         if (result.isEmpty())
             *error = envelope.contains("error") ? envelope.value("error").toString()
-                                                : QStringLiteral("answer is not JSON");
+                   : envelope.isEmpty()
+                     ? QStringLiteral("answer is not JSON (reply of %1 bytes: %2)")
+                           .arg(raw.size()).arg(envelopeError.errorString())
+                     : QStringLiteral("answer is not JSON (%1 at %2 of %3 chars)")
+                           .arg(answerError.errorString()).arg(answerError.offset).arg(text.size());
     }
     reply->deleteLater();
     return result;

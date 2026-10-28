@@ -136,6 +136,7 @@ private:
     double  probeDuration(const QString &path);
     bool    runTool(const QString &program, const QStringList &args, QByteArray *output, QString *error);
     QJsonObject askOllama(const QString &model, const QString &prompt, const QStringList &imagePaths, QString *error);
+    QJsonObject askOllamaOnce(const QString &model, const QString &prompt, const QStringList &imagePaths, QString *error);
 
     QString derivedRelative(const FileItem &file, const QString &analysis, const QString &suffix) const;
     QString absoluteDerived(const QString &relative) const;
