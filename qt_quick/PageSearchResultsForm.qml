@@ -222,8 +222,118 @@ ColumnLayout {
         }
     }
 
+    // ── By meaning (fork, SpecMediaIntelligence.md MDI-F47..F49) ─────────
+    // Its own list: the table's columns hold no matched sentence. Alone on the
+    // page when no other criterion was set, above the table otherwise.
+    ColumnLayout {
+        id: semanticPanel
+        visible: appManager1.semanticActive
+        Layout.fillWidth: true
+        Layout.fillHeight: appManager1.semanticOnly
+        Layout.preferredHeight: appManager1.semanticOnly ? -1 : Math.min(implicitHeight, pageSearchResults_column.height * 0.45)
+        spacing: 0
+
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.margins: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.largeSpacing
+            Controls.Label {
+                text: qsTr("By meaning") + "  ·  " + appManager1.semanticResults.length
+                color: applicationWindow().titleColor
+                leftPadding: Kirigami.Units.largeSpacing
+            }
+            Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
+        }
+
+        Kirigami.PlaceholderMessage {
+            visible: appManager1.semanticResults.length === 0
+            Layout.fillWidth: true
+            Layout.margins: Kirigami.Units.largeSpacing
+            text: qsTr("No file matches this description.")
+        }
+
+        ListView {
+            id: semanticList
+            visible: appManager1.semanticResults.length > 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            implicitHeight: contentHeight
+            clip: true
+            model: appManager1.semanticResults
+            Controls.ScrollBar.vertical: Controls.ScrollBar {}
+
+            function hitKind(kind) {
+                switch (kind) {
+                    case "caption":  return qsTr("Caption and tags")
+                    case "segment":  return qsTr("Topic segments")
+                    case "passage":  return qsTr("Transcript")
+                    default:         return qsTr("Summary and excerpts")
+                }
+            }
+
+            delegate: Controls.ItemDelegate {
+                required property var modelData
+                required property int index
+                width: semanticList.width
+                highlighted: semanticList.currentIndex === index
+                onClicked: semanticList.currentIndex = index
+                onDoubleClicked: Qt.openUrlExternally(appManager1.localFileUrl(modelData.fullPath))
+
+                contentItem: RowLayout {
+                    spacing: Kirigami.Units.largeSpacing
+                    Kirigami.Icon {
+                        Layout.alignment: Qt.AlignTop
+                        source: modelData.preview !== "" ? modelData.preview : "document-open"
+                        implicitWidth:  Kirigami.Units.iconSizes.huge
+                        implicitHeight: Kirigami.Units.iconSizes.huge
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Controls.Label { text: modelData.fileName; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Controls.Label { text: Math.round(modelData.score * 100) + "%"; opacity: 0.7 }
+                        }
+                        Controls.Label { text: modelData.folderPath; opacity: 0.6; elide: Text.ElideMiddle; Layout.fillWidth: true; font: Kirigami.Theme.smallFont }
+                        Repeater {
+                            model: modelData.hits
+                            delegate: Controls.Label {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                maximumLineCount: 3
+                                elide: Text.ElideRight
+                                textFormat: Text.StyledText
+                                text: "<span style='opacity:0.6'>" + semanticList.hitKind(modelData.kind)
+                                      + (modelData.start >= 0 ? " · " + mdiDetailsDialog.timecode(modelData.start) : "")
+                                      + "</span>  " + modelData.text
+                            }
+                        }
+                    }
+                    ColumnLayout {
+                        Layout.alignment: Qt.AlignTop
+                        IconButton {
+                            icon.name: "document-open"
+                            text: qsTr("Open file")
+                            onClicked: Qt.openUrlExternally(appManager1.localFileUrl(modelData.fullPath))
+                        }
+                        IconButton {
+                            icon.name: "view-preview"
+                            text: qsTr("Show analysis")
+                            onClicked: mdiDetailsDialog.showFor(modelData.catalogId, modelData.fullPath, modelData.fileName)
+                        }
+                    }
+                }
+            }
+        }
+
+        Kirigami.Separator { Layout.fillWidth: true; visible: !appManager1.semanticOnly }
+    }
+
     // ── Summary bar ──────────────────────────────────────────────────────
     Rectangle {
+        visible: !appManager1.semanticOnly
         Layout.fillWidth: true
         implicitHeight: summaryRow.implicitHeight + Kirigami.Units.largeSpacing * 2
         color: Kirigami.Theme.backgroundColor
@@ -382,6 +492,7 @@ ColumnLayout {
 
     // ── Column headers + Table ───────────────────────────────────────────
     Item {
+        visible: !appManager1.semanticOnly
         Layout.fillWidth: true
         Layout.fillHeight: true
         clip: true
@@ -942,6 +1053,7 @@ ColumnLayout {
 
     // ── Metadata dialog ───────────────────────────────────────────────────
     MetadataDialog { id: metadataDialog }
+    MdiDetailsDialog { id: mdiDetailsDialog }
 
     // ── Checksum result dialog ────────────────────────────────────────────
     Kirigami.Dialog {
