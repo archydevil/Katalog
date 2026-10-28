@@ -19,6 +19,7 @@
 #include "core/mdiprofile.h"
 #include "core/mdidata.h"
 #include "core/mdienrichmentjob.h"
+#include "core/mdisystemmonitor.h"
 #include <QThread>
 #include <QThread>
 #include <QJsonDocument>
@@ -2833,6 +2834,8 @@ QString AppManager::startEnrichment(int deviceId)
 
     m_mdiCatalogName = device.name;
     m_mdiIsPaused    = false;
+    m_mdiJobStart    = QDateTime::currentDateTime();
+    m_mdiSourcePath  = device.path;
     m_mdiJob    = new MdiEnrichmentJob(config, files);
     m_mdiThread = new QThread();
     m_mdiJob->moveToThread(m_mdiThread);
@@ -2853,6 +2856,7 @@ QString AppManager::startEnrichment(int deviceId)
                               .build();
         emit mdiStatusTextChanged();
     });
+    connect(m_mdiJob, &MdiEnrichmentJob::activity, this, &AppManager::onMdiActivity);
     connect(m_mdiJob, &MdiEnrichmentJob::datumCommitted, this, [this](const QString &, const QString &) {
         // Coalesced: Explore re-reads its previews at most once a second
         if (!m_mdiRevisionPending) {
@@ -2872,6 +2876,8 @@ QString AppManager::startEnrichment(int deviceId)
         emit mdiStatusTextChanged();
         m_mdiJob = nullptr;           // deleted with its thread
         m_mdiIsPaused = false;
+        m_mdiStep.clear();
+        emit mdiStepChanged();
         m_mdiRevision++;
         emit mdiRevisionChanged();
         emit mdiStateChanged();
@@ -2893,11 +2899,17 @@ QString AppManager::startEnrichment(int deviceId)
                 m_mdiThread->quit();
                 m_mdiThread->wait(5000);
             }
+            if (m_monitorThread) {
+                m_monitorThread->quit();
+                m_monitorThread->wait(3000);
+            }
         });
     }
 
     m_mdiThread->start();
     emit mdiStateChanged();
+    emit mdiStepChanged();
+    updateMonitoring();
     return QString();
 }
 //----------------------------------------------------------------------
@@ -2929,6 +2941,137 @@ void AppManager::setEnrichmentPaused(bool paused)
                           .setDeviceContext(1, 1, m_mdiCatalogName).build();
     emit mdiStatusTextChanged();
     emit mdiStateChanged();
+}
+//----------------------------------------------------------------------
+// Activity page (MDI-F61..F75)
+void AppManager::setActivityMonitoring(bool visible)
+{
+    m_activityVisible = visible;
+    updateMonitoring();
+}
+//----------------------------------------------------------------------
+void AppManager::updateMonitoring()
+{
+    // Samples only while someone can see them or a job runs: the monitor
+    // starts short system programs every two seconds.
+    const bool wanted = m_activityVisible || m_mdiJob != nullptr;
+    if (wanted && !m_monitor) {
+        m_monitor       = new MdiSystemMonitor();
+        m_monitorThread = new QThread();
+        m_monitor->moveToThread(m_monitorThread);
+        connect(m_monitorThread, &QThread::finished, m_monitor, &QObject::deleteLater);
+        connect(m_monitorThread, &QThread::finished, m_monitorThread, &QObject::deleteLater);
+        connect(m_monitor, &MdiSystemMonitor::snapshot, this, [this](const QVariantMap &snapshot) {
+            m_mdiSystem = snapshot;
+            QVariantMap point;
+            point[QStringLiteral("t")]   = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
+            point[QStringLiteral("cpu")] = snapshot.value(QStringLiteral("cpu"), -1);
+            point[QStringLiteral("gpu")] = snapshot.value(QStringLiteral("gpu"), -1);
+            const double total = snapshot.value(QStringLiteral("memTotalGb")).toDouble();
+            point[QStringLiteral("mem")] = total > 0
+                ? qRound(100.0 * snapshot.value(QStringLiteral("memUsedGb")).toDouble() / total) : -1;
+            m_mdiHistory.append(point);
+            // Session only (D21): the last 30 minutes at one sample every 2 s
+            while (m_mdiHistory.size() > 900)
+                m_mdiHistory.removeFirst();
+            emit mdiSystemChanged();
+        });
+        m_monitorThread->start();
+        QMetaObject::invokeMethod(m_monitor, "setOllamaUrl", Q_ARG(QString, getEnrichmentTools().value(QStringLiteral("ollamaUrl")).toString()));
+        QMetaObject::invokeMethod(m_monitor, "start", Q_ARG(int, 2000));
+    } else if (!wanted && m_monitor) {
+        QMetaObject::invokeMethod(m_monitor, "stop");
+        m_monitorThread->quit();
+        m_monitor       = nullptr;   // deleted with its thread
+        m_monitorThread = nullptr;
+    }
+}
+//----------------------------------------------------------------------
+void AppManager::onMdiActivity(const QVariantMap &step)
+{
+    const QString event = step.value(QStringLiteral("event")).toString();
+    if (event == QLatin1String("start")) {
+        m_mdiStep = step;
+        m_mdiStep[QStringLiteral("label")]    = mdiAnalysisLabel(step.value(QStringLiteral("analysis")).toString());
+        m_mdiStep[QStringLiteral("fileName")] = QFileInfo(step.value(QStringLiteral("filePath")).toString()).fileName();
+        emit mdiStepChanged();
+    } else if (event == QLatin1String("progress")) {
+        m_mdiStep[QStringLiteral("progress")] = step.value(QStringLiteral("progress"));
+        m_mdiStep[QStringLiteral("detail")]   = step.value(QStringLiteral("detail"));
+        emit mdiStepChanged();
+    } else if (event == QLatin1String("end")) {
+        QVariantMap entry = step;
+        entry[QStringLiteral("label")]    = mdiAnalysisLabel(step.value(QStringLiteral("analysis")).toString());
+        entry[QStringLiteral("fileName")] = step.value(QStringLiteral("filePath")).toString().isEmpty()
+                                            ? m_mdiCatalogName
+                                            : QFileInfo(step.value(QStringLiteral("filePath")).toString()).fileName();
+        entry[QStringLiteral("time")]     = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
+        entry[QStringLiteral("catalog")]  = m_mdiCatalogName;
+        m_mdiStepLog.prepend(entry);
+        while (m_mdiStepLog.size() > 500)
+            m_mdiStepLog.removeLast();
+        m_mdiStep.clear();
+        emit mdiStepLogChanged();
+        emit mdiStepChanged();
+    }
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::getMdiJobInfo() const
+{
+    QVariantMap info;
+    info[QStringLiteral("running")] = m_mdiJob != nullptr;
+    info[QStringLiteral("paused")]  = m_mdiIsPaused;
+    info[QStringLiteral("catalog")] = m_mdiCatalogName;
+    if (m_mdiJob) {
+        const int index = m_mdiStep.value(QStringLiteral("fileIndex")).toInt();
+        const int count = m_mdiStep.value(QStringLiteral("fileCount")).toInt();
+        info[QStringLiteral("fileIndex")] = index;
+        info[QStringLiteral("fileCount")] = count;
+        info[QStringLiteral("startedAt")] = m_mdiJobStart.toString(QStringLiteral("HH:mm"));
+        // Estimate from the pace of the files already done
+        const qint64 elapsed = m_mdiJobStart.secsTo(QDateTime::currentDateTime());
+        if (index > 1 && count >= index && elapsed > 0) {
+            const qint64 remaining = elapsed * (count - index + 1) / (index - 1);
+            info[QStringLiteral("endsAt")] = QDateTime::currentDateTime().addSecs(remaining).toString(QStringLiteral("HH:mm"));
+        }
+        info[QStringLiteral("sourceConnected")] = !m_mdiSourcePath.isEmpty() && QFileInfo::exists(m_mdiSourcePath);
+    }
+    QStringList waiting;
+    for (int id : m_mdiWaiting) {
+        Device d;
+        d.ID = id;
+        d.loadDevice(m_connectionName);
+        waiting << d.name;
+    }
+    info[QStringLiteral("waiting")] = waiting;
+    // Where data went in this session: anything not on this Mac is egress
+    QStringList remoteHosts;
+    for (const QVariant &v : m_mdiStepLog) {
+        const QVariantMap e = v.toMap();
+        if (e.value(QStringLiteral("where")).toString() != QLatin1String("local"))
+            remoteHosts << e.value(QStringLiteral("tool")).toString();
+    }
+    remoteHosts.removeDuplicates();
+    info[QStringLiteral("egress")] = remoteHosts;
+    return info;
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::mdiToolsInfo()
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    QVariantMap configured;
+    configured[QStringLiteral("ffmpeg")]       = settings.value("MediaIntelligence/FfmpegPath");
+    configured[QStringLiteral("ffprobe")]      = settings.value("MediaIntelligence/FfprobePath");
+    configured[QStringLiteral("pdftotext")]    = settings.value("MediaIntelligence/PdftotextPath");
+    configured[QStringLiteral("whisper")]      = settings.value("MediaIntelligence/WhisperPath");
+    configured[QStringLiteral("whisperModel")] = settings.value("MediaIntelligence/WhisperModelPath");
+    QVariantMap info = MdiSystemMonitor::toolsInfo(configured);
+    const QVariantMap tools = getEnrichmentTools();
+    info[QStringLiteral("ollamaUrl")]   = tools.value(QStringLiteral("ollamaUrl"));
+    info[QStringLiteral("visionModel")] = tools.value(QStringLiteral("visionModel"));
+    info[QStringLiteral("textModel")]   = tools.value(QStringLiteral("textModel"));
+    info[QStringLiteral("embedModel")]  = tools.value(QStringLiteral("embedModel"));
+    return info;
 }
 //----------------------------------------------------------------------
 void AppManager::refreshMdiIndex(int catalogId)

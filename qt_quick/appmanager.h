@@ -79,6 +79,7 @@ class BackupJobStoppable;
 class MdiEnrichmentJob;
 class QThread;
 
+class MdiSystemMonitor;
 class AppManager : public QObject
 {
     Q_OBJECT
@@ -148,6 +149,12 @@ class AppManager : public QObject
     Q_PROPERTY(bool    mdiIsPaused   READ getMdiIsPaused   NOTIFY mdiStateChanged)
     Q_PROPERTY(QString mdiStatusText READ getMdiStatusText NOTIFY mdiStatusTextChanged)
     Q_PROPERTY(int     mdiRevision   READ getMdiRevision   NOTIFY mdiRevisionChanged)
+    // Activity page (fork, MDI-F61..F75): resources, current step, log, session history
+    Q_PROPERTY(QVariantMap  mdiSystem  READ getMdiSystem  NOTIFY mdiSystemChanged)
+    Q_PROPERTY(QVariantList mdiHistory READ getMdiHistory NOTIFY mdiSystemChanged)
+    Q_PROPERTY(QVariantMap  mdiStep    READ getMdiStep    NOTIFY mdiStepChanged)
+    Q_PROPERTY(QVariantMap  mdiJobInfo READ getMdiJobInfo NOTIFY mdiStepChanged)
+    Q_PROPERTY(QVariantList mdiStepLog READ getMdiStepLog NOTIFY mdiStepLogChanged)
     // Search by meaning (fork, MDI-F47..F51): its own result list, beside the table
     Q_PROPERTY(QVariantList semanticResults READ getSemanticResults NOTIFY semanticResultsChanged)
     Q_PROPERTY(bool         semanticActive  READ getSemanticActive  NOTIFY semanticResultsChanged)
@@ -436,6 +443,16 @@ public slots:
     Q_INVOKABLE void         stopEnrichment();
     Q_INVOKABLE void         setEnrichmentPaused(bool paused);
     Q_INVOKABLE QVariantMap  getEnrichmentTools();
+    QVariantMap  getMdiSystem()  const { return m_mdiSystem; }
+    QVariantList getMdiHistory() const { return m_mdiHistory; }
+    QVariantMap  getMdiStep()    const { return m_mdiStep; }
+    QVariantMap  getMdiJobInfo() const;
+    QVariantList getMdiStepLog() const { return m_mdiStepLog; }
+    // The monitor samples while the Activity page is shown or a job runs
+    Q_INVOKABLE void         setActivityMonitoring(bool visible);
+    // Tools with path and version, for the Activity page
+    Q_INVOKABLE QVariantMap  mdiToolsInfo();
+    Q_INVOKABLE QString      mdiAnalysisName(const QString &analysis) const { return mdiAnalysisLabel(analysis); }
     // Explore / details: revision is passed only to re-evaluate the bindings
     Q_INVOKABLE QString      mdiPreviewUrl(int catalogId, const QString &fullPath, int revision = 0);
     Q_INVOKABLE bool         mdiHasData(int catalogId, const QString &fullPath, int revision = 0);
@@ -669,6 +686,9 @@ signals:
     void mdiStateChanged();
     void mdiStatusTextChanged();
     void mdiRevisionChanged();
+    void mdiSystemChanged();
+    void mdiStepChanged();
+    void mdiStepLogChanged();
     void enrichmentFinished(const QVariantMap &summary);
     void semanticResultsChanged();
     // End of a Memory-mode Explore load: the open's result, or stopped
@@ -808,6 +828,19 @@ private:
     bool    openMdiMainConnection();
     void    refreshMdiIndex(int catalogId);
     void    startNextEnrichment();
+
+    // Activity page
+    MdiSystemMonitor *m_monitor       = nullptr;
+    QThread          *m_monitorThread = nullptr;
+    bool              m_activityVisible = false;
+    QVariantMap       m_mdiSystem;
+    QVariantList      m_mdiHistory;      // session only (D21)
+    QVariantMap       m_mdiStep;         // running step, empty between steps
+    QVariantList      m_mdiStepLog;      // finished steps, newest first
+    QDateTime         m_mdiJobStart;
+    QString           m_mdiSourcePath;   // catalog source, to tell whether it is connected
+    void    updateMonitoring();
+    void    onMdiActivity(const QVariantMap &step);
     QString mdiAnalysisLabel(const QString &analysis) const;
     QVariantList m_semanticResults;
     bool         m_semanticActive = false;
