@@ -4,15 +4,15 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../qt_quick/appmanager.cpp" line="+161"/>
+        <location filename="../qt_quick/appmanager.cpp" line="+162"/>
         <location line="+110"/>
         <location line="+14"/>
-        <location line="+4935"/>
+        <location line="+5037"/>
         <source>Search</source>
         <translation>Otsing</translation>
     </message>
     <message>
-        <location line="-5055"/>
+        <location line="-5157"/>
         <source>Stopped</source>
         <translation>Peatatud</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+96"/>
-        <location line="+3368"/>
+        <location line="+3470"/>
         <source>Evaluated</source>
         <translation>Hinnatud</translation>
     </message>
     <message>
-        <location line="-3486"/>
+        <location line="-3588"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+95"/>
@@ -45,8 +45,8 @@
         <location line="+9"/>
         <location line="+7"/>
         <location line="+81"/>
-        <location line="+2288"/>
-        <location line="+637"/>
+        <location line="+2295"/>
+        <location line="+732"/>
         <location line="+26"/>
         <location line="+20"/>
         <location line="+380"/>
@@ -67,8 +67,8 @@
         <translation>Pooleli</translation>
     </message>
     <message>
-        <location line="-4936"/>
-        <location line="+4028"/>
+        <location line="-5038"/>
+        <location line="+4130"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -78,7 +78,7 @@
         <translation>Lõpetatud</translation>
     </message>
     <message>
-        <location line="-4529"/>
+        <location line="-4631"/>
         <source>Empty database path provided</source>
         <translation>Sisestati tühi andmebaasi tee</translation>
     </message>
@@ -118,7 +118,7 @@
         <translation>Kohalik ketas</translation>
     </message>
     <message>
-        <location line="+476"/>
+        <location line="+479"/>
         <source>search_results</source>
         <translation>otsingu_tulemused</translation>
     </message>
@@ -164,12 +164,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+2952"/>
+        <location line="+3051"/>
         <source>Size</source>
         <translation>Suurus</translation>
     </message>
     <message>
-        <location line="-2951"/>
+        <location line="-3050"/>
         <source>Date</source>
         <translation>Kuupäev</translation>
     </message>
@@ -229,7 +229,7 @@
         <translation>Hostitud ühendus ebaõnnestus: %1</translation>
     </message>
     <message>
-        <location line="+238"/>
+        <location line="+240"/>
         <source>Provide a name for this new catalog.</source>
         <translation>Sisesta selle uue kataloogi nimi.</translation>
     </message>
@@ -263,19 +263,19 @@ Vali teine nimi ja proovi uuesti.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+1140"/>
+        <location line="+1237"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>Seadme operatsioon on juba käimas.</translation>
     </message>
     <message>
-        <location line="-1663"/>
-        <location line="+662"/>
+        <location line="-1758"/>
+        <location line="+757"/>
         <source>Create</source>
         <translation>Loo</translation>
     </message>
     <message>
-        <location line="-543"/>
+        <location line="-544"/>
         <source>Catalog creation was stopped.</source>
         <translation>Kataloogi loomine peatati.</translation>
     </message>
@@ -311,7 +311,7 @@ Vali teine nimi ja proovi uuesti.</translation>
         <translation>Viga: %1</translation>
     </message>
     <message>
-        <location line="+238"/>
+        <location line="+239"/>
         <location line="+46"/>
         <source>Update</source>
         <translation>Värskenda</translation>
@@ -816,6 +816,182 @@ Vali teine nimi.</translation>
         <location line="+0"/>
         <source>Device ID</source>
         <translation>Seadme ID</translation>
+    </message>
+</context>
+<context>
+    <name>CreateWizard</name>
+    <message>
+        <location filename="../qt_quick/CreateWizard.qml" line="+24"/>
+        <source>Source</source>
+        <translation>Allikas</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+121"/>
+        <location line="+120"/>
+        <source>Destination path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-241"/>
+        <location line="+244"/>
+        <source>File types</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-244"/>
+        <location line="+259"/>
+        <source>Previews</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-259"/>
+        <source>Summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <location line="+26"/>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-25"/>
+        <source>Full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Partial</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>On</source>
+        <translation>Asukohas</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Step %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Path for previews and derived data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Select the path</source>
+        <translation>Vali tee</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <location line="+16"/>
+        <location line="+89"/>
+        <location line="+10"/>
+        <source>Image</source>
+        <translation>Pilt</translation>
+    </message>
+    <message>
+        <location line="-114"/>
+        <location line="+20"/>
+        <location line="+85"/>
+        <location line="+11"/>
+        <location line="+2"/>
+        <location line="+6"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location line="-123"/>
+        <location line="+54"/>
+        <location line="+51"/>
+        <location line="+26"/>
+        <location line="+8"/>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <location line="-138"/>
+        <location line="+105"/>
+        <source>Text</source>
+        <translation>Tekst</translation>
+    </message>
+    <message>
+        <location line="-104"/>
+        <location line="+105"/>
+        <source>Other</source>
+        <translation>Muu</translation>
+    </message>
+    <message>
+        <location line="-92"/>
+        <location line="+98"/>
+        <source>Thumbnail</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+95"/>
+        <source>Poster frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+95"/>
+        <source>Keyframe strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+96"/>
+        <source>Number of frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-89"/>
+        <location line="+24"/>
+        <location line="+68"/>
+        <location line="+8"/>
+        <source>Clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+24"/>
+        <location line="+65"/>
+        <location line="+8"/>
+        <source>Start (seconds)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-90"/>
+        <location line="+24"/>
+        <location line="+59"/>
+        <location line="+8"/>
+        <source>Duration (seconds)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-60"/>
+        <location line="+63"/>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-51"/>
+        <source>Source path</source>
+        <translation>Lähtetee</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Storage</source>
+        <translation>Salvestusruum</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Catalog name</source>
+        <translation>Kataloogi nimi</translation>
     </message>
 </context>
 <context>
@@ -6845,13 +7021,13 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
 <context>
     <name>PageCreateForm</name>
     <message>
-        <location filename="../qt_quick/PageCreateForm.qml" line="+221"/>
-        <location line="+47"/>
+        <location filename="../qt_quick/PageCreateForm.qml" line="+332"/>
+        <location line="+49"/>
         <source>All</source>
         <translation>Kõik</translation>
     </message>
     <message>
-        <location line="-45"/>
+        <location line="-47"/>
         <source>Image</source>
         <translation>Pilt</translation>
     </message>
@@ -6861,24 +7037,54 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
         <translation>Audio</translation>
     </message>
     <message>
-        <location line="-199"/>
+        <location line="-294"/>
         <source>Provide a name for this new catalog.</source>
         <translation>Sisesta selle uue kataloogi nimi.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Provide a path for this new catalog.</source>
         <translation>Sisesta selle uue kataloogi asukoht.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Select a Storage for this new catalog.
 (Selection panel on the left and dropdown list)</source>
         <translation>Vali selle uue kataloogi salvestusruum.
 (Valikupaneel vasakul ja rippmenüü)</translation>
     </message>
     <message>
+        <location line="+18"/>
+        <source>Provide a destination path for the previews and derived data.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Select a destination path that can be written to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Select a destination path outside the source path.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Select at least one file type, or turn off all previews.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+116"/>
+        <source>Standard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Wizard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+49"/>
         <source>Catalog definition</source>
         <translation>Kataloogi määratlus</translation>
     </message>
@@ -6888,29 +7094,29 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
         <translation>Lähtetee</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Path to index</source>
         <translation>Indekseeritav tee</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+156"/>
-        <location line="+81"/>
+        <location line="+166"/>
+        <location line="+83"/>
         <source>Select the path</source>
         <translation>Vali tee</translation>
     </message>
     <message>
-        <location line="-229"/>
+        <location line="-241"/>
         <source>Storage</source>
         <translation>Salvestusruum</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Catalog name</source>
         <translation>Kataloogi nimi</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>New catalog name</source>
         <translation>Uue kataloogi nimi</translation>
     </message>
@@ -6920,7 +7126,7 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
         <translation>Loo nimi teest</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Content options</source>
         <translation>Sisu valikud</translation>
     </message>
@@ -6930,7 +7136,7 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
         <translation>Faili tüüp</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+14"/>
         <source>Text</source>
         <translation>Tekst</translation>
     </message>
@@ -6946,29 +7152,29 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
     </message>
     <message>
         <location line="+1"/>
-        <location line="+41"/>
-        <location line="+12"/>
-        <location line="+16"/>
+        <location line="+43"/>
+        <location line="+13"/>
+        <location line="+17"/>
         <source>None</source>
         <translation>Puudub</translation>
     </message>
     <message>
-        <location line="-39"/>
+        <location line="-43"/>
         <source>Include subdirectories</source>
         <translation>Kaasa alamkataloogid</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Include hidden files</source>
         <translation>Kaasa peidetud failid</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Include metadata</source>
         <translation>Kaasa metaandmed</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Media Basic</source>
         <translation>Meedia põhiline</translation>
     </message>
@@ -6988,15 +7194,30 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
         <translation>Kaasa kontrollsumma</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+18"/>
         <source>Exclude folders or files</source>
         <translation>Välista kaustad või failid</translation>
     </message>
     <message>
         <location line="+4"/>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Path or name to exclude</source>
         <translation>Väljajäetav tee või nimi</translation>
+    </message>
+    <message>
+        <location line="+148"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Create</source>
+        <translation>Loo</translation>
     </message>
     <message>
         <source>Path or text to exclude</source>
@@ -7011,14 +7232,14 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
         <translation type="vanished">Väljajäetav tee</translation>
     </message>
     <message>
-        <location line="+13"/>
-        <location line="+81"/>
+        <location line="-148"/>
+        <location line="+83"/>
         <source>Add</source>
         <translation>Lisa</translation>
     </message>
     <message>
-        <location line="-53"/>
-        <location line="+84"/>
+        <location line="-54"/>
+        <location line="+85"/>
         <source>Remove</source>
         <translation>Eemalda</translation>
     </message>
@@ -8093,7 +8314,7 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-3898"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-3997"/>
         <source>Exact Phrase</source>
         <translation>Täpne fraas</translation>
     </message>

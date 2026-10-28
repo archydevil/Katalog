@@ -11,6 +11,21 @@ ColumnLayout {
     // Empty-dir confirmation is a Yes/No decision → modal dialog lives in Main.qml
     signal emptyDirConfirmNeeded()
 
+    // Standard form or wizard (fork, SpecMediaIntelligence.md MDI-F1). The wizard's
+    // Source step is this form's "Catalog definition" section, so the values
+    // common to both modes are the same fields and survive a switch.
+    property string mode: "standard"
+    readonly property bool wizardMode:  mode === "wizard"
+    readonly property bool showSource:  !wizardMode || createWizard.step === 0
+    readonly property bool showOptions: !wizardMode
+
+    function setMode(newMode) {
+        if (mode === newMode) return
+        mode = newMode
+        createValidationMessage.visible = false
+        appManager1.setCreateSetting("Mode", newMode)   // restored on next open (MDI-F1)
+    }
+
     function showValidationMessage(message) {
         createValidationMessage.text = message
         createValidationMessage.visible = true
@@ -20,22 +35,54 @@ ColumnLayout {
     function triggerCreate() {
         createValidationMessage.visible = false
         if (create_lineEdit_NewCatalogName.text.trim() === "") {
+            createWizard.step = 0
             showValidationMessage(qsTr("Provide a name for this new catalog."))
             return
         }
         if (create_lineEdit_NewCatalogPath.text.trim() === "") {
+            createWizard.step = 0
             showValidationMessage(qsTr("Provide a path for this new catalog."))
             return
         }
         if (create_storageComboBox.selectedDeviceId <= 0) {
+            createWizard.step = 0
             showValidationMessage(qsTr("Select a Storage for this new catalog.\n(Selection panel on the left and dropdown list)"))
             return
         }
+        if (wizardMode && !validateWizard())
+            return
         if (appManager1.isDirectoryEmpty(appManager1.normalizeSourcePath(create_lineEdit_NewCatalogPath.text))) {
             emptyDirConfirmNeeded()
             return
         }
         doCreate()
+    }
+
+    // Wizard-only checks (MDI-F6); the offending step is shown with the message
+    function validateWizard() {
+        var source      = appManager1.normalizeSourcePath(create_lineEdit_NewCatalogPath.text)
+        var destination = appManager1.normalizeSourcePath(createWizard.destinationPath)
+        if (destination === "") {
+            createWizard.step = 1
+            showValidationMessage(qsTr("Provide a destination path for the previews and derived data."))
+            return false
+        }
+        if (!appManager1.isPathWritable(destination)) {
+            createWizard.step = 1
+            showValidationMessage(qsTr("Select a destination path that can be written to."))
+            return false
+        }
+        if (appManager1.isPathInside(destination, source)) {
+            createWizard.step = 1
+            showValidationMessage(qsTr("Select a destination path outside the source path."))
+            return false
+        }
+        if (!createWizard.anyFileType() && createWizard.anyPreview()) {
+            createWizard.step = 2
+            showValidationMessage(qsTr("Select at least one file type, or turn off all previews."))
+            return false
+        }
+        return true
     }
 
     // Called from Main.qml Stop action
@@ -49,19 +96,40 @@ ColumnLayout {
         for (var i = 0; i < pendingExcludesModel.count; i++)
             excludes.push(pendingExcludesModel.get(i).folderPath)
 
-        var error = appManager1.createCatalog(
-            create_lineEdit_NewCatalogName.text.trim(),
-            appManager1.normalizeSourcePath(create_lineEdit_NewCatalogPath.text),
-            create_storageComboBox.selectedDeviceId,
-            create_comboBox_FileType.currentValue,
-            create_checkBox_IncludeSubDir.checked,
-            create_comboBox_IncludeHidden.currentIndex === 1,
-            false,
-            false,
-            create_comboBox_Metadata.currentValue,
-            create_comboBox_Checksum.currentValue,
-            excludes
-        )
+        var name   = create_lineEdit_NewCatalogName.text.trim()
+        var source = appManager1.normalizeSourcePath(create_lineEdit_NewCatalogPath.text)
+        var error
+        if (wizardMode) {
+            // Same creation as standard mode, with the options of the standard
+            // form (hidden in wizard mode); the profile is saved on success (MDI-F7)
+            createWizard.rememberSettings()
+            error = appManager1.createCatalogWithEnrichment(
+                name, source,
+                create_storageComboBox.selectedDeviceId,
+                create_comboBox_FileType.currentValue,
+                create_checkBox_IncludeSubDir.checked,
+                create_comboBox_IncludeHidden.currentIndex === 1,
+                false,
+                false,
+                create_comboBox_Metadata.currentValue,
+                create_comboBox_Checksum.currentValue,
+                excludes,
+                createWizard.buildProfile()
+            )
+        } else {
+            error = appManager1.createCatalog(
+                name, source,
+                create_storageComboBox.selectedDeviceId,
+                create_comboBox_FileType.currentValue,
+                create_checkBox_IncludeSubDir.checked,
+                create_comboBox_IncludeHidden.currentIndex === 1,
+                false,
+                false,
+                create_comboBox_Metadata.currentValue,
+                create_comboBox_Checksum.currentValue,
+                excludes
+            )
+        }
         if (error !== "")
             showValidationMessage(error)
     }
@@ -88,6 +156,9 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
+        if (appManager1.getCreateSetting("Mode") === "wizard")
+            mode = "wizard"
+        createWizard.restoreSettings()
         globalExcludes = appManager1.getExcludeDirectories()
         // The last selected device is restored before QML loads (initiateApp), so no
         // selectedDeviceChanged reaches this page at startup: seed the path here (K2 parity).
@@ -117,6 +188,27 @@ ColumnLayout {
         }
     }
 
+    // ── Mode: Standard / Wizard (MDI-F1) ─────────────────────────────────────
+    RowLayout {
+        Layout.leftMargin:  Kirigami.Units.gridUnit
+        Layout.rightMargin: Kirigami.Units.gridUnit
+        Layout.topMargin:   Kirigami.Units.gridUnit
+        spacing: Kirigami.Units.smallSpacing
+        Controls.ToolButton {
+            text: qsTr("Standard")
+            checkable: true
+            checked: !pageCreateForm.wizardMode
+            onClicked: pageCreateForm.setMode("standard")
+        }
+        Controls.ToolButton {
+            text: qsTr("Wizard")
+            icon.name: "tools-wizard"
+            checkable: true
+            checked: pageCreateForm.wizardMode
+            onClicked: pageCreateForm.setMode("wizard")
+        }
+    }
+
     Kirigami.InlineMessage {
         id: createValidationMessage
         Layout.fillWidth: true
@@ -126,6 +218,19 @@ ColumnLayout {
         type: Kirigami.MessageType.Warning
         showCloseButton: true
         visible: false
+    }
+
+    CreateWizard {
+        id: createWizard
+        visible: pageCreateForm.wizardMode
+        Layout.fillWidth: true
+        Layout.leftMargin:  Kirigami.Units.gridUnit
+        Layout.rightMargin: Kirigami.Units.gridUnit
+        Layout.topMargin:   Kirigami.Units.gridUnit
+        sourcePath:  appManager1.normalizeSourcePath(create_lineEdit_NewCatalogPath.text)
+        storageName: create_storageComboBox.selectedDeviceName
+        catalogName: create_lineEdit_NewCatalogName.text.trim()
+        onChoiceEdited: createValidationMessage.visible = false
     }
 
     // ════════════════════════════════════════════════════════════════════════════
@@ -140,6 +245,7 @@ ColumnLayout {
 
         // ── Section 1: Required ───────────────────────────────────────────────
         RowLayout {
+            visible: !pageCreateForm.wizardMode
             Layout.columnSpan: 2
             Layout.topMargin: Kirigami.Units.smallSpacing
             Layout.fillWidth: true
@@ -148,8 +254,9 @@ ColumnLayout {
             Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
         }
 
-        Controls.Label { text: qsTr("Source path"); opacity: 0.7 }
+        Controls.Label { text: qsTr("Source path"); opacity: 0.7; visible: pageCreateForm.showSource }
         RowLayout {
+            visible: pageCreateForm.showSource
             Layout.fillWidth: true
             Controls.TextField {
                 id: create_lineEdit_NewCatalogPath
@@ -168,8 +275,9 @@ ColumnLayout {
             }
         }
 
-        Controls.Label { text: qsTr("Storage"); opacity: 0.7 }
+        Controls.Label { text: qsTr("Storage"); opacity: 0.7; visible: pageCreateForm.showSource }
         DeviceTreeComboBox {
+            visible: pageCreateForm.showSource
             id: create_storageComboBox
             storageOnly: true
             hideCatalogs: true
@@ -177,8 +285,9 @@ ColumnLayout {
             Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
         }
 
-        Controls.Label { text: qsTr("Catalog name"); opacity: 0.7 }
+        Controls.Label { text: qsTr("Catalog name"); opacity: 0.7; visible: pageCreateForm.showSource }
         RowLayout {
+            visible: pageCreateForm.showSource
             Layout.fillWidth: true
             Controls.TextField {
                 id: create_lineEdit_NewCatalogName
@@ -200,6 +309,7 @@ ColumnLayout {
 
         // ── Section 2: Catalog Options ────────────────────────────────────────
         RowLayout {
+            visible: pageCreateForm.showOptions
             Layout.columnSpan: 2
             Layout.topMargin: Kirigami.Units.smallSpacing
             Layout.fillWidth: true
@@ -208,8 +318,9 @@ ColumnLayout {
             Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
         }
 
-        Controls.Label { text: qsTr("File type"); opacity: 0.7 }
+        Controls.Label { text: qsTr("File type"); opacity: 0.7; visible: pageCreateForm.showOptions }
         ComboBoxFitted {
+            visible: pageCreateForm.showOptions
             id: create_comboBox_FileType
             Layout.fillWidth: true
             Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
@@ -254,14 +365,16 @@ ColumnLayout {
             }
         }
 
-        Controls.Label { text: qsTr("Include subdirectories"); opacity: 0.7 }
+        Controls.Label { text: qsTr("Include subdirectories"); opacity: 0.7; visible: pageCreateForm.showOptions }
         Controls.CheckBox {
+            visible: pageCreateForm.showOptions
             id: create_checkBox_IncludeSubDir
             checked: true
         }
 
-        Controls.Label { text: qsTr("Include hidden files"); opacity: 0.7 }
+        Controls.Label { text: qsTr("Include hidden files"); opacity: 0.7; visible: pageCreateForm.showOptions }
         ComboBoxFitted {
+            visible: pageCreateForm.showOptions
             id: create_comboBox_IncludeHidden
             Layout.fillWidth: true
             Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
@@ -269,8 +382,9 @@ ColumnLayout {
             currentIndex: 0
         }
 
-        Controls.Label { text: qsTr("Include metadata"); opacity: 0.7 }
+        Controls.Label { text: qsTr("Include metadata"); opacity: 0.7; visible: pageCreateForm.showOptions }
         ComboBoxFitted {
+            visible: pageCreateForm.showOptions
             id: create_comboBox_Metadata
             Layout.fillWidth: true
             Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
@@ -285,8 +399,9 @@ ColumnLayout {
             currentIndex: 0
         }
 
-        Controls.Label { text: qsTr("Include checksum"); opacity: 0.7 }
+        Controls.Label { text: qsTr("Include checksum"); opacity: 0.7; visible: pageCreateForm.showOptions }
         ComboBoxFitted {
+            visible: pageCreateForm.showOptions
             id: create_comboBox_Checksum
             Layout.fillWidth: true
             Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
@@ -301,12 +416,14 @@ ColumnLayout {
 
         //Folder exclusion (catalog only)
         Controls.Label {
+            visible: pageCreateForm.showOptions
             text: qsTr("Exclude folders or files")
             Layout.columnSpan: 2
             Layout.topMargin: Kirigami.Units.smallSpacing
         }
-        Controls.Label { text: qsTr("Path or name to exclude"); opacity: 0.7 }
+        Controls.Label { text: qsTr("Path or name to exclude"); opacity: 0.7; visible: pageCreateForm.showOptions }
         RowLayout {
+            visible: pageCreateForm.showOptions
             Layout.fillWidth: true
             Controls.TextField {
                 id: create_lineEdit_NewExcludeFolder
@@ -337,8 +454,9 @@ ColumnLayout {
         }
 
         // Pending exclude folders list
-        Item { Layout.preferredWidth: 1 }
+        Item { Layout.preferredWidth: 1; visible: pageCreateForm.showOptions }
         ColumnLayout {
+            visible: pageCreateForm.showOptions
             Layout.fillWidth: true
             spacing: 2
             Repeater {
@@ -363,6 +481,7 @@ ColumnLayout {
 
         // Global Parameters (collapsible) ────────────────────────
         RowLayout {
+            visible: pageCreateForm.showOptions
             Layout.columnSpan: 2
             Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.smallSpacing
@@ -384,11 +503,11 @@ ColumnLayout {
         Controls.Label {
             text: qsTr("Global exclude directory")
             opacity: 0.7
-            visible: globalParamsExpanded
+            visible: pageCreateForm.showOptions && (globalParamsExpanded)
         }
         RowLayout {
             Layout.fillWidth: true
-            visible: globalParamsExpanded
+            visible: pageCreateForm.showOptions && (globalParamsExpanded)
             Controls.TextField {
                 id: create_lineEdit_FolderToExclude
                 Layout.fillWidth: true
@@ -418,12 +537,12 @@ ColumnLayout {
 
         // Global excludes list
         Item {
-            visible: globalParamsExpanded && globalExcludes.length > 0
+            visible: pageCreateForm.showOptions && (globalParamsExpanded && globalExcludes.length > 0)
             Layout.preferredWidth: 1
         }
         ColumnLayout {
             Layout.fillWidth: true
-            visible: globalParamsExpanded && globalExcludes.length > 0
+            visible: pageCreateForm.showOptions && (globalParamsExpanded && globalExcludes.length > 0)
             spacing: 2
             Repeater {
                 model: globalExcludes
@@ -445,6 +564,34 @@ ColumnLayout {
         }
 
         // Bottom spacer
-        Item { Layout.columnSpan: 2; Layout.preferredHeight: Kirigami.Units.gridUnit }
+        Item { Layout.columnSpan: 2; Layout.preferredHeight: Kirigami.Units.gridUnit; visible: pageCreateForm.showOptions }
+    }
+
+    // ── Wizard navigation ─────────────────────────────────────────────────────
+    RowLayout {
+        visible: pageCreateForm.wizardMode
+        Layout.fillWidth: true
+        Layout.leftMargin:   Kirigami.Units.gridUnit
+        Layout.rightMargin:  Kirigami.Units.gridUnit
+        Layout.bottomMargin: Kirigami.Units.gridUnit
+        Item { Layout.fillWidth: true }
+        Controls.Button {
+            text: qsTr("Back")
+            icon.name: "go-previous"
+            enabled: createWizard.step > 0
+            onClicked: createWizard.step--
+        }
+        Controls.Button {
+            visible: createWizard.step < createWizard.stepCount - 1
+            text: qsTr("Next")
+            icon.name: "go-next"
+            onClicked: createWizard.step++
+        }
+        Controls.Button {
+            visible: createWizard.step === createWizard.stepCount - 1
+            text: qsTr("Create")
+            icon.name: "document-save"
+            onClicked: pageCreateForm.triggerCreate()
+        }
     }
 }

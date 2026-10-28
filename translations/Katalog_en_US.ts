@@ -4,15 +4,15 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../qt_quick/appmanager.cpp" line="+161"/>
+        <location filename="../qt_quick/appmanager.cpp" line="+162"/>
         <location line="+110"/>
         <location line="+14"/>
-        <location line="+4935"/>
+        <location line="+5037"/>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5055"/>
+        <location line="-5157"/>
         <source>Stopped</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+96"/>
-        <location line="+3368"/>
+        <location line="+3470"/>
         <source>Evaluated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3486"/>
+        <location line="-3588"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+95"/>
@@ -45,8 +45,8 @@
         <location line="+9"/>
         <location line="+7"/>
         <location line="+81"/>
-        <location line="+2288"/>
-        <location line="+637"/>
+        <location line="+2295"/>
+        <location line="+732"/>
         <location line="+26"/>
         <location line="+20"/>
         <location line="+380"/>
@@ -67,8 +67,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4936"/>
-        <location line="+4028"/>
+        <location line="-5038"/>
+        <location line="+4130"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -78,7 +78,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4529"/>
+        <location line="-4631"/>
         <source>Empty database path provided</source>
         <translation type="unfinished"></translation>
     </message>
@@ -118,7 +118,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+476"/>
+        <location line="+479"/>
         <source>search_results</source>
         <translation type="unfinished"></translation>
     </message>
@@ -164,12 +164,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+2952"/>
+        <location line="+3051"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2951"/>
+        <location line="-3050"/>
         <source>Date</source>
         <translation type="unfinished"></translation>
     </message>
@@ -229,14 +229,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+234"/>
-        <location line="+1140"/>
+        <location line="+236"/>
+        <location line="+1237"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1743"/>
+        <location line="-1840"/>
         <source>Provide a name for this new catalog.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -265,13 +265,13 @@ Choose a different name and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+64"/>
-        <location line="+662"/>
+        <location line="+66"/>
+        <location line="+757"/>
         <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-543"/>
+        <location line="-544"/>
         <source>Catalog creation was stopped.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -307,7 +307,7 @@ Choose a different name and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+238"/>
+        <location line="+239"/>
         <location line="+46"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
@@ -802,6 +802,182 @@ Choose a different name.</source>
     <message>
         <location line="+0"/>
         <source>Device ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CreateWizard</name>
+    <message>
+        <location filename="../qt_quick/CreateWizard.qml" line="+24"/>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+121"/>
+        <location line="+120"/>
+        <source>Destination path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-241"/>
+        <location line="+244"/>
+        <source>File types</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-244"/>
+        <location line="+259"/>
+        <source>Previews</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-259"/>
+        <source>Summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+29"/>
+        <location line="+26"/>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-25"/>
+        <source>Full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Partial</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>On</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Step %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Path for previews and derived data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Select the path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <location line="+16"/>
+        <location line="+89"/>
+        <location line="+10"/>
+        <source>Image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-114"/>
+        <location line="+20"/>
+        <location line="+85"/>
+        <location line="+11"/>
+        <location line="+2"/>
+        <location line="+6"/>
+        <source>Video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-123"/>
+        <location line="+54"/>
+        <location line="+51"/>
+        <location line="+26"/>
+        <location line="+8"/>
+        <source>Audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-138"/>
+        <location line="+105"/>
+        <source>Text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-104"/>
+        <location line="+105"/>
+        <source>Other</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-92"/>
+        <location line="+98"/>
+        <source>Thumbnail</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+95"/>
+        <source>Poster frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+95"/>
+        <source>Keyframe strip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+96"/>
+        <source>Number of frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-89"/>
+        <location line="+24"/>
+        <location line="+68"/>
+        <location line="+8"/>
+        <source>Clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-93"/>
+        <location line="+24"/>
+        <location line="+65"/>
+        <location line="+8"/>
+        <source>Start (seconds)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-90"/>
+        <location line="+24"/>
+        <location line="+59"/>
+        <location line="+8"/>
+        <source>Duration (seconds)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-60"/>
+        <location line="+63"/>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-51"/>
+        <source>Source path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Storage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Catalog name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6565,23 +6741,53 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
 <context>
     <name>PageCreateForm</name>
     <message>
-        <location filename="../qt_quick/PageCreateForm.qml" line="+23"/>
+        <location filename="../qt_quick/PageCreateForm.qml" line="+39"/>
         <source>Provide a name for this new catalog.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Provide a path for this new catalog.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Select a Storage for this new catalog.
 (Selection panel on the left and dropdown list)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location line="+18"/>
+        <source>Provide a destination path for the previews and derived data.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Select a destination path that can be written to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Select a destination path outside the source path.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Select at least one file type, or turn off all previews.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+116"/>
+        <source>Standard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Wizard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+49"/>
         <source>Catalog definition</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6591,29 +6797,29 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Path to index</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+156"/>
-        <location line="+81"/>
+        <location line="+166"/>
+        <location line="+83"/>
         <source>Select the path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-229"/>
+        <location line="-241"/>
         <source>Storage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Catalog name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>New catalog name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6623,7 +6829,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Content options</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6633,13 +6839,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+10"/>
-        <location line="+47"/>
+        <location line="+11"/>
+        <location line="+49"/>
         <source>All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-46"/>
+        <location line="-48"/>
         <source>Audio</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6665,29 +6871,29 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+1"/>
-        <location line="+41"/>
-        <location line="+12"/>
-        <location line="+16"/>
+        <location line="+43"/>
+        <location line="+13"/>
+        <location line="+17"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-39"/>
+        <location line="-43"/>
         <source>Include subdirectories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Include hidden files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Include metadata</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Media Basic</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6707,25 +6913,25 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+18"/>
         <source>Exclude folders or files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+4"/>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Path or name to exclude</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+13"/>
-        <location line="+81"/>
+        <location line="+83"/>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-53"/>
-        <location line="+84"/>
+        <location line="-54"/>
+        <location line="+85"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6752,6 +6958,21 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+10"/>
         <source>Path to exclude globally</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+65"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -7750,7 +7971,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-3898"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-3997"/>
         <source>Exact Phrase</source>
         <translation type="unfinished"></translation>
     </message>

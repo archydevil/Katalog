@@ -7,7 +7,7 @@ version: "3.1"
 
 # MEDIA INTELLIGENCE — PREVIEWS, AI ENRICHMENT AND SEMANTIC SEARCH
 
-![Status](https://img.shields.io/badge/Status-Draft-orange) ![Version](https://img.shields.io/badge/Version-fork%203.1-blue) ![Implementation](https://img.shields.io/badge/Implementation-planned-lightgrey) ![Scope](https://img.shields.io/badge/Scope-fork%20only%20(K3)-purple)
+![Status](https://img.shields.io/badge/Status-Draft-orange) ![Version](https://img.shields.io/badge/Version-fork%203.1-blue) ![Implementation](https://img.shields.io/badge/Implementation-Phase%20A.1-yellow) ![Scope](https://img.shields.io/badge/Scope-fork%20only%20(K3)-purple)
 
 ## Context
 
@@ -29,7 +29,10 @@ result is browsable when the device is disconnected and searchable by meaning
 > **Reading the requirement IDs.** Each requirement has a permanent ID (`MDI-`).
 > IDs are never renumbered or reused; a retired requirement is marked
 > `[Removed]`, not deleted. Status is one of
-> `[Implemented] / [Planned] / [Backlog] / [Removed]`.
+> `[Implemented] / [Planned] / [Backlog] / [Removed]`. A suffix names the
+> increment that implemented the row (`[Implemented — Phase A.1]`).
+> `[Planned — part implemented in Phase A.1]` means only the part named in
+> [Implementation status](#implementation-status) is built; the rest is planned.
 
 ### Vocabulary {#vocabulary}
 
@@ -155,14 +158,14 @@ characterising information for applications and other files.
 
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
-| MDI-F1 | The K3 Create page offers two modes: the existing form (**standard** mode) and a **wizard** mode. Switching mode does not open another page and does not clear the values common to both (source path, catalog name, storage). In standard mode the page behaves exactly as before this spec; the mode switch is the only visible addition. The last mode used is restored when the page is opened again. | [Planned] |
-| MDI-F2 | The wizard presents its choices as ordered steps: (1) source drive or folder; (2) destination path for derived files; (3) file types to include; (4) preview options; (5) AI options; (6) a summary of every choice with a *Create* action. The user can go back to any previous step without losing later choices. | [Planned] |
-| MDI-F3 | Step 3 offers the file types Image, Video, Audio, Document and Other, each on or off independently. Only files of the selected types are enriched; the catalog itself is created with the same file selection standard mode would use for the same source. | [Planned] |
-| MDI-F4 | Step 4 offers, per type: **Image** — thumbnail on/off. **Video** — poster frame on/off; keyframe strip on/off with a frame count (default 8, range 2–32); low-resolution clip off / full / partial, where partial takes a start offset and a duration in seconds (default 0 s and 30 s). **Audio** — clip off / full / partial (same parameters); waveform image on/off. | [Planned] |
+| MDI-F1 | The K3 Create page offers two modes: the existing form (**standard** mode) and a **wizard** mode. Switching mode does not open another page and does not clear the values common to both (source path, catalog name, storage). In standard mode the page behaves exactly as before this spec; the mode switch is the only visible addition. The last mode used is restored when the page is opened again. | [Implemented — Phase A.1] |
+| MDI-F2 | The wizard presents its choices as ordered steps: (1) source drive or folder; (2) destination path for derived files; (3) file types to include; (4) preview options; (5) AI options; (6) a summary of every choice with a *Create* action. The user can go back to any previous step without losing later choices. | [Planned — part implemented in Phase A.1] |
+| MDI-F3 | Step 3 offers the file types Image, Video, Audio, Text and Other, each on or off independently. The document type is labelled with the existing catalog file type *Text* (user decision 2026-10-28; reuses an existing translation, no *Document* string). Only files of the selected types are enriched; the catalog itself is created with the same file selection standard mode would use for the same source. | [Implemented — Phase A.1] |
+| MDI-F4 | Step 4 offers, per type: **Image** — thumbnail on/off. **Video** — poster frame on/off; keyframe strip on/off with a frame count (default 8, range 2–32); low-resolution clip off / full / partial, where partial takes a start offset and a duration in seconds (default 0 s and 30 s). **Audio** — clip off / full / partial (same parameters); waveform image on/off. | [Implemented — Phase A.1] |
 | MDI-F5 | Step 5 offers a provider choice and the analyses: image caption and tags; document summary and key excerpts; transcript; topic segments; topic clusters; embeddings for semantic search. The default provider is the local one. A commercial provider appears in the list only when it is configured (`MDI-F23`). An analysis whose external tool or model is unavailable is shown disabled with the reason (`MDI-F20`). Topic segments require transcript; topic clusters require topic segments; selecting a dependent analysis selects its prerequisite. Generated text (captions, tags, summaries, segment titles and summaries, topics, cluster labels and descriptions) is in the source's language by default; an option sets it to the UI language instead (D12). Key excerpts stay verbatim (`MDI-F40`). | [Planned] |
-| MDI-F6 | *Create* is refused, with a `Kirigami.InlineMessage` at the top of the wizard and nothing created, when: the source is empty; the destination path is empty; the destination path is not writable; the destination path is the source or lies inside it; no file type is selected while at least one preview or analysis is selected. The message hides when the offending field is edited (`SpecValidationRules.md`). | [Planned] |
-| MDI-F7 | Confirming the wizard creates the catalog through the **existing** catalog-creation path (same entry point, same queue behaviour, same result as standard mode for the same inputs) and saves the enrichment profile for that catalog. Only when the creation **completes successfully** is an enrichment job for that catalog added to the enrichment list (`MDI-F16`). A creation that fails, is cancelled, or is removed from the operation queue creates no enrichment job. | [Planned] |
-| MDI-F8 | The enrichment profile is saved per catalog and survives closing and reopening the collection. Later runs on that catalog use it. For any existing catalog — created in wizard mode, in standard mode, or before this feature — the user can, from the catalog's page and from Explore, edit its enrichment profile (or create one when it has none) and start an enrichment job, which is added to the enrichment list (`MDI-F16`) (D8). No new page is created for this (`MDI-C18`). | [Planned] |
+| MDI-F6 | *Create* is refused, with a `Kirigami.InlineMessage` at the top of the wizard and nothing created, when: the source is empty; the destination path is empty; the destination path is not writable; the destination path is the source or lies inside it; no file type is selected while at least one preview or analysis is selected. The message hides when the offending field is edited (`SpecValidationRules.md`). | [Implemented — Phase A.1] |
+| MDI-F7 | Confirming the wizard creates the catalog through the **existing** catalog-creation path (same entry point, same queue behaviour, same result as standard mode for the same inputs) and saves the enrichment profile for that catalog. Only when the creation **completes successfully** is an enrichment job for that catalog added to the enrichment list (`MDI-F16`). A creation that fails, is cancelled, or is removed from the operation queue creates no enrichment job. | [Planned — part implemented in Phase A.1] |
+| MDI-F8 | The enrichment profile is saved per catalog and survives closing and reopening the collection. Later runs on that catalog use it. For any existing catalog — created in wizard mode, in standard mode, or before this feature — the user can, from the catalog's page and from Explore, edit its enrichment profile (or create one when it has none) and start an enrichment job, which is added to the enrichment list (`MDI-F16`) (D8). No new page is created for this (`MDI-C18`). | [Planned — part implemented in Phase A.1] |
 
 ### Enrichment runner {#runner}
 
@@ -303,7 +306,7 @@ characterising information for applications and other files.
 | MDI-C12 | Remote providers MUST NOT receive an original file — only derived inputs (thumbnails, sampled frames, rendered pages, extracted or transcribed text). Transcription is local only (`whisper.cpp`); no remote speech-to-text. | [Planned] |
 | MDI-C13 | An API key MUST NOT be written to any file, `.ini` settings file, database or log. It is held in memory for the session only, or read from an environment variable at use (D10). Keys and authorization headers are never written to logs or reports. | [Planned] |
 | MDI-C14 | **Core boundary.** All SQL, tool invocation, HTTP requests, prompt construction, cost computation and similarity live in `core/`. `qt_quick/` contains no raw `QSqlQuery` and only orchestrates and displays. Every new `core/` class or method still needs explicit user approval before it is written (`CLAUDE.md`); approval of this spec is not approval of a core design. | [Planned] |
-| MDI-C15 | **`mdi_` tables outside the core schema (D5).** The core schema stays 3.0: this fork MUST NOT change the core schema version, never stamps 3.1, and MUST NOT edit `runMigration_3_0`. The new tables (at least: enrichment profile, enrichment job, derived datum with provenance, derived file, transcript passage, topic segment, topic cluster and membership, embedding) all have the prefix `mdi_`. Their own version ("media intelligence schema version 1") is stored separately from the core schema version, in a single-row `mdi_schema` table or equivalent. A separate migration creates the `mdi_` tables when they are absent and upgrades them when their version is older; it is idempotent and touches only `mdi_` tables. No 3.0 table or column is altered, added to or removed. Memory mode adds new `mdi_`-prefixed files to the collection folder and changes no existing file format. | [Planned] |
+| MDI-C15 | **`mdi_` tables outside the core schema (D5).** The core schema stays 3.0: this fork MUST NOT change the core schema version, never stamps 3.1, and MUST NOT edit `runMigration_3_0`. The new tables (at least: enrichment profile, enrichment job, derived datum with provenance, derived file, transcript passage, topic segment, topic cluster and membership, embedding) all have the prefix `mdi_`. Their own version ("media intelligence schema version 1") is stored separately from the core schema version, in a single-row `mdi_schema` table or equivalent. A separate migration creates the `mdi_` tables when they are absent and upgrades them when their version is older; it is idempotent and touches only `mdi_` tables. No 3.0 table or column is altered, added to or removed. Memory mode adds new `mdi_`-prefixed files to the collection folder and changes no existing file format. | [Planned — part implemented in Phase A.1] |
 | MDI-C16 | Every progress and status message is built with `StatusBarMessageBuilder` (`SpecProgressReport.md`); no raw status string. | [Planned] |
 | MDI-C17 | **User-visible text.** Every new string needs per-string approval of its exact text before it is written, and existing strings are reused wherever they fit. Copy states what is needed, without "Please" or orders. Blocking validation uses `Kirigami.InlineMessage`; decisions (egress confirmation, deletions) use modal dialogs; transient success uses `showPassiveNotification`. No string is approved by this spec. | [Planned] |
 | MDI-C18 | **UI structure.** No new Page: the wizard is a mode of the existing `PageCreateForm.qml`, derived data is shown inside the existing Explore and Search results pages, provider and tool settings inside the existing Settings page. Creating any new `.qml`, `.cpp` or `.h` file needs the user's explicit request first. | [Planned] |
@@ -330,12 +333,118 @@ with the core design approval required by `MDI-C14` and the string approvals of
 
 ## User-visible text
 
-No string is approved yet. Each string this feature needs — wizard step titles,
-option labels, analysis names, the operation name and process titles for the
-status builder, the egress confirmation, placeholders — is proposed with its
-exact text, checked first against existing K2/K3 strings for reuse, and written
-only after its own approval (`MDI-C17`). Approved strings are listed here as they
-are approved.
+Every new string needs its own approval (`MDI-C17`). Approved strings are listed
+here as they are approved.
+
+### Approved 2026-10-28 — Phase A.1 (wizard mode)
+
+New strings:
+
+| String | Where |
+| --- | --- |
+| "Standard" | Mode switch (`MDI-F1`) |
+| "Wizard" | Mode switch (`MDI-F1`) |
+| "Next" | Wizard navigation (`MDI-F2`) |
+| "Back" | Wizard navigation (`MDI-F2`) |
+| "Step %1 of %2" | Wizard step indicator (`MDI-F2`) |
+| "Destination path" | Step title and field label (`MDI-F2`) |
+| "Path for previews and derived data" | Destination path placeholder (`MDI-F2`) |
+| "File types" | Step title (`MDI-F3`) |
+| "Previews" | Step title (`MDI-F4`) |
+| "Summary" | Step title (`MDI-F2`) |
+| "Thumbnail" | Image option (`MDI-F4`) |
+| "Poster frame" | Video option (`MDI-F4`) |
+| "Keyframe strip" | Video option (`MDI-F4`) |
+| "Number of frames" | Keyframe strip count (`MDI-F4`) |
+| "Clip" | Video and audio option (`MDI-F4`) |
+| "Off" | Clip choice (`MDI-F4`) |
+| "Full" | Clip choice (`MDI-F4`) |
+| "Partial" | Clip choice (`MDI-F4`) |
+| "Start (seconds)" | Partial clip start (`MDI-F4`) |
+| "Duration (seconds)" | Partial clip duration (`MDI-F4`) |
+| "Waveform" | Audio option (`MDI-F4`) |
+
+New validation strings (`Kirigami.InlineMessage`, `MDI-F6`):
+
+| String | Refusal |
+| --- | --- |
+| "Provide a destination path for the previews and derived data." | Destination path empty |
+| "Select a destination path that can be written to." | Destination path not writable |
+| "Select a destination path outside the source path." | Destination path is the source or inside it |
+| "Select at least one file type, or turn off all previews." | No file type while a preview is selected |
+
+Reused existing strings: "Source", "Source path", "Select the path", "Storage",
+"Catalog name", "Create", "Image", "Video", "Audio", "Text", "Other", "On", and
+the three existing Create page validations (name, path, storage).
+
+The approval was given by the user in the main session ("ok tutto") and reported
+to the specifications agent by the main agent.
+
+---
+
+## Implementation status {#implementation-status}
+
+### Phase A, increment 1 (A.1) — approved 2026-10-28
+
+The user approved this increment in the main session ("ok tutto", 2026-10-28);
+the main agent reported it to the specifications agent. That reply is the
+`MDI-C14` approval for the core changes and the `MDI-C18` request for the new
+files listed here. Nothing else is approved by it.
+
+Approved new files:
+
+| File | Content |
+| --- | --- |
+| `core/mdischema.{h,cpp}` | `MdiSchema::ensure` / `storedVersion`. Creates `mdi_schema(mdi_schema_version)` and `mdi_profile(profile_device_id` primary key, `profile_destination_path`, `profile_settings` JSON, `profile_date_updated)` when absent. |
+| `core/mdiprofile.{h,cpp}` | `MdiProfile` load / save / remove. Memory mode: file `mdi_profile.csv` in the collection folder, tab-separated. |
+| `qt_quick/CreateWizard.qml` | A component inside `PageCreateForm.qml`, not a Page (`MDI-C18` holds). |
+
+Approved changes to existing files:
+
+- `DatabaseManager::runMigrations` calls `MdiSchema::ensure` after the core
+  migrations and, in Memory mode, `MdiProfile::loadFileToTable`. `Collection`
+  is not modified: in Memory mode `runMigrations` runs after
+  `collection->load()`, so the profile file is loaded there, once the table
+  exists.
+- `AppManager` (K3): `createCatalogWithEnrichment(...)` wraps the existing
+  `createCatalog` (`MDI-C2`, `MDI-F7`). Pending profiles are keyed by the
+  catalog's device ID and saved only in `onCatalogCreationCompleted`. A pending
+  profile is dropped on error, on Stop (even when the catalog is kept), on
+  removal of a queued creation, and on collection switch.
+- `AppManager::isPathWritable`: a destination that does not exist yet is
+  accepted when its nearest existing ancestor is writable.
+  `AppManager::isPathInside`: compares canonical paths, case-insensitive on
+  Windows and macOS.
+- Settings keys `Create/Mode` and `Create/WizardDestinationPath` in the
+  application settings file (added keys only, `MDI-C7`).
+
+Wizard steps as built (5 steps): Source (the standard form's *Catalog
+definition* section; its fields are shared with standard mode) → Destination
+path → File types → Previews → Summary. The AI options step of `MDI-F2`/`MDI-F5`
+comes with Phase B. On a failed validation the wizard shows the offending step.
+The standard form's other options (file type, subdirectories, hidden files,
+metadata, checksum, excludes) are hidden in wizard mode and used with their
+current values, so the catalog is the same as in standard mode.
+
+What A.1 covers per row:
+
+| Row | Implemented in A.1 | Still planned |
+| --- | --- | --- |
+| `MDI-F1` | All. | — |
+| `MDI-F2` | Steps 1–4 and 6 (summary), back and next. | Step 5 (AI options), Phase B. |
+| `MDI-F3` | All, with *Text* as the document type. | — |
+| `MDI-F4` | All. | — |
+| `MDI-F6` | All four wizard refusals; source checks reuse the Create page validations. | — |
+| `MDI-F7` | Creation through the existing path; profile saved only on success; no profile on failure, Stop or queue removal. | Adding the enrichment job to the list (`MDI-F16`): increment 2, with the runner. |
+| `MDI-F8` | Profile saved per catalog; it survives closing and reopening the collection (File, Hosted, Memory). | Editing or creating a profile for an existing catalog from its page and from Explore, and starting a job from there. |
+| `MDI-C15` | `mdi_schema` and `mdi_profile` created by an idempotent migration outside the core schema; core schema 3.0 and `runMigration_3_0` untouched; Memory mode adds only `mdi_profile.csv`. | The other `mdi_` tables (job, derived datum, derived file, transcript, segment, cluster, embedding) and their Memory-mode files. |
+
+### Known gaps for increment 2
+
+- `MDI-F57`: deleting a catalog does not yet delete its enrichment profile.
+- `MDI-F56`: collection export does not yet carry the `mdi_` data.
+- The enrichment runner and its lifecycle (`MDI-F9`–`F19`), external tools
+  (`MDI-F20`–`F22`) and previews (`MDI-F29`–`F34`).
 
 ---
 
@@ -373,9 +482,13 @@ are approved.
 
 For each row: set up the stated condition, run the operation, confirm the result.
 
-- **MDI-F1** — Fill source and name in standard mode, switch to wizard and back: the values remain; standard-mode creation gives the same catalog as before this feature.
-- **MDI-F6** — Set the destination path inside the source: *Create* shows the inline message and creates nothing; editing the path hides it.
-- **MDI-F7** — Cancel a wizard creation while it runs: no enrichment job appears. Let one complete: a job appears for that catalog.
+- **MDI-F1** — Fill source and name in standard mode, switch to wizard and back: the values remain; standard-mode creation gives the same catalog as before this feature. Reopen the page: the last mode is restored.
+- **MDI-F2** — Go through every step with *Next*, then *Back* to the first: the step indicator follows; choices made on later steps are kept.
+- **MDI-F3** — The file types shown are Image, Video, Audio, Text and Other; each turns on and off on its own. Create the same source in both modes: identical catalog.
+- **MDI-F4** — Keyframe count accepts 2–32 (default 8); a partial clip shows start and duration (default 0 and 30).
+- **MDI-F6** — Set the destination path inside the source: *Create* shows the inline message, returns to the destination step and creates nothing; editing the path hides it. Repeat with an empty path, a read-only path, and no file type with a preview on. A destination that does not exist yet under a writable folder is accepted.
+- **MDI-F7** — Cancel a wizard creation while it runs: no enrichment job appears and no profile is saved (even when the catalog is kept). Remove a queued wizard creation: no profile. Let one complete: the profile is saved and a job appears for that catalog (job: increment 2).
+- **MDI-F8 (A.1)** — Create a catalog in wizard mode, close and reopen the collection (File and Memory modes): its profile is still there.
 - **MDI-F9 / F10** — Stop a job mid-run: files already done keep their results; the status is *Stopped*; no orphan `ffmpeg` process remains.
 - **MDI-F11** — Pause: no tool process runs and no request is sent until Resume.
 - **MDI-F8** — On a catalog created in standard mode, open its page and Explore: the profile can be created or edited and a job started from each; the job appears in the enrichment list.

@@ -95,6 +95,7 @@ set(K3_QML_FILES
     ${CMAKE_SOURCE_DIR}/qt_quick/PageDevicesView.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/PageDevicesViewDelegate.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/PageCreateForm.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/CreateWizard.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/DeviceTreeComboBox.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/SearchTermList.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/MetadataDialog.qml
