@@ -1091,8 +1091,22 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeArchiveListing(const FileItem &fi
         archive = std::make_unique<KZip>(file.fullPath);
     else if (kind == QLatin1String("7z"))
         archive = std::make_unique<K7Zip>(file.fullPath);
-    else
-        archive = std::make_unique<KTar>(file.fullPath);
+    else {
+        // The compression is named from the suffix: MIME detection by
+        // content is not reliable on every platform
+        const QString lower = file.fullPath.toLower();
+        QString mime = QStringLiteral("application/x-tar");
+        if (lower.endsWith(QLatin1String(".gz")) || lower.endsWith(QLatin1String(".tgz")))
+            mime = QStringLiteral("application/x-compressed-tar");
+        else if (lower.endsWith(QLatin1String(".bz2")) || lower.endsWith(QLatin1String(".tbz"))
+                 || lower.endsWith(QLatin1String(".tbz2")))
+            mime = QStringLiteral("application/x-bzip-compressed-tar");
+        else if (lower.endsWith(QLatin1String(".xz")) || lower.endsWith(QLatin1String(".txz")))
+            mime = QStringLiteral("application/x-xz-compressed-tar");
+        else if (lower.endsWith(QLatin1String(".zst")))
+            mime = QStringLiteral("application/x-zstd-compressed-tar");
+        archive = std::make_unique<KTar>(file.fullPath, mime);
+    }
     if (!archive->open(QIODevice::ReadOnly)) {
         r.outcome = QStringLiteral("failed");
         r.reason  = archive->errorString().isEmpty() ? QStringLiteral("archive not readable") : archive->errorString();
