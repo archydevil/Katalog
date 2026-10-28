@@ -35,6 +35,8 @@ set(CORE_HEADERS
     backupjobstoppable.h
     collectionimporter.h
     statistics.h
+    mdischema.h
+    mdiprofile.h
 )
 
 set(CORE_SOURCES
@@ -74,6 +76,8 @@ set(CORE_SOURCES
     backupjobstoppable.cpp
     collectionimporter.cpp
     statistics.cpp
+    mdischema.cpp
+    mdiprofile.cpp
 )
 
 add_library(katalog-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

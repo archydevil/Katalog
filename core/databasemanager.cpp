@@ -33,6 +33,8 @@
 #include "core/databasemanager.h"
 #include "core/database.h"
 #include "core/collection.h"
+#include "core/mdischema.h"
+#include "core/mdiprofile.h"
 #include <QSqlDatabase>
 #include <QVersionNumber>
 
@@ -123,6 +125,15 @@ QSqlError DatabaseManager::runMigrations(const QString &connectionName, Collecti
         if (err.type() != QSqlError::NoError) return err;
         collection->setDatabaseSchemaVersion();
     }
+
+    // Fork media intelligence tables (SpecMediaIntelligence.md MDI-C15): outside
+    // the core schema numbering, so they are ensured on every open. In Memory mode
+    // the collection files were loaded before this call, so the mdi_ file is
+    // loaded here, once its table exists.
+    QSqlError mdiErr = MdiSchema::ensure(connectionName);
+    if (mdiErr.type() != QSqlError::NoError) return mdiErr;
+    if (collection->databaseMode == "Memory")
+        MdiProfile::loadFileToTable(connectionName, collection->folder);
 
     return QSqlError();
 }

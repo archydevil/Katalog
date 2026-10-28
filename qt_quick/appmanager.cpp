@@ -16,6 +16,7 @@
 #include "core/directoryreplicator.h"
 #include "core/storage.h"
 #include "core/foldertreeloader.h"
+#include "core/mdiprofile.h"
 #include <QThread>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -1250,6 +1251,9 @@ bool AppManager::reconnectToDatabase()
 {
     const QString conn = m_connectionName;
 
+    // Pending wizard profiles belong to the collection being left
+    m_pendingEnrichmentProfiles.clear();
+
     QSqlError err = DatabaseManager::reconnect(conn, collection);
     if (err.type() != QSqlError::NoError) {
         lastDatabaseError = err.text();
@@ -2467,6 +2471,8 @@ QString AppManager::createCatalog(const QString &name, const QString &path,
                                    const QString &includeChecksum,
                                    const QStringList &perCatalogExcludes)
 {
+    m_lastCreateRequestDeviceId = 0;
+
     // A search is a blocking call on this same thread that keeps the UI alive by
     // pumping the event loop, so Create stays reachable while one runs. Starting
     // here would nest inside the search's call stack on the same database
@@ -2545,6 +2551,7 @@ QString AppManager::createCatalog(const QString &name, const QString &path,
         // are wired when the entry actually starts, in startNextDeviceUpdate().
         const int     queuedId   = newDevice->ID;
         const QString queuedName = newDevice->name;
+        m_lastCreateRequestDeviceId = queuedId;
         delete newDevice;
         enqueueOperation(queuedId, true, queuedName);
         emit deviceListChanged();
@@ -2554,6 +2561,7 @@ QString AppManager::createCatalog(const QString &name, const QString &path,
 
     setupDeviceUpdateManager();
     m_creatingDevice = newDevice;
+    m_lastCreateRequestDeviceId = newDevice->ID;
     m_catalogIsCreating = true;
     m_catalogCreateStartTime = QDateTime::currentDateTime();
     m_catalogStatusText = StatusBarMessageBuilder().setOperation(tr("Create")).setStatus(tr("In Progress")).build();
@@ -2594,6 +2602,95 @@ bool AppManager::isDirectoryEmpty(const QString &path) const
     return dir.exists() && dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries).isEmpty();
 }
 //----------------------------------------------------------------------
+QString AppManager::createCatalogWithEnrichment(const QString &name, const QString &path,
+                                                int storageId,
+                                                const QString &fileType, bool includeSubDir,
+                                                bool includeHidden, bool includeSymlinks,
+                                                bool isFullDevice,
+                                                const QString &includeMetadata,
+                                                const QString &includeChecksum,
+                                                const QStringList &perCatalogExcludes,
+                                                const QVariantMap &enrichmentProfile)
+{
+    // The wizard reaches creation only through the standard entry point (MDI-C2).
+    const QString error = createCatalog(name, path, storageId, fileType, includeSubDir,
+                                        includeHidden, includeSymlinks, isFullDevice,
+                                        includeMetadata, includeChecksum, perCatalogExcludes);
+    if (error.isEmpty() && m_lastCreateRequestDeviceId > 0)
+        m_pendingEnrichmentProfiles.insert(m_lastCreateRequestDeviceId, enrichmentProfile);
+    return error;
+}
+//----------------------------------------------------------------------
+void AppManager::savePendingEnrichmentProfile(int deviceId)
+{
+    const QVariantMap pending = m_pendingEnrichmentProfiles.take(deviceId);
+    if (pending.isEmpty())
+        return;
+
+    MdiProfile profile;
+    profile.deviceId        = deviceId;
+    profile.destinationPath = pending.value(QStringLiteral("destinationPath")).toString();
+    profile.settings        = QJsonObject::fromVariantMap(pending.value(QStringLiteral("settings")).toMap());
+    if (!profile.save(m_connectionName)) {
+        qWarning() << "savePendingEnrichmentProfile: profile not saved for device" << deviceId;
+        return;
+    }
+    if (collection->databaseMode == "Memory")
+        MdiProfile::saveTableToFile(m_connectionName, collection->folder);
+}
+//----------------------------------------------------------------------
+bool AppManager::isPathWritable(const QString &path) const
+{
+    // A destination that does not exist yet is accepted when the nearest
+    // existing folder above it can be written to: it is created when first used.
+    if (path.trimmed().isEmpty())
+        return false;
+    QFileInfo info(QDir::cleanPath(QFileInfo(path).absoluteFilePath()));
+    while (!info.exists()) {
+        const QString parent = info.absolutePath();
+        if (parent == info.absoluteFilePath())
+            return false;
+        info = QFileInfo(parent);
+    }
+    return info.isDir() && info.isWritable();
+}
+//----------------------------------------------------------------------
+bool AppManager::isPathInside(const QString &path, const QString &parentPath) const
+{
+    auto resolved = [](const QString &p) {
+        const QFileInfo info(p);
+        return info.exists() ? info.canonicalFilePath()
+                             : QDir::cleanPath(info.absoluteFilePath());
+    };
+    if (path.trimmed().isEmpty() || parentPath.trimmed().isEmpty())
+        return false;
+    const QString child  = resolved(path);
+    QString       parent = resolved(parentPath);
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+    const Qt::CaseSensitivity cs = Qt::CaseInsensitive;
+#else
+    const Qt::CaseSensitivity cs = Qt::CaseSensitive;
+#endif
+    if (child.compare(parent, cs) == 0)
+        return true;
+    if (!parent.endsWith('/'))
+        parent += '/';
+    return child.startsWith(parent, cs);
+}
+//----------------------------------------------------------------------
+QString AppManager::getCreateSetting(const QString &key) const
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    return settings.value("Create/" + key).toString();
+}
+//----------------------------------------------------------------------
+void AppManager::setCreateSetting(const QString &key, const QVariant &value)
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    settings.setValue("Create/" + key, value);
+    settings.sync();
+}
+//----------------------------------------------------------------------
 void AppManager::onCatalogCreationCompleted(const QList<qint64> &results)
 {
     collection->saveDeviceTableToFile();
@@ -2611,6 +2708,7 @@ void AppManager::onCatalogCreationCompleted(const QList<qint64> &results)
     // selection, then the creation report is shown on the Devices page
     QVariantMap report;
     if (m_creatingDevice) {
+        savePendingEnrichmentProfile(m_creatingDevice->ID);
         selectDeviceById(m_creatingDevice->ID);
         report = buildUpdateReport(m_creatingDevice->ID, results);
         if (!report.isEmpty())
@@ -2627,6 +2725,7 @@ void AppManager::onCatalogCreationCompleted(const QList<qint64> &results)
 void AppManager::onCatalogCreationError(const QString &error)
 {
     if (m_creatingDevice) {
+        m_pendingEnrichmentProfiles.remove(m_creatingDevice->ID);
         m_creatingDevice->deleteDevice(false);
         m_creatingDevice = nullptr;
     }
@@ -2658,6 +2757,9 @@ void AppManager::onCatalogCreationCancelled()
                << "type=" << (m_creatingDevice ? m_creatingDevice->type : QStringLiteral("<none>"))
                << "catalogID=" << (m_creatingDevice && m_creatingDevice->catalog
                                    ? m_creatingDevice->catalog->ID : -1);
+    // A stopped creation gets no enrichment profile, even when the catalog is kept (MDI-F7)
+    if (m_creatingDevice)
+        m_pendingEnrichmentProfiles.remove(m_creatingDevice->ID);
     if (!keptCatalog && m_creatingDevice) {
         const Device::DeleteOperationResult r = m_creatingDevice->deleteDevice(false);
         qWarning() << "STOPTRACE deleteDevice result=" << int(r.result)
@@ -3097,6 +3199,7 @@ void AppManager::removeQueuedOperation(int index)
     // (they are written before the operation is queued). Dropping the entry must
     // remove them too, or an empty catalog is left behind.
     if (op.isCreate) {
+        m_pendingEnrichmentProfiles.remove(op.deviceId);
         Device dev;
         dev.ID = op.deviceId;
         dev.loadDevice(m_connectionName);

@@ -65,6 +65,7 @@ qt_add_qml_module(Katalog3
         PageDevicesView.qml
         PageDevicesViewDelegate.qml
         PageCreateForm.qml
+        CreateWizard.qml
         PageDeviceEditForm.qml
         PageTagsForm.qml
         PageStatisticsForm.qml

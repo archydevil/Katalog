@@ -398,6 +398,23 @@ public slots:
     Q_INVOKABLE void         stopCatalogCreation();
     Q_INVOKABLE bool         isDirectoryEmpty(const QString &path) const;
 
+    // Create wizard (fork, SpecMediaIntelligence.md MDI-F1..F8). Same creation as
+    // createCatalog(); the profile {destinationPath, settings} is saved for the
+    // new catalog only when its creation completes successfully (MDI-F7).
+    Q_INVOKABLE QString      createCatalogWithEnrichment(const QString &name, const QString &path,
+                                                         int storageId,
+                                                         const QString &fileType, bool includeSubDir,
+                                                         bool includeHidden, bool includeSymlinks,
+                                                         bool isFullDevice,
+                                                         const QString &includeMetadata,
+                                                         const QString &includeChecksum,
+                                                         const QStringList &perCatalogExcludes,
+                                                         const QVariantMap &enrichmentProfile);
+    Q_INVOKABLE bool         isPathWritable(const QString &path) const;
+    Q_INVOKABLE bool         isPathInside(const QString &path, const QString &parentPath) const;
+    Q_INVOKABLE QString      getCreateSetting(const QString &key) const;
+    Q_INVOKABLE void         setCreateSetting(const QString &key, const QVariant &value);
+
     // Storage pre-selection for Create page (used by DeviceTreeComboBox storageOnly mode)
     Q_INVOKABLE int getDefaultStorageId() const;
 
@@ -728,6 +745,11 @@ private:
     QString m_catalogStatusText;
     Device *m_creatingDevice   = nullptr;
     QDateTime m_catalogCreateStartTime;
+    // Create wizard: profiles waiting for their catalog's creation to complete,
+    // keyed by catalog device ID (a creation can wait in the operation queue)
+    int     m_lastCreateRequestDeviceId = 0;
+    QHash<int, QVariantMap> m_pendingEnrichmentProfiles;
+    void    savePendingEnrichmentProfile(int deviceId);
     DeviceUpdateManager    *m_deviceUpdateManager    = nullptr;
     CatalogProgressManager *m_catalogProgressManager = nullptr;
     CollectionImporter     *m_importer               = nullptr;
