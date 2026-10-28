@@ -40,6 +40,8 @@
 #include <QVariantMap>
 #include <QHash>
 #include <QList>
+#include <QVector>
+#include <QVariantList>
 
 class MdiData
 {
@@ -64,6 +66,17 @@ public:
         QString     date;              // processing date, ISO 8601
     };
 
+    // One indexed text of a file for semantic search (MDI-F47): a summary,
+    // a caption, a topic segment or a transcript window
+    struct EmbeddingRow {
+        QString        kind;          // "summary", "excerpt", "caption", "segment", "passage"
+        int            index = 0;     // segment or window number within the file
+        double         start = -1;    // seconds, for timecoded kinds; -1 otherwise
+        double         end   = -1;
+        QString        text;
+        QVector<float> vector;        // unit length
+    };
+
     static QString filePath(const QString &collectionFolder);
 
     // Opens (creating when absent) the store on a connection of the caller's
@@ -86,6 +99,17 @@ public:
 
     // Completed data of one analysis across a catalog (e.g. every "segments")
     static QList<Datum> forCatalog(const QString &connectionName, int catalogId, const QString &analysis);
+
+    // Replaces the file's indexed texts (one model at a time per file)
+    static bool replaceEmbeddings(const QString &connectionName, int catalogId, const QString &fullPath,
+                                  const QString &model, const QList<EmbeddingRow> &rows);
+
+    // Semantic search over the given catalogs (all when empty), with vectors of
+    // the same model only (MDI-F49). Files by best score, each with its best
+    // passages: [{catalogId, fullPath, score, hits: [{kind, text, start, end, score}]}]
+    static QVariantList semanticSearch(const QString &connectionName, const QList<int> &catalogIds,
+                                       const QVector<float> &query, const QString &model,
+                                       int maxFiles = 30, int hitsPerFile = 3, double minScore = 0.35);
 
     // Removes the catalog's data and returns the derived files it recorded (absolute)
     static QStringList clearCatalog(const QString &connectionName, int catalogId);

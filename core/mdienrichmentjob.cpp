@@ -55,6 +55,7 @@
 #include <QSet>
 #include <QDebug>
 #include <algorithm>
+#include <cmath>
 
 #include <KFileMetaData/ExtractorCollection>
 #include <KFileMetaData/Extractor>
@@ -68,6 +69,12 @@ const QString kCaptionPrompt = QStringLiteral("caption-v1");
 const QString kSummaryPrompt = QStringLiteral("summary-v3");
 const QString kSegmentsPrompt = QStringLiteral("segments-v1");
 const QString kClustersPrompt = QStringLiteral("clusters-v1");
+const QString kEmbedVersion   = QStringLiteral("embed-v1");
+
+// Transcript windows indexed for search: about this long, in seconds or words
+constexpr double kWindowSeconds = 45.0;
+constexpr int    kWindowWords   = 120;
+constexpr int    kEmbedBatch    = 32;
 
 // Transcript text sent per segmentation request
 constexpr int kSegmentChunkChars = 20000;
@@ -306,6 +313,9 @@ void MdiEnrichmentJob::run()
             continue;
         }
 
+        // Embeddings index the file's other data: redone whenever one of them
+        // was produced in this run
+        bool fileChanged = false;
         for (const QString &analysis : analyses) {
             if (!waitWhilePaused())
                 break;
@@ -313,8 +323,9 @@ void MdiEnrichmentJob::run()
             const QJsonObject params = analysisParams(analysis);
             // Incremental (MDI-F13): same file state and parameters, and the
             // derived file still present, means nothing to do.
-            if (MdiData::isCurrent(m_connectionName, m_config.catalogId, file.fullPath, analysis,
-                                   file.size, file.dateUpdated, params)) {
+            const bool forced = analysis == QLatin1String("embeddings") && fileChanged;
+            if (!forced && MdiData::isCurrent(m_connectionName, m_config.catalogId, file.fullPath, analysis,
+                                              file.size, file.dateUpdated, params)) {
                 bool filesPresent = true;
                 for (const MdiData::Datum &d : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath))
                     if (d.analysis == analysis)
@@ -356,6 +367,8 @@ void MdiEnrichmentJob::run()
             emit datumCommitted(file.fullPath, analysis);
             if (analysis == QLatin1String("segments") && r.outcome == QLatin1String("completed"))
                 m_segmentsChanged = true;
+            if (r.outcome == QLatin1String("completed"))
+                fileChanged = true;
 
             if (r.outcome == QLatin1String("completed"))      ++completed;
             else if (r.outcome == QLatin1String("skipped"))   ++skipped;
@@ -423,6 +436,7 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
     // Topic segments need the transcript, which is selected with them (MDI-F5)
     const bool segments   = ai.value("segments").toBool(true);
     const bool transcript = segments || ai.value("transcript").toBool(true);
+    const bool embeddings = ai.value("embeddings").toBool(true);
 
     QStringList list;
     if (file.fileType == QLatin1String("image")) {
@@ -447,6 +461,9 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
     } else if (file.fileType == QLatin1String("text")) {
         if (summary) list << QStringLiteral("summary");
     }
+    // Last: indexes what the analyses above produced (MDI-F47)
+    if (embeddings && !list.isEmpty())
+        list << QStringLiteral("embeddings");
     return list;
 }
 
@@ -483,6 +500,9 @@ QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
     } else if (analysis == QLatin1String("clusters")) {
         p["model"]  = m_config.textModel;
         p["prompt"] = kClustersPrompt;
+    } else if (analysis == QLatin1String("embeddings")) {
+        p["model"]   = m_config.embedModel;
+        p["version"] = kEmbedVersion;
     }
     return p;
 }
@@ -491,7 +511,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
 {
     // Previews need ffmpeg; caption and summary check their own inputs (MDI-F21)
     const bool isPreview = analysis != QLatin1String("summary") && analysis != QLatin1String("caption")
-                        && analysis != QLatin1String("segments");
+                        && analysis != QLatin1String("segments") && analysis != QLatin1String("embeddings");
     if (isPreview && m_config.ffmpegPath.isEmpty()) {
         Result r;
         r.outcome = QStringLiteral("skipped");
@@ -508,6 +528,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     if (analysis == QLatin1String("summary"))    return makeSummary(file);
     if (analysis == QLatin1String("transcript")) return makeTranscript(file);
     if (analysis == QLatin1String("segments"))   return makeSegments(file);
+    if (analysis == QLatin1String("embeddings")) return makeEmbeddings(file);
     Result r;
     r.outcome = QStringLiteral("skipped");
     r.reason  = QStringLiteral("unknown analysis");
@@ -1135,6 +1156,159 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeClusters()
     }
     r.value["clusters"] = clusters;
     r.value["segmentCount"] = refs.size();
+    return r;
+}
+
+//----------------------------------------------------------------------
+QList<QVector<float>> MdiEnrichmentJob::embedTexts(const QString &ollamaUrl, const QString &model,
+                                                   const QStringList &texts, QString *error, int timeoutMs)
+{
+    QList<QVector<float>> vectors;
+    if (providerClass(QUrl(ollamaUrl)) != QLatin1String("local")) {
+        *error = QStringLiteral("endpoint is not local");
+        return vectors;
+    }
+    QJsonArray input;
+    for (const QString &t : texts)
+        input.append(t);
+    const QJsonObject body{{"model", model}, {"input", input}};
+
+    QNetworkAccessManager manager;
+    QNetworkRequest request(QUrl(ollamaUrl + QStringLiteral("/api/embed")));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    request.setTransferTimeout(timeoutMs);
+    QNetworkReply *reply = manager.post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        *error = reply->errorString();
+    } else {
+        const QJsonObject doc = QJsonDocument::fromJson(reply->readAll()).object();
+        for (const QJsonValue &e : doc.value("embeddings").toArray()) {
+            const QJsonArray a = e.toArray();
+            QVector<float> v(a.size());
+            double norm = 0.0;
+            for (int i = 0; i < a.size(); ++i) {
+                v[i] = float(a.at(i).toDouble());
+                norm += double(v[i]) * double(v[i]);
+            }
+            norm = std::sqrt(norm);
+            if (norm > 0)
+                for (float &x : v)
+                    x = float(x / norm);
+            vectors.append(v);
+        }
+        if (vectors.size() != texts.size()) {
+            *error = doc.contains("error") ? doc.value("error").toString()
+                                           : QStringLiteral("unexpected embeddings answer");
+            vectors.clear();
+        }
+    }
+    reply->deleteLater();
+    return vectors;
+}
+
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeEmbeddings(const FileItem &file)
+{
+    Result r;
+    r.model = m_config.embedModel;
+
+    QList<MdiData::EmbeddingRow> rows;
+    auto add = [&rows](const QString &kind, int index, double start, double end, const QString &text) {
+        if (text.trimmed().isEmpty())
+            return;
+        MdiData::EmbeddingRow row;
+        row.kind  = kind;
+        row.index = index;
+        row.start = start;
+        row.end   = end;
+        row.text  = text.trimmed();
+        rows.append(row);
+    };
+    auto joinTags = [](const QJsonValue &tags) {
+        QStringList list;
+        for (const QJsonValue &t : tags.toArray())
+            list << t.toString();
+        return list.join(", ");
+    };
+
+    const QString name = QFileInfo(file.fullPath).completeBaseName();
+    for (const MdiData::Datum &d : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath)) {
+        if (d.outcome != QLatin1String("completed"))
+            continue;
+        if (d.analysis == QLatin1String("summary")) {
+            // The file's name helps queries naming a place or a person
+            add(QStringLiteral("summary"), 0, -1, -1,
+                name + QStringLiteral(". ") + d.value.value("summary").toString()
+                + QStringLiteral(" (") + joinTags(d.value.value("tags")) + QStringLiteral(")"));
+            int k = 0;
+            for (const QJsonValue &e : d.value.value("excerpts").toArray())
+                add(QStringLiteral("excerpt"), k++, -1, -1, e.toString());
+        } else if (d.analysis == QLatin1String("caption")) {
+            add(QStringLiteral("caption"), 0, -1, -1,
+                d.value.value("caption").toString() + QStringLiteral(" (") + joinTags(d.value.value("tags")) + QStringLiteral(")"));
+        } else if (d.analysis == QLatin1String("segments")) {
+            const QJsonArray segs = d.value.value("segments").toArray();
+            for (int i = 0; i < segs.size(); ++i) {
+                const QJsonObject s = segs.at(i).toObject();
+                add(QStringLiteral("segment"), i, s.value("start").toDouble(), s.value("end").toDouble(),
+                    s.value("title").toString() + QStringLiteral(". ") + s.value("summary").toString()
+                    + QStringLiteral(" (") + joinTags(s.value("topics")) + QStringLiteral(")"));
+            }
+        } else if (d.analysis == QLatin1String("transcript")) {
+            // Windows of consecutive passages, so a hit lands on a timecode
+            QString text;
+            double start = -1, end = -1;
+            int words = 0, k = 0;
+            for (const QJsonValue &v : d.value.value("passages").toArray()) {
+                const QJsonObject p = v.toObject();
+                if (start < 0)
+                    start = p.value("start").toDouble();
+                end = p.value("end").toDouble();
+                text += p.value("text").toString() + ' ';
+                words += p.value("text").toString().split(' ', Qt::SkipEmptyParts).size();
+                if (end - start >= kWindowSeconds || words >= kWindowWords) {
+                    add(QStringLiteral("passage"), k++, start, end, text);
+                    text.clear();
+                    start = -1;
+                    words = 0;
+                }
+            }
+            if (!text.isEmpty())
+                add(QStringLiteral("passage"), k, start, end, text);
+        }
+    }
+    if (rows.isEmpty()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("nothing to index");
+        return r;
+    }
+
+    for (int from = 0; from < rows.size() && !m_stop.load(); from += kEmbedBatch) {
+        QStringList texts;
+        for (int i = from; i < qMin(rows.size(), from + kEmbedBatch); ++i)
+            texts << rows[i].text;
+        QString err;
+        const QList<QVector<float>> vectors = embedTexts(m_config.ollamaUrl, m_config.embedModel, texts, &err,
+                                                         m_config.httpTimeoutMs);
+        if (vectors.isEmpty()) {
+            r.outcome = QStringLiteral("failed");
+            r.reason  = err;
+            return r;
+        }
+        for (int i = 0; i < vectors.size(); ++i)
+            rows[from + i].vector = vectors[i];
+    }
+    if (m_stop.load())
+        return r;
+    if (!MdiData::replaceEmbeddings(m_connectionName, m_config.catalogId, file.fullPath, m_config.embedModel, rows)) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = QStringLiteral("index not written");
+        return r;
+    }
+    r.value["count"] = rows.size();
     return r;
 }
 

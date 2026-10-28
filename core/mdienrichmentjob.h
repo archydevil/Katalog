@@ -52,6 +52,7 @@
 #include <QList>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QVector>
 #include <atomic>
 
 class QProcess;
@@ -82,6 +83,7 @@ public:
         QString     ollamaUrl = QStringLiteral("http://localhost:11434");
         QString     visionModel = QStringLiteral("gemma4");
         QString     textModel   = QStringLiteral("gemma4");
+        QString     embedModel  = QStringLiteral("bge-m3");   // semantic search (MDI-F47)
         QString     uiLanguageName = QStringLiteral("English");   // captions of images
         int         toolTimeoutMs = 10 * 60 * 1000;               // MDI-F22
         int         httpTimeoutMs = 120 * 1000;                   // MDI-C20
@@ -100,6 +102,13 @@ public:
     // A whisper.cpp ggml model: the configured file, else the largest
     // ggml-*.bin in ~/whisper-models or the Homebrew share folder; empty when none
     static QString findWhisperModel(const QString &configuredPath = QString());
+
+    // Unit-length embeddings of `texts` from an Ollama endpoint, in order; empty
+    // on error. Synchronous: usable on any thread (the search query is
+    // embedded on the UI thread). Local endpoints only, as for the job.
+    static QList<QVector<float>> embedTexts(const QString &ollamaUrl, const QString &model,
+                                            const QStringList &texts, QString *error,
+                                            int timeoutMs = 120 * 1000);
 
     void requestStop();
     void setPaused(bool paused);
@@ -140,6 +149,7 @@ private:
     Result makeSegments(const FileItem &file);
     // Catalog-level: groups the catalog's topic segments (MDI-F37, scope per catalog)
     Result makeClusters();
+    Result makeEmbeddings(const FileItem &file);
     QString transcriptText(const FileItem &file);   // from this catalog's transcript datum
 
     QString extractText(const QString &path, QString *tool, QString *reason);

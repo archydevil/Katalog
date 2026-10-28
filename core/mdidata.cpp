@@ -33,6 +33,9 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QDir>
+#include <QMap>
+#include <algorithm>
+#include <cstring>
 #include <QDebug>
 
 namespace {
@@ -125,6 +128,22 @@ bool MdiData::open(const QString &connectionName, const QString &dbPath)
     )"));
     if (!ok)
         qWarning() << "MdiData::open: table creation failed:" << q.lastError().text();
+
+    // Semantic search index (MDI-F47): float32 vectors as BLOBs
+    q.exec(QLatin1String(R"(
+        CREATE TABLE IF NOT EXISTS mdi_embedding (
+            emb_catalog_id INTEGER NOT NULL,
+            emb_full_path  TEXT    NOT NULL,
+            emb_kind       TEXT    NOT NULL,
+            emb_index      INTEGER NOT NULL,
+            emb_start      REAL,
+            emb_end        REAL,
+            emb_text       TEXT,
+            emb_model      TEXT    NOT NULL,
+            emb_vector     BLOB    NOT NULL
+        )
+    )"));
+    q.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS mdi_embedding_file ON mdi_embedding (emb_catalog_id, emb_full_path)"));
     return ok;
 }
 
@@ -265,6 +284,118 @@ QList<MdiData::Datum> MdiData::forCatalog(const QString &connectionName, int cat
     return list;
 }
 
+bool MdiData::replaceEmbeddings(const QString &connectionName, int catalogId, const QString &fullPath,
+                                const QString &model, const QList<EmbeddingRow> &rows)
+{
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
+    db.transaction();
+    QSqlQuery del(db);
+    del.prepare(QLatin1String("DELETE FROM mdi_embedding WHERE emb_catalog_id = :catalog_id AND emb_full_path = :full_path"));
+    del.bindValue(":catalog_id", catalogId);
+    del.bindValue(":full_path",  fullPath);
+    if (!del.exec()) {
+        db.rollback();
+        return false;
+    }
+    QSqlQuery ins(db);
+    ins.prepare(QLatin1String(R"(
+        INSERT INTO mdi_embedding (emb_catalog_id, emb_full_path, emb_kind, emb_index,
+                                   emb_start, emb_end, emb_text, emb_model, emb_vector)
+        VALUES (:catalog_id, :full_path, :kind, :index, :start, :end, :text, :model, :vector)
+    )"));
+    for (const EmbeddingRow &r : rows) {
+        ins.bindValue(":catalog_id", catalogId);
+        ins.bindValue(":full_path",  fullPath);
+        ins.bindValue(":kind",       r.kind);
+        ins.bindValue(":index",      r.index);
+        ins.bindValue(":start",      r.start);
+        ins.bindValue(":end",        r.end);
+        ins.bindValue(":text",       r.text);
+        ins.bindValue(":model",      model);
+        ins.bindValue(":vector",     QByteArray(reinterpret_cast<const char *>(r.vector.constData()),
+                                                r.vector.size() * int(sizeof(float))));
+        if (!ins.exec()) {
+            qWarning() << "MdiData::replaceEmbeddings failed:" << ins.lastError().text();
+            db.rollback();
+            return false;
+        }
+    }
+    return db.commit();
+}
+
+QVariantList MdiData::semanticSearch(const QString &connectionName, const QList<int> &catalogIds,
+                                     const QVector<float> &query, const QString &model,
+                                     int maxFiles, int hitsPerFile, double minScore)
+{
+    struct Hit { int catalogId; QString fullPath, kind, text; double start, end, score; };
+    QList<Hit> hits;
+
+    QString sql = QStringLiteral("SELECT emb_catalog_id, emb_full_path, emb_kind, emb_text, emb_start, emb_end, emb_vector "
+                                 "FROM mdi_embedding WHERE emb_model = :model");
+    if (!catalogIds.isEmpty()) {
+        QStringList ids;
+        for (int id : catalogIds)
+            ids << QString::number(id);
+        sql += QStringLiteral(" AND emb_catalog_id IN (%1)").arg(ids.join(','));
+    }
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    q.setForwardOnly(true);
+    q.prepare(sql);
+    q.bindValue(":model", model);
+    if (!q.exec() || query.isEmpty())
+        return {};
+
+    // Brute-force cosine: vectors are unit length, so a dot product
+    while (q.next()) {
+        const QByteArray blob = q.value(6).toByteArray();
+        const int n = blob.size() / int(sizeof(float));
+        if (n != query.size())
+            continue;
+        const float *v = reinterpret_cast<const float *>(blob.constData());
+        double dot = 0.0;
+        for (int i = 0; i < n; ++i)
+            dot += double(v[i]) * double(query[i]);
+        if (dot < minScore)
+            continue;
+        hits.append({q.value(0).toInt(), q.value(1).toString(), q.value(2).toString(), q.value(3).toString(),
+                     q.value(4).toDouble(), q.value(5).toDouble(), dot});
+    }
+    std::sort(hits.begin(), hits.end(), [](const Hit &a, const Hit &b) { return a.score > b.score; });
+
+    // Group by file, in the order of each file's best hit
+    QVariantList files;
+    QMap<QString, int> position;   // "catalogId|fullPath" -> index in files
+    for (const Hit &h : hits) {
+        const QString key = QString::number(h.catalogId) + '|' + h.fullPath;
+        auto it = position.find(key);
+        if (it == position.end()) {
+            if (files.size() >= maxFiles)
+                continue;
+            QVariantMap f;
+            f[QStringLiteral("catalogId")] = h.catalogId;
+            f[QStringLiteral("fullPath")]  = h.fullPath;
+            f[QStringLiteral("score")]     = h.score;
+            f[QStringLiteral("hits")]      = QVariantList();
+            it = position.insert(key, files.size());
+            files.append(f);
+        }
+        QVariantMap f = files[it.value()].toMap();
+        QVariantList list = f.value(QStringLiteral("hits")).toList();
+        if (list.size() >= hitsPerFile)
+            continue;
+        QVariantMap hit;
+        hit[QStringLiteral("kind")]  = h.kind;
+        hit[QStringLiteral("text")]  = h.text;
+        hit[QStringLiteral("start")] = h.start;
+        hit[QStringLiteral("end")]   = h.end;
+        hit[QStringLiteral("score")] = h.score;
+        list.append(hit);
+        f[QStringLiteral("hits")] = list;
+        files[it.value()] = f;
+    }
+    return files;
+}
+
 QStringList MdiData::clearCatalog(const QString &connectionName, int catalogId)
 {
     QStringList derived;
@@ -285,5 +416,9 @@ QStringList MdiData::clearCatalog(const QString &connectionName, int catalogId)
     del.prepare(QLatin1String("DELETE FROM mdi_datum WHERE datum_catalog_id = :catalog_id"));
     del.bindValue(":catalog_id", catalogId);
     del.exec();
+    QSqlQuery delEmb(QSqlDatabase::database(connectionName));
+    delEmb.prepare(QLatin1String("DELETE FROM mdi_embedding WHERE emb_catalog_id = :catalog_id"));
+    delEmb.bindValue(":catalog_id", catalogId);
+    delEmb.exec();
     return derived;
 }
