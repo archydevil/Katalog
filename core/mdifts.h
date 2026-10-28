@@ -38,6 +38,7 @@
 #define MDIFTS_H
 
 #include <QString>
+#include <QDateTime>
 #include <QList>
 #include <QVariantMap>
 #include <atomic>
@@ -45,8 +46,11 @@
 class MdiFts
 {
 public:
-    // Catalog state the index was built from (catalog_date_updated format)
-    static QString stamp(const QString &catalogDateUpdated) { return catalogDateUpdated; }
+    // Catalog state the index was built from: the catalog's last update, to
+    // the second. The date is stored as "yyyy-MM-dd hh:mm:ss" in File mode and
+    // as ISO with milliseconds in Memory mode; both give the same stamp.
+    static QString stamp(const QString &catalogDateUpdated);
+    static QString stamp(const QDateTime &catalogDateUpdated);
 
     // Creates the index tables in `schema` ("main" for a connection to
     // mdi_data.db, "mdi" when it is attached to the collection connection)

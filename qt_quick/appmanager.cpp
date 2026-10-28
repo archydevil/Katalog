@@ -282,6 +282,8 @@ void AppManager::executeSearch()
 
     // Execute search (synchronous — onSearchProgress() fires via direct connection during this call)
     searchObject->searchFiles(selectedDevice);
+    qInfo() << "Search: instant-search index used for" << searchObject->ftsPrefilteredCatalogs
+            << "catalog(s)";
 
     m_searchIsRunning = false;
     m_searchIsPaused  = false;

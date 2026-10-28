@@ -83,6 +83,22 @@ QString composeText(const QHash<QString, QJsonObject> &byAnalysis)
 
 } // namespace
 
+QString MdiFts::stamp(const QDateTime &catalogDateUpdated)
+{
+    return catalogDateUpdated.isValid() ? catalogDateUpdated.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss")) : QString();
+}
+
+QString MdiFts::stamp(const QString &catalogDateUpdated)
+{
+    for (const QString &format : {QStringLiteral("yyyy-MM-dd hh:mm:ss"), QStringLiteral("yyyy/MM/dd hh:mm:ss")}) {
+        const QDateTime d = QDateTime::fromString(catalogDateUpdated, format);
+        if (d.isValid())
+            return stamp(d);
+    }
+    const QDateTime iso = QDateTime::fromString(catalogDateUpdated, Qt::ISODateWithMs);
+    return iso.isValid() ? stamp(iso) : catalogDateUpdated;
+}
+
 bool MdiFts::ensureTables(const QString &connectionName, const QString &schema)
 {
     QSqlQuery q(QSqlDatabase::database(connectionName));

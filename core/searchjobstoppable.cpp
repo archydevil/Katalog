@@ -615,7 +615,7 @@ void SearchJobStoppable::searchFilesInCatalog(Device *device, QMutex &mutex, boo
     if (!m_mdiDataPath.isEmpty() && searchOnFileName && device->catalog
         && MdiFts::attach(m_connectionName, m_mdiDataPath)
         && MdiFts::isCurrent(m_connectionName, QStringLiteral("mdi"), device->externalID,
-                             MdiFts::stamp(device->catalog->dateUpdated.toString("yyyy-MM-dd hh:mm:ss")))) {
+                             MdiFts::stamp(device->catalog->dateUpdated))) {
         ftsQuery = MdiFts::matchQuery(searchText, selectedTextCriteria, selectedSearchIn);
         if (!ftsQuery.isEmpty())
             getFilesQuerySQL += QLatin1String(R"(
