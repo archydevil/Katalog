@@ -830,40 +830,40 @@ Vælg et andet navn.</translation>
         <location line="+121"/>
         <location line="+120"/>
         <source>Destination path</source>
-        <translation type="unfinished"></translation>
+        <translation>Destinationssti</translation>
     </message>
     <message>
         <location line="-241"/>
         <location line="+244"/>
         <source>File types</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtyper</translation>
     </message>
     <message>
         <location line="-244"/>
         <location line="+259"/>
         <source>Previews</source>
-        <translation type="unfinished"></translation>
+        <translation>Forhåndsvisninger</translation>
     </message>
     <message>
         <location line="-259"/>
         <source>Summary</source>
-        <translation type="unfinished"></translation>
+        <translation>Oversigt</translation>
     </message>
     <message>
         <location line="+29"/>
         <location line="+26"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>Fra</translation>
     </message>
     <message>
         <location line="-25"/>
         <source>Full</source>
-        <translation type="unfinished"></translation>
+        <translation>Fuld</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Partial</source>
-        <translation type="unfinished"></translation>
+        <translation>Delvis</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -873,12 +873,12 @@ Vælg et andet navn.</translation>
     <message>
         <location line="+53"/>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Trin %1 af %2</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Path for previews and derived data</source>
-        <translation type="unfinished"></translation>
+        <translation>Sti til forhåndsvisninger og afledte data</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -928,25 +928,25 @@ Vælg et andet navn.</translation>
         <location line="-92"/>
         <location line="+98"/>
         <source>Thumbnail</source>
-        <translation type="unfinished"></translation>
+        <translation>Miniature</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Poster frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Repræsentativt billede</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>Stribe med nøglebilleder</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+96"/>
         <source>Number of frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Antal billeder</translation>
     </message>
     <message>
         <location line="-89"/>
@@ -954,7 +954,7 @@ Vælg et andet navn.</translation>
         <location line="+68"/>
         <location line="+8"/>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Klip</translation>
     </message>
     <message>
         <location line="-93"/>
@@ -962,7 +962,7 @@ Vælg et andet navn.</translation>
         <location line="+65"/>
         <location line="+8"/>
         <source>Start (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Start (sekunder)</translation>
     </message>
     <message>
         <location line="-90"/>
@@ -970,13 +970,13 @@ Vælg et andet navn.</translation>
         <location line="+59"/>
         <location line="+8"/>
         <source>Duration (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Varighed (sekunder)</translation>
     </message>
     <message>
         <location line="-60"/>
         <location line="+63"/>
         <source>Waveform</source>
-        <translation type="unfinished"></translation>
+        <translation>Bølgeform</translation>
     </message>
     <message>
         <location line="-51"/>
@@ -7056,32 +7056,32 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
     <message>
         <location line="+18"/>
         <source>Provide a destination path for the previews and derived data.</source>
-        <translation type="unfinished"></translation>
+        <translation>Angiv en destinationssti til forhåndsvisningerne og de afledte data.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path that can be written to.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vælg en destinationssti, der kan skrives til.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path outside the source path.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vælg en destinationssti uden for kildestien.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select at least one file type, or turn off all previews.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vælg mindst én filtype, eller slå alle forhåndsvisninger fra.</translation>
     </message>
     <message>
         <location line="+116"/>
         <source>Standard</source>
-        <translation type="unfinished"></translation>
+        <translation>Standard</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Wizard</source>
-        <translation type="unfinished"></translation>
+        <translation>Guide</translation>
     </message>
     <message>
         <location line="+49"/>
@@ -7207,12 +7207,12 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
     <message>
         <location line="+148"/>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Tilbage</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>Næste</translation>
     </message>
     <message>
         <location line="+6"/>

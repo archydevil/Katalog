@@ -830,40 +830,40 @@ Kies een andere naam.</translation>
         <location line="+121"/>
         <location line="+120"/>
         <source>Destination path</source>
-        <translation type="unfinished"></translation>
+        <translation>Doelpad</translation>
     </message>
     <message>
         <location line="-241"/>
         <location line="+244"/>
         <source>File types</source>
-        <translation type="unfinished"></translation>
+        <translation>Bestandstypen</translation>
     </message>
     <message>
         <location line="-244"/>
         <location line="+259"/>
         <source>Previews</source>
-        <translation type="unfinished"></translation>
+        <translation>Voorbeelden</translation>
     </message>
     <message>
         <location line="-259"/>
         <source>Summary</source>
-        <translation type="unfinished"></translation>
+        <translation>Samenvatting</translation>
     </message>
     <message>
         <location line="+29"/>
         <location line="+26"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>Uit</translation>
     </message>
     <message>
         <location line="-25"/>
         <source>Full</source>
-        <translation type="unfinished"></translation>
+        <translation>Volledig</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Partial</source>
-        <translation type="unfinished"></translation>
+        <translation>Gedeeltelijk</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -873,12 +873,12 @@ Kies een andere naam.</translation>
     <message>
         <location line="+53"/>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Stap %1 van %2</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Path for previews and derived data</source>
-        <translation type="unfinished"></translation>
+        <translation>Pad voor voorbeelden en afgeleide gegevens</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -928,25 +928,25 @@ Kies een andere naam.</translation>
         <location line="-92"/>
         <location line="+98"/>
         <source>Thumbnail</source>
-        <translation type="unfinished"></translation>
+        <translation>Miniatuur</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Poster frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Representatief beeld</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>Strook met sleutelbeelden</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+96"/>
         <source>Number of frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Aantal beelden</translation>
     </message>
     <message>
         <location line="-89"/>
@@ -954,7 +954,7 @@ Kies een andere naam.</translation>
         <location line="+68"/>
         <location line="+8"/>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Clip</translation>
     </message>
     <message>
         <location line="-93"/>
@@ -962,7 +962,7 @@ Kies een andere naam.</translation>
         <location line="+65"/>
         <location line="+8"/>
         <source>Start (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Start (seconden)</translation>
     </message>
     <message>
         <location line="-90"/>
@@ -970,13 +970,13 @@ Kies een andere naam.</translation>
         <location line="+59"/>
         <location line="+8"/>
         <source>Duration (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Duur (seconden)</translation>
     </message>
     <message>
         <location line="-60"/>
         <location line="+63"/>
         <source>Waveform</source>
-        <translation type="unfinished"></translation>
+        <translation>Golfvorm</translation>
     </message>
     <message>
         <location line="-51"/>
@@ -7055,32 +7055,32 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
     <message>
         <location line="+18"/>
         <source>Provide a destination path for the previews and derived data.</source>
-        <translation type="unfinished"></translation>
+        <translation>Geef een doelpad op voor de voorbeelden en afgeleide gegevens.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path that can be written to.</source>
-        <translation type="unfinished"></translation>
+        <translation>Selecteer een doelpad waarnaar geschreven kan worden.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path outside the source path.</source>
-        <translation type="unfinished"></translation>
+        <translation>Selecteer een doelpad buiten het bronpad.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select at least one file type, or turn off all previews.</source>
-        <translation type="unfinished"></translation>
+        <translation>Selecteer ten minste één bestandstype, of schakel alle voorbeelden uit.</translation>
     </message>
     <message>
         <location line="+116"/>
         <source>Standard</source>
-        <translation type="unfinished"></translation>
+        <translation>Standaard</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Wizard</source>
-        <translation type="unfinished"></translation>
+        <translation>Wizard</translation>
     </message>
     <message>
         <location line="+49"/>
@@ -7206,12 +7206,12 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
     <message>
         <location line="+148"/>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Vorige</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>Volgende</translation>
     </message>
     <message>
         <location line="+6"/>

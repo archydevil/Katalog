@@ -830,40 +830,40 @@ Choose a different name.</source>
         <location line="+121"/>
         <location line="+120"/>
         <source>Destination path</source>
-        <translation type="unfinished"></translation>
+        <translation>保存先パス</translation>
     </message>
     <message>
         <location line="-241"/>
         <location line="+244"/>
         <source>File types</source>
-        <translation type="unfinished"></translation>
+        <translation>ファイルタイプ</translation>
     </message>
     <message>
         <location line="-244"/>
         <location line="+259"/>
         <source>Previews</source>
-        <translation type="unfinished"></translation>
+        <translation>プレビュー</translation>
     </message>
     <message>
         <location line="-259"/>
         <source>Summary</source>
-        <translation type="unfinished"></translation>
+        <translation>概要</translation>
     </message>
     <message>
         <location line="+29"/>
         <location line="+26"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>オフ</translation>
     </message>
     <message>
         <location line="-25"/>
         <source>Full</source>
-        <translation type="unfinished"></translation>
+        <translation>全体</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Partial</source>
-        <translation type="unfinished"></translation>
+        <translation>部分</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -873,12 +873,12 @@ Choose a different name.</source>
     <message>
         <location line="+53"/>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>ステップ %1 / %2</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Path for previews and derived data</source>
-        <translation type="unfinished"></translation>
+        <translation>プレビューと派生データのパス</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -928,25 +928,25 @@ Choose a different name.</source>
         <location line="-92"/>
         <location line="+98"/>
         <source>Thumbnail</source>
-        <translation type="unfinished"></translation>
+        <translation>サムネイル</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Poster frame</source>
-        <translation type="unfinished"></translation>
+        <translation>代表フレーム</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>キーフレームストリップ</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+96"/>
         <source>Number of frames</source>
-        <translation type="unfinished"></translation>
+        <translation>フレーム数</translation>
     </message>
     <message>
         <location line="-89"/>
@@ -954,7 +954,7 @@ Choose a different name.</source>
         <location line="+68"/>
         <location line="+8"/>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>クリップ</translation>
     </message>
     <message>
         <location line="-93"/>
@@ -962,7 +962,7 @@ Choose a different name.</source>
         <location line="+65"/>
         <location line="+8"/>
         <source>Start (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>開始 (秒)</translation>
     </message>
     <message>
         <location line="-90"/>
@@ -970,13 +970,13 @@ Choose a different name.</source>
         <location line="+59"/>
         <location line="+8"/>
         <source>Duration (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>長さ (秒)</translation>
     </message>
     <message>
         <location line="-60"/>
         <location line="+63"/>
         <source>Waveform</source>
-        <translation type="unfinished"></translation>
+        <translation>波形</translation>
     </message>
     <message>
         <location line="-51"/>
@@ -7055,32 +7055,32 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+18"/>
         <source>Provide a destination path for the previews and derived data.</source>
-        <translation type="unfinished"></translation>
+        <translation>プレビューと派生データの保存先パスを入力してください。</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path that can be written to.</source>
-        <translation type="unfinished"></translation>
+        <translation>書き込み可能な保存先パスを選択してください。</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path outside the source path.</source>
-        <translation type="unfinished"></translation>
+        <translation>ソースパスの外にある保存先パスを選択してください。</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select at least one file type, or turn off all previews.</source>
-        <translation type="unfinished"></translation>
+        <translation>少なくとも 1 つのファイルタイプを選択するか、すべてのプレビューをオフにしてください。</translation>
     </message>
     <message>
         <location line="+116"/>
         <source>Standard</source>
-        <translation type="unfinished"></translation>
+        <translation>標準</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Wizard</source>
-        <translation type="unfinished"></translation>
+        <translation>ウィザード</translation>
     </message>
     <message>
         <location line="+49"/>
@@ -7206,12 +7206,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+148"/>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>戻る</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>次へ</translation>
     </message>
     <message>
         <location line="+6"/>

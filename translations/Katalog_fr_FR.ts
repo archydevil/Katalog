@@ -830,40 +830,40 @@ Choisissez un autre nom.</translation>
         <location line="+121"/>
         <location line="+120"/>
         <source>Destination path</source>
-        <translation type="unfinished"></translation>
+        <translation>Chemin de destination</translation>
     </message>
     <message>
         <location line="-241"/>
         <location line="+244"/>
         <source>File types</source>
-        <translation type="unfinished"></translation>
+        <translation>Types de fichiers</translation>
     </message>
     <message>
         <location line="-244"/>
         <location line="+259"/>
         <source>Previews</source>
-        <translation type="unfinished"></translation>
+        <translation>Aperçus</translation>
     </message>
     <message>
         <location line="-259"/>
         <source>Summary</source>
-        <translation type="unfinished"></translation>
+        <translation>Résumé</translation>
     </message>
     <message>
         <location line="+29"/>
         <location line="+26"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>Désactivé</translation>
     </message>
     <message>
         <location line="-25"/>
         <source>Full</source>
-        <translation type="unfinished"></translation>
+        <translation>Complet</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Partial</source>
-        <translation type="unfinished"></translation>
+        <translation>Partiel</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -873,12 +873,12 @@ Choisissez un autre nom.</translation>
     <message>
         <location line="+53"/>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Étape %1 sur %2</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Path for previews and derived data</source>
-        <translation type="unfinished"></translation>
+        <translation>Chemin des aperçus et des données dérivées</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -928,25 +928,25 @@ Choisissez un autre nom.</translation>
         <location line="-92"/>
         <location line="+98"/>
         <source>Thumbnail</source>
-        <translation type="unfinished"></translation>
+        <translation>Miniature</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Poster frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Image représentative</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>Bande d'images clés</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+96"/>
         <source>Number of frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Nombre d'images</translation>
     </message>
     <message>
         <location line="-89"/>
@@ -954,7 +954,7 @@ Choisissez un autre nom.</translation>
         <location line="+68"/>
         <location line="+8"/>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Extrait</translation>
     </message>
     <message>
         <location line="-93"/>
@@ -962,7 +962,7 @@ Choisissez un autre nom.</translation>
         <location line="+65"/>
         <location line="+8"/>
         <source>Start (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Début (secondes)</translation>
     </message>
     <message>
         <location line="-90"/>
@@ -970,13 +970,13 @@ Choisissez un autre nom.</translation>
         <location line="+59"/>
         <location line="+8"/>
         <source>Duration (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Durée (secondes)</translation>
     </message>
     <message>
         <location line="-60"/>
         <location line="+63"/>
         <source>Waveform</source>
-        <translation type="unfinished"></translation>
+        <translation>Forme d'onde</translation>
     </message>
     <message>
         <location line="-51"/>
@@ -7057,32 +7057,32 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
     <message>
         <location line="+18"/>
         <source>Provide a destination path for the previews and derived data.</source>
-        <translation type="unfinished"></translation>
+        <translation>Indiquez un chemin de destination pour les aperçus et les données dérivées.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path that can be written to.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sélectionnez un chemin de destination accessible en écriture.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path outside the source path.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sélectionnez un chemin de destination en dehors du chemin source.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select at least one file type, or turn off all previews.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sélectionnez au moins un type de fichier, ou désactivez tous les aperçus.</translation>
     </message>
     <message>
         <location line="+116"/>
         <source>Standard</source>
-        <translation type="unfinished"></translation>
+        <translation>Standard</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Wizard</source>
-        <translation type="unfinished"></translation>
+        <translation>Assistant</translation>
     </message>
     <message>
         <location line="+49"/>
@@ -7208,12 +7208,12 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
     <message>
         <location line="+148"/>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Retour</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>Suivant</translation>
     </message>
     <message>
         <location line="+6"/>

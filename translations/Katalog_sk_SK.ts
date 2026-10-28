@@ -830,40 +830,40 @@ Zvoľte iný názov.</translation>
         <location line="+121"/>
         <location line="+120"/>
         <source>Destination path</source>
-        <translation type="unfinished"></translation>
+        <translation>Cieľová cesta</translation>
     </message>
     <message>
         <location line="-241"/>
         <location line="+244"/>
         <source>File types</source>
-        <translation type="unfinished"></translation>
+        <translation>Typy súborov</translation>
     </message>
     <message>
         <location line="-244"/>
         <location line="+259"/>
         <source>Previews</source>
-        <translation type="unfinished"></translation>
+        <translation>Náhľady</translation>
     </message>
     <message>
         <location line="-259"/>
         <source>Summary</source>
-        <translation type="unfinished"></translation>
+        <translation>Súhrn</translation>
     </message>
     <message>
         <location line="+29"/>
         <location line="+26"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>Vypnuté</translation>
     </message>
     <message>
         <location line="-25"/>
         <source>Full</source>
-        <translation type="unfinished"></translation>
+        <translation>Celý</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Partial</source>
-        <translation type="unfinished"></translation>
+        <translation>Čiastočný</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -873,12 +873,12 @@ Zvoľte iný názov.</translation>
     <message>
         <location line="+53"/>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Krok %1 z %2</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Path for previews and derived data</source>
-        <translation type="unfinished"></translation>
+        <translation>Cesta pre náhľady a odvodené údaje</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -928,25 +928,25 @@ Zvoľte iný názov.</translation>
         <location line="-92"/>
         <location line="+98"/>
         <source>Thumbnail</source>
-        <translation type="unfinished"></translation>
+        <translation>Miniatúra</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Poster frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Reprezentatívna snímka</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>Pás kľúčových snímok</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+96"/>
         <source>Number of frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Počet snímok</translation>
     </message>
     <message>
         <location line="-89"/>
@@ -954,7 +954,7 @@ Zvoľte iný názov.</translation>
         <location line="+68"/>
         <location line="+8"/>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Klip</translation>
     </message>
     <message>
         <location line="-93"/>
@@ -962,7 +962,7 @@ Zvoľte iný názov.</translation>
         <location line="+65"/>
         <location line="+8"/>
         <source>Start (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Začiatok (sekundy)</translation>
     </message>
     <message>
         <location line="-90"/>
@@ -970,13 +970,13 @@ Zvoľte iný názov.</translation>
         <location line="+59"/>
         <location line="+8"/>
         <source>Duration (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Trvanie (sekundy)</translation>
     </message>
     <message>
         <location line="-60"/>
         <location line="+63"/>
         <source>Waveform</source>
-        <translation type="unfinished"></translation>
+        <translation>Vlnový priebeh</translation>
     </message>
     <message>
         <location line="-51"/>
@@ -7056,32 +7056,32 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="+18"/>
         <source>Provide a destination path for the previews and derived data.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zadajte cieľovú cestu pre náhľady a odvodené údaje.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path that can be written to.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vyberte cieľovú cestu, do ktorej je možné zapisovať.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path outside the source path.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vyberte cieľovú cestu mimo zdrojovej cesty.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select at least one file type, or turn off all previews.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vyberte aspoň jeden typ súboru alebo vypnite všetky náhľady.</translation>
     </message>
     <message>
         <location line="+116"/>
         <source>Standard</source>
-        <translation type="unfinished"></translation>
+        <translation>Štandardný</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Wizard</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprievodca</translation>
     </message>
     <message>
         <location line="+49"/>
@@ -7207,12 +7207,12 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="+148"/>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Späť</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>Ďalej</translation>
     </message>
     <message>
         <location line="+6"/>

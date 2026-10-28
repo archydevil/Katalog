@@ -830,40 +830,40 @@ Choose a different name.</source>
         <location line="+121"/>
         <location line="+120"/>
         <source>Destination path</source>
-        <translation type="unfinished"></translation>
+        <translation>Διαδρομή προορισμού</translation>
     </message>
     <message>
         <location line="-241"/>
         <location line="+244"/>
         <source>File types</source>
-        <translation type="unfinished"></translation>
+        <translation>Τύποι αρχείων</translation>
     </message>
     <message>
         <location line="-244"/>
         <location line="+259"/>
         <source>Previews</source>
-        <translation type="unfinished"></translation>
+        <translation>Προεπισκοπήσεις</translation>
     </message>
     <message>
         <location line="-259"/>
         <source>Summary</source>
-        <translation type="unfinished"></translation>
+        <translation>Σύνοψη</translation>
     </message>
     <message>
         <location line="+29"/>
         <location line="+26"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>Ανενεργό</translation>
     </message>
     <message>
         <location line="-25"/>
         <source>Full</source>
-        <translation type="unfinished"></translation>
+        <translation>Πλήρες</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Partial</source>
-        <translation type="unfinished"></translation>
+        <translation>Μερικό</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -873,12 +873,12 @@ Choose a different name.</source>
     <message>
         <location line="+53"/>
         <source>Step %1 of %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Βήμα %1 από %2</translation>
     </message>
     <message>
         <location line="+19"/>
         <source>Path for previews and derived data</source>
-        <translation type="unfinished"></translation>
+        <translation>Διαδρομή για προεπισκοπήσεις και παράγωγα δεδομένα</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -928,25 +928,25 @@ Choose a different name.</source>
         <location line="-92"/>
         <location line="+98"/>
         <source>Thumbnail</source>
-        <translation type="unfinished"></translation>
+        <translation>Μικρογραφία</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Poster frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Αντιπροσωπευτικό καρέ</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+95"/>
         <source>Keyframe strip</source>
-        <translation type="unfinished"></translation>
+        <translation>Λωρίδα καρέ-κλειδιών</translation>
     </message>
     <message>
         <location line="-93"/>
         <location line="+96"/>
         <source>Number of frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Αριθμός καρέ</translation>
     </message>
     <message>
         <location line="-89"/>
@@ -954,7 +954,7 @@ Choose a different name.</source>
         <location line="+68"/>
         <location line="+8"/>
         <source>Clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Απόσπασμα</translation>
     </message>
     <message>
         <location line="-93"/>
@@ -962,7 +962,7 @@ Choose a different name.</source>
         <location line="+65"/>
         <location line="+8"/>
         <source>Start (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Έναρξη (δευτερόλεπτα)</translation>
     </message>
     <message>
         <location line="-90"/>
@@ -970,13 +970,13 @@ Choose a different name.</source>
         <location line="+59"/>
         <location line="+8"/>
         <source>Duration (seconds)</source>
-        <translation type="unfinished"></translation>
+        <translation>Διάρκεια (δευτερόλεπτα)</translation>
     </message>
     <message>
         <location line="-60"/>
         <location line="+63"/>
         <source>Waveform</source>
-        <translation type="unfinished"></translation>
+        <translation>Κυματομορφή</translation>
     </message>
     <message>
         <location line="-51"/>
@@ -7057,32 +7057,32 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+18"/>
         <source>Provide a destination path for the previews and derived data.</source>
-        <translation type="unfinished"></translation>
+        <translation>Δώστε μια διαδρομή προορισμού για τις προεπισκοπήσεις και τα παράγωγα δεδομένα.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path that can be written to.</source>
-        <translation type="unfinished"></translation>
+        <translation>Επιλέξτε μια διαδρομή προορισμού με δικαίωμα εγγραφής.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select a destination path outside the source path.</source>
-        <translation type="unfinished"></translation>
+        <translation>Επιλέξτε μια διαδρομή προορισμού εκτός της διαδρομής πηγής.</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Select at least one file type, or turn off all previews.</source>
-        <translation type="unfinished"></translation>
+        <translation>Επιλέξτε τουλάχιστον έναν τύπο αρχείου ή απενεργοποιήστε όλες τις προεπισκοπήσεις.</translation>
     </message>
     <message>
         <location line="+116"/>
         <source>Standard</source>
-        <translation type="unfinished"></translation>
+        <translation>Τυπικό</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Wizard</source>
-        <translation type="unfinished"></translation>
+        <translation>Οδηγός</translation>
     </message>
     <message>
         <location line="+49"/>
@@ -7208,12 +7208,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+148"/>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Πίσω</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Next</source>
-        <translation type="unfinished"></translation>
+        <translation>Επόμενο</translation>
     </message>
     <message>
         <location line="+6"/>
