@@ -332,7 +332,7 @@ characterising information for applications and other files.
 
 | Phase | Content | Rows |
 | ------- | --------- | ------ |
-| **A** | Wizard mode; runner and its lifecycle; tool detection; previews; offline browsing of previews; `mdi_` tables and their migration (core schema stays 3.0); provenance; enrichment of existing catalogs; Memory/Hosted support; *Include metadata* independence. | `MDI-F1`–`F4`, `F6`–`F22`, `F29`–`F34`, `F44`–`F46`, `F52`–`F59`; all `MDI-C` |
+| **A** | Wizard mode; runner and its lifecycle; tool detection; previews; offline browsing of previews; `mdi_` tables and their migration (core schema stays 3.0); provenance; enrichment of existing catalogs; Memory/Hosted support; *Include metadata* independence. | `MDI-F1`, `F3`, `F4`, `F6`–`F22`, `F60`, `F29`–`F34`, `F44`–`F46`, `F52`–`F59`; all `MDI-C` |
 | **B** | Providers (local, then commercial with egress confirmation and cost); image caption and tags; PDF summary and excerpts. | `MDI-F5`, `F23`–`F28`, `F39`–`F41` |
 | **C** | Transcripts, topic segments, topic clusters. | `MDI-F35`–`F38` |
 | **D** | Embeddings and semantic search. | `MDI-F47`–`F51` |
@@ -346,8 +346,8 @@ with the core design approval required by `MDI-C14` and the string approvals of
 
 ## User-visible text
 
-Every new string needs its own approval (`MDI-C17`). Approved strings are listed
-here as they are approved.
+New strings are approved together at the end of each step (`MDI-C17`, D16).
+Approved strings are listed here as they are approved.
 
 ### Approved 2026-10-28 — Phase A.1 (wizard mode)
 
@@ -357,14 +357,14 @@ New strings:
 | --- | --- |
 | "Standard" | Mode switch (`MDI-F1`) |
 | "Wizard" | Mode switch (`MDI-F1`) |
-| "Next" | Wizard navigation (`MDI-F2`) |
-| "Back" | Wizard navigation (`MDI-F2`) |
-| "Step %1 of %2" | Wizard step indicator (`MDI-F2`) |
-| "Destination path" | Step title and field label (`MDI-F2`) |
-| "Path for previews and derived data" | Destination path placeholder (`MDI-F2`) |
-| "File types" | Step title (`MDI-F3`) |
-| "Previews" | Step title (`MDI-F4`) |
-| "Summary" | Step title (`MDI-F2`) |
+| "Next" | Wizard navigation (`MDI-F2`) — no longer used (D15) |
+| "Back" | Wizard navigation (`MDI-F2`) — no longer used (D15) |
+| "Step %1 of %2" | Wizard step indicator (`MDI-F2`) — no longer used (D15) |
+| "Destination path" | Section title and field label (`MDI-F60`) |
+| "Path for previews and derived data" | Destination path placeholder (`MDI-F60`) |
+| "File types" | Section title (`MDI-F3`) |
+| "Previews" | Section title (`MDI-F4`) |
+| "Summary" | Step title (`MDI-F2`) — no longer used in `CreateWizard.qml` (D15) |
 | "Thumbnail" | Image option (`MDI-F4`) |
 | "Poster frame" | Video option (`MDI-F4`) |
 | "Keyframe strip" | Video option (`MDI-F4`) |
@@ -392,6 +392,42 @@ the three existing Create page validations (name, path, storage).
 
 The approval was given by the user in the main session ("ok tutto") and reported
 to the specifications agent by the main agent.
+
+### Approved 2026-10-28 — increment 2 (runner, AI analysis, Explore, semantic search)
+
+Approved together at the end of the step (D16), by the fork owner in the main
+session; reported to the specifications agent by the main agent.
+
+New strings:
+
+| String | Where |
+| --- | --- |
+| "AI analysis" | Section title of the enrichment options (`MDI-F5`, `MDI-F60`) |
+| "Caption and tags" | AI analysis switch; analysis label in progress and *Show analysis* (`MDI-F39`) |
+| "Summary and excerpts" | AI analysis switch; analysis label (`MDI-F40`) |
+| "Transcript" | AI analysis switch; analysis label (`MDI-F35`) |
+| "Topic segments" | AI analysis switch; analysis label (`MDI-F36`) |
+| "Topic clusters" | Explore action and dialog title; analysis label (`MDI-F37`) |
+| "Analysed on this computer by the local model (%1). Nothing is sent to the internet." | Note under the AI analysis switches (`MDI-F5`, privacy stance) |
+| "Analyze" | Explore action, dialog title and confirm action for an existing catalog (`MDI-F8`) |
+| "Show analysis" | Explore file action, semantic result action, details dialog title (`MDI-F44`) |
+| "Enrichment" | Operation name in the activity-panel status (`MDI-F17`, `MDI-C16`) |
+| "Paused" | Status in the activity-panel status (`MDI-F11`, `MDI-F17`) |
+| "By meaning" | Search page section and result list title (`MDI-F47`) |
+| "Describe what you are looking for" | Placeholder of the semantic query (`MDI-F47`) |
+| "No file matches this description." | Empty semantic result list (`MDI-F48`) |
+| "The local model is not reachable: %1" | Passive notification when the query cannot be embedded (`MDI-F50`) |
+
+Reused existing strings: "Pause", "Resume", "Stop", "In Progress", "Completed",
+"Cancelled", "Open file", "Expand", "Collapse", "text", "Selected device is not
+a catalog", and the A.1 strings above (including the four destination and
+file-type validations, reused by the *Analyze* dialog).
+
+### No longer used (D15)
+
+The one-page wizard (`MDI-F60`) no longer uses "Next", "Back", "Step %1 of %2"
+and "Summary" (in `CreateWizard.qml`). They stay in the translation files until
+the fork owner decides otherwise.
 
 ---
 
@@ -431,33 +467,115 @@ Approved changes to existing files:
 - Settings keys `Create/Mode` and `Create/WizardDestinationPath` in the
   application settings file (added keys only, `MDI-C7`).
 
-Wizard steps as built (5 steps): Source (the standard form's *Catalog
-definition* section; its fields are shared with standard mode) → Destination
-path → File types → Previews → Summary. The AI options step of `MDI-F2`/`MDI-F5`
-comes with Phase B. On a failed validation the wizard shows the offending step.
+Wizard as first built in A.1 (5 steps: Source → Destination path → File types →
+Previews → Summary) is superseded by the one-page layout of `MDI-F60` (D15).
 The standard form's other options (file type, subdirectories, hidden files,
 metadata, checksum, excludes) are hidden in wizard mode and used with their
 current values, so the catalog is the same as in standard mode.
 
-What A.1 covers per row:
+What A.1 covered per row (history; current coverage is in the next section):
 
-| Row | Implemented in A.1 | Still planned |
+| Row | Implemented in A.1 | Still planned after A.1 |
 | --- | --- | --- |
 | `MDI-F1` | All. | — |
-| `MDI-F2` | Steps 1–4 and 6 (summary), back and next. | Step 5 (AI options), Phase B. |
+| `MDI-F2` | Steps 1–4 and 6 (summary), back and next. | Superseded by `MDI-F60` (D15). |
 | `MDI-F3` | All, with *Text* as the document type. | — |
 | `MDI-F4` | All. | — |
 | `MDI-F6` | All four wizard refusals; source checks reuse the Create page validations. | — |
-| `MDI-F7` | Creation through the existing path; profile saved only on success; no profile on failure, Stop or queue removal. | Adding the enrichment job to the list (`MDI-F16`): increment 2, with the runner. |
-| `MDI-F8` | Profile saved per catalog; it survives closing and reopening the collection (File, Hosted, Memory). | Editing or creating a profile for an existing catalog from its page and from Explore, and starting a job from there. |
-| `MDI-C15` | `mdi_schema` and `mdi_profile` created by an idempotent migration outside the core schema; core schema 3.0 and `runMigration_3_0` untouched; Memory mode adds only `mdi_profile.csv`. | The other `mdi_` tables (job, derived datum, derived file, transcript, segment, cluster, embedding) and their Memory-mode files. |
+| `MDI-F7` | Creation through the existing path; profile saved only on success; no profile on failure, Stop or queue removal. | Adding the enrichment job (done in increment 2). |
+| `MDI-F8` | Profile saved per catalog; it survives closing and reopening the collection (File, Hosted, Memory). | See increment 2. |
+| `MDI-C15` | `mdi_schema` and `mdi_profile` created by an idempotent migration outside the core schema; core schema 3.0 and `runMigration_3_0` untouched; Memory mode adds only `mdi_profile.csv`. | See increment 2. |
 
-### Known gaps for increment 2
+### Increment 2 (phases A to D, partial) — reported 2026-10-28
 
-- `MDI-F57`: deleting a catalog does not yet delete its enrichment profile.
-- `MDI-F56`: collection export does not yet carry the `mdi_` data.
-- The enrichment runner and its lifecycle (`MDI-F9`–`F19`), external tools
-  (`MDI-F20`–`F22`) and previews (`MDI-F29`–`F34`).
+Reported by the fork owner in the main session and checked by the
+specifications agent against the code on `work/dev-fork` (commit `000839ef`).
+Work split (D18): `core/mdidata.*` and `core/mdienrichmentjob.*` by another
+session; `qt_quick/` by the main session. `core/mdistore.*` is an unused draft,
+not listed in `core/CMakeLists.txt` and not compiled.
+
+Files added in this increment:
+
+| File | Content |
+| --- | --- |
+| `core/mdidata.{h,cpp}` | `MdiData`: the store `mdi_data.db` (tables `mdi_schema`, `mdi_datum`, `mdi_embedding`), opened per connection with WAL and a 5 s busy timeout; upsert, incremental check, per-file and per-catalog reads, embeddings, semantic search, `clearCatalog` (not called yet). |
+| `core/mdienrichmentjob.{h,cpp}` | `MdiEnrichmentJob`: the runner (worker moved to its own `QThread`), tool discovery, analyses, local Ollama calls, `embedTexts`. |
+| `qt_quick/MdiDetailsDialog.qml` | The *Show analysis* and *Topic clusters* dialog, reported by the fork owner as part of the approved increment (`MDI-C18`). |
+
+Settings keys added (application settings file, added keys only, `MDI-C7`):
+`MediaIntelligence/FfmpegPath`, `FfprobePath`, `PdftotextPath`, `WhisperPath`,
+`WhisperModelPath`, `OllamaUrl` (default `http://localhost:11434`),
+`VisionModel` and `TextModel` (default `gemma4`), `EmbedModel` (default
+`bge-m3`). There is no Settings UI for them yet.
+
+What is built, per row (rows not listed are not started):
+
+| Row | Built | Still planned |
+| --- | --- | --- |
+| `MDI-F5` | *AI analysis* switches: caption and tags, summary and excerpts, transcript, topic segments; segments turn the transcript on, turning the transcript off turns segments off; switches disabled when no matching file type is selected; local provider only, with the local-model note. Topic clusters follow segments; embeddings are always on. Summaries are asked in the source's language. | Provider choice; disabling an analysis with the reason when its tool or model is missing; separate clusters and embeddings choices; the UI-language option (D12). Captions are always asked in the UI language (see findings). |
+| `MDI-F7` | Profile saved on successful creation, then the enrichment job starts (or waits) automatically. | — |
+| `MDI-F8` | *Analyze* action in Explore: a dialog with the enrichment options, filled from the catalog's profile (or the last choices), the same four validations, saves the profile and starts the job (D8, `Q9`). | The same from the catalog's page (Devices). |
+| `MDI-F9`, `F11`, `F13` | One file at a time, each analysis committed before the next; Pause before the next step, Resume; incremental on size, modified date, parameters (including prompt version) and presence of the derived files. | — |
+| `MDI-F10` | Stop kills the running tool and aborts the HTTP request; the abandoned step is not recorded; finished results are kept. | The final status reads the existing "Cancelled", not *Stopped*. |
+| `MDI-F12` | — | Resume after restart: the running job and the waiting list are not kept; reopening needs a new *Analyze* (which is incremental). |
+| `MDI-F15` | The runner never blocks or refuses other operations. | Pausing on an update, re-scan or deletion of the catalog being enriched. |
+| `MDI-F16` | One job at a time, in order; a catalog already running or waiting is not added twice. | Removing one waiting job (Stop clears the whole waiting list). |
+| `MDI-F17` | Own row in the activity panel, built with the builder: operation, status, catalog, current analysis as process with file count, current file; Pause/Resume and Stop. | Time to completion. |
+| `MDI-F18` | Final status line with the completed count; failed and skipped analyses shown with their reason in *Show analysis*. | Counts per analysis and outcome; the *Report* action. |
+| `MDI-F20`, `F21` | `ffmpeg`, `ffprobe`, `pdftotext`, `whisper-cli` and a ggml model found automatically (configured path, usual locations, search path); a missing tool skips the analysis with a reason and the job goes on. | Settings UI (path, version, set/clear), `pdftoppm`, detection results shown before a job, per-job *skipped (tool missing)* count. |
+| `MDI-F22` | Failure with the reason, next file; default limit 10 min per invocation (longer for transcripts of long recordings). | Configurable limit. |
+| `MDI-F23`, `F26` | Local Ollama endpoint and models per task through settings keys; endpoints classified local / local-network / remote by host in `core/`, and any non-local endpoint is refused in `core/`. | Settings UI and connection test; commercial providers (`F23`–`F27`); classification through `Database::validateHostname()` (`HST-C1`). |
+| `MDI-F29` | 320 px JPEG, aspect ratio kept. | Configurable size (128–1024); orientation not verified. |
+| `MDI-F30`–`F34` | Poster at 10 %, keyframes evenly spaced with timecodes, H.264/AAC clip at most 360 px, M4A clip, PNG waveform; derived files under `<destination>/katalog_mdi/<catalog>/<analysis>/<hash>`; clips open with the system application. | — |
+| `MDI-F35`–`F38` | ffmpeg 16 kHz mono + whisper.cpp, passages with timecodes and detected language, plus an `.srt` derived file; topic segments by the text model; clusters per catalog, recomputed when the run produced segments or when none exist; timecodes shown as `h:mm:ss`. | `Q3b` (when clusters are recomputed) is still open; the current rule is the implementation's, not a decision. |
+| `MDI-F39` | Caption (at most two sentences asked) and tags from the thumbnail or a reduced frame, never the original; kept apart from user tags. | — |
+| `MDI-F40` | PDF text with `pdftotext` (first 30 pages); summary, excerpts, tags. | Up to 10 excerpts with their page number (now up to 4, without page). |
+| `MDI-F44`–`F46` | Explore: thumbnails replace the file-type icons (offline too); *Show analysis* when the file has data; the same from semantic results; derived text shown from the store when the device is offline. | A marker in the Search results table; a "not available" placeholder for missing derived files (the type icon shows instead); *Open at timecode* per segment (clips open, without seek). |
+| `MDI-F47`, `F48` | *By meaning* section on the Search page, one text query, results in their own list above the table, grouped by file (best passages, kind, score, timecode), with *Open file* and *Show analysis*. | — |
+| `MDI-F49` | Scoped to the active catalogs of the Selection; only vectors of the current embeddings model are compared. | Reporting how many stored vectors were not compared. |
+| `MDI-F52`, `F54` | Provenance per datum: file, analysis, tool (version for ffmpeg), model name, provider, class, host, date, file size and date, parameters with prompt version, outcome and reason. | Model version or digest; cost (no remote provider yet). |
+| `MDI-F55`, `C4`, `C5` | `mdi_data.db` in File and Memory modes; runner connection on its thread, separate main-thread read connection (D17). | Hosted mode (`Q11`). |
+| `MDI-F58` | Derived data is in its own file; no metadata level touches it. | — |
+| `MDI-C9` | Cosine similarity in `core/` over stored unit vectors. | Batches, Stop and progress; the scan runs on the UI thread (see `MDI-F51`). |
+| `MDI-C15` | `mdi_schema` + `mdi_profile` in the collection database; `mdi_schema`, `mdi_datum`, `mdi_embedding` in `mdi_data.db`. | Transcript passages, segments and clusters are JSON values of `mdi_datum`, not their own tables, and there is no job or derived-file table: the table list of `MDI-C15` is not met as written (fork owner to decide). |
+| `MDI-C19`, `C20` | Derived-file names are hashes; HTTP limit 120 s, aborted on Stop, unparsable answers recorded as failed. | Executable suffix not verified; configurable HTTP limit. |
+
+### Known gaps
+
+- Settings UI for tool paths and models (`MDI-F20`, `MDI-F23`).
+- Commercial providers, egress confirmation, cost (`MDI-F23`–`F27`, `F50`).
+- `MDI-F57`: deleting a catalog removes neither its profile nor its derived
+  data and files.
+- `MDI-F56`: collection export does not carry the `mdi_` data.
+- `MDI-F59`: no *Clear derived data* action.
+- `MDI-F19`: no free-space check.
+- `MDI-F18`: no failure *Report* action.
+- `MDI-F12`, `MDI-F14`, `MDI-F28`, `MDI-F41`, `MDI-F51` (semantic search is not
+  in the background, not stoppable, no progress, at most 30 files), `MDI-F53`.
+- Semantic search and search history (`Q8`).
+- Hosted mode (`Q11`).
+- Failure and skip reasons are core English text, shown untranslated.
+- *Open at timecode* only opens the file; there is no seek (D7).
+
+### Findings for the fork owner (not authorised by any row)
+
+- **Office and OpenDocument summaries.** The summary also extracts text from
+  Office/OpenDocument files with KFileMetaData, and reads plain-text formats
+  (`txt`, `md`, `srt`, `vtt`, `csv`, `log`, `rtf`, `html`). Those formats are
+  `MDI-F42` (`[Backlog]`, "the tool for Office formats needs its own
+  approval"). Keep and promote `MDI-F42`, or remove?
+- **Summaries of recordings.** Audio and video files get a summary from a
+  transcript file found next to the recording (`.txt`, `.pdf`, `.docx`, `.srt`,
+  `.vtt`) or from the whisper transcript. No row covers summaries of
+  recordings. Add a row, or remove?
+- **Captions of videos.** Video files get a caption from the poster frame;
+  `MDI-F39` covers images only. Add to `MDI-F39`, or remove?
+- **Caption language.** Captions are always asked in the UI language, with no
+  option; D12 asks for the source's language by default with a UI-language
+  option.
+- **`MDI-C1`.** `qt_widgets/CMakeLists.txt` was changed (the two new K3 QML
+  files added to its `K3_QML_FILES` list). `MDI-C1` says no file under
+  `qt_widgets/` is changed. Accept as a build-list exception, or move the list?
 
 ---
 
@@ -468,9 +586,8 @@ What A.1 covers per row:
 | # | Question | Decided when |
 | --- | ---------- | -------------- |
 | Q3b | When topic clusters are recomputed (the per-catalog scope is decided, D11) (`MDI-F37`). | Start of Phase C |
-| Q6 | Concurrency mechanism: File mode journal mode / busy timeout; Memory mode shared in-memory database versus file-based handover (`MDI-C4`, `MDI-C5`). An implementation detail, decided during Phase A implementation and recorded back here. | Phase A |
 | Q8 | Semantic search and search history; which other criteria (file type, size, date) combine with semantic mode. | Phase D |
-| Q11 | Hosted mode with several machines: one shared destination path or one per machine (`MDI-C6`). | Deferred |
+| Q11 | Hosted mode: where derived data is stored (D17 covers File and Memory modes only), and with several machines one shared destination path or one per machine (`MDI-C6`). | Deferred |
 | Q14 | Performance target for semantic search (collection size and response time) (`MDI-C9`). | Phase D |
 
 ### Decided 2026-10-28 (kept for traceability)
@@ -482,6 +599,7 @@ What A.1 covers per row:
 | Q3 | Scope of topic clustering. | D11 — per catalog. (Recompute timing split out as `Q3b`.) |
 | Q4 | Language of generated text. | D12 — the source's language, with an option for the UI language. |
 | Q5 | In-app playback versus the system default application. | D7 — system default application; no Qt Multimedia in Phase A. |
+| Q6 | Concurrency mechanism and Memory mode handover (`MDI-C4`, `MDI-C5`). | D17 — own SQLite file `mdi_data.db` in the collection folder (File and Memory modes), WAL and busy timeout, runner connection on its thread, separate main-thread read connection. Hosted mode stays with `Q11`. |
 | Q7 | Re-run history. | D13 — keep only the provenance of replaced data. |
 | Q9 | Profile editing and enrichment of existing catalogs. | D8 — from the catalog's page and from Explore. |
 | Q10 | Cost prices. | D14 — user-entered only. |
@@ -496,11 +614,12 @@ What A.1 covers per row:
 For each row: set up the stated condition, run the operation, confirm the result.
 
 - **MDI-F1** — Fill source and name in standard mode, switch to wizard and back: the values remain; standard-mode creation gives the same catalog as before this feature. Reopen the page: the last mode is restored.
-- **MDI-F2** — Go through every step with *Next*, then *Back* to the first: the step indicator follows; choices made on later steps are kept.
+- **MDI-F2** — Removed (D15); replaced by `MDI-F60`.
+- **MDI-F60** — Switch to wizard mode: one page shows *Catalog definition*, destination path, file-type toggle buttons, preview switches and *AI analysis*, with no *Next*/*Back*. Open *Analyze* in Explore: the same options appear.
 - **MDI-F3** — The file types shown are Image, Video, Audio, Text and Other; each turns on and off on its own. Create the same source in both modes: identical catalog.
 - **MDI-F4** — Keyframe count accepts 2–32 (default 8); a partial clip shows start and duration (default 0 and 30).
-- **MDI-F6** — Set the destination path inside the source: *Create* shows the inline message, returns to the destination step and creates nothing; editing the path hides it. Repeat with an empty path, a read-only path, and no file type with a preview on. A destination that does not exist yet under a writable folder is accepted.
-- **MDI-F7** — Cancel a wizard creation while it runs: no enrichment job appears and no profile is saved (even when the catalog is kept). Remove a queued wizard creation: no profile. Let one complete: the profile is saved and a job appears for that catalog (job: increment 2).
+- **MDI-F6** — Set the destination path inside the source: *Create* shows the inline message at the top of the form and creates nothing; editing the path hides it. Repeat with an empty path, a read-only path, and no file type with a preview on. A destination that does not exist yet under a writable folder is accepted.
+- **MDI-F7** — Cancel a wizard creation while it runs: no enrichment job appears and no profile is saved (even when the catalog is kept). Remove a queued wizard creation: no profile. Let one complete: the profile is saved and the enrichment row appears in the activity panel for that catalog.
 - **MDI-F8 (A.1)** — Create a catalog in wizard mode, close and reopen the collection (File and Memory modes): its profile is still there.
 - **MDI-F9 / F10** — Stop a job mid-run: files already done keep their results; the status is *Stopped*; no orphan `ffmpeg` process remains.
 - **MDI-F11** — Pause: no tool process runs and no request is sent until Resume.
@@ -533,17 +652,17 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F51** — Stop a semantic search on a large collection: it stops; progress used the builder in the activity panel.
 - **MDI-F52 / F54** — Inspect a datum: every provenance field is present; changing a prompt version makes the next run reprocess that analysis.
 - **MDI-F53** — Re-run failed only: only failed files are processed. Re-run an analysis: the old result is gone, its provenance record remains as history.
-- **MDI-F55** — In Memory mode, enrich, close, reopen: derived data is present and shown.
+- **MDI-F55** — In File and in Memory mode, enrich, close, reopen: derived data is present and shown; the profile is restored (Memory mode: from `mdi_profile.csv`).
 - **MDI-F56** — Export a File collection to Memory mode and back: derived data survives; derived files still open.
 - **MDI-F57 / F59** — Delete a catalog, and clear derived data on another: confirmation shown; data and recorded files removed; other files in the destination path untouched.
 - **MDI-F58** — Set *Include metadata* to *None* on an enriched catalog and update: every derived datum remains.
 - **MDI-C1** — `git diff` of the feature touches nothing under `qt_widgets/`. Open an enriched collection (File and Memory modes) with K2 2.13 and upstream K3 3.0: it opens normally, and the `mdi_` tables and files are left in place.
 - **MDI-C2** — Create the same source in standard mode before and after the feature: identical catalog and identical progress messages.
-- **MDI-C4** — Search repeatedly in File mode during a job: no "database is locked" error.
+- **MDI-C4 / C5** — Search and open *Show analysis* repeatedly during a job, in File and in Memory mode: no "database is locked" error, no stall; `mdi_data.db` (with its WAL files) is the only new derived-data file in the collection folder, and the collection database receives no derived data.
 - **MDI-C7** — Name a source file with spaces, quotes and `;`: tools process it; nothing is executed by a shell.
 - **MDI-C11** — With default settings, a network monitor shows connections to `localhost` only during a full job.
 - **MDI-C13** — Use a commercial provider once with a session key and once with an environment-variable key: search every `.ini`, the database and logs for the key: absent; after restart a session key must be entered again.
-- **MDI-C15** — Open a 3.0 collection: the `mdi_` tables and the `mdi_` version record exist, the core schema version is still 3.0, every 3.0 table and column is unchanged; open it again: the `mdi_` migration changes nothing. In Memory mode: only new `mdi_`-prefixed files appear in the collection folder.
+- **MDI-C15** — Open a 3.0 collection: the `mdi_` tables and the `mdi_` version record exist, the core schema version is still 3.0, every 3.0 table and column is unchanged; open it again: the `mdi_` migration changes nothing. In File and Memory modes `mdi_data.db` appears in the collection folder; in Memory mode `mdi_profile.csv` too.
 
 ---
 
