@@ -99,6 +99,14 @@ target_link_libraries(katalog-core PUBLIC
     KF6::FileMetaData
 )
 
+# Fork: archive listing in the enrichment job (zip, tar, 7z) when KArchive is
+# available; without it the analysis is skipped (SpecMediaIntelligence.md)
+find_package(KF6Archive QUIET)
+if (TARGET KF6::Archive)
+    target_link_libraries(katalog-core PUBLIC KF6::Archive)
+    target_compile_definitions(katalog-core PUBLIC KATALOG_HAS_KARCHIVE)
+endif()
+
 target_include_directories(katalog-core
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC  ${CMAKE_SOURCE_DIR}

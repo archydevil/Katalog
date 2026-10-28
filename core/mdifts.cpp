@@ -77,6 +77,15 @@ QString composeText(const QHash<QString, QJsonObject> &byAnalysis)
         const QJsonObject c = byAnalysis.value(QStringLiteral("caption"));
         parts << c.value("caption").toString() << joinTags(c.value("tags"));
     }
+    if (byAnalysis.contains(QStringLiteral("archive"))) {
+        // Names inside the archive: found offline by content search
+        int n = 0;
+        for (const QJsonValue &e : byAnalysis.value(QStringLiteral("archive")).value("entries").toArray()) {
+            if (++n > 2000)
+                break;
+            parts << e.toObject().value("path").toString();
+        }
+    }
     parts.removeAll(QString());
     return parts.join(' ');
 }
@@ -175,7 +184,7 @@ bool MdiFts::rebuildCatalog(const QString &mdiDbPath, int catalogId, const QStri
             d.prepare(QLatin1String(R"(
                 SELECT datum_full_path, datum_analysis, datum_value FROM mdi_datum
                 WHERE datum_catalog_id = :id AND datum_outcome = 'completed'
-                  AND datum_analysis IN ('snippet', 'summary', 'caption')
+                  AND datum_analysis IN ('snippet', 'summary', 'caption', 'archive')
             )"));
             d.bindValue(":id", catalogId);
             if (d.exec())

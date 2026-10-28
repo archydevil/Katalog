@@ -50,6 +50,7 @@
 #include <QJsonObject>
 #include <QVariantMap>
 #include <QList>
+#include <QHash>
 #include <QMutex>
 #include <QWaitCondition>
 #include <QVector>
@@ -165,6 +166,11 @@ private:
     Result makeEmbeddings(const FileItem &file);
     Result makeSnippet(const FileItem &file);
     Result makeQuickHash(const FileItem &file);
+    Result makeMediaInfo(const FileItem &file);
+    Result makeArchiveListing(const FileItem &file);
+    // Parallel image-thumbnail pre-pass over files [from, to) (QThreadPool)
+    void   precomputeThumbnails(int from, int to);
+    QHash<QString, Result> m_precomputed;   // full path -> thumbnail done by the pre-pass
     // ffmpeg writes a JPEG frame; this stores it as the thumbnail (WebP when possible)
     bool   finishThumbnail(const QString &jpegPath, const QString &targetPath, QString *error);
     QString transcriptText(const FileItem &file);   // from this catalog's transcript datum

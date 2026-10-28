@@ -47,6 +47,11 @@
 #include <QTemporaryDir>
 #include <QImage>
 #include <QImageWriter>
+#include <QImageReader>
+#include <QPainter>
+#include <QThreadPool>
+#include <QRunnable>
+#include <QMutex>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -60,11 +65,20 @@
 #include <QRegularExpression>
 #include <QDebug>
 #include <algorithm>
+#include <memory>
 #include <cmath>
 
 #include <KFileMetaData/ExtractorCollection>
 #include <KFileMetaData/Extractor>
 #include <KFileMetaData/SimpleExtractionResult>
+
+#ifdef KATALOG_HAS_KARCHIVE
+#include <KZip>
+#include <KTar>
+#include <K7Zip>
+#include <KArchiveDirectory>
+#include <KArchiveFile>
+#endif
 
 namespace {
 
@@ -92,8 +106,36 @@ constexpr int kMaxTextChars  = 24000;
 constexpr int kContextTokens = 16384;
 constexpr int kAnswerTokens  = 2048;
 
-constexpr int kThumbnailSize = 320;   // longest side, MDI-F29
-constexpr int kSnippetChars  = 1000;  // text kept for instant search
+constexpr int kThumbnailSize = 256;   // longest side (owner's choice; MDI-F29 range 128-1024)
+constexpr int kThumbQuality  = 75;    // WebP quality: ~5 KB per thumbnail
+constexpr int kSheetHeight   = 144;   // height of each frame in a video contact sheet
+constexpr int kParallelChunk = 64;    // files per parallel thumbnail pre-pass
+constexpr int kSnippetChars  = 800;   // text kept for offline full-text search
+
+// Archive listing: entries stored per archive (all are counted), and the
+// largest compressed tar listed (a tar has no index: listing reads it whole)
+constexpr int    kArchiveMaxEntries = 20000;
+constexpr qint64 kArchiveMaxTarSize = qint64(2) * 1024 * 1024 * 1024;
+
+// "zip", "tar", "7z" or empty, from the file name (".tar.gz" has suffix "gz")
+QString archiveKind(const QString &fullPath)
+{
+    const QString name = QFileInfo(fullPath).fileName().toLower();
+    if (name.endsWith(QLatin1String(".zip")) || name.endsWith(QLatin1String(".jar")))
+        return QStringLiteral("zip");
+    if (name.endsWith(QLatin1String(".7z")))
+        return QStringLiteral("7z");
+    for (const char *t : {".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz", ".tbz2", ".tar.xz", ".txz", ".tar.zst"})
+        if (name.endsWith(QLatin1String(t)))
+            return QStringLiteral("tar");
+    return QString();
+}
+
+// Files whose first characters are kept as a snippet, whatever their catalog type
+const QStringList kSnippetSuffixes = {
+    "txt", "md", "markdown", "csv", "tsv", "json", "xml", "log", "srt", "vtt", "rtf", "html", "htm",
+    "pdf", "docx", "odt", "doc", "pptx", "odp", "xlsx", "ods",
+};
 
 // Offline thumbnails are WebP when Qt can write it (owner's choice), JPEG otherwise
 QString thumbnailSuffix()
@@ -315,6 +357,8 @@ void MdiEnrichmentJob::run()
                                                              QStringLiteral("segments")).isEmpty();
 
     for (int i = 0; i < fileCount && !m_stop.load(); ++i) {
+        if (i % kParallelChunk == 0)
+            precomputeThumbnails(i, qMin(fileCount, i + kParallelChunk));
         const FileItem &file = m_files.at(i);
         const QStringList analyses = plannedAnalyses(file);
         if (analyses.isEmpty())
@@ -423,7 +467,7 @@ void MdiEnrichmentJob::run()
             // Instant-search index: the file's derived text changed
             if (r.outcome == QLatin1String("completed")
                 && (analysis == QLatin1String("snippet") || analysis == QLatin1String("summary")
-                    || analysis == QLatin1String("caption")))
+                    || analysis == QLatin1String("caption") || analysis == QLatin1String("archive")))
                 MdiFts::updateDerivedText(m_connectionName, m_config.catalogId, file.fullPath);
             if (analysis == QLatin1String("segments") && r.outcome == QLatin1String("completed"))
                 m_segmentsChanged = true;
@@ -523,6 +567,15 @@ QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
         info[QStringLiteral("tool")]  = QStringLiteral("whisper.cpp");
         info[QStringLiteral("model")] = QFileInfo(m_config.whisperModelPath).fileName();
         info[QStringLiteral("where")] = QStringLiteral("local");
+    } else if (analysis == QLatin1String("mediainfo")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("ffprobe");
+        info[QStringLiteral("where")] = QStringLiteral("local");
+    } else if (analysis == QLatin1String("thumbnail")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("qt / ffmpeg");
+        info[QStringLiteral("where")] = QStringLiteral("local");
+    } else if (analysis == QLatin1String("archive")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("karchive");
+        info[QStringLiteral("where")] = QStringLiteral("local");
     } else if (analysis == QLatin1String("quickhash") || analysis == QLatin1String("snippet")) {
         info[QStringLiteral("tool")]  = QStringLiteral("katalog");
         info[QStringLiteral("where")] = QStringLiteral("local");
@@ -544,6 +597,12 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
         hashes << QStringLiteral("quickhash");
     if (m_config.quickHashOnly)
         return hashes;
+    // Contents of archives, listed without extracting (whatever the catalog type)
+    if (s.value("archive").toObject().value("list").toBool(true) && !archiveKind(file.fullPath).isEmpty())
+        hashes << QStringLiteral("archive");
+    // First characters of documents, no AI: searchable offline (instant search)
+    if (s.value("text").toObject().value("snippet").toBool(true) && kSnippetSuffixes.contains(file.extension))
+        hashes << QStringLiteral("snippet");
 
     bool typeSelected = false;
     for (const QJsonValue &t : s.value("fileTypes").toArray())
@@ -570,6 +629,7 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
         if (image.value("thumbnail").toBool()) list << QStringLiteral("thumbnail");
         if (caption)                           list << QStringLiteral("caption");
     } else if (file.fileType == QLatin1String("video")) {
+        list << QStringLiteral("mediainfo");
         if (video.value("posterFrame").toBool())   list << QStringLiteral("poster");
         if (video.value("keyframeStrip").toBool()) list << QStringLiteral("keyframes");
         if (video.value("clip").toString(QStringLiteral("off")) != QLatin1String("off"))
@@ -579,6 +639,7 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
         if (summary)    list << QStringLiteral("summary");
         if (segments)   list << QStringLiteral("segments");
     } else if (file.fileType == QLatin1String("audio")) {
+        list << QStringLiteral("mediainfo");
         if (audio.value("clip").toString(QStringLiteral("off")) != QLatin1String("off"))
             list << QStringLiteral("clip_audio");
         if (audio.value("waveform").toBool()) list << QStringLiteral("waveform");
@@ -586,9 +647,6 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
         if (summary)                          list << QStringLiteral("summary");
         if (segments)                         list << QStringLiteral("segments");
     } else if (file.fileType == QLatin1String("text")) {
-        // First characters of the text, no AI: searchable offline (instant search)
-        if (s.value("text").toObject().value("snippet").toBool(true))
-            list << QStringLiteral("snippet");
         if (summary) list << QStringLiteral("summary");
     }
     // Last: indexes what the analyses above produced (MDI-F47)
@@ -602,14 +660,21 @@ QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
     const QJsonObject s = m_config.settings;
     QJsonObject p;
     if (analysis == QLatin1String("thumbnail") || analysis == QLatin1String("poster")) {
-        p["size"]   = kThumbnailSize;
-        p["format"] = thumbnailSuffix().mid(1);
+        p["size"]    = kThumbnailSize;
+        p["format"]  = thumbnailSuffix().mid(1);
+        p["quality"] = kThumbQuality;
     } else if (analysis == QLatin1String("keyframes")) {
-        p["count"]  = s.value("video").toObject().value("keyframeCount").toInt(8);
-        p["size"]   = kThumbnailSize;
-        p["format"] = thumbnailSuffix().mid(1);
+        p["count"]   = s.value("video").toObject().value("keyframeCount").toInt(4);
+        p["height"]  = kSheetHeight;
+        p["format"]  = thumbnailSuffix().mid(1);
+        p["quality"] = kThumbQuality;
+        p["layout"]  = QStringLiteral("sheet");
     } else if (analysis == QLatin1String("snippet")) {
         p["chars"] = kSnippetChars;
+    } else if (analysis == QLatin1String("mediainfo")) {
+        p["tool"] = QStringLiteral("ffprobe");
+    } else if (analysis == QLatin1String("archive")) {
+        p["maxEntries"] = kArchiveMaxEntries;
     } else if (analysis == QLatin1String("quickhash")) {
         p["method"] = QStringLiteral("blake2b-256 size+3x64KiB");
     } else if (analysis == QLatin1String("clip_video") || analysis == QLatin1String("clip_audio")) {
@@ -648,7 +713,9 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     // Previews need ffmpeg; caption and summary check their own inputs (MDI-F21)
     const bool isPreview = analysis != QLatin1String("summary") && analysis != QLatin1String("caption")
                         && analysis != QLatin1String("segments") && analysis != QLatin1String("embeddings")
-                        && analysis != QLatin1String("snippet") && analysis != QLatin1String("quickhash");
+                        && analysis != QLatin1String("snippet") && analysis != QLatin1String("quickhash")
+                        && analysis != QLatin1String("mediainfo") && analysis != QLatin1String("thumbnail")
+                        && analysis != QLatin1String("archive");
     if (isPreview && m_config.ffmpegPath.isEmpty()) {
         Result r;
         r.outcome = QStringLiteral("skipped");
@@ -668,6 +735,8 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     if (analysis == QLatin1String("embeddings")) return makeEmbeddings(file);
     if (analysis == QLatin1String("snippet"))    return makeSnippet(file);
     if (analysis == QLatin1String("quickhash"))  return makeQuickHash(file);
+    if (analysis == QLatin1String("mediainfo"))  return makeMediaInfo(file);
+    if (analysis == QLatin1String("archive"))    return makeArchiveListing(file);
     Result r;
     r.outcome = QStringLiteral("skipped");
     r.reason  = QStringLiteral("unknown analysis");
@@ -711,7 +780,7 @@ bool MdiEnrichmentJob::finishThumbnail(const QString &jpegPath, const QString &t
         return false;
     }
     QImageWriter writer(targetPath, "webp");
-    writer.setQuality(80);
+    writer.setQuality(kThumbQuality);
     if (!writer.write(image)) {
         *error = writer.errorString();
         return false;
@@ -749,9 +818,102 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSnippet(const FileItem &file)
     return r;
 }
 
+// Image thumbnail decoded by Qt itself: JPEG is decoded already reduced, the
+// EXIF orientation is applied, and the result is written straight as WebP.
+// Thread-safe (no member state): the parallel pre-pass runs it on a pool.
+static bool qtImageThumbnail(const QString &source, const QString &target, QString *error)
+{
+    QImageReader reader(source);
+    reader.setAutoTransform(true);
+    if (!reader.canRead()) {
+        *error = reader.errorString();
+        return false;
+    }
+    const QSize original = reader.size();
+    if (original.isValid() && (original.width() > kThumbnailSize || original.height() > kThumbnailSize))
+        reader.setScaledSize(original.scaled(kThumbnailSize, kThumbnailSize, Qt::KeepAspectRatio));
+    QImage image = reader.read();
+    if (image.isNull()) {
+        *error = reader.errorString();
+        return false;
+    }
+    if (image.width() > kThumbnailSize || image.height() > kThumbnailSize)
+        image = image.scaled(kThumbnailSize, kThumbnailSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    QDir().mkpath(QFileInfo(target).absolutePath());
+    QImageWriter writer(target, target.endsWith(QLatin1String(".webp")) ? "webp" : "jpeg");
+    writer.setQuality(kThumbQuality);
+    if (!writer.write(image)) {
+        *error = writer.errorString();
+        return false;
+    }
+    return true;
+}
+
+void MdiEnrichmentJob::precomputeThumbnails(int from, int to)
+{
+    // Image thumbnails of the next files, decoded in parallel; the job thread
+    // still commits every datum in order (MDI-F9). Only files whose thumbnail
+    // is due; any image Qt cannot read is left to the ffmpeg path.
+    struct Task { QString source, target, rel; };
+    QList<Task> tasks;
+    for (int i = from; i < to; ++i) {
+        const FileItem &file = m_files.at(i);
+        if (file.fileType != QLatin1String("image") || !plannedAnalyses(file).contains(QStringLiteral("thumbnail")))
+            continue;
+        if (MdiData::isCurrent(m_connectionName, m_config.catalogId, file.fullPath, QStringLiteral("thumbnail"),
+                               file.size, file.dateUpdated, analysisParams(QStringLiteral("thumbnail")))
+            || !QFileInfo::exists(file.fullPath))
+            continue;
+        const QString rel = derivedRelative(file, QStringLiteral("thumbnail"), thumbnailSuffix());
+        tasks.append({file.fullPath, absoluteDerived(rel), rel});
+    }
+    if (tasks.isEmpty())
+        return;
+
+    QThreadPool pool;
+    pool.setMaxThreadCount(qBound(1, QThread::idealThreadCount() / 2, 4));
+    QMutex mutex;
+    for (const Task &task : tasks) {
+        pool.start([this, task, &mutex]() {
+            if (m_stop.load())
+                return;
+            QString error;
+            if (qtImageThumbnail(task.source, task.target, &error)) {
+                Result r;
+                r.tool = QStringLiteral("qt %1").arg(QString::fromLatin1(qVersion()));
+                r.derivedFiles << task.rel;
+                QMutexLocker locker(&mutex);
+                m_precomputed.insert(task.source, r);
+            }
+        });
+    }
+    pool.waitForDone();
+}
+
 MdiEnrichmentJob::Result MdiEnrichmentJob::makeThumbnail(const FileItem &file)
 {
+    // Done by the parallel pre-pass
+    const auto pre = m_precomputed.find(file.fullPath);
+    if (pre != m_precomputed.end()) {
+        const Result r = pre.value();
+        m_precomputed.erase(pre);
+        return r;
+    }
+
     Result r;
+    const QString target = absoluteDerived(derivedRelative(file, QStringLiteral("thumbnail"), thumbnailSuffix()));
+    QString qtError;
+    if (qtImageThumbnail(file.fullPath, target, &qtError)) {
+        r.tool = QStringLiteral("qt %1").arg(QString::fromLatin1(qVersion()));
+        r.derivedFiles << derivedRelative(file, QStringLiteral("thumbnail"), thumbnailSuffix());
+        return r;
+    }
+    if (m_config.ffmpegPath.isEmpty()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = qtError;
+        return r;
+    }
+    // Formats Qt does not read (PSD, RAW...): ffmpeg
     r.tool = m_ffmpegVersion;
     const QString rel = derivedRelative(file, QStringLiteral("thumbnail"), thumbnailSuffix());
     QTemporaryDir tmp;
@@ -808,36 +970,190 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makePosterFrame(const FileItem &file)
 
 MdiEnrichmentJob::Result MdiEnrichmentJob::makeKeyframes(const FileItem &file)
 {
+    // Video contact sheet: N frames evenly spaced (MDI-F31) side by side in
+    // one image, each kSheetHeight px high; value.frames maps each frame to
+    // its timecode and horizontal position in the sheet
     Result r;
     r.tool = m_ffmpegVersion;
-    const int count = qBound(2, m_config.settings.value("video").toObject().value("keyframeCount").toInt(8), 32);
+    const int count = qBound(2, m_config.settings.value("video").toObject().value("keyframeCount").toInt(4), 32);
     const double duration = probeDuration(file.fullPath);
     if (duration <= 0) {
         r.outcome = QStringLiteral("failed");
         r.reason  = QStringLiteral("duration unknown");
         return r;
     }
-    QJsonArray timecodes;
     QTemporaryDir tmp;
+    QList<QImage> frames;
+    QJsonArray timecodes;
     for (int k = 0; k < count && !m_stop.load(); ++k) {
-        const double at = duration * (k + 0.5) / count;   // evenly spaced (MDI-F31)
-        const QString rel = derivedRelative(file, QStringLiteral("keyframes"),
-                                            QStringLiteral("_%1").arg(k, 2, 10, QLatin1Char('0')) + thumbnailSuffix());
+        const double at = duration * (k + 0.5) / count;
         const QString jpeg = tmp.filePath(QStringLiteral("frame_%1.jpg").arg(k));
         QString err;
         if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error",
                                            "-ss", QString::number(at, 'f', 2), "-i", file.fullPath,
-                                           "-vf", scaleFilter(kThumbnailSize), "-frames:v", "1", "-q:v", "4",
-                                           jpeg}, nullptr, &err)
-            || !finishThumbnail(jpeg, absoluteDerived(rel), &err)) {
+                                           "-vf", QStringLiteral("scale=-2:%1").arg(kSheetHeight),
+                                           "-frames:v", "1", "-q:v", "3", jpeg}, nullptr, &err)) {
             r.outcome = QStringLiteral("failed");
             r.reason  = err;
             return r;
         }
-        r.derivedFiles << rel;
+        const QImage frame(jpeg);
+        if (frame.isNull()) {
+            r.outcome = QStringLiteral("failed");
+            r.reason  = QStringLiteral("frame not readable");
+            return r;
+        }
+        frames.append(frame);
         timecodes.append(at);
     }
+    if (frames.isEmpty())
+        return r;
+
+    int width = 0;
+    for (const QImage &f : frames)
+        width += f.width();
+    QImage sheet(width, kSheetHeight, QImage::Format_RGB32);
+    sheet.fill(Qt::black);
+    QJsonArray layout;
+    {
+        QPainter painter(&sheet);
+        int x = 0;
+        for (int k = 0; k < frames.size(); ++k) {
+            painter.drawImage(x, 0, frames.at(k));
+            layout.append(QJsonObject{{"t", timecodes.at(k)}, {"x", x}, {"w", frames.at(k).width()}});
+            x += frames.at(k).width();
+        }
+    }
+    const QString rel = derivedRelative(file, QStringLiteral("keyframes"), QStringLiteral("_sheet") + thumbnailSuffix());
+    const QString target = absoluteDerived(rel);
+    QFile::remove(target);
+    QImageWriter writer(target, target.endsWith(QLatin1String(".webp")) ? "webp" : "jpeg");
+    writer.setQuality(kThumbQuality);
+    if (!writer.write(sheet)) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = writer.errorString();
+        return r;
+    }
+    r.derivedFiles << rel;
     r.value["timecodes"] = timecodes;
+    r.value["frames"]    = layout;
+    r.value["sheet"]     = true;
+    return r;
+}
+
+#ifdef KATALOG_HAS_KARCHIVE
+namespace {
+void walkArchive(const KArchiveDirectory *dir, const QString &prefix, QJsonArray &entries,
+                 int &count, qint64 &total, const std::atomic<bool> &stop)
+{
+    const QStringList names = dir->entries();
+    for (const QString &name : names) {
+        if (stop.load())
+            return;
+        const KArchiveEntry *e = dir->entry(name);
+        if (!e)
+            continue;
+        const QString path = prefix.isEmpty() ? name : prefix + QLatin1Char('/') + name;
+        ++count;
+        qint64 size = 0;
+        if (e->isFile()) {
+            size = static_cast<const KArchiveFile *>(e)->size();
+            total += size;
+        }
+        if (entries.size() < kArchiveMaxEntries) {
+            QJsonObject o{{"path", path}, {"dir", e->isDirectory()},
+                          {"date", e->date().toString(Qt::ISODate)}};
+            if (e->isFile())
+                o["size"] = size;
+            entries.append(o);
+        }
+        if (e->isDirectory())
+            walkArchive(static_cast<const KArchiveDirectory *>(e), path, entries, count, total, stop);
+    }
+}
+} // namespace
+#endif
+
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeArchiveListing(const FileItem &file)
+{
+    Result r;
+    r.tool = QStringLiteral("karchive");
+#ifdef KATALOG_HAS_KARCHIVE
+    const QString kind = archiveKind(file.fullPath);
+    if (kind == QLatin1String("tar") && !file.fullPath.toLower().endsWith(QLatin1String(".tar"))
+        && file.size > kArchiveMaxTarSize) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("compressed tar too large to list");
+        return r;
+    }
+    std::unique_ptr<KArchive> archive;
+    if (kind == QLatin1String("zip"))
+        archive = std::make_unique<KZip>(file.fullPath);
+    else if (kind == QLatin1String("7z"))
+        archive = std::make_unique<K7Zip>(file.fullPath);
+    else
+        archive = std::make_unique<KTar>(file.fullPath);
+    if (!archive->open(QIODevice::ReadOnly)) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = archive->errorString().isEmpty() ? QStringLiteral("archive not readable") : archive->errorString();
+        return r;
+    }
+    QJsonArray entries;
+    int count = 0;
+    qint64 total = 0;
+    walkArchive(archive->directory(), QString(), entries, count, total, m_stop);
+    archive->close();
+    r.value["format"]    = kind;
+    r.value["count"]     = count;
+    r.value["totalSize"] = total;
+    r.value["truncated"] = count > entries.size();
+    r.value["entries"]   = entries;
+#else
+    Q_UNUSED(file);
+    r.outcome = QStringLiteral("skipped");
+    r.reason  = QStringLiteral("archive support not built");
+#endif
+    return r;
+}
+
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeMediaInfo(const FileItem &file)
+{
+    // Technical data by ffprobe, for catalogs scanned without metadata
+    Result r;
+    if (m_config.ffprobePath.isEmpty()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("ffprobe not found");
+        return r;
+    }
+    r.tool = QStringLiteral("ffprobe");
+    QByteArray out;
+    QString err;
+    if (!runTool(m_config.ffprobePath, {"-v", "error", "-show_entries",
+                                        "format=duration,bit_rate:stream=codec_type,codec_name,width,height,"
+                                        "avg_frame_rate,sample_rate,channels",
+                                        "-of", "json", file.fullPath}, &out, &err)) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = err;
+        return r;
+    }
+    const QJsonObject doc = QJsonDocument::fromJson(out).object();
+    const QJsonObject format = doc.value("format").toObject();
+    r.value["duration"] = format.value("duration").toString().toDouble();
+    r.value["bitrate"]  = format.value("bit_rate").toString().toLongLong();
+    for (const QJsonValue &v : doc.value("streams").toArray()) {
+        const QJsonObject st = v.toObject();
+        const QString type = st.value("codec_type").toString();
+        if (type == QLatin1String("video") && !r.value.contains("video")) {
+            const QStringList rate = st.value("avg_frame_rate").toString().split('/');
+            const double fps = rate.size() == 2 && rate[1].toDouble() > 0 ? rate[0].toDouble() / rate[1].toDouble() : 0.0;
+            r.value["video"] = QJsonObject{{"codec", st.value("codec_name")}, {"width", st.value("width")},
+                                           {"height", st.value("height")}, {"fps", qRound(fps * 100) / 100.0}};
+        } else if (type == QLatin1String("audio") && !r.value.contains("audio")) {
+            r.value["audio"] = QJsonObject{{"codec", st.value("codec_name")},
+                                           {"sampleRate", st.value("sample_rate").toString().toInt()},
+                                           {"channels", st.value("channels")}};
+        }
+    }
     return r;
 }
 
@@ -981,14 +1297,24 @@ QString MdiEnrichmentJob::extractText(const QString &path, QString *tool, QStrin
         return QString::fromUtf8(out);
     }
 
-    static const QStringList plain = {"txt", "md", "markdown", "srt", "vtt", "csv", "log", "rtf", "html", "htm"};
+    static const QStringList plain = {"txt", "md", "markdown", "srt", "vtt", "csv", "tsv", "log", "rtf",
+                                      "html", "htm", "json", "xml"};
     if (plain.contains(suffix)) {
         QFile f(path);
         if (!f.open(QIODevice::ReadOnly)) {
             *reason = f.errorString();
             return QString();
         }
-        return QString::fromUtf8(f.read(kMaxTextChars * 4));
+        // Bounded read; a NUL byte means a binary file named like a text one
+        const QByteArray bytes = f.read(kMaxTextChars * 4);
+        if (bytes.left(4096).contains('\0')) {
+            *reason = QStringLiteral("binary content");
+            return QString();
+        }
+        QString text = QString::fromUtf8(bytes);
+        // Control characters out (keeps tabs and line breaks for simplified())
+        text.removeIf([](QChar c) { return c.category() == QChar::Other_Control && c != '\n' && c != '\t'; });
+        return text;
     }
 
     // Office and OpenDocument files: KFileMetaData's plain-text extractors
