@@ -95,7 +95,7 @@ bool MdiFts::ensureTables(const QString &connectionName, const QString &schema)
                               " doc_full_path TEXT NOT NULL,"
                               " UNIQUE (doc_catalog_id, doc_full_path))").arg(schema))
         && q.exec(QStringLiteral("CREATE VIRTUAL TABLE IF NOT EXISTS %1.mdi_fts USING fts5("
-                                 "name, path, derived, tokenize = 'trigram')").arg(schema))
+                                 "name, folder, derived, tokenize = 'trigram')").arg(schema))
         && q.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS %1.mdi_fts_state ("
                                  " state_catalog_id INTEGER PRIMARY KEY,"
                                  " state_stamp TEXT,"
@@ -185,18 +185,18 @@ bool MdiFts::rebuildCatalog(const QString &mdiDbPath, int catalogId, const QStri
         QSqlQuery insDoc(mdi);
         insDoc.prepare(QStringLiteral("INSERT INTO mdi_fts_doc (doc_catalog_id, doc_full_path) VALUES (:id, :path)"));
         QSqlQuery insFts(mdi);
-        insFts.prepare(QStringLiteral("INSERT INTO mdi_fts (rowid, name, path, derived) VALUES (:rowid, :name, :path, :derived)"));
+        insFts.prepare(QStringLiteral("INSERT INTO mdi_fts (rowid, name, folder, derived) VALUES (:rowid, :name, :folder, :derived)"));
 
         int count = 0;
         bool stopped = false;
-        auto add = [&](const QString &fullPath, const QString &name) {
+        auto add = [&](const QString &fullPath, const QString &name, const QString &folder) {
             insDoc.bindValue(":id", catalogId);
             insDoc.bindValue(":path", fullPath);
             if (!insDoc.exec())
                 return;
             insFts.bindValue(":rowid", insDoc.lastInsertId());
             insFts.bindValue(":name", name);
-            insFts.bindValue(":path", fullPath);
+            insFts.bindValue(":folder", folder);
             const auto it = derived.constFind(fullPath);
             insFts.bindValue(":derived", it == derived.constEnd() ? QString() : composeText(it.value()));
             insFts.exec();
@@ -218,7 +218,8 @@ bool MdiFts::rebuildCatalog(const QString &mdiDbPath, int catalogId, const QStri
                     if (line.isEmpty() || line.startsWith('<'))
                         continue;
                     const QString fullPath = line.section('\t', 0, 0);
-                    add(fullPath, QFileInfo(fullPath).fileName());
+                    const QFileInfo info(fullPath);
+                    add(fullPath, info.fileName(), info.path());
                 }
                 ok = true;
             }
@@ -229,11 +230,11 @@ bool MdiFts::rebuildCatalog(const QString &mdiDbPath, int catalogId, const QStri
             if (src.open()) {
                 QSqlQuery files(src);
                 files.setForwardOnly(true);
-                files.prepare(QStringLiteral("SELECT file_full_path, file_name FROM file WHERE file_catalog_id = :id"));
+                files.prepare(QStringLiteral("SELECT file_full_path, file_name, file_folder_path FROM file WHERE file_catalog_id = :id"));
                 files.bindValue(":id", catalogId);
                 if (files.exec()) {
                     while (files.next() && !stopped)
-                        add(files.value(0).toString(), files.value(1).toString());
+                        add(files.value(0).toString(), files.value(1).toString(), files.value(2).toString());
                     ok = true;
                 }
                 src.close();
@@ -319,9 +320,16 @@ void MdiFts::updateDerivedText(const QString &mdiConnectionName, int catalogId, 
         qWarning() << "MdiFts::updateDerivedText failed:" << update.lastError().text();
 }
 
-QString MdiFts::matchQuery(const QString &searchText, const QString &criteria, bool namesOnly)
+QString MdiFts::matchQuery(const QString &searchText, const QString &criteria, const QString &searchIn)
 {
     if (criteria == Search::TEXT_CRITERIA_REGEX)
+        return QString();
+    const bool namesOnly = searchIn == Search::SEARCH_IN_FILE_NAMES;
+    // Name and folder are indexed apart (the full path would store every name
+    // twice). A term without '/' lies wholly in one of them, so matching either
+    // is a superset of matching the full path; a term with '/' may straddle
+    // the separator, so those searches run without the prefilter.
+    if (!namesOnly && searchText.contains(QLatin1Char('/')))
         return QString();
 
     // Mirrors Search::prepareSearchPatterns: each line is an OR term
@@ -349,8 +357,8 @@ QString MdiFts::matchQuery(const QString &searchText, const QString &criteria, b
     }
     if (lineExpressions.isEmpty())
         return QString();
-    // Names only: the name column; the other modes match the folder or the
-    // full path, both contained in the path column
-    return QStringLiteral("%1 : (%2)").arg(namesOnly ? QStringLiteral("name") : QStringLiteral("path"),
-                                          lineExpressions.join(QStringLiteral(" OR ")));
+    const QString columns = namesOnly ? QStringLiteral("name")
+                          : searchIn == Search::SEARCH_IN_FOLDER_PATH ? QStringLiteral("folder")
+                                                                      : QStringLiteral("{name folder}");
+    return QStringLiteral("%1 : (%2)").arg(columns, lineExpressions.join(QStringLiteral(" OR ")));
 }

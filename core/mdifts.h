@@ -24,7 +24,7 @@
 // Application: Katalog
 // File Name:   mdifts.h
 // Purpose:     Instant search index (fork only, SpecMediaIntelligence.md, D5)
-// Description: SQLite FTS5 trigram index of file names and full paths, plus
+// Description: SQLite FTS5 trigram index of file names and folder paths, plus
 //              the text derived by the enrichment runner (snippet, summary,
 //              caption), kept in mdi_data.db so the core schema stays 3.0.
 //              The search uses it as a prefilter: a superset of what the
@@ -82,7 +82,8 @@ public:
     // FTS5 query for a search text and criteria (Search::TEXT_CRITERIA_*);
     // empty when the prefilter cannot be a superset of the regex: regex
     // criteria, or a term shorter than 3 characters (trigram minimum)
-    static QString matchQuery(const QString &searchText, const QString &criteria, bool namesOnly);
+    // searchIn: Search::SEARCH_IN_* (names, folder path, or both)
+    static QString matchQuery(const QString &searchText, const QString &criteria, const QString &searchIn);
 };
 
 #endif // MDIFTS_H
