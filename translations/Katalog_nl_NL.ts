@@ -4,15 +4,15 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../qt_quick/appmanager.cpp" line="+162"/>
+        <location filename="../qt_quick/appmanager.cpp" line="+165"/>
         <location line="+110"/>
         <location line="+14"/>
-        <location line="+5037"/>
+        <location line="+5420"/>
         <source>Search</source>
         <translation>Zoeken</translation>
     </message>
     <message>
-        <location line="-5157"/>
+        <location line="-5540"/>
         <source>Stopped</source>
         <translation>Gestopt</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+96"/>
-        <location line="+3470"/>
+        <location line="+3853"/>
         <source>Evaluated</source>
         <translation>Geëvalueerd</translation>
     </message>
     <message>
-        <location line="-3588"/>
+        <location line="-3971"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+95"/>
@@ -45,8 +45,11 @@
         <location line="+9"/>
         <location line="+7"/>
         <location line="+81"/>
-        <location line="+2295"/>
-        <location line="+732"/>
+        <location line="+2297"/>
+        <location line="+272"/>
+        <location line="+6"/>
+        <location line="+78"/>
+        <location line="+757"/>
         <location line="+26"/>
         <location line="+20"/>
         <location line="+380"/>
@@ -67,8 +70,10 @@
         <translation>Bezig</translation>
     </message>
     <message>
-        <location line="-5038"/>
-        <location line="+4130"/>
+        <location line="-5421"/>
+        <location line="+2580"/>
+        <location line="+1"/>
+        <location line="+1932"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -78,7 +83,7 @@
         <translation>Voltooid</translation>
     </message>
     <message>
-        <location line="-4631"/>
+        <location line="-5014"/>
         <source>Empty database path provided</source>
         <translation>Leeg databasepad opgegeven</translation>
     </message>
@@ -118,7 +123,7 @@
         <translation>Lokale schijf</translation>
     </message>
     <message>
-        <location line="+479"/>
+        <location line="+481"/>
         <source>search_results</source>
         <translation>zoekresultaten</translation>
     </message>
@@ -164,12 +169,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+3051"/>
+        <location line="+3432"/>
         <source>Size</source>
         <translation>Grootte</translation>
     </message>
     <message>
-        <location line="-3050"/>
+        <location line="-3431"/>
         <source>Date</source>
         <translation>Datum</translation>
     </message>
@@ -263,14 +268,14 @@ Kies een andere naam en probeer het opnieuw.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+1237"/>
+        <location line="+1618"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>Een apparaatoperatie is al actief.</translation>
     </message>
     <message>
-        <location line="-1758"/>
-        <location line="+757"/>
+        <location line="-2139"/>
+        <location line="+1138"/>
         <source>Create</source>
         <translation>Maken</translation>
     </message>
@@ -462,7 +467,8 @@ Kies een andere naam.</translation>
         <translation type="vanished">Er bestaat al een opslag met deze ID. Kies een andere ID.</translation>
     </message>
     <message>
-        <location line="+199"/>
+        <location line="-1724"/>
+        <location line="+1923"/>
         <source>Selected device is not a catalog</source>
         <translation>Geselecteerd apparaat is geen catalogus</translation>
     </message>
@@ -519,7 +525,8 @@ Kies een andere naam.</translation>
         <translation>Exporteren</translation>
     </message>
     <message>
-        <location line="-492"/>
+        <location line="-2422"/>
+        <location line="+1930"/>
         <location line="+411"/>
         <location line="+26"/>
         <location line="+17"/>
@@ -530,7 +537,90 @@ Kies een andere naam.</translation>
         <translation>Geannuleerd</translation>
     </message>
     <message>
-        <location line="-1340"/>
+        <location line="-3304"/>
+        <source>Thumbnail</source>
+        <translation>Miniatuur</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Poster frame</source>
+        <translation>Representatief beeld</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keyframe strip</source>
+        <translation>Strook met sleutelbeelden</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+1"/>
+        <source>Clip</source>
+        <translation>Clip</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waveform</source>
+        <translation>Golfvorm</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Caption and tags</source>
+        <translation>Bijschrift en tags</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Summary and excerpts</source>
+        <translation>Samenvatting en fragmenten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Transcript</source>
+        <translation>Transcriptie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Topic segments</source>
+        <translation>Onderwerpsegmenten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Topic clusters</source>
+        <translation>Onderwerpclusters</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Provide a destination path for the previews and derived data.</source>
+        <translation>Geef een doelpad op voor de voorbeelden en afgeleide gegevens.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Select a destination path that can be written to.</source>
+        <translation>Selecteer een doelpad waarnaar geschreven kan worden.</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <location line="+86"/>
+        <source>Enrichment</source>
+        <translation>Verrijking</translation>
+    </message>
+    <message>
+        <location line="-77"/>
+        <location line="+78"/>
+        <source>Paused</source>
+        <translation>Gepauzeerd</translation>
+    </message>
+    <message>
+        <location line="+1811"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>Verkennen</translation>
@@ -821,42 +911,35 @@ Kies een andere naam.</translation>
 <context>
     <name>CreateWizard</name>
     <message>
-        <location filename="../qt_quick/CreateWizard.qml" line="+24"/>
         <source>Source</source>
-        <translation>Bron</translation>
+        <translation type="vanished">Bron</translation>
     </message>
     <message>
-        <location line="+0"/>
-        <location line="+121"/>
-        <location line="+120"/>
+        <location filename="../qt_quick/CreateWizard.qml" line="+154"/>
         <source>Destination path</source>
         <translation>Doelpad</translation>
     </message>
     <message>
-        <location line="-241"/>
-        <location line="+244"/>
+        <location line="+19"/>
         <source>File types</source>
         <translation>Bestandstypen</translation>
     </message>
     <message>
-        <location line="-244"/>
-        <location line="+259"/>
+        <location line="+24"/>
         <source>Previews</source>
         <translation>Voorbeelden</translation>
     </message>
     <message>
-        <location line="-259"/>
         <source>Summary</source>
-        <translation>Samenvatting</translation>
+        <translation type="vanished">Samenvatting</translation>
     </message>
     <message>
-        <location line="+29"/>
-        <location line="+26"/>
+        <location line="-148"/>
         <source>Off</source>
         <translation>Uit</translation>
     </message>
     <message>
-        <location line="-25"/>
+        <location line="+1"/>
         <source>Full</source>
         <translation>Volledig</translation>
     </message>
@@ -866,17 +949,15 @@ Kies een andere naam.</translation>
         <translation>Gedeeltelijk</translation>
     </message>
     <message>
-        <location line="+24"/>
         <source>On</source>
-        <translation>Aan</translation>
+        <translation type="vanished">Aan</translation>
     </message>
     <message>
-        <location line="+53"/>
         <source>Step %1 of %2</source>
-        <translation>Stap %1 van %2</translation>
+        <translation type="vanished">Stap %1 van %2</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+109"/>
         <source>Path for previews and derived data</source>
         <translation>Pad voor voorbeelden en afgeleide gegevens</translation>
     </message>
@@ -886,112 +967,114 @@ Kies een andere naam.</translation>
         <translation>Selecteer het pad</translation>
     </message>
     <message>
-        <location line="+12"/>
-        <location line="+16"/>
-        <location line="+89"/>
-        <location line="+10"/>
+        <location line="+13"/>
         <source>Image</source>
         <translation>Afbeelding</translation>
     </message>
     <message>
-        <location line="-114"/>
-        <location line="+20"/>
-        <location line="+85"/>
-        <location line="+11"/>
-        <location line="+2"/>
-        <location line="+6"/>
+        <location line="+1"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
     <message>
-        <location line="-123"/>
-        <location line="+54"/>
-        <location line="+51"/>
-        <location line="+26"/>
-        <location line="+8"/>
+        <location line="+1"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
     <message>
-        <location line="-138"/>
-        <location line="+105"/>
+        <location line="+1"/>
         <source>Text</source>
         <translation>Tekst</translation>
     </message>
     <message>
-        <location line="-104"/>
-        <location line="+105"/>
+        <location line="+1"/>
         <source>Other</source>
         <translation>Overig</translation>
     </message>
     <message>
-        <location line="-92"/>
-        <location line="+98"/>
+        <location line="+25"/>
         <source>Thumbnail</source>
         <translation>Miniatuur</translation>
     </message>
     <message>
-        <location line="-93"/>
-        <location line="+95"/>
+        <location line="+12"/>
         <source>Poster frame</source>
         <translation>Representatief beeld</translation>
     </message>
     <message>
-        <location line="-93"/>
-        <location line="+95"/>
+        <location line="+7"/>
         <source>Keyframe strip</source>
         <translation>Strook met sleutelbeelden</translation>
     </message>
     <message>
-        <location line="-93"/>
-        <location line="+96"/>
+        <location line="+9"/>
         <source>Number of frames</source>
         <translation>Aantal beelden</translation>
     </message>
     <message>
-        <location line="-89"/>
-        <location line="+24"/>
-        <location line="+68"/>
-        <location line="+8"/>
+        <location line="+6"/>
+        <location line="+39"/>
         <source>Clip</source>
         <translation>Clip</translation>
     </message>
     <message>
-        <location line="-93"/>
-        <location line="+24"/>
-        <location line="+65"/>
-        <location line="+8"/>
+        <location line="-27"/>
+        <location line="+39"/>
         <source>Start (seconds)</source>
         <translation>Start (seconden)</translation>
     </message>
     <message>
-        <location line="-90"/>
-        <location line="+24"/>
-        <location line="+59"/>
-        <location line="+8"/>
+        <location line="-31"/>
+        <location line="+39"/>
         <source>Duration (seconds)</source>
         <translation>Duur (seconden)</translation>
     </message>
     <message>
-        <location line="-60"/>
-        <location line="+63"/>
+        <location line="-26"/>
         <source>Waveform</source>
         <translation>Golfvorm</translation>
     </message>
     <message>
-        <location line="-51"/>
+        <location line="+34"/>
+        <source>AI analysis</source>
+        <translation>AI-analyse</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Caption and tags</source>
+        <translation>Bijschrift en tags</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Summary and excerpts</source>
+        <translation>Samenvatting en fragmenten</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Transcript</source>
+        <translation>Transcriptie</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Topic segments</source>
+        <translation>Onderwerpsegmenten</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Analysed on this computer by the local model (%1). Nothing is sent to the internet.</source>
+        <translation>Geanalyseerd op deze computer door het lokale model (%1). Er wordt niets naar internet verzonden.</translation>
+    </message>
+    <message>
         <source>Source path</source>
-        <translation>Bronpad</translation>
+        <translation type="vanished">Bronpad</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Storage</source>
-        <translation>Opslag</translation>
+        <translation type="vanished">Opslag</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Catalog name</source>
-        <translation>Catalogusnaam</translation>
+        <translation type="vanished">Catalogusnaam</translation>
     </message>
 </context>
 <context>
@@ -1264,21 +1347,21 @@ Kies een andere naam.</translation>
         <location line="+41"/>
         <location line="+144"/>
         <location line="+59"/>
-        <location line="+160"/>
+        <location line="+234"/>
         <source>Yes</source>
         <translation>Ja</translation>
     </message>
     <message>
-        <location line="-464"/>
+        <location line="-538"/>
         <location line="+64"/>
         <location line="+250"/>
-        <location line="+907"/>
+        <location line="+999"/>
         <location line="+125"/>
         <source>Cancel</source>
         <translation>Annuleren</translation>
     </message>
     <message>
-        <location line="-1497"/>
+        <location line="-1589"/>
         <location line="+114"/>
         <location line="+73"/>
         <location line="+179"/>
@@ -1334,42 +1417,42 @@ Kies een andere naam.</translation>
     </message>
     <message>
         <location line="+17"/>
-        <location line="+927"/>
+        <location line="+1001"/>
         <source>Selection</source>
         <translation>Selectie</translation>
     </message>
     <message>
-        <location line="-917"/>
-        <location line="+1269"/>
+        <location line="-991"/>
+        <location line="+1343"/>
         <source>Devices</source>
         <translation>Apparaten</translation>
     </message>
     <message>
-        <location line="-1264"/>
-        <location line="+1361"/>
+        <location line="-1338"/>
+        <location line="+1435"/>
         <source>Explore</source>
         <translation>Verkennen</translation>
     </message>
     <message>
-        <location line="-1351"/>
-        <location line="+1672"/>
+        <location line="-1425"/>
+        <location line="+1764"/>
         <source>Backup</source>
         <translation>Back-up</translation>
     </message>
     <message>
-        <location line="-1667"/>
-        <location line="+1624"/>
+        <location line="-1759"/>
+        <location line="+1716"/>
         <source>Statistics</source>
         <translation>Statistieken</translation>
     </message>
     <message>
-        <location line="-1619"/>
-        <location line="+1641"/>
+        <location line="-1711"/>
+        <location line="+1733"/>
         <source>Tags</source>
         <translation>Tags</translation>
     </message>
     <message>
-        <location line="-1628"/>
+        <location line="-1720"/>
         <source>Documentation</source>
         <translation>Documentatie</translation>
     </message>
@@ -1469,12 +1552,12 @@ Kies een andere naam.</translation>
         <location line="+9"/>
         <location line="+150"/>
         <location line="+54"/>
-        <location line="+159"/>
+        <location line="+233"/>
         <source>No</source>
         <translation>Nee</translation>
     </message>
     <message>
-        <location line="-333"/>
+        <location line="-407"/>
         <source>The catalog source path changed.</source>
         <translation>Het bronpad van de catalogus is gewijzigd.</translation>
     </message>
@@ -1683,6 +1766,33 @@ Kies een andere naam.</translation>
         <translation>Geselecteerde actieve catalogi worden bijgewerkt.</translation>
     </message>
     <message>
+        <location line="+52"/>
+        <location line="+36"/>
+        <location line="+552"/>
+        <source>Analyze</source>
+        <translation>Analyseren</translation>
+    </message>
+    <message>
+        <location line="-572"/>
+        <source>Provide a destination path for the previews and derived data.</source>
+        <translation>Geef een doelpad op voor de voorbeelden en afgeleide gegevens.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Select a destination path that can be written to.</source>
+        <translation>Selecteer een doelpad waarnaar geschreven kan worden.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Select a destination path outside the source path.</source>
+        <translation>Selecteer een doelpad buiten het bronpad.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Select at least one file type, or turn off all previews.</source>
+        <translation>Selecteer ten minste één bestandstype, of schakel alle voorbeelden uit.</translation>
+    </message>
+    <message>
         <location line="+53"/>
         <source>The source folder does not contain any file.
 This could mean that the source is empty or the device is not mounted to this folder.
@@ -1692,19 +1802,19 @@ Dit kan betekenen dat de bron leeg is of dat het apparaat niet op deze map is aa
 Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
     </message>
     <message>
-        <location line="-864"/>
-        <location line="+1101"/>
+        <location line="-938"/>
+        <location line="+1175"/>
         <location line="+51"/>
         <source>Search</source>
         <translation>Zoeken</translation>
     </message>
     <message>
-        <location line="-929"/>
+        <location line="-1003"/>
         <source>Welcome to Katalog 3. News, questions and feedback are shared on the project discussions:</source>
         <translation>Welkom bij Katalog 3. Nieuws, vragen en feedback worden gedeeld in de discussies van het project:</translation>
     </message>
     <message>
-        <location line="+784"/>
+        <location line="+858"/>
         <source>Name</source>
         <translation>Naam</translation>
     </message>
@@ -1721,12 +1831,12 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
     <message>
         <location line="+7"/>
         <location line="+116"/>
-        <location line="+259"/>
+        <location line="+277"/>
         <source>Stop</source>
         <translation>Stoppen</translation>
     </message>
     <message>
-        <location line="-368"/>
+        <location line="-386"/>
         <source>Reset</source>
         <translation>Herstellen</translation>
     </message>
@@ -1740,7 +1850,7 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
         <location line="+288"/>
         <location line="+39"/>
         <location line="+108"/>
-        <location line="+39"/>
+        <location line="+57"/>
         <location line="+174"/>
         <location line="+104"/>
         <location line="+20"/>
@@ -1757,7 +1867,7 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
 </translation>
     </message>
     <message>
-        <location line="-824"/>
+        <location line="-842"/>
         <source>Copy version and system information</source>
         <translation>Versie- en systeeminformatie kopiëren</translation>
     </message>
@@ -1835,19 +1945,24 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
         <translation type="vanished">Catalogus succesvol aangemaakt.</translation>
     </message>
     <message>
-        <location line="+205"/>
+        <location line="+223"/>
         <source>Catalog creation failed: </source>
         <translation>Aanmaken van catalogus mislukt: </translation>
     </message>
     <message>
-        <location line="-1506"/>
-        <location line="+1490"/>
+        <location line="-1598"/>
+        <location line="+1582"/>
         <location line="+32"/>
         <source>Create</source>
         <translation>Maken</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="-170"/>
+        <source>Topic clusters</source>
+        <translation>Onderwerpclusters</translation>
+    </message>
+    <message>
+        <location line="+203"/>
         <source>Edit Device</source>
         <translation>Apparaat bewerken</translation>
     </message>
@@ -6389,6 +6504,29 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
     </message>
 </context>
 <context>
+    <name>MdiDetailsDialog</name>
+    <message>
+        <location filename="../qt_quick/MdiDetailsDialog.qml" line="+21"/>
+        <source>Show analysis</source>
+        <translation>Analyse tonen</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Topic clusters</source>
+        <translation>Onderwerpclusters</translation>
+    </message>
+    <message>
+        <location line="+211"/>
+        <source>Collapse</source>
+        <translation>Inklappen</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Expand</source>
+        <translation>Uitklappen</translation>
+    </message>
+</context>
+<context>
     <name>MetadataDialog</name>
     <message>
         <location filename="../qt_quick/MetadataDialog.qml" line="+24"/>
@@ -6424,12 +6562,23 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
 <context>
     <name>OperationQueueView</name>
     <message>
-        <location filename="../qt_quick/OperationQueueView.qml" line="+107"/>
+        <location filename="../qt_quick/OperationQueueView.qml" line="+129"/>
+        <location line="+45"/>
         <source>Stop</source>
         <translation>Stoppen</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="-7"/>
+        <source>Resume</source>
+        <translation>Hervatten</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Pause</source>
+        <translation>Pauzeren</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Queue</source>
         <translation>Wachtrij</translation>
     </message>
@@ -7020,7 +7169,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
 <context>
     <name>PageCreateForm</name>
     <message>
-        <location filename="../qt_quick/PageCreateForm.qml" line="+332"/>
+        <location filename="../qt_quick/PageCreateForm.qml" line="+312"/>
         <location line="+49"/>
         <source>All</source>
         <translation>Alle</translation>
@@ -7036,39 +7185,39 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Audio</translation>
     </message>
     <message>
-        <location line="-294"/>
+        <location line="-275"/>
         <source>Provide a name for this new catalog.</source>
         <translation>Geef een naam op voor deze nieuwe catalogus.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Provide a path for this new catalog.</source>
         <translation>Geef een pad op voor deze nieuwe catalogus.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Select a Storage for this new catalog.
 (Selection panel on the left and dropdown list)</source>
         <translation>Selecteer een opslag voor deze nieuwe catalogus.
 (Selectiepaneel links en keuzelijst)</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+17"/>
         <source>Provide a destination path for the previews and derived data.</source>
         <translation>Geef een doelpad op voor de voorbeelden en afgeleide gegevens.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Select a destination path that can be written to.</source>
         <translation>Selecteer een doelpad waarnaar geschreven kan worden.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Select a destination path outside the source path.</source>
         <translation>Selecteer een doelpad buiten het bronpad.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Select at least one file type, or turn off all previews.</source>
         <translation>Selecteer ten minste één bestandstype, of schakel alle voorbeelden uit.</translation>
     </message>
@@ -7083,7 +7232,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Wizard</translation>
     </message>
     <message>
-        <location line="+49"/>
+        <location line="+36"/>
         <source>Catalog definition</source>
         <translation>Catalogusdefinitie</translation>
     </message>
@@ -7204,17 +7353,15 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Uit te sluiten pad of naam</translation>
     </message>
     <message>
-        <location line="+148"/>
         <source>Back</source>
-        <translation>Vorige</translation>
+        <translation type="vanished">Vorige</translation>
     </message>
     <message>
-        <location line="+7"/>
         <source>Next</source>
-        <translation>Volgende</translation>
+        <translation type="vanished">Volgende</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+158"/>
         <source>Create</source>
         <translation>Maken</translation>
     </message>
@@ -7231,7 +7378,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="vanished">Uit te sluiten pad</translation>
     </message>
     <message>
-        <location line="-148"/>
+        <location line="-145"/>
         <location line="+83"/>
         <source>Add</source>
         <translation>Toevoegen</translation>
@@ -7931,7 +8078,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Totale grootte</translation>
     </message>
     <message>
-        <location line="+346"/>
+        <location line="+353"/>
         <location line="+11"/>
         <source>Open folder</source>
         <translation>Map openen</translation>
@@ -7947,7 +8094,12 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Uitgebreide metadata tonen (JSON)</translation>
     </message>
     <message>
-        <location line="+54"/>
+        <location line="+16"/>
+        <source>Show analysis</source>
+        <translation>Analyse tonen</translation>
+    </message>
+    <message>
+        <location line="+49"/>
         <source>Copy folder path</source>
         <translation>Mappad kopiëren</translation>
     </message>
@@ -8005,14 +8157,14 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="vanished">Controlesom berekenen (SHA-256)</translation>
     </message>
     <message>
-        <location line="-570"/>
-        <location line="+599"/>
+        <location line="-588"/>
+        <location line="+617"/>
         <location line="+40"/>
         <source>File not found or could not be read</source>
         <translation>Bestand niet gevonden of kon niet worden gelezen</translation>
     </message>
     <message>
-        <location line="-628"/>
+        <location line="-646"/>
         <source>Folder not found.</source>
         <translation>Map niet gevonden.</translation>
     </message>
@@ -8021,7 +8173,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="vanished">Controlesom verifiëren (SHA-256)</translation>
     </message>
     <message>
-        <location line="+611"/>
+        <location line="+629"/>
         <source>Error: </source>
         <translation>Fout: </translation>
     </message>
@@ -8176,14 +8328,14 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
 <context>
     <name>PageSearchForm</name>
     <message>
-        <location filename="../qt_quick/PageSearchForm.qml" line="+367"/>
-        <location line="+590"/>
+        <location filename="../qt_quick/PageSearchForm.qml" line="+385"/>
+        <location line="+619"/>
         <location line="+18"/>
         <source>Select a date</source>
         <translation>Selecteer een datum</translation>
     </message>
     <message>
-        <location line="-603"/>
+        <location line="-632"/>
         <source>Now</source>
         <translation>Nu</translation>
     </message>
@@ -8244,12 +8396,12 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
     </message>
     <message>
         <location line="+6"/>
-        <location line="+540"/>
+        <location line="+569"/>
         <source>Clear</source>
         <translation>Wissen</translation>
     </message>
     <message>
-        <location line="-534"/>
+        <location line="-563"/>
         <source>Cancel</source>
         <translation>Annuleren</translation>
     </message>
@@ -8279,12 +8431,13 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Selecteer het pad</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+46"/>
         <source>File name</source>
         <translation>Bestandsnaam</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="-18"/>
+        <location line="+40"/>
         <source>text</source>
         <translation>tekst</translation>
     </message>
@@ -8313,7 +8466,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-3997"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-4378"/>
         <source>Exact Phrase</source>
         <translation>Exacte zin</translation>
     </message>
@@ -8380,13 +8533,28 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Type</translation>
     </message>
     <message>
-        <location line="-239"/>
-        <location line="+251"/>
+        <location line="-268"/>
+        <location line="+280"/>
         <source>All</source>
         <translation>Alle</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-632"/>
+        <source>The local model is not reachable: %1</source>
+        <translation>Het lokale model is niet bereikbaar: %1</translation>
+    </message>
+    <message>
+        <location line="+432"/>
+        <source>By meaning</source>
+        <translation>Op betekenis</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Describe what you are looking for</source>
+        <translation>Beschrijf wat u zoekt</translation>
+    </message>
+    <message>
+        <location line="+186"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
@@ -8539,7 +8707,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
 <context>
     <name>PageSearchResultsForm</name>
     <message>
-        <location filename="../qt_quick/PageSearchResultsForm.qml" line="+252"/>
+        <location filename="../qt_quick/PageSearchResultsForm.qml" line="+362"/>
         <source>%1 duplicate(s) found</source>
         <translation>%1 duplica(a)t(en) gevonden</translation>
     </message>
@@ -8580,13 +8748,13 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
     </message>
     <message>
         <location line="+1"/>
-        <location line="+929"/>
+        <location line="+931"/>
         <location line="+56"/>
         <source>Verify Checksums</source>
         <translation>Controleersommen verifiëren</translation>
     </message>
     <message>
-        <location line="-431"/>
+        <location line="-432"/>
         <location line="+53"/>
         <source>Calculate Checksum</source>
         <translation>Controleersom berekenen</translation>
@@ -8597,7 +8765,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Controleersom verifiëren</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+71"/>
         <source>Checksum</source>
         <translation>Controlesom</translation>
     </message>
@@ -8613,14 +8781,14 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Metadata opnemen</translation>
     </message>
     <message>
-        <location line="-983"/>
-        <location line="+621"/>
-        <location line="+304"/>
+        <location line="-985"/>
+        <location line="+622"/>
+        <location line="+305"/>
         <source>Move to Trash</source>
         <translation>Naar prullenbak verplaatsen</translation>
     </message>
     <message>
-        <location line="-1073"/>
+        <location line="-1185"/>
         <location line="+11"/>
         <source>The device is not active. It may be disconnected, or its path may have changed.</source>
         <translation>Het apparaat is niet actief. Het is mogelijk losgekoppeld of het pad is gewijzigd.</translation>
@@ -8631,28 +8799,28 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Map niet gevonden.</translation>
     </message>
     <message>
-        <location line="+132"/>
+        <location line="+242"/>
         <source>Extract Metadata</source>
         <translation>Metadata extraheren</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+756"/>
+        <location line="+758"/>
         <source>Delete</source>
         <translation>Verwijderen</translation>
     </message>
     <message>
-        <location line="-706"/>
+        <location line="-708"/>
         <source>Run process on all results</source>
         <translation>Proces uitvoeren op alle resultaten</translation>
     </message>
     <message>
-        <location line="-174"/>
+        <location line="-284"/>
         <source>Exported to: %1</source>
         <translation>Geëxporteerd naar: %1</translation>
     </message>
     <message>
-        <location line="+184"/>
+        <location line="+294"/>
         <source>Export failed — no results or write error</source>
         <translation>Export mislukt — geen resultaten of schrijffout</translation>
     </message>
@@ -8667,17 +8835,53 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Export mislukt — geen resultaten of databasefout</translation>
     </message>
     <message>
-        <location line="+369"/>
+        <location line="+370"/>
         <source>(no selection)</source>
         <translation>(geen selectie)</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-529"/>
+        <location line="+535"/>
         <source>Open file</source>
         <translation>Bestand openen</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="-612"/>
+        <source>By meaning</source>
+        <translation>Op betekenis</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>No file matches this description.</source>
+        <translation>Geen enkel bestand komt overeen met deze beschrijving.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Caption and tags</source>
+        <translation>Bijschrift en tags</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Topic segments</source>
+        <translation>Onderwerpsegmenten</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Transcript</source>
+        <translation>Transcriptie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Summary and excerpts</source>
+        <translation>Samenvatting en fragmenten</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Show analysis</source>
+        <translation>Analyse tonen</translation>
+    </message>
+    <message>
+        <location line="+536"/>
         <source>Open folder</source>
         <translation>Map openen</translation>
     </message>
@@ -8737,8 +8941,8 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="vanished">Controlesom berekenen (SHA-256)</translation>
     </message>
     <message>
-        <location line="-658"/>
-        <location line="+712"/>
+        <location line="-769"/>
+        <location line="+823"/>
         <location line="+47"/>
         <source>File not found or could not be read</source>
         <translation>Bestand niet gevonden of kon niet worden gelezen</translation>
@@ -8750,7 +8954,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
     </message>
     <message>
         <location line="+6"/>
-        <location line="+100"/>
+        <location line="+101"/>
         <source>Checksum copied to clipboard</source>
         <translation>Controlesom gekopieerd naar klembord</translation>
     </message>
@@ -8759,7 +8963,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="vanished">Controlesom verifiëren (SHA-256)</translation>
     </message>
     <message>
-        <location line="-79"/>
+        <location line="-80"/>
         <source>Error: </source>
         <translation>Fout: </translation>
     </message>
@@ -8803,7 +9007,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="vanished">Controlesom (SHA-256)</translation>
     </message>
     <message>
-        <location line="+37"/>
+        <location line="+38"/>
         <source>Checksum saved to database.</source>
         <translation>Controleersom opgeslagen in database.</translation>
     </message>
