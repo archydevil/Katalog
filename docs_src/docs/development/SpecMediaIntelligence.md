@@ -131,6 +131,16 @@ agent did not see the replies itself).
 | --- | ------------------------ |
 | D31 | **Resume after unplugging the drive** (owner's request, 2026-10-29: "se metto in pausa l'analisi ai dei contenuti, e stacco il disco, posso riprendere in un secondo momento dal punto in cui ho interrotto? Se no, inseriamo questa opzione"). A job whose source drive is disconnected, paused or not, waits for the drive and continues with the same file when it is back, instead of skipping the remaining files; Pause reads nothing from the source; the running job and the waiting list are kept in `mdi_data.db` across restarts and collection switches; a job paused when Katalog closed comes back paused; a job waiting for its drive lets a queued catalog with a reachable source run first. Follow-up, same day: the drive of the destination path is waited for like the source drive, and a pending job leaves the list only when its catalog no longer exists; checking the drives of queued catalogs on the UI thread is accepted, with the risk of network volumes (`MDI-F11`, `F12`, `F16`, `F91`–`F93`, `MDI-C15`, `C28`, `C29`). |
 
+D32 was decided by the fork owner on **2026-10-29** in the main session,
+answering an explicit question prompt after a real run on catalog 2 (71 `.doc`
+files without text), together with "correggi" for the two fixes recorded under
+*Fixes after D31*. Reported to the specifications agent by the main agent (the
+agent did not see the replies itself).
+
+| # | Decision (2026-10-29, fork owner) |
+| --- | ------------------------ |
+| D32 | **`textutil` on macOS** ("Per leggere i 71 vecchi documenti Word (.doc), Katalog può usare «textutil», il programma di macOS già presente sul Mac. Non va installato nulla, lavora offline e legge soltanto, senza modificare i file. Lo approvi?" → "Sì, usa textutil (Consigliato)"; "Solo su Mac. Su Linux resta catdoc, come oggi."). On macOS, the system program `/usr/bin/textutil` reads the text of Word 97–2004 `.doc` files when KFileMetaData returns none (its extractor needs `catdoc`, which Homebrew does not provide). It adds this program to the external tools of D4, on macOS only; nothing is installed, nothing is written, nothing leaves the machine. Linux keeps `catdoc` through KFileMetaData (`MDI-C8`, `MDI-F81`). |
+
 ---
 
 ## Scope at a glance
@@ -311,7 +321,7 @@ characterising information for applications and other files.
 
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
-| MDI-F35 | **Transcript:** the audio track is extracted with `ffmpeg` and transcribed locally with `whisper.cpp`. The transcript is stored as an ordered list of passages, each with start and end timecodes and text, plus the detected language. | [Implemented — Phase C] |
+| MDI-F35 | **Transcript:** the audio track is extracted with `ffmpeg` and transcribed locally with `whisper.cpp`. The transcript is stored as an ordered list of passages, each with start and end timecodes and text, plus the detected language. A file without an audio track (checked with `ffprobe` when it is available) is recorded as *skipped (no audio track)*: nothing is extracted, transcribed or sent (2026-10-29). | [Implemented — Phase C] |
 | MDI-F36 | **Topic segments:** the text model divides a transcript into consecutive segments. Each segment has a start and end timecode taken from transcript passage boundaries, a title, a summary and a list of topics. Segments cover the transcript without overlapping. | [Implemented — Phase C] |
 | MDI-F37 | **Topic clusters:** segments are grouped into clusters, each with a label, a description and its member segments; a segment belongs to at most one cluster. Clustering is per catalog: a cluster groups segments of files of one catalog only (D11). When clusters are recomputed is decided at the start of Phase C (`Q3b`). | [Implemented — Phase C] |
 | MDI-F38 | Wherever a segment or transcript passage is shown, its timecodes are shown as `h:mm:ss`. | [Implemented — Phase C] |
@@ -430,7 +440,7 @@ characterising information for applications and other files.
 | MDI-C5 | **Memory mode.** The in-memory collection database is never shared with the runner's thread. Derived data lives in `mdi_data.db` exactly as in File mode (`MDI-C4`), so no derived table is loaded into the in-memory database. The enrichment profile (`mdi_profile`) stays in the in-memory database, is persisted to `mdi_profile.csv` in the collection folder and is loaded when the collection is opened, before any query on it (Memory Mode Caveat in `CLAUDE.md`). | [Implemented — Phase A] |
 | MDI-C6 | **Hosted mode.** The runner opens its own connection with the collection's already validated host settings. Derived-file locations are stored relative to the destination path, which is recorded per catalog, so a second machine can point to its own copy. Whether several machines share one destination path or use one each is `Q11` (deferred). | [Planned] |
 | MDI-C7 | External tools are started with `QProcess` using a program path and an argument list — never through a shell or a command string. Standard output and error are captured; the process is terminated on Stop, on time limit and on application exit. Tool paths are application settings (machine-specific); per-collection choices (profile, provider enablement) are stored with the collection. New settings keys only add to `katalog3_prerelease_settings.ini`; existing keys keep their meaning, so a beta settings file stays readable. | [Implemented — Phase A] |
-| MDI-C8 | No new linked library and no new Qt or KF6 module: `ffmpeg`, `whisper.cpp` and poppler are external programs; HTTP uses `Qt6::Network`; no vector-index library, no keychain library, no Qt Multimedia. Adding any of these needs explicit user approval and an amendment here first. **Exception (D25, 2026-10-29):** KArchive (`KF6::Archive`), optional, under `MDI-C25`; this exception covers that library only. | [Implemented — Phase A] |
+| MDI-C8 | No new linked library and no new Qt or KF6 module: `ffmpeg`, `whisper.cpp` and poppler are external programs; HTTP uses `Qt6::Network`; no vector-index library, no keychain library, no Qt Multimedia. Adding any of these needs explicit user approval and an amendment here first. **Exception (D25, 2026-10-29):** KArchive (`KF6::Archive`), optional, under `MDI-C25`; this exception covers that library only. **Addition (D32, 2026-10-29):** on macOS only, the system program `/usr/bin/textutil` (`-convert txt -stdout`) is an approved external program, for the text of `.doc` files when KFileMetaData returns none; it is started as `MDI-C7` requires, under the time limit of `MDI-F22`, is not detected or configurable (`MDI-F20`), and is a platform-specific program, not a platform-specific API (`MDI-C19`). | [Implemented — Phase A] |
 | MDI-C9 | Embeddings are stored in the database with the model name, model version and dimension. Similarity (cosine) is computed in `core/` by scanning stored vectors in batches; the scan is stoppable between batches and reports progress. A performance target is `Q14`, decided in Phase D. | [Planned — part implemented in Phase D] |
 | MDI-C10 | The runner MUST NOT write, modify, rename or delete anything on the cataloged source. It reads source files only, and only while their device is connected. All derived files go under the destination path, which is validated as outside the source (`MDI-F6`). | [Implemented — Phase A] |
 | MDI-C11 | Katalog MUST NOT send any content, query or metadata off the machine except to a provider enabled and confirmed under `MDI-F23`/`MDI-F24`/`MDI-F50`. With default settings the only network destination is `localhost`. No telemetry is added. | [Implemented — Phase A] |
@@ -880,6 +890,27 @@ increment 2 rows for `MDI-F11`, `F12` and `F16`.
 | `MDI-C28` | All. The list is written when a job is queued, starts, is paused or resumed, ends, is stopped, steps aside, or leaves the list (`MDI-F12`); quitting and switching collection write nothing. | — |
 | `MDI-C29` | All. The runner's check is on the runner's thread, every 2 s while waiting; Pause and Stop wake it. The waiting catalogs' source paths are checked on the UI thread by `AppManager::mdiSourceReachable` (a device load and a directory listing per waiting job), as amended. | — |
 
+### Fixes after D31 — reported 2026-10-29
+
+From the owner's real run on catalog 2; the owner asked for both ("correggi").
+Checked by the specifications agent against the working-tree diff of
+`core/mdienrichmentjob.cpp`.
+
+- **`.doc` text on macOS (D32, `MDI-F81`).** 71 `.doc` files gave "no text
+  extracted (application/msword)": KFileMetaData's Office extractor needs
+  `catdoc`, absent on macOS. `MdiEnrichmentJob::extractText()` now runs
+  `/usr/bin/textutil -convert txt -stdout <file>` through `runTool` (argument
+  list, time limit, Stop) for a `.doc` when KFileMetaData returns no text, on
+  macOS only (`Q_OS_MACOS`); the datum's tool is `textutil`. Other platforms are
+  unchanged.
+- **Video without an audio track (`MDI-F35`).** A `.m2v` elementary stream made
+  `ffmpeg` fail ("Error opening output files: Invalid argument") and the
+  transcript was recorded *failed*. `makeTranscript()` now asks `ffprobe`
+  (`-select_streams a -show_entries stream=index`) first; no audio stream gives
+  *skipped*, reason "no audio track", with no AI call and nothing written. Without
+  `ffprobe`, or when `ffprobe` itself fails, the previous path runs. Outcome
+  classification only.
+
 ### Known gaps
 
 - Settings UI for tool paths and models (`MDI-F20`, `MDI-F23`).
@@ -907,7 +938,16 @@ increment 2 rows for `MDI-F11`, `F12` and `F16`.
   Office/OpenDocument files with KFileMetaData, and reads plain-text formats
   (`txt`, `md`, `srt`, `vtt`, `csv`, `log`, `rtf`, `html`). Those formats are
   `MDI-F42` (`[Backlog]`, "the tool for Office formats needs its own
-  approval"). Keep and promote `MDI-F42`, or remove?
+  approval"). Keep and promote `MDI-F42`, or remove? Since D32, `textutil`
+  also feeds `.doc` text to the summary on macOS: D32 approves the program,
+  not summaries of Office formats, so this finding stays open.
+- **Skipped analyses and `MDI-F13`.** Only a *completed* datum counts as
+  current, so a file whose analysis was *skipped* is processed again by every
+  run: "no audio track", "no text", a binary file for the snippet, as well as
+  "tool missing". `MDI-F13` says a second run with no file change processes zero
+  files. Count a skip that depends only on the file (no audio track, no text,
+  binary) as current until the file changes, keeping "tool missing" retried; or
+  amend `MDI-F13` to say skipped analyses are retried every run?
 - **Summaries of recordings.** Audio and video files get a summary from a
   transcript file found next to the recording (`.txt`, `.pdf`, `.docx`, `.srt`,
   `.vtt`) or from the whisper transcript. No row covers summaries of
@@ -1041,7 +1081,7 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F29 / F31** — Removed (D23); replaced by `MDI-F78` and `MDI-F79`.
 - **MDI-F30, F32, F33** — Check each derived file's format, size limit and range against the row.
 - **MDI-F34 / C19** — Inspect the destination path: names are identifiers, not source names; nothing was written on the source.
-- **MDI-F35 / F36 / F38** — Transcribe a recording: passages carry timecodes; segments have title, summary, topics, contiguous `h:mm:ss` ranges.
+- **MDI-F35 / F36 / F38** — Transcribe a recording: passages carry timecodes; segments have title, summary, topics, contiguous `h:mm:ss` ranges. Transcribe a video without an audio track (a `.m2v` stream): the transcript is *skipped (no audio track)*, not failed, and no model is called.
 - **MDI-F37** — Cluster segments: each has a label, description, members; no segment in two clusters; no cluster holds segments of two catalogs.
 - **MDI-F5 (language)** — Caption and summarise a French source with the UI in English: output is French; with the UI-language option: output is English; excerpts stay verbatim.
 - **MDI-F39** — Caption an image: caption is at most two sentences; user tags are unchanged; the request carried the thumbnail only.
@@ -1078,7 +1118,7 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F78 / C24** — Enrich a rotated JPEG: a WebP thumbnail, 256 px longest side, correctly oriented; a format Qt cannot read goes through `ffmpeg`; re-running replaces the file only after the new datum is saved.
 - **MDI-F79** — Enrich a video with 4 frames: one sheet, 4 frames 144 px high side by side; the datum lists each frame's timecode, position and width.
 - **MDI-F80** — Open the technical data of a video and an audio file: codec, resolution, frame rate, duration, bit rate and audio match `ffprobe`.
-- **MDI-F81** — A `.docx`, a `.pdf` and a `.md` get an 800-character snippet even with *Text* off in the profile; a binary file renamed `.txt` gets none.
+- **MDI-F81** — A `.docx`, a `.pdf` and a `.md` get an 800-character snippet even with *Text* off in the profile; a binary file renamed `.txt` gets none. On macOS without `catdoc`, a Word 97–2004 `.doc` gets a snippet with tool `textutil`, and the file is unchanged; on Linux, `.doc` still goes through `catdoc`.
 - **MDI-F82 / C25** — List a `zip`, a `.tar.zst` and a `7z`: entries shown, total counted beyond 20,000; a RAR is not supported; a macOS pax tar fails with its reason; a build without KArchive skips the analysis with its reason.
 - **MDI-F84 / C26** — Create a catalog without a profile: quick hashes are computed for all its files; the catalog's `file` table and checksum option are unchanged; the hash of a sample file matches an independent implementation. On a catalog with topic segments and no clusters, a quick-hash pass asks no model and leaves the clusters to the next enrichment run.
 - **MDI-F85** — Duplicates search on checksum: groups by quick hash; with *Verify with full checksum* only true SHA-256 duplicates remain; the option is absent from the saved search history.
