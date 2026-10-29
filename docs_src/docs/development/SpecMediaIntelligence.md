@@ -1180,6 +1180,21 @@ Checked against the ratified rows by the specifications agent:
 | Q13 | Schema number collision with a future upstream 3.1. | D5 — no collision: the fork never bumps the core schema; `mdi_` tables carry their own version. |
 | Q15 | Distribution of external tools and the whisper model. | D9 — user-installed; bundling and licence review deferred. |
 
+### Decided 2026-10-29 — D33 (kept for traceability)
+
+Answers relayed by the main agent (see D33).
+
+| # | Question | Decision |
+| --- | ---------- | ---------- |
+| Q19 | Where the context editor lives. | A page *Context* in the *Tools* submenu; the six main entries unchanged ("Pagina nel menu Strumenti (Consigliato)") — `MDI-F107`, `MDI-F89`, `MDI-C18`. |
+| Q20 | Catalog additions. | Notes only — `MDI-F95`. |
+| Q21 | What re-interpretation redoes. | The classification only ("Solo la classificazione (Consigliato)") — `MDI-F103`. |
+| Q22 | First classification of an already enriched catalog. | New or changed files only; the others through re-interpretation ("Solo file nuovi; gli altri con Rielabora (Consigliato)") — `MDI-F100`. |
+| Q23 | Output language. | The context's language applies to all AI-generated text; without one, D12 applies — `MDI-F98`. |
+| Q24 | Re-interpretation interrupted by quitting. | Resumed after the restart, like an enrichment job — `MDI-F103`, `MDI-C36`. |
+| Q27 | Archive files and spreadsheets as knowledge-base sources. | PDF, Word, Excel/CSV and text yes; zip archives no — `MDI-F104`. |
+| Q28 | Glossary terms as `whisper.cpp`'s initial prompt. | A separate option, off by default — `MDI-F98`. |
+
 ---
 
 ## Manual test charter
