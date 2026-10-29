@@ -146,11 +146,38 @@ ColumnLayout {
         }
     }
 
+    // A part of the options: a title and what it is for. Lighter than the
+    // card titles of the design system, because the options sit inside a card
+    // on the Create page and inside the enrichment dialog.
+    component SectionHeader: ColumnLayout {
+        id: sectionHeader
+        property string title
+        property string description
+        Layout.fillWidth: true
+        spacing: 2
+        Controls.Label {
+            Layout.fillWidth: true
+            text: sectionHeader.title
+            wrapMode: Text.WordWrap
+            color: KTheme.text
+            font.pixelSize: KTheme.body
+            font.weight: Font.DemiBold
+            Accessible.role: Accessible.Heading
+        }
+        Controls.Label {
+            Layout.fillWidth: true
+            visible: sectionHeader.description !== ""
+            text: sectionHeader.description
+            wrapMode: Text.WordWrap
+            color: KTheme.text2
+            font.pixelSize: KTheme.note
+        }
+    }
+
     // ── Destination path ──────────────────────────────────────────────────────
-    KSectionHeader {
-        level: 3
+    SectionHeader {
         title: qsTr("Destination path")
-        description: qsTr("Previews and other derived data are written here, outside the drive being catalogued.")
+        description: qsTr("Previews and other derived data are written here, outside the catalogued drive.")
     }
     RowLayout {
         Layout.fillWidth: true
@@ -171,9 +198,8 @@ ColumnLayout {
     }
 
     // ── File types ────────────────────────────────────────────────────────────
-    KSectionHeader {
+    SectionHeader {
         Layout.topMargin: 10
-        level: 3
         title: qsTr("File types")
         description: qsTr("The kinds of files that get previews and AI analysis.")
     }
@@ -249,9 +275,8 @@ ColumnLayout {
     }
 
     // ── Previews ──────────────────────────────────────────────────────────────
-    KSectionHeader {
+    SectionHeader {
         Layout.topMargin: 10
-        level: 3
         title: qsTr("Previews")
         description: qsTr("Small copies to look at the files, even when the drive is not connected.")
     }
@@ -401,8 +426,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.topMargin: 10
         spacing: 12
-        KSectionHeader {
-            level: 3
+        SectionHeader {
             title: qsTr("AI analysis")
             description: qsTr("Descriptions, transcripts and classification, made by the local model.")
         }

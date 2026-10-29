@@ -4,20 +4,24 @@ import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import Qt.labs.platform
 
+// Search the drives (fork, D34 phase R3, SpecMediaIntelligence.md MDI-F117):
+// a search card with the two existing ways to search — by name and by meaning —
+// as described choices and the page's one primary Search button; where to
+// search; then the other criteria grouped in described cards that open their
+// fields when switched on. Presentation only (MDI-C40): every criterion, its
+// validation, the search history and its restore are unchanged.
 ColumnLayout {
     id: pageSearchForm
-    spacing: 0
+    spacing: KTheme.gap
 
-    // Emitted when the user requests a search from within the form (e.g. Enter in the
-    // text field). Main.qml runs the same action as the Search button (run + show results).
+    // Emitted when the user requests a search from within the form (Enter in a
+    // text field, or the Search button). Main.qml runs the same action as the
+    // page's Search action (run + show results).
     signal searchRequested()
 
-    // Width of the left label column inside sub-sections
+    // Width of the left label column inside the cards
     readonly property int labelW: Kirigami.Units.gridUnit * 5
-    // Left margin of every section, title row and body alike, so a checkbox that
-    // opens a body row sits under the section title checkbox (PGL-F10, PGL-C7)
-    readonly property int sectionMargin: Kirigami.Units.smallSpacing
-    // One vertical gap between rows of a section and between the wrapped lines of a
+    // One vertical gap between rows of a card and between the wrapped lines of a
     // row; a Flow has a single spacing, so it is also the gap between its groups (PGL-F13)
     readonly property int rowSpacing: Kirigami.Units.mediumSpacing
 
@@ -41,12 +45,126 @@ ColumnLayout {
         }
         return item.height
     }
-    // Plain left-column labels start where a checkbox's text starts, so their text
-    // lines up with the checkbox text above them (PGL-F10, PGL-C9)
-    readonly property real labelInset: search_checkBox_FileNameCriteria.contentItem
-                                       ? search_checkBox_FileNameCriteria.contentItem.x + search_checkBox_FileNameCriteria.contentItem.leftPadding : 0
+    // Plain left-column labels start at the card's content edge: the section
+    // titles they used to line up with are now card headers (D34)
+    readonly property real labelInset: 0
 
     property var tagNames: []
+
+    // A way to search (by name, by meaning): a described choice that switches its
+    // criterion on or off. The check mark and the border say it is on, not the
+    // colour alone (MDI-F114).
+    component WayChoice: Controls.CheckBox {
+        id: way
+        property string hint: ""
+        property string iconName: ""
+
+        hoverEnabled: true
+        padding: 10
+        leftPadding: 14
+        rightPadding: 14
+        spacing: 10
+        implicitWidth: implicitContentWidth + leftPadding + rightPadding
+        implicitHeight: Math.max(52, implicitContentHeight + topPadding + bottomPadding)
+        Accessible.description: hint
+
+        indicator: Item { visible: false; implicitWidth: 0; implicitHeight: 0 }
+        background: Rectangle {
+            radius: KTheme.radiusControl
+            color: way.checked ? KTheme.accentSoft : (way.hovered ? KTheme.hover : KTheme.surface)
+            border.width: way.checked || way.visualFocus ? 2 : 1
+            border.color: way.checked || way.visualFocus ? KTheme.accent : KTheme.line
+            opacity: way.enabled ? (way.down ? 0.85 : 1) : 0.5
+        }
+        contentItem: RowLayout {
+            spacing: way.spacing
+            Kirigami.Icon {
+                Layout.alignment: Qt.AlignTop
+                implicitWidth: 20
+                implicitHeight: 20
+                source: way.iconName
+                isMask: true
+                color: way.checked ? KTheme.accentText : KTheme.text2
+            }
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: way.text
+                    wrapMode: Text.WordWrap
+                    font.weight: Font.DemiBold
+                    font.pixelSize: KTheme.body
+                    color: way.checked ? KTheme.accentText : KTheme.text
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    visible: way.hint !== ""
+                    text: way.hint
+                    wrapMode: Text.WordWrap
+                    font.pixelSize: KTheme.note
+                    color: way.checked ? KTheme.accentText : KTheme.text2
+                }
+            }
+            Kirigami.Icon {
+                Layout.alignment: Qt.AlignTop
+                implicitWidth: 16
+                implicitHeight: 16
+                source: "checkmark"
+                isMask: true
+                color: KTheme.accentText
+                opacity: way.checked ? 1 : 0
+            }
+        }
+    }
+
+    // The header of a criteria card: its title and the line that says what it is
+    // for, with the switch that turns the criterion on. The whole header is the
+    // switch. Turned on, the card shows its fields, as the section titles did.
+    component CriteriaSwitch: Controls.CheckBox {
+        id: toggle
+        property string description: ""
+
+        Layout.fillWidth: true
+        hoverEnabled: true
+        padding: 0
+        spacing: 12
+        leftPadding: mirrored ? indicator.width + spacing : 0
+        rightPadding: mirrored ? 0 : indicator.width + spacing
+        implicitWidth: implicitContentWidth + leftPadding + rightPadding
+        implicitHeight: Math.max(40, implicitContentHeight)
+        Accessible.description: description
+
+        indicator: Rectangle {
+            implicitWidth: 40
+            implicitHeight: 24
+            x: toggle.mirrored ? 0 : toggle.width - width
+            y: (toggle.height - height) / 2
+            radius: height / 2
+            color: toggle.checked ? KTheme.accent : KTheme.neutralSoft
+            border.width: toggle.visualFocus ? 2 : 1
+            border.color: toggle.checked || toggle.visualFocus ? KTheme.accent : KTheme.line
+            opacity: toggle.enabled ? 1 : 0.5
+            Rectangle {
+                width: 18
+                height: 18
+                radius: 9
+                y: 3
+                x: toggle.checked ? parent.width - width - 3 : 3
+                color: toggle.checked ? KTheme.onAccent : KTheme.surface
+                border.width: toggle.checked ? 0 : 1
+                border.color: KTheme.line
+                Behavior on x { NumberAnimation { duration: Kirigami.Units.shortDuration } }
+            }
+        }
+        contentItem: KSectionHeader {
+            level: 3
+            title: toggle.text
+            description: toggle.description
+            opacity: toggle.enabled ? 1 : 0.5
+        }
+        background: Item {}
+    }
 
     Connections {
         target: appManager1
@@ -388,7 +506,8 @@ ColumnLayout {
 
         contentItem: ColumnLayout {
             RowLayout {
-                Controls.Button {
+                spacing: 8
+                KButton {
                     text: qsTr("Now")
                     onClicked: {
                         var today = new Date();
@@ -406,7 +525,7 @@ ColumnLayout {
                         dateDialog.close()
                     }
                 }
-                Controls.Button {
+                KButton {
                     text: qsTr("1 day ago")
                     onClicked: {
                         var today = new Date();
@@ -420,7 +539,7 @@ ColumnLayout {
                         dateDialog.close()
                     }
                 }
-                Controls.Button {
+                KButton {
                     text: qsTr("1 week ago")
                     onClicked: {
                         var today = new Date();
@@ -434,7 +553,7 @@ ColumnLayout {
                         dateDialog.close()
                     }
                 }
-                Controls.Button {
+                KButton {
                     text: qsTr("1 month ago")
                     onClicked: {
                         var today = new Date();
@@ -448,7 +567,7 @@ ColumnLayout {
                         dateDialog.close()
                     }
                 }
-                Controls.Button {
+                KButton {
                     text: qsTr("1 year ago")
                     onClicked: {
                         var today = new Date();
@@ -462,7 +581,7 @@ ColumnLayout {
                         dateDialog.close()
                     }
                 }
-                Controls.Button {
+                KButton {
                     text: qsTr("Reset")
                     onClicked: {
                         if (dateDialog.selectedDateField === "Min")
@@ -624,225 +743,283 @@ ColumnLayout {
         }
     }
 
-    // ── Section 0: Search scope ───────────────────────────────────────────────
     FolderDialog {
         id: connectedDirectoryDialog
         onAccepted: search_lineEdit_ConnectedDirectory.text = folder.toString().replace("file://", "")
     }
 
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: Kirigami.Units.smallSpacing
-
-        Controls.RadioButton {
-            id: search_radioButton_SearchInCatalogs
-            text: qsTr("Catalogs")
-            checked: true
-            onCheckedChanged: {
-                if (checked) search_lineEdit_ConnectedDirectory.text = ""
-            }
-        }
-        Controls.RadioButton {
-            id: search_radioButton_SearchInConnected
-            text: qsTr("Connected drive")
-        }
+    // ── Page header ──────────────────────────────────────────────────────────
+    KSectionHeader {
+        level: 1
+        title: qsTr("Search the drives")
+        description: qsTr("Katalog searches its catalogs, so the drives can stay disconnected. By meaning, it also searches the descriptions and transcripts made by the AI.")
     }
 
-    RowLayout {
-        id: search_RowLayout_ConnectedDirectory
+    // ── What to look for: the ways to search (MDI-F117) ──────────────────────
+    // By name and by meaning are the two existing criteria, shown as described
+    // choices. Both can be on together: the search then fills both lists of the
+    // Results page, as before (MDI-F47).
+    KCard {
         Layout.fillWidth: true
-        Layout.leftMargin: Kirigami.Units.smallSpacing
-        Layout.topMargin: Kirigami.Units.smallSpacing * 2
-        visible: search_radioButton_SearchInConnected.checked
+        spacing: KTheme.gap
 
-        Controls.TextField {
-            id: search_lineEdit_ConnectedDirectory
+        KSectionHeader {
+            level: 3
+            title: qsTr("What are you looking for")
+            description: qsTr("By name, by meaning, or both at once.")
+        }
+
+        Flow {
+            id: search_flow_Ways
             Layout.fillWidth: true
-            placeholderText: qsTr("Path to connected drive or folder")
-        }
-        IconButton {
-            icon.name: "folder-open"
-            text: qsTr("Select the path")
-            onClicked: connectedDirectoryDialog.open()
-        }
-    }
+            spacing: 8
 
-    Controls.Label { text: ""}
-
-
-    // ── Section 0: By meaning (fork, SpecMediaIntelligence.md MDI-F47) ─────────
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.topMargin: Kirigami.Units.smallSpacing
-        spacing: Kirigami.Units.largeSpacing
-        Controls.CheckBox {
-            id: search_checkBox_MeaningCriteria
-            checked: false
-            text: qsTr("By meaning")
-            Binding { target: search_checkBox_MeaningCriteria.contentItem; property: "color"; value: applicationWindow().titleColor }
-        }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-    }
-    RowLayout {
-        visible: search_checkBox_MeaningCriteria.checked
-        Layout.topMargin: Kirigami.Units.smallSpacing
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.fillWidth: true
-        Layout.maximumWidth: pageSearchForm.width - pageSearchForm.sectionMargin
-        Controls.Label { text: qsTr("text"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset }
-        Controls.TextField {
-            id: search_TextField_Meaning
-            Layout.fillWidth: true
-            placeholderText: qsTr("Describe what you are looking for")
-            onAccepted: pageSearchForm.searchRequested()
-        }
-    }
-
-    // ── Section 1: File name ──────────────────────────────────────────────────
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.topMargin: Kirigami.Units.smallSpacing
-        spacing: Kirigami.Units.largeSpacing
-        Controls.CheckBox {
-            id: search_checkBox_FileNameCriteria
-            checked: true
-            text: qsTr("File name")
-            // Section title, styled like the section headings on the other pages
-            // (link colour, line after the text); the checkbox still switches the section on.
-            Binding { target: search_checkBox_FileNameCriteria.contentItem; property: "color"; value: applicationWindow().titleColor }
-            onCheckedChanged: search_FormLayout_FileNameCriteria.visible = checked
-        }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-    }
-    ColumnLayout {
-        id: search_FormLayout_FileNameCriteria
-        Layout.topMargin: Kirigami.Units.smallSpacing   // gap under the section title
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.fillWidth: true
-        spacing: pageSearchForm.rowSpacing
-
-        RowLayout {
-            Layout.fillWidth: true
-            // Capped at the visible width: the "in" combo can be wider than a
-            // narrow column, and the section stretches its rows to match it,
-            // which pushed the Paste and Clean buttons past the edge.
-            Layout.maximumWidth: pageSearchForm.width - search_FormLayout_FileNameCriteria.Layout.leftMargin
-            // Centred on the first term row, not on the whole list.
-            Controls.Label { text: qsTr("text"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
-                             Layout.topMargin: Math.max(0, (search_TextField_FileNameText.firstRowHeight - implicitHeight) / 2) }
-            SearchTermList {
-                id: search_TextField_FileNameText
-                Layout.fillWidth: true
-                // Same affordance as the exclude list: clearing is per-row, through
-                // the icon inside the field. The list-level Clear button this field
-                // used to carry predates the rows — it was the only way to empty a
-                // field that stood in for several terms, and rows replaced it.
-                showInlineClear: true
-                onAccepted: pageSearchForm.searchRequested()
+            WayChoice {
+                id: search_checkBox_FileNameCriteria
+                width: Math.min(implicitWidth, search_flow_Ways.width)
+                checked: true
+                text: qsTr("By name")
+                hint: qsTr("In the names of files and folders")
+                iconName: "edit-rename"
+                onCheckedChanged: search_FormLayout_FileNameCriteria.visible = checked
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignTop
-                spacing: Kirigami.Units.smallSpacing
-                IconButton {
-                    id: search_Button_PasteClipboard
-                    text: qsTr("Paste the text from the clipboard")
-                    icon.name: "edit-paste"
-                    onClicked: search_TextField_FileNameText.pasteReplaceAll()
-                }
-                IconButton {
-                    id: search_Button_CleanText
-                    text: qsTr("Clean the search Text from characters such as _ - . ,")
-                    icon.name: "edit-clear-history"
-                    onClicked: search_TextField_FileNameText.cleanAll()
-                }
-            }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            Controls.Label { text: qsTr("with"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap }
-            ComboBoxFitted {
-                id: search_ComboBox_TextCriteriaWith
-                textRole: "text"
-                valueRole: "value"
-                model: [
-                    {text: qsTr("All Words"),     value: "AllWords"},
-                    {text: qsTr("Exact Phrase"),  value: "ExactPhrase"},
-                    {text: qsTr("Begins With"),   value: "BeginsWith"},
-                    {text: qsTr("Any Word"),      value: "AnyWord"},
-                    {text: qsTr("Regex"),         value: "Regex"}
-                ]
-            }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            Controls.Label { text: qsTr("in"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap }
-            ComboBoxFitted {
-                id: search_ComboBox_TextCriteriaIn
-                textRole: "text"
-                valueRole: "value"
-                // A binding, not an assignment from the "with" combo's handler: an
-                // assigned array keeps the words of the language it was built in,
-                // so a language switch left this list untranslated. "Begins With"
-                // matches file names only.
-                model: search_ComboBox_TextCriteriaWith.currentIndex === 2
-                       ? [ {text: qsTr("File names only"),            value: "FileNamesOnly"} ]
-                       : [ {text: qsTr("File names only"),            value: "FileNamesOnly"},
-                           {text: qsTr("File names or Folder paths"), value: "FilesAndFolders"},
-                           {text: qsTr("Folder path only"),           value: "FolderPathOnly"} ]
-            }
-        }
-        RowLayout {
-            Controls.Label { text: ""; Layout.preferredWidth: pageSearchForm.labelW }
-            Controls.CheckBox {
-                id: search_CheckBox_FileNameCaseSensitive
+            WayChoice {
+                id: search_checkBox_MeaningCriteria
+                width: Math.min(implicitWidth, search_flow_Ways.width)
                 checked: false
-                text: qsTr("case sensitive")
+                text: qsTr("By meaning")
+                hint: qsTr("With other words too, in the descriptions, summaries and transcripts made by the AI")
+                iconName: "tools-wizard"
             }
         }
-        RowLayout {
+
+        // By name: the text criteria (SpecSearchList.md)
+        ColumnLayout {
+            id: search_FormLayout_FileNameCriteria
             Layout.fillWidth: true
-            Layout.maximumWidth: pageSearchForm.width - search_FormLayout_FileNameCriteria.Layout.leftMargin
-            Controls.Label { text: qsTr("exclude"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
-                             Layout.topMargin: Math.max(0, (search_TextField_FileNameExclude.firstRowHeight - implicitHeight) / 2) }
-            SearchTermList {
-                id: search_TextField_FileNameExclude
-                Layout.fillWidth: true
-                showInlineClear: true
-                onAccepted: pageSearchForm.searchRequested()
+            spacing: pageSearchForm.rowSpacing
+
+            // Says which field is which when both ways are on
+            Controls.Label {
+                visible: search_checkBox_MeaningCriteria.checked
+                text: qsTr("By name")
+                color: KTheme.text3
+                font.pixelSize: KTheme.note
+                font.weight: Font.DemiBold
             }
             RowLayout {
-                Layout.alignment: Qt.AlignTop
-                spacing: Kirigami.Units.smallSpacing
-                IconButton {
-                    id: search_Button_ExcludePasteClipboard
-                    text: qsTr("Paste the text from the clipboard")
-                    icon.name: "edit-paste"
-                    onClicked: search_TextField_FileNameExclude.pasteReplaceAll()
+                Layout.fillWidth: true
+                // Capped at the card's width: the "in" combo can be wider than a
+                // narrow column, and the rows would stretch to match it, which
+                // pushed the Paste and Clean buttons past the edge.
+                Layout.maximumWidth: search_FormLayout_FileNameCriteria.width
+                // Centred on the first term row, not on the whole list.
+                Controls.Label { text: qsTr("text"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
+                                 Layout.topMargin: Math.max(0, (search_TextField_FileNameText.firstRowHeight - implicitHeight) / 2) }
+                SearchTermList {
+                    id: search_TextField_FileNameText
+                    Layout.fillWidth: true
+                    // Same affordance as the exclude list: clearing is per-row, through
+                    // the icon inside the field.
+                    showInlineClear: true
+                    onAccepted: pageSearchForm.searchRequested()
                 }
-                IconButton {
-                    id: search_Button_ExcludeCleanText
-                    text: qsTr("Clean the search Text from characters such as _ - . ,")
-                    icon.name: "edit-clear-history"
-                    onClicked: search_TextField_FileNameExclude.cleanAll()
+                RowLayout {
+                    Layout.alignment: Qt.AlignTop
+                    spacing: Kirigami.Units.smallSpacing
+                    IconButton {
+                        id: search_Button_PasteClipboard
+                        text: qsTr("Paste the text from the clipboard")
+                        icon.name: "edit-paste"
+                        onClicked: search_TextField_FileNameText.pasteReplaceAll()
+                    }
+                    IconButton {
+                        id: search_Button_CleanText
+                        text: qsTr("Clean the search Text from characters such as _ - . ,")
+                        icon.name: "edit-clear-history"
+                        onClicked: search_TextField_FileNameText.cleanAll()
+                    }
                 }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.maximumWidth: search_FormLayout_FileNameCriteria.width
+                Controls.Label { text: qsTr("with"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap }
+                ComboBoxFitted {
+                    id: search_ComboBox_TextCriteriaWith
+                    textRole: "text"
+                    valueRole: "value"
+                    model: [
+                        {text: qsTr("All Words"),     value: "AllWords"},
+                        {text: qsTr("Exact Phrase"),  value: "ExactPhrase"},
+                        {text: qsTr("Begins With"),   value: "BeginsWith"},
+                        {text: qsTr("Any Word"),      value: "AnyWord"},
+                        {text: qsTr("Regex"),         value: "Regex"}
+                    ]
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.maximumWidth: search_FormLayout_FileNameCriteria.width
+                Controls.Label { text: qsTr("in"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap }
+                ComboBoxFitted {
+                    id: search_ComboBox_TextCriteriaIn
+                    textRole: "text"
+                    valueRole: "value"
+                    // A binding, not an assignment from the "with" combo's handler: an
+                    // assigned array keeps the words of the language it was built in,
+                    // so a language switch left this list untranslated. "Begins With"
+                    // matches file names only.
+                    model: search_ComboBox_TextCriteriaWith.currentIndex === 2
+                           ? [ {text: qsTr("File names only"),            value: "FileNamesOnly"} ]
+                           : [ {text: qsTr("File names only"),            value: "FileNamesOnly"},
+                               {text: qsTr("File names or Folder paths"), value: "FilesAndFolders"},
+                               {text: qsTr("Folder path only"),           value: "FolderPathOnly"} ]
+                }
+            }
+            RowLayout {
+                Controls.Label { text: ""; Layout.preferredWidth: pageSearchForm.labelW }
+                Controls.CheckBox {
+                    id: search_CheckBox_FileNameCaseSensitive
+                    checked: false
+                    text: qsTr("case sensitive")
+                }
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.maximumWidth: search_FormLayout_FileNameCriteria.width
+                Controls.Label { text: qsTr("exclude"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
+                                 Layout.topMargin: Math.max(0, (search_TextField_FileNameExclude.firstRowHeight - implicitHeight) / 2) }
+                SearchTermList {
+                    id: search_TextField_FileNameExclude
+                    Layout.fillWidth: true
+                    showInlineClear: true
+                    onAccepted: pageSearchForm.searchRequested()
+                }
+                RowLayout {
+                    Layout.alignment: Qt.AlignTop
+                    spacing: Kirigami.Units.smallSpacing
+                    IconButton {
+                        id: search_Button_ExcludePasteClipboard
+                        text: qsTr("Paste the text from the clipboard")
+                        icon.name: "edit-paste"
+                        onClicked: search_TextField_FileNameExclude.pasteReplaceAll()
+                    }
+                    IconButton {
+                        id: search_Button_ExcludeCleanText
+                        text: qsTr("Clean the search Text from characters such as _ - . ,")
+                        icon.name: "edit-clear-history"
+                        onClicked: search_TextField_FileNameExclude.cleanAll()
+                    }
+                }
+            }
+        }
+
+        // By meaning (fork, SpecMediaIntelligence.md MDI-F47)
+        ColumnLayout {
+            visible: search_checkBox_MeaningCriteria.checked
+            Layout.fillWidth: true
+            spacing: pageSearchForm.rowSpacing
+
+            Controls.Label {
+                visible: search_checkBox_FileNameCriteria.checked
+                text: qsTr("By meaning")
+                color: KTheme.text3
+                font.pixelSize: KTheme.note
+                font.weight: Font.DemiBold
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.Label { text: qsTr("text"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap }
+                Controls.TextField {
+                    id: search_TextField_Meaning
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("Describe what you are looking for")
+                    onAccepted: pageSearchForm.searchRequested()
+                }
+            }
+        }
+
+        // The one primary action of the page: the same as the page's Search
+        // action and the Enter key (Main.qml runSearch), enabled when it is.
+        RowLayout {
+            Layout.fillWidth: true
+            Item { Layout.fillWidth: true }
+            KButton {
+                id: search_Button_Search
+                variant: "primary"
+                icon.name: "edit-find"
+                text: qsTr("Search")
+                enabled: !appManager1.searchIsRunning
+                         && !appManager1.deviceUpdateIsRunning
+                         && !appManager1.catalogIsCreating
+                         && !appManager1.exploreLoadIsRunning   // OPQ-F20
+                onClicked: pageSearchForm.searchRequested()
             }
         }
     }
-    Controls.Label { text: ""}
 
-    // ── Section 2: File attributes ────────────────────────────────────────────
-    RowLayout {
+    // ── Where to search ──────────────────────────────────────────────────────
+    KCard {
         Layout.fillWidth: true
-        Layout.leftMargin: pageSearchForm.sectionMargin
+
+        KSectionHeader {
+            level: 3
+            title: qsTr("Where to search")
+            description: qsTr("In the catalogs of the drives chosen in My drives, or straight on a connected drive or folder.")
+        }
+        Flow {
+            Layout.fillWidth: true
+            spacing: Kirigami.Units.largeSpacing
+
+            Controls.RadioButton {
+                id: search_radioButton_SearchInCatalogs
+                text: qsTr("Catalogs")
+                checked: true
+                onCheckedChanged: {
+                    if (checked) search_lineEdit_ConnectedDirectory.text = ""
+                }
+            }
+            Controls.RadioButton {
+                id: search_radioButton_SearchInConnected
+                text: qsTr("Connected drive")
+            }
+        }
+        RowLayout {
+            id: search_RowLayout_ConnectedDirectory
+            Layout.fillWidth: true
+            visible: search_radioButton_SearchInConnected.checked
+
+            Controls.TextField {
+                id: search_lineEdit_ConnectedDirectory
+                Layout.fillWidth: true
+                placeholderText: qsTr("Path to connected drive or folder")
+            }
+            IconButton {
+                icon.name: "folder-open"
+                text: qsTr("Select the path")
+                onClicked: connectedDirectoryDialog.open()
+            }
+        }
+    }
+
+    // ── Filters ──────────────────────────────────────────────────────────────
+    // Each card opens its fields when switched on, as the section titles did.
+    KSectionHeader {
         Layout.topMargin: Kirigami.Units.smallSpacing
-        spacing: Kirigami.Units.largeSpacing
-        Controls.CheckBox {
+        title: qsTr("Filters")
+        description: qsTr("A filter counts only while it is on.")
+    }
+
+    // File attributes
+    KCard {
+        Layout.fillWidth: true
+
+        CriteriaSwitch {
             id: checkBoxFileAttributesCriteria
             checked: false
-            text: qsTr("File attributes")
-            Binding { target: checkBoxFileAttributesCriteria.contentItem; property: "color"; value: applicationWindow().titleColor }
+            text: qsTr("Type, size and date")
+            description: qsTr("Files of one type, within a size range or modified between two dates.")
             onCheckedChanged: {
                 fileAtrributeCriteria.visible = checked
                 // Convenience: enabling File attributes while Type is still the default
@@ -852,452 +1029,442 @@ ColumnLayout {
                     search_checkBox_Type.checked = true
             }
         }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-    }
-    ColumnLayout {
-        id: fileAtrributeCriteria
-        Layout.topMargin: Kirigami.Units.smallSpacing   // gap under the section title
-        visible: false
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.fillWidth: true
-        spacing: pageSearchForm.rowSpacing
-
-        RowLayout {
+        ColumnLayout {
+            id: fileAtrributeCriteria
+            visible: false
             Layout.fillWidth: true
-            Controls.CheckBox {
-                id: search_checkBox_Type
-                checked: false
-                text: qsTr("Type")
-                Layout.preferredWidth: pageSearchForm.labelW
-                onCheckedChanged: search_comboBox_FileType.enabled = checked
-            }
-            ComboBoxFitted {
-                id: search_comboBox_FileType
-                rowLeadingWidth: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing * 2  // row icon
-                enabled: false
-                textRole: "text"
-                valueRole: "value"
-                displayText: ""
-                model: [
-                    {text: qsTr("All"),   value: "All",   iconName: "folder"},
-                    {text: qsTr("Audio"), value: "Audio", iconName: "audio-x-mpeg"},
-                    {text: qsTr("Image"), value: "Image", iconName: "image-jpeg"},
-                    {text: qsTr("Text"),  value: "Text",  iconName: "view-list-text"},
-                    {text: qsTr("Video"), value: "Video", iconName: "video-mp4"},
-                    {text: qsTr("Other"), value: "Other", iconName: "document-open"},
-                    {text: qsTr("None"),  value: "None",  iconName: "application-x-zerosize"}
-                ]
-                delegate: Controls.ItemDelegate {
-                    width: ListView.view ? ListView.view.width : search_comboBox_FileType.width  // fills the list, which may be wider than the box
-                    text: modelData.text
-                    icon.name: modelData.iconName
-                    highlighted: search_comboBox_FileType.highlightedIndex === index
-                }
-                contentItem: RowLayout {
-                    function positionToRectangle(pos) { return Qt.rect(0, 0, 0, 0) }
-                    property int selectionStart: 0
-                    spacing: Kirigami.Units.smallSpacing
-                    Item { width: Kirigami.Units.smallSpacing }
-                    Kirigami.Icon {
-                        source: search_comboBox_FileType.currentIndex >= 0
-                                ? search_comboBox_FileType.model[search_comboBox_FileType.currentIndex].iconName : ""
-                        implicitWidth:  Kirigami.Units.iconSizes.small
-                        implicitHeight: Kirigami.Units.iconSizes.small
-                    }
-                    Controls.Label {
-                        text: search_comboBox_FileType.currentIndex >= 0
-                              ? search_comboBox_FileType.model[search_comboBox_FileType.currentIndex].text : ""
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
-            }
-        }
+            spacing: pageSearchForm.rowSpacing
 
-        RowLayout {
-            Layout.fillWidth: true
-            Controls.CheckBox {
-                id: search_checkBox_Size
-                checked: false
-                text: qsTr("Size")
-                Layout.preferredWidth: pageSearchForm.labelW
-                Layout.alignment: Qt.AlignTop
-                Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_Size) - implicitHeight) / 2)
-                onCheckedChanged: {
-                    search_spinBox_MinimumSize.enabled = checked
-                    search_comboBox_MinSizeUnit.enabled = checked
-                    search_spinBox_MaximumSize.enabled = checked
-                    search_comboBox_MaxSizeUnit.enabled = checked
-                }
-            }
-            Flow {
-                id: search_flow_Size
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: pageSearchForm.rowSpacing
-                RowLayout {
-                    width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-                    Controls.Label { text: ">" }
-                    Controls.SpinBox {
-                        id: search_spinBox_MinimumSize
-                        enabled: false
-                        editable: true
-                        from: 0; value: 0; to: 1000
-                        implicitWidth: 110
-                    }
-                    ComboBoxFitted {
-                        id: search_comboBox_MinSizeUnit
-                        enabled: false
-                        model: ["Bytes", "KiB", "MiB", "GiB", "TiB"]
-                    }
+                Controls.CheckBox {
+                    id: search_checkBox_Type
+                    checked: false
+                    text: qsTr("Type")
+                    Layout.preferredWidth: pageSearchForm.labelW
+                    onCheckedChanged: search_comboBox_FileType.enabled = checked
                 }
-                RowLayout {
-                    width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-                    Controls.Label { text: "<" }
-                    Controls.SpinBox {
-                        id: search_spinBox_MaximumSize
-                        enabled: false
-                        editable: true
-                        from: 0; value: 1000; to: 1000
-                        implicitWidth: 110
+                ComboBoxFitted {
+                    id: search_comboBox_FileType
+                    rowLeadingWidth: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing * 2  // row icon
+                    enabled: false
+                    textRole: "text"
+                    valueRole: "value"
+                    displayText: ""
+                    model: [
+                        {text: qsTr("All"),   value: "All",   iconName: "folder"},
+                        {text: qsTr("Audio"), value: "Audio", iconName: "audio-x-mpeg"},
+                        {text: qsTr("Image"), value: "Image", iconName: "image-jpeg"},
+                        {text: qsTr("Text"),  value: "Text",  iconName: "view-list-text"},
+                        {text: qsTr("Video"), value: "Video", iconName: "video-mp4"},
+                        {text: qsTr("Other"), value: "Other", iconName: "document-open"},
+                        {text: qsTr("None"),  value: "None",  iconName: "application-x-zerosize"}
+                    ]
+                    delegate: Controls.ItemDelegate {
+                        width: ListView.view ? ListView.view.width : search_comboBox_FileType.width  // fills the list, which may be wider than the box
+                        text: modelData.text
+                        icon.name: modelData.iconName
+                        highlighted: search_comboBox_FileType.highlightedIndex === index
                     }
-                    ComboBoxFitted {
-                        id: search_comboBox_MaxSizeUnit
-                        enabled: false
-                        model: ["Bytes", "KiB", "MiB", "GiB", "TiB"]
-                        currentIndex: 3
+                    contentItem: RowLayout {
+                        function positionToRectangle(pos) { return Qt.rect(0, 0, 0, 0) }
+                        property int selectionStart: 0
+                        spacing: Kirigami.Units.smallSpacing
+                        Item { width: Kirigami.Units.smallSpacing }
+                        Kirigami.Icon {
+                            source: search_comboBox_FileType.currentIndex >= 0
+                                    ? search_comboBox_FileType.model[search_comboBox_FileType.currentIndex].iconName : ""
+                            implicitWidth:  Kirigami.Units.iconSizes.small
+                            implicitHeight: Kirigami.Units.iconSizes.small
+                        }
+                        Controls.Label {
+                            text: search_comboBox_FileType.currentIndex >= 0
+                                  ? search_comboBox_FileType.model[search_comboBox_FileType.currentIndex].text : ""
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
                 }
             }
-        }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Controls.CheckBox {
-                id: search_checkBox_Date
-                checked: false
-                text: qsTr("Date")
-                Layout.preferredWidth: pageSearchForm.labelW
-                Layout.alignment: Qt.AlignTop
-                Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_Date) - implicitHeight) / 2)
-                onCheckedChanged: {
-                    search_dateTimeEdit_Min.enabled = checked
-                    search_button_ShowMinDateCalendar.enabled = checked
-                    search_dateTimeEdit_Max.enabled = checked
-                    search_button_ShowMaxDateCalendar.enabled = checked
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.CheckBox {
+                    id: search_checkBox_Size
+                    checked: false
+                    text: qsTr("Size")
+                    Layout.preferredWidth: pageSearchForm.labelW
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_Size) - implicitHeight) / 2)
+                    onCheckedChanged: {
+                        search_spinBox_MinimumSize.enabled = checked
+                        search_comboBox_MinSizeUnit.enabled = checked
+                        search_spinBox_MaximumSize.enabled = checked
+                        search_comboBox_MaxSizeUnit.enabled = checked
+                    }
+                }
+                Flow {
+                    id: search_flow_Size
+                    Layout.fillWidth: true
+                    spacing: pageSearchForm.rowSpacing
+                    RowLayout {
+                        width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
+                        Controls.Label { text: ">" }
+                        Controls.SpinBox {
+                            id: search_spinBox_MinimumSize
+                            enabled: false
+                            editable: true
+                            from: 0; value: 0; to: 1000
+                            implicitWidth: 110
+                        }
+                        ComboBoxFitted {
+                            id: search_comboBox_MinSizeUnit
+                            enabled: false
+                            model: ["Bytes", "KiB", "MiB", "GiB", "TiB"]
+                        }
+                    }
+                    RowLayout {
+                        width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
+                        Controls.Label { text: "<" }
+                        Controls.SpinBox {
+                            id: search_spinBox_MaximumSize
+                            enabled: false
+                            editable: true
+                            from: 0; value: 1000; to: 1000
+                            implicitWidth: 110
+                        }
+                        ComboBoxFitted {
+                            id: search_comboBox_MaxSizeUnit
+                            enabled: false
+                            model: ["Bytes", "KiB", "MiB", "GiB", "TiB"]
+                            currentIndex: 3
+                        }
+                    }
                 }
             }
-            Flow {
-                id: search_flow_Date
+
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: pageSearchForm.rowSpacing
-                RowLayout {
-                    Controls.Label { text: ">" }
-                    Controls.TextField {
-                        id: search_dateTimeEdit_Min
-                        enabled: false
-                        inputMask: "9999/99/99 99:99:99"
-                        inputMethodHints: Qt.ImhDigitsOnly
-                        text: "1970/01/01 00:00:00"
-                        implicitWidth: 150
-                    }
-                    IconButton {
-                        id: search_button_ShowMinDateCalendar
-                        text: qsTr("Select a date")
-                        enabled: false
-                        icon.name: "view-calendar"
-                        onClicked: { dateDialog.selectedDateField = "Min"; dateDialog.open() }
+                Controls.CheckBox {
+                    id: search_checkBox_Date
+                    checked: false
+                    text: qsTr("Date")
+                    Layout.preferredWidth: pageSearchForm.labelW
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_Date) - implicitHeight) / 2)
+                    onCheckedChanged: {
+                        search_dateTimeEdit_Min.enabled = checked
+                        search_button_ShowMinDateCalendar.enabled = checked
+                        search_dateTimeEdit_Max.enabled = checked
+                        search_button_ShowMaxDateCalendar.enabled = checked
                     }
                 }
-                RowLayout {
-                    Controls.Label { text: "<" }
-                    Controls.TextField {
-                        id: search_dateTimeEdit_Max
-                        enabled: false
-                        inputMask: "9999/99/99 99:99:99"
-                        inputMethodHints: Qt.ImhDigitsOnly
-                        text: "2030/01/01 00:00:00"
-                        implicitWidth: 150
+                Flow {
+                    id: search_flow_Date
+                    Layout.fillWidth: true
+                    spacing: pageSearchForm.rowSpacing
+                    RowLayout {
+                        Controls.Label { text: ">" }
+                        Controls.TextField {
+                            id: search_dateTimeEdit_Min
+                            enabled: false
+                            inputMask: "9999/99/99 99:99:99"
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            text: "1970/01/01 00:00:00"
+                            implicitWidth: 150
+                        }
+                        IconButton {
+                            id: search_button_ShowMinDateCalendar
+                            text: qsTr("Select a date")
+                            enabled: false
+                            icon.name: "view-calendar"
+                            onClicked: { dateDialog.selectedDateField = "Min"; dateDialog.open() }
+                        }
                     }
-                    IconButton {
-                        id: search_button_ShowMaxDateCalendar
-                        text: qsTr("Select a date")
-                        enabled: false
-                        icon.name: "view-calendar"
-                        onClicked: { dateDialog.selectedDateField = "Max"; dateDialog.open() }
+                    RowLayout {
+                        Controls.Label { text: "<" }
+                        Controls.TextField {
+                            id: search_dateTimeEdit_Max
+                            enabled: false
+                            inputMask: "9999/99/99 99:99:99"
+                            inputMethodHints: Qt.ImhDigitsOnly
+                            text: "2030/01/01 00:00:00"
+                            implicitWidth: 150
+                        }
+                        IconButton {
+                            id: search_button_ShowMaxDateCalendar
+                            text: qsTr("Select a date")
+                            enabled: false
+                            icon.name: "view-calendar"
+                            onClicked: { dateDialog.selectedDateField = "Max"; dateDialog.open() }
+                        }
                     }
                 }
             }
         }
     }
-    Controls.Label { text: ""}
 
-    // ── Section 3: File metadata ──────────────────────────────────────────────
-    RowLayout {
+    // File metadata
+    KCard {
         Layout.fillWidth: true
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.topMargin: Kirigami.Units.smallSpacing
-        spacing: Kirigami.Units.largeSpacing
-        Controls.CheckBox {
+
+        CriteriaSwitch {
             id: search_checkBox_FileMetadata
             checked: false
-            text: qsTr("File metadata")
-            Binding { target: search_checkBox_FileMetadata.contentItem; property: "color"; value: applicationWindow().titleColor }
+            text: qsTr("Information in the files")
+            description: qsTr("What the files themselves record: text such as title, artist or album, picture size and duration.")
             onCheckedChanged: search_FormLayout_FileMetadata.visible = checked
         }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-    }
-    ColumnLayout {
-        id: search_FormLayout_FileMetadata
-        Layout.topMargin: Kirigami.Units.smallSpacing   // gap under the section title
-        visible: false
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.fillWidth: true
-        spacing: pageSearchForm.rowSpacing
-
-        RowLayout {
+        ColumnLayout {
+            id: search_FormLayout_FileMetadata
+            visible: false
             Layout.fillWidth: true
-            Controls.CheckBox {
-                id: search_checkBox_MetadataText
-                checked: false
-                text: qsTr("Text")
-                Layout.preferredWidth: pageSearchForm.labelW
-                onCheckedChanged: search_lineEdit_MetadataText.enabled = checked
-            }
-            Controls.TextField {
-                id: search_lineEdit_MetadataText
-                enabled: false
-                Layout.fillWidth: true
-                leftPadding: Kirigami.Units.largeSpacing
-                rightPadding: text.length > 0
-                              ? Kirigami.Units.iconSizes.small + Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
-                              : Kirigami.Units.smallSpacing
-                Kirigami.Icon {
-                    anchors { right: parent.right; rightMargin: Kirigami.Units.smallSpacing * 2; verticalCenter: parent.verticalCenter }
-                    source: parent.LayoutMirroring.enabled ? "edit-clear-locationbar-ltr" : "edit-clear-locationbar-rtl"
-                    implicitWidth: Kirigami.Units.iconSizes.small
-                    implicitHeight: Kirigami.Units.iconSizes.small
-                    visible: parent.text.length > 0
-                    opacity: metaClearTap.pressed ? 0.5 : 1.0
-                    Behavior on opacity { NumberAnimation { duration: Kirigami.Units.shortDuration } }
-                    HoverHandler { id: metaClearHover; cursorShape: Qt.ArrowCursor }
-                    Controls.ToolTip.text: qsTr("Clear")
-                    Controls.ToolTip.visible: metaClearHover.hovered
-                    TapHandler {
-                        id: metaClearTap
-                        // Focus follows the clear, so the user can retype straight
-                        // away instead of clicking the field a second time.
-                        onTapped: {
-                            search_lineEdit_MetadataText.clear()
-                            search_lineEdit_MetadataText.forceActiveFocus()
-                        }
-                    }
-                }
-            }
-            IconButton {
-                icon.name: "edit-paste"
-                enabled: search_checkBox_MetadataText.checked
-                text: qsTr("Paste the text from the clipboard")
-                onClicked: search_lineEdit_MetadataText.text = pageSearch1.returnClipboard()
-            }
-            IconButton {
-                icon.name: "edit-clear-history"
-                enabled: search_checkBox_MetadataText.checked
-                onClicked: search_lineEdit_MetadataText.text = pageSearch1.returnCleanedText(search_lineEdit_MetadataText.text)
-            }
-        }
+            spacing: pageSearchForm.rowSpacing
 
-        RowLayout {
-            Layout.fillWidth: true
-            Controls.CheckBox {
-                id: search_checkBox_MetadataSize
-                checked: false
-                text: qsTr("Size")
-                Layout.preferredWidth: pageSearchForm.labelW
-                Layout.alignment: Qt.AlignTop
-                Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_MetadataWidth) - implicitHeight) / 2)
-                onCheckedChanged: {
-                    search_spinBox_MetadataMinimumHeight.enabled = checked
-                    search_spinBox_MetadataMaximumHeight.enabled = checked
-                    search_spinBox_MetadataMinimumWidth.enabled  = checked
-                    search_spinBox_MetadataMaximumWidth.enabled  = checked
-                }
-            }
-            ColumnLayout {
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: pageSearchForm.rowSpacing
-                // The label sits in front of the Flow, so a wrapped "<" group starts
-                // under the ">" group above it (PGL-F14)
-                RowLayout {
+                Controls.CheckBox {
+                    id: search_checkBox_MetadataText
+                    checked: false
+                    text: qsTr("Text")
+                    Layout.preferredWidth: pageSearchForm.labelW
+                    onCheckedChanged: search_lineEdit_MetadataText.enabled = checked
+                }
+                Controls.TextField {
+                    id: search_lineEdit_MetadataText
+                    enabled: false
                     Layout.fillWidth: true
-                    Controls.Label { text: qsTr("Width"); Layout.preferredWidth: 50; Layout.alignment: Qt.AlignTop
-                                     Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_MetadataWidth) - implicitHeight) / 2) }
-                    Flow {
-                        id: search_flow_MetadataWidth
-                        Layout.fillWidth: true
-                        spacing: pageSearchForm.rowSpacing
-                        RowLayout {
-                            Controls.Label { text: ">" }
-                            Controls.SpinBox {
-                                id: search_spinBox_MetadataMinimumWidth
-                                enabled: false
-                                editable: true
-                                from: 0; value: 0; to: 30000
-                                implicitWidth: 110
-                            }
-                        }
-                        RowLayout {
-                            Controls.Label { text: "<" }
-                            Controls.SpinBox {
-                                id: search_spinBox_MetadataMaximumWidth
-                                enabled: false
-                                editable: true
-                                from: 0; value: 30000; to: 30000
-                                implicitWidth: 110
+                    leftPadding: Kirigami.Units.largeSpacing
+                    rightPadding: text.length > 0
+                                  ? Kirigami.Units.iconSizes.small + Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
+                                  : Kirigami.Units.smallSpacing
+                    Kirigami.Icon {
+                        anchors { right: parent.right; rightMargin: Kirigami.Units.smallSpacing * 2; verticalCenter: parent.verticalCenter }
+                        source: parent.LayoutMirroring.enabled ? "edit-clear-locationbar-ltr" : "edit-clear-locationbar-rtl"
+                        implicitWidth: Kirigami.Units.iconSizes.small
+                        implicitHeight: Kirigami.Units.iconSizes.small
+                        visible: parent.text.length > 0
+                        opacity: metaClearTap.pressed ? 0.5 : 1.0
+                        Behavior on opacity { NumberAnimation { duration: Kirigami.Units.shortDuration } }
+                        HoverHandler { id: metaClearHover; cursorShape: Qt.ArrowCursor }
+                        Controls.ToolTip.text: qsTr("Clear")
+                        Controls.ToolTip.visible: metaClearHover.hovered
+                        TapHandler {
+                            id: metaClearTap
+                            // Focus follows the clear, so the user can retype straight
+                            // away instead of clicking the field a second time.
+                            onTapped: {
+                                search_lineEdit_MetadataText.clear()
+                                search_lineEdit_MetadataText.forceActiveFocus()
                             }
                         }
                     }
                 }
-                // The label sits in front of the Flow, so a wrapped "<" group starts
-                // under the ">" group above it (PGL-F14)
-                RowLayout {
-                    Layout.fillWidth: true
-                    Controls.Label { text: qsTr("Height"); Layout.preferredWidth: 50; Layout.alignment: Qt.AlignTop
-                                     Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_MetadataHeight) - implicitHeight) / 2) }
-                    Flow {
-                        id: search_flow_MetadataHeight
-                        Layout.fillWidth: true
-                        spacing: pageSearchForm.rowSpacing
-                        RowLayout {
-                            Controls.Label { text: ">" }
-                            Controls.SpinBox {
-                                id: search_spinBox_MetadataMinimumHeight
-                                enabled: false
-                                editable: true
-                                from: 0; value: 0; to: 30000
-                                implicitWidth: 110
-                            }
-                        }
-                        RowLayout {
-                            Controls.Label { text: "<" }
-                            Controls.SpinBox {
-                                id: search_spinBox_MetadataMaximumHeight
-                                enabled: false
-                                editable: true
-                                from: 0; value: 30000; to: 30000
-                                implicitWidth: 110
-                            }
-                        }
-                    }
+                IconButton {
+                    icon.name: "edit-paste"
+                    enabled: search_checkBox_MetadataText.checked
+                    text: qsTr("Paste the text from the clipboard")
+                    onClicked: search_lineEdit_MetadataText.text = pageSearch1.returnClipboard()
+                }
+                IconButton {
+                    icon.name: "edit-clear-history"
+                    enabled: search_checkBox_MetadataText.checked
+                    // The tooltip of the same button beside the term lists (ICB-F1)
+                    text: qsTr("Clean the search Text from characters such as _ - . ,")
+                    onClicked: search_lineEdit_MetadataText.text = pageSearch1.returnCleanedText(search_lineEdit_MetadataText.text)
                 }
             }
-        }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Controls.CheckBox {
-                id: search_checkBox_MetadataDuration
-                checked: false
-                text: qsTr("Duration")
-                Layout.preferredWidth: pageSearchForm.labelW
-                Layout.alignment: Qt.AlignTop
-                Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_MetadataDuration) - implicitHeight) / 2)
-                onCheckedChanged: {
-                    search_dateTimeEdit_MetadataDurationMin.enabled = checked
-                    search_dateTimeEdit_MetadataDurationMax.enabled = checked
-                }
-            }
-            Flow {
-                id: search_flow_MetadataDuration
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: pageSearchForm.rowSpacing
-                RowLayout {
-                    Controls.Label { text: ">" }
-                    Controls.TextField {
-                        id: search_dateTimeEdit_MetadataDurationMin
-                        enabled: false
-                        inputMask: "99:99:99"
-                        text: "00:00:00"
-                        implicitWidth: 80
+                Controls.CheckBox {
+                    id: search_checkBox_MetadataSize
+                    checked: false
+                    text: qsTr("Size")
+                    Layout.preferredWidth: pageSearchForm.labelW
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_MetadataWidth) - implicitHeight) / 2)
+                    onCheckedChanged: {
+                        search_spinBox_MetadataMinimumHeight.enabled = checked
+                        search_spinBox_MetadataMaximumHeight.enabled = checked
+                        search_spinBox_MetadataMinimumWidth.enabled  = checked
+                        search_spinBox_MetadataMaximumWidth.enabled  = checked
                     }
                 }
-                RowLayout {
-                    Controls.Label { text: "<" }
-                    Controls.TextField {
-                        id: search_dateTimeEdit_MetadataDurationMax
-                        enabled: false
-                        inputMask: "99:99:99"
-                        text: "23:59:59"
-                        implicitWidth: 80
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: pageSearchForm.rowSpacing
+                    // The label sits in front of the Flow, so a wrapped "<" group starts
+                    // under the ">" group above it (PGL-F14)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Controls.Label { text: qsTr("Width"); color: KTheme.text2; Layout.preferredWidth: 50; Layout.alignment: Qt.AlignTop
+                                         Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_MetadataWidth) - implicitHeight) / 2) }
+                        Flow {
+                            id: search_flow_MetadataWidth
+                            Layout.fillWidth: true
+                            spacing: pageSearchForm.rowSpacing
+                            RowLayout {
+                                Controls.Label { text: ">" }
+                                Controls.SpinBox {
+                                    id: search_spinBox_MetadataMinimumWidth
+                                    enabled: false
+                                    editable: true
+                                    from: 0; value: 0; to: 30000
+                                    implicitWidth: 110
+                                }
+                            }
+                            RowLayout {
+                                Controls.Label { text: "<" }
+                                Controls.SpinBox {
+                                    id: search_spinBox_MetadataMaximumWidth
+                                    enabled: false
+                                    editable: true
+                                    from: 0; value: 30000; to: 30000
+                                    implicitWidth: 110
+                                }
+                            }
+                        }
+                    }
+                    // The label sits in front of the Flow, so a wrapped "<" group starts
+                    // under the ">" group above it (PGL-F14)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Controls.Label { text: qsTr("Height"); color: KTheme.text2; Layout.preferredWidth: 50; Layout.alignment: Qt.AlignTop
+                                         Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_MetadataHeight) - implicitHeight) / 2) }
+                        Flow {
+                            id: search_flow_MetadataHeight
+                            Layout.fillWidth: true
+                            spacing: pageSearchForm.rowSpacing
+                            RowLayout {
+                                Controls.Label { text: ">" }
+                                Controls.SpinBox {
+                                    id: search_spinBox_MetadataMinimumHeight
+                                    enabled: false
+                                    editable: true
+                                    from: 0; value: 0; to: 30000
+                                    implicitWidth: 110
+                                }
+                            }
+                            RowLayout {
+                                Controls.Label { text: "<" }
+                                Controls.SpinBox {
+                                    id: search_spinBox_MetadataMaximumHeight
+                                    enabled: false
+                                    editable: true
+                                    from: 0; value: 30000; to: 30000
+                                    implicitWidth: 110
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.CheckBox {
+                    id: search_checkBox_MetadataDuration
+                    checked: false
+                    text: qsTr("Duration")
+                    Layout.preferredWidth: pageSearchForm.labelW
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_MetadataDuration) - implicitHeight) / 2)
+                    onCheckedChanged: {
+                        search_dateTimeEdit_MetadataDurationMin.enabled = checked
+                        search_dateTimeEdit_MetadataDurationMax.enabled = checked
+                    }
+                }
+                Flow {
+                    id: search_flow_MetadataDuration
+                    Layout.fillWidth: true
+                    spacing: pageSearchForm.rowSpacing
+                    RowLayout {
+                        Controls.Label { text: ">" }
+                        Controls.TextField {
+                            id: search_dateTimeEdit_MetadataDurationMin
+                            enabled: false
+                            inputMask: "99:99:99"
+                            text: "00:00:00"
+                            implicitWidth: 80
+                        }
+                    }
+                    RowLayout {
+                        Controls.Label { text: "<" }
+                        Controls.TextField {
+                            id: search_dateTimeEdit_MetadataDurationMax
+                            enabled: false
+                            inputMask: "99:99:99"
+                            text: "23:59:59"
+                            implicitWidth: 80
+                        }
                     }
                 }
             }
         }
     }
-    Controls.Label { text: ""}
 
-    // ── Section 4: Folder criteria ────────────────────────────────────────────
-    RowLayout {
+    // Folder criteria
+    KCard {
         Layout.fillWidth: true
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.topMargin: Kirigami.Units.smallSpacing
-        spacing: Kirigami.Units.largeSpacing
-        Controls.CheckBox {
+
+        CriteriaSwitch {
             id: search_checkBox_FolderCriteria
             checked: false
-            text: qsTr("Folder criteria")
-            Binding { target: search_checkBox_FolderCriteria.contentItem; property: "color"; value: applicationWindow().titleColor }
+            text: qsTr("Folders and tags")
+            description: qsTr("Only folders in the results, or only what lies in folders with a tag.")
             onCheckedChanged: search_FormLayout_folderCriteria.visible = checked
         }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-    }
-    ColumnLayout {
-        Layout.fillWidth: true
-        id: search_FormLayout_folderCriteria
-        Layout.topMargin: Kirigami.Units.smallSpacing   // gap under the section title
-        visible: false
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        spacing: pageSearchForm.rowSpacing
+        ColumnLayout {
+            Layout.fillWidth: true
+            id: search_FormLayout_folderCriteria
+            visible: false
+            spacing: pageSearchForm.rowSpacing
 
-        Controls.CheckBox {
-            id: search_checkBox_ShowFoldersOnly
-            checked: false
-            text: qsTr("only list folders in results")
-            // Wraps rather than hold the section at its one-line width: in
-            // French it was the widest item, and every row stretched to it,
-            // under the scrollbar of a narrow Search column (PGL-F4).
-            Layout.fillWidth: true
-            Binding { target: search_checkBox_ShowFoldersOnly.contentItem; property: "wrapMode"; value: Text.WordWrap }
-        }
-        RowLayout {
-            Layout.fillWidth: true
             Controls.CheckBox {
-                id: search_checkBox_SearchOnTags
+                id: search_checkBox_ShowFoldersOnly
                 checked: false
-                text: qsTr("Tag")
-                Layout.preferredWidth: pageSearchForm.labelW
-                onCheckedChanged: search_comboBox_FolderTag.enabled = checked
+                text: qsTr("only list folders in results")
+                // Wraps rather than hold the card at its one-line width: in
+                // French it was the widest item, and every row stretched to it,
+                // under the scrollbar of a narrow Search column (PGL-F4).
+                Layout.fillWidth: true
+                Binding { target: search_checkBox_ShowFoldersOnly.contentItem; property: "wrapMode"; value: Text.WordWrap }
             }
-            ComboBoxFitted {
-                id: search_comboBox_FolderTag
-                enabled: false
-                model: pageSearchForm.tagNames
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.CheckBox {
+                    id: search_checkBox_SearchOnTags
+                    checked: false
+                    text: qsTr("Tag")
+                    Layout.preferredWidth: pageSearchForm.labelW
+                    onCheckedChanged: search_comboBox_FolderTag.enabled = checked
+                }
+                ComboBoxFitted {
+                    id: search_comboBox_FolderTag
+                    enabled: false
+                    model: pageSearchForm.tagNames
+                }
             }
         }
     }
-    Controls.Label { text: ""}
 
-    // ── Section 5: Duplicates ─────────────────────────────────────────────────
-    RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin: pageSearchForm.sectionMargin
+    // ── Duplicates and differences ───────────────────────────────────────────
+    KSectionHeader {
         Layout.topMargin: Kirigami.Units.smallSpacing
-        spacing: Kirigami.Units.largeSpacing
-        Controls.CheckBox {
+        title: qsTr("Duplicates and differences")
+        description: qsTr("Files found more than once, or that differ between two drives. One of the two at a time.")
+    }
+
+    KCard {
+        Layout.fillWidth: true
+
+        CriteriaSwitch {
             id: search_checkBox_Duplicates
             checked: false
             text: qsTr("Duplicates")
-            Binding { target: search_checkBox_Duplicates.contentItem; property: "color"; value: applicationWindow().titleColor }
+            description: qsTr("The same file more than once, compared by name, size, date or checksum.")
             onCheckedChanged: {
                 search_FormLayout_Duplicates.visible = checked
                 if (checked && search_checkBox_Differences.checked) {
@@ -1306,141 +1473,134 @@ ColumnLayout {
                 }
             }
         }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-    }
-    ColumnLayout {
-        id: search_FormLayout_Duplicates
-        Layout.topMargin: Kirigami.Units.smallSpacing   // gap under the section title
-        visible: false
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.fillWidth: true
-        spacing: pageSearchForm.rowSpacing
-
-        RowLayout {
-            Layout.fillWidth: true
-            Controls.Label { text: qsTr("On"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
-                             Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_DuplicatesOn) - implicitHeight) / 2) }
-            Flow {
-                id: search_flow_DuplicatesOn
-                Layout.fillWidth: true
-                spacing: pageSearchForm.rowSpacing
-                RowLayout {
-                    Controls.CheckBox {
-                        id: search_checkBox_DuplicatesOnName
-                        checked: true
-                        text: qsTr("Name")
-                        onCheckedChanged: {
-                            if (!search_checkBox_DuplicatesOnSize.checked && !search_checkBox_DuplicatesOnDate.checked
-                                    && !search_checkBox_DuplicatesOnChecksum.checked)
-                                search_checkBox_DuplicatesOnName.checked = true
-                        }
-                    }
-                    Controls.CheckBox {
-                        id: search_checkBox_DuplicatesOnSize
-                        checked: false
-                        text: qsTr("Size")
-                        onCheckedChanged: {
-                            if (!search_checkBox_DuplicatesOnName.checked && !search_checkBox_DuplicatesOnDate.checked
-                                    && !search_checkBox_DuplicatesOnChecksum.checked)
-                                search_checkBox_DuplicatesOnSize.checked = true
-                        }
-                    }
-                    Controls.CheckBox {
-                        id: search_checkBox_DuplicatesOnDate
-                        checked: false
-                        text: qsTr("Date")
-                        onCheckedChanged: {
-                            if (!search_checkBox_DuplicatesOnSize.checked && !search_checkBox_DuplicatesOnName.checked
-                                    && !search_checkBox_DuplicatesOnChecksum.checked)
-                                search_checkBox_DuplicatesOnDate.checked = true
-                        }
-                    }
-                }
-                RowLayout {
-                    width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-                    ComboBoxFitted {
-                        id: search_comboBox_DuplicateChecksumSign
-                        model: ["=", "≠"]
-                        enabled: search_checkBox_DuplicatesOnChecksum.checked
-                    }
-                    Controls.CheckBox {
-                        id: search_checkBox_DuplicatesOnChecksum
-                        checked: false
-                        text: qsTr("Checksum")
-                        onCheckedChanged: {
-                            search_comboBox_DuplicateChecksumSign.enabled = checked
-                            if (!search_checkBox_DuplicatesOnName.checked && !search_checkBox_DuplicatesOnSize.checked
-                                    && !search_checkBox_DuplicatesOnDate.checked)
-                                search_checkBox_DuplicatesOnChecksum.checked = true
-                        }
-                    }
-                    // Fork: the checksum key is the quick hash when available;
-                    // this confirms the groups with the full SHA-256
-                    Controls.CheckBox {
-                        id: search_checkBox_DuplicatesChecksumVerify
-                        checked: false
-                        text: qsTr("Verify with full checksum")
-                        enabled: search_checkBox_DuplicatesOnChecksum.checked
-                                 && search_comboBox_DuplicateChecksumSign.currentIndex === 0
-                    }
-                }
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            Controls.Label { text: qsTr("Scope"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
-                             Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_DuplicatesScope) - implicitHeight) / 2) }
-            Flow {
-                id: search_flow_DuplicatesScope
-                Layout.fillWidth: true
-                spacing: pageSearchForm.rowSpacing
-                Controls.RadioButton {
-                    id: search_radioButton_DuplicatesWithinSelectedDevice
-                    checked: true
-                    text: qsTr("Within selected device")
-                }
-                Controls.RadioButton {
-                    id: search_radioButton_DuplicatesCompareTwoDevices
-                    text: qsTr("Compare two devices")
-                    onCheckedChanged: search_FormLayout_DuplicatesDevices.visible = checked
-                }
-            }
-        }
-
-        Flow {
-            id: search_FormLayout_DuplicatesDevices
+        ColumnLayout {
+            id: search_FormLayout_Duplicates
             visible: false
-            Layout.leftMargin: pageSearchForm.labelW + Kirigami.Units.largeSpacing
             Layout.fillWidth: true
             spacing: pageSearchForm.rowSpacing
 
             RowLayout {
-                width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-                Controls.Label { text: qsTr("Device 1") }
-                DeviceTreeComboBox { id: search_comboBox_DuplicatesDevice1 }
+                Layout.fillWidth: true
+                Controls.Label { text: qsTr("On"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
+                                 Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_DuplicatesOn) - implicitHeight) / 2) }
+                Flow {
+                    id: search_flow_DuplicatesOn
+                    Layout.fillWidth: true
+                    spacing: pageSearchForm.rowSpacing
+                    RowLayout {
+                        Controls.CheckBox {
+                            id: search_checkBox_DuplicatesOnName
+                            checked: true
+                            text: qsTr("Name")
+                            onCheckedChanged: {
+                                if (!search_checkBox_DuplicatesOnSize.checked && !search_checkBox_DuplicatesOnDate.checked
+                                        && !search_checkBox_DuplicatesOnChecksum.checked)
+                                    search_checkBox_DuplicatesOnName.checked = true
+                            }
+                        }
+                        Controls.CheckBox {
+                            id: search_checkBox_DuplicatesOnSize
+                            checked: false
+                            text: qsTr("Size")
+                            onCheckedChanged: {
+                                if (!search_checkBox_DuplicatesOnName.checked && !search_checkBox_DuplicatesOnDate.checked
+                                        && !search_checkBox_DuplicatesOnChecksum.checked)
+                                    search_checkBox_DuplicatesOnSize.checked = true
+                            }
+                        }
+                        Controls.CheckBox {
+                            id: search_checkBox_DuplicatesOnDate
+                            checked: false
+                            text: qsTr("Date")
+                            onCheckedChanged: {
+                                if (!search_checkBox_DuplicatesOnSize.checked && !search_checkBox_DuplicatesOnName.checked
+                                        && !search_checkBox_DuplicatesOnChecksum.checked)
+                                    search_checkBox_DuplicatesOnDate.checked = true
+                            }
+                        }
+                    }
+                    RowLayout {
+                        width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
+                        ComboBoxFitted {
+                            id: search_comboBox_DuplicateChecksumSign
+                            model: ["=", "≠"]
+                            enabled: search_checkBox_DuplicatesOnChecksum.checked
+                        }
+                        Controls.CheckBox {
+                            id: search_checkBox_DuplicatesOnChecksum
+                            checked: false
+                            text: qsTr("Checksum")
+                            onCheckedChanged: {
+                                search_comboBox_DuplicateChecksumSign.enabled = checked
+                                if (!search_checkBox_DuplicatesOnName.checked && !search_checkBox_DuplicatesOnSize.checked
+                                        && !search_checkBox_DuplicatesOnDate.checked)
+                                    search_checkBox_DuplicatesOnChecksum.checked = true
+                            }
+                        }
+                        // Fork: the checksum key is the quick hash when available;
+                        // this confirms the groups with the full SHA-256
+                        Controls.CheckBox {
+                            id: search_checkBox_DuplicatesChecksumVerify
+                            checked: false
+                            text: qsTr("Verify with full checksum")
+                            enabled: search_checkBox_DuplicatesOnChecksum.checked
+                                     && search_comboBox_DuplicateChecksumSign.currentIndex === 0
+                        }
+                    }
+                }
             }
+
             RowLayout {
-                width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-                Controls.Label { text: qsTr("Device 2") }
-                DeviceTreeComboBox { id: search_comboBox_DuplicatesDevice2 }
+                Layout.fillWidth: true
+                Controls.Label { text: qsTr("Scope"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
+                                 Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_DuplicatesScope) - implicitHeight) / 2) }
+                Flow {
+                    id: search_flow_DuplicatesScope
+                    Layout.fillWidth: true
+                    spacing: pageSearchForm.rowSpacing
+                    Controls.RadioButton {
+                        id: search_radioButton_DuplicatesWithinSelectedDevice
+                        checked: true
+                        text: qsTr("Within selected device")
+                    }
+                    Controls.RadioButton {
+                        id: search_radioButton_DuplicatesCompareTwoDevices
+                        text: qsTr("Compare two devices")
+                        onCheckedChanged: search_FormLayout_DuplicatesDevices.visible = checked
+                    }
+                }
+            }
+
+            Flow {
+                id: search_FormLayout_DuplicatesDevices
+                visible: false
+                Layout.leftMargin: pageSearchForm.labelW + Kirigami.Units.largeSpacing
+                Layout.fillWidth: true
+                spacing: pageSearchForm.rowSpacing
+
+                RowLayout {
+                    width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
+                    Controls.Label { text: qsTr("Device 1"); color: KTheme.text2 }
+                    DeviceTreeComboBox { id: search_comboBox_DuplicatesDevice1 }
+                }
+                RowLayout {
+                    width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
+                    Controls.Label { text: qsTr("Device 2"); color: KTheme.text2 }
+                    DeviceTreeComboBox { id: search_comboBox_DuplicatesDevice2 }
+                }
             }
         }
     }
-    Controls.Label { text: ""}
 
-    // ── Section 6: Differences ────────────────────────────────────────────────
-    RowLayout {
+    KCard {
         Layout.fillWidth: true
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.topMargin: Kirigami.Units.smallSpacing
-        spacing: Kirigami.Units.largeSpacing
-        Controls.CheckBox {
+
+        CriteriaSwitch {
             id: search_checkBox_Differences
             checked: false
             enabled: search_radioButton_SearchInCatalogs.checked
             text: qsTr("Differences")
-            Binding { target: search_checkBox_Differences.contentItem; property: "color"; value: applicationWindow().titleColor }
+            description: qsTr("What differs between two drives, compared by name, size, date or checksum.")
             onCheckedChanged: {
                 search_FormLayout_Differences.visible = checked
                 if (checked && search_checkBox_Duplicates.checked) {
@@ -1449,91 +1609,97 @@ ColumnLayout {
                 }
             }
         }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-    }
-    ColumnLayout {
-        id: search_FormLayout_Differences
-        Layout.topMargin: Kirigami.Units.smallSpacing   // gap under the section title
-        visible: false
-        Layout.leftMargin: pageSearchForm.sectionMargin
-        Layout.fillWidth: true
-        spacing: pageSearchForm.rowSpacing
-
-        RowLayout {
+        // Says why the switch is greyed, instead of leaving it unexplained
+        Controls.Label {
+            visible: !search_checkBox_Differences.enabled
             Layout.fillWidth: true
-            Controls.Label { text: qsTr("On"); Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
-                             Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_DifferencesOn) - implicitHeight) / 2) }
+            wrapMode: Text.WordWrap
+            color: KTheme.text3
+            font.pixelSize: KTheme.note
+            text: qsTr("Available when the search is in the catalogs.")
+        }
+        ColumnLayout {
+            id: search_FormLayout_Differences
+            visible: false
+            Layout.fillWidth: true
+            spacing: pageSearchForm.rowSpacing
+
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.Label { text: qsTr("On"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap; Layout.alignment: Qt.AlignTop
+                                 Layout.topMargin: Math.max(0, (pageSearchForm.firstLineHeight(search_flow_DifferencesOn) - implicitHeight) / 2) }
+                Flow {
+                    id: search_flow_DifferencesOn
+                    Layout.fillWidth: true
+                    spacing: pageSearchForm.rowSpacing
+                    RowLayout {
+                        Controls.CheckBox {
+                            id: search_checkBox_DifferencesOnName
+                            checked: true
+                            text: qsTr("Name")
+                            onCheckedChanged: {
+                                if (!search_checkBox_DifferencesOnSize.checked && !search_checkBox_DifferencesOnDate.checked
+                                        && !search_checkBox_DifferencesOnChecksum.checked)
+                                    search_checkBox_DifferencesOnName.checked = true
+                            }
+                        }
+                        Controls.CheckBox {
+                            id: search_checkBox_DifferencesOnSize
+                            checked: false
+                            text: qsTr("Size")
+                            onCheckedChanged: {
+                                if (!search_checkBox_DifferencesOnName.checked && !search_checkBox_DifferencesOnDate.checked
+                                        && !search_checkBox_DifferencesOnChecksum.checked)
+                                    search_checkBox_DifferencesOnSize.checked = true
+                            }
+                        }
+                        Controls.CheckBox {
+                            id: search_checkBox_DifferencesOnDate
+                            checked: false
+                            text: qsTr("Date")
+                            onCheckedChanged: {
+                                if (!search_checkBox_DifferencesOnSize.checked && !search_checkBox_DifferencesOnName.checked
+                                        && !search_checkBox_DifferencesOnChecksum.checked)
+                                    search_checkBox_DifferencesOnDate.checked = true
+                            }
+                        }
+                    }
+                    RowLayout {
+                        width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
+                        ComboBoxFitted {
+                            id: search_comboBox_DifferenceChecksumSign
+                            model: ["=", "≠"]
+                            enabled: search_checkBox_DifferencesOnChecksum.checked
+                        }
+                        Controls.CheckBox {
+                            id: search_checkBox_DifferencesOnChecksum
+                            checked: false
+                            text: qsTr("Checksum")
+                            onCheckedChanged: {
+                                search_comboBox_DifferenceChecksumSign.enabled = checked
+                                if (!search_checkBox_DifferencesOnName.checked && !search_checkBox_DifferencesOnSize.checked
+                                        && !search_checkBox_DifferencesOnDate.checked)
+                                    search_checkBox_DifferencesOnChecksum.checked = true
+                            }
+                        }
+                    }
+                }
+            }
+
             Flow {
-                id: search_flow_DifferencesOn
+                Layout.leftMargin: pageSearchForm.labelW + Kirigami.Units.largeSpacing
                 Layout.fillWidth: true
                 spacing: pageSearchForm.rowSpacing
                 RowLayout {
-                    Controls.CheckBox {
-                        id: search_checkBox_DifferencesOnName
-                        checked: true
-                        text: qsTr("Name")
-                        onCheckedChanged: {
-                            if (!search_checkBox_DifferencesOnSize.checked && !search_checkBox_DifferencesOnDate.checked
-                                    && !search_checkBox_DifferencesOnChecksum.checked)
-                                search_checkBox_DifferencesOnName.checked = true
-                        }
-                    }
-                    Controls.CheckBox {
-                        id: search_checkBox_DifferencesOnSize
-                        checked: false
-                        text: qsTr("Size")
-                        onCheckedChanged: {
-                            if (!search_checkBox_DifferencesOnName.checked && !search_checkBox_DifferencesOnDate.checked
-                                    && !search_checkBox_DifferencesOnChecksum.checked)
-                                search_checkBox_DifferencesOnSize.checked = true
-                        }
-                    }
-                    Controls.CheckBox {
-                        id: search_checkBox_DifferencesOnDate
-                        checked: false
-                        text: qsTr("Date")
-                        onCheckedChanged: {
-                            if (!search_checkBox_DifferencesOnSize.checked && !search_checkBox_DifferencesOnName.checked
-                                    && !search_checkBox_DifferencesOnChecksum.checked)
-                                search_checkBox_DifferencesOnDate.checked = true
-                        }
-                    }
+                    width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
+                    Controls.Label { text: qsTr("Between"); color: KTheme.text2 }
+                    DeviceTreeComboBox { id: search_comboBox_DifferencesDevice1 }
                 }
                 RowLayout {
                     width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-                    ComboBoxFitted {
-                        id: search_comboBox_DifferenceChecksumSign
-                        model: ["=", "≠"]
-                        enabled: search_checkBox_DifferencesOnChecksum.checked
-                    }
-                    Controls.CheckBox {
-                        id: search_checkBox_DifferencesOnChecksum
-                        checked: false
-                        text: qsTr("Checksum")
-                        onCheckedChanged: {
-                            search_comboBox_DifferenceChecksumSign.enabled = checked
-                            if (!search_checkBox_DifferencesOnName.checked && !search_checkBox_DifferencesOnSize.checked
-                                    && !search_checkBox_DifferencesOnDate.checked)
-                                search_checkBox_DifferencesOnChecksum.checked = true
-                        }
-                    }
+                    Controls.Label { text: qsTr("And"); color: KTheme.text2 }
+                    DeviceTreeComboBox { id: search_comboBox_DifferencesDevice2 }
                 }
-            }
-        }
-
-        Flow {
-            Layout.leftMargin: pageSearchForm.labelW + Kirigami.Units.largeSpacing
-            Layout.fillWidth: true
-            spacing: pageSearchForm.rowSpacing
-            RowLayout {
-                width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-                Controls.Label { text: qsTr("Between") }
-                DeviceTreeComboBox { id: search_comboBox_DifferencesDevice1 }
-            }
-            RowLayout {
-                width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-                Controls.Label { text: qsTr("And") }
-                DeviceTreeComboBox { id: search_comboBox_DifferencesDevice2 }
             }
         }
     }

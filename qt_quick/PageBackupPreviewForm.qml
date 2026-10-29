@@ -355,6 +355,7 @@ Kirigami.Page {
                         implicitWidth: 12 + (column === 0 ? statusTag.implicitWidth : cellLabel.implicitWidth)
 
                         readonly property bool selected: previewTableView.selectedRow === row
+                        clip: true
                         color: selected ? applicationWindow().selectionHighlightColor
                                         : row % 2 === 0 ? KTheme.surface : KTheme.surface2
 
@@ -369,6 +370,8 @@ Kirigami.Page {
                         // Status as an info tag: its text says what happens to the file
                         KInfoTag {
                             id: statusTag
+                            // Its full width, read by the double-click fit (CDT-F4)
+                            maximumWidth: 100000
                             visible: cell.column === 0
                             anchors.left: parent.left
                             anchors.leftMargin: 6
