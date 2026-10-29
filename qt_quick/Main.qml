@@ -992,9 +992,10 @@ Kirigami.ApplicationWindow {
 
         topContent: [
             ColumnLayout {
-                // The drawer stretches its top area: the entries stay at the top
+                // The drawer stretches its top area: the column fills it and a
+                // spacer at its end keeps the entries at the top
                 Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
+                Layout.fillHeight: true
                 spacing: 2
                 KSidebarItem {
                     iconName: "go-home"
@@ -1053,6 +1054,7 @@ Kirigami.ApplicationWindow {
                 KSidebarItem { iconName: "backup"; title: qsTr("Safety copies"); active: root.openFeaturePage === pageBackup; onClicked: root.sidebarGo("Backup", pageBackup) }
                 KSidebarItem { iconName: "view-list-details"; title: qsTr("Manage drives"); active: root.openFeaturePage === pageDevices; onClicked: root.sidebarGo("Devices", pageDevices) }
                 KSidebarItem { iconName: "help-about"; title: qsTr("About"); onClicked: root.showLayer(aboutPage) }
+                Item { Layout.fillHeight: true }
             }
         ]
 
