@@ -99,6 +99,23 @@ main agent (the agent did not see the replies itself).
 | D20 | **Redesign scope.** Redesigned now: the Activity page (D19); the Create page, as a single page of cards — Source, Destination, What to make, AI — replacing the step wizard; Explore, with thumbnail tiles and *Analyze* at hand. Search, Devices and Settings are unchanged for now. The Create and Explore redesigns have no requirement rows yet (`Q18`). |
 | D21 | **Resource history.** CPU, GPU and memory history charts cover the current session only; nothing is persisted. |
 
+D22–D30 were decided by the fork owner on **2026-10-28 and 2026-10-29**, in the
+main session, answering explicit question prompts and approval requests, and
+reported to the specifications agent by the main agent (the agent did not see
+the replies itself).
+
+| # | Decision (2026-10-28/29, fork owner) |
+| --- | ------------------------ |
+| D22 | **Instant search index.** The owner chose to keep D5: the index is a SQLite FTS5 trigram index in `mdi_data.db` (tables `mdi_fts`, `mdi_fts_doc`, `mdi_fts_state`, `core/mdifts.*`), never in the core schema. It holds file name, folder and derived text (snippet, summary, caption, tags, archive entry names), is rebuilt per catalog in a background thread after the collection is opened and after each creation or update, and is updated per file by the runner. K3 text search uses it as a prefilter in `SearchJobStoppable::searchFilesInCatalog`; K2 never enables it. No SQLite triggers (`MDI-F76`, `F77`, `MDI-C22`, `C23`). |
+| D23 | **Thumbnails and video previews.** Thumbnails are WebP **files** under the destination path, not database BLOBs: 256 px, quality 75; images decoded in-process by Qt in a parallel pre-pass; `ffmpeg` only for formats Qt cannot read; JPEG when Qt has no WebP writer. The video keyframe strip is **one contact sheet** (frames side by side, default 4, 144 px high). A *Technical data* analysis reads codec, resolution, frame rate, duration, bit rate and audio with `ffprobe`. Supersedes `MDI-F29` and `MDI-F31` (`MDI-F78`–`F80`, `MDI-C24`). |
+| D24 | **Text snippet.** The first 800 characters of text, cleaned, for a fixed list of text, PDF and Office/OpenDocument extensions, whatever file types the profile selects; binary files skipped (`MDI-F81`). |
+| D25 | **Archive listing.** KArchive (`KF6::Archive`) may be linked to core, optionally (`KATALOG_HAS_KARCHIVE`); it amends `MDI-C8` for this library only. Archive entries are listed and indexed; showing archives as folders in the Explore tree is backlog (`MDI-F82`, `F83`, `MDI-C25`). |
+| D26 | **Quick hash.** `FileChecksum::computeQuickHash` (BLAKE2b-256 over size and three 64 KB samples) is computed by the runner after each creation or update, for every catalog whose source is reachable, with or without a profile, and stored in `mdi_data.db` only: no core column (`CKS-C4`, D5), scan unchanged, no "Quick" catalog checksum option (K2 and upstream would read an unknown value as SHA-256). The duplicates search uses it as its checksum key, with an optional *Verify with full checksum*; compare-two-devices stays on SHA-256 (backlog) (`MDI-F84`–`F86`, `MDI-C26`). |
+| D27 | **Offline Inspector.** A K3 side panel (owner's choice over a K2 Widgets version) in Explore and Search results, new file `qt_quick/Inspector.qml` (a component, not a Page); visibility remembered (`MDI-F87`). |
+| D28 | **Explore column view.** A Finder-style column view in K3 Explore, new file `qt_quick/ColumnBrowser.qml` (a component, not a Page); choice remembered (`MDI-F88`). |
+| D29 | **Simplified side menu** (owner's request). Main entries Selection, Search, Explore, Create, Activity, Settings; a *Tools* submenu with Devices, Tags, Statistics, Backup, About; *Documentation* and *Quit* removed from the drawer (Quit stays as the standard shortcut); footer pins as icon buttons with tooltips (`MDI-F89`). |
+| D30 | **Connected drives** (owner's request, NTFS). `core/mdivolumes.*` lists external drives, mounted or not, detects third-party file-system drivers (Paragon, Tuxera, macFUSE) and mounts a drive read-only on request; the Create page shows the list. Katalog never reads raw devices (that needs administrator rights): reading a drive the system cannot mount is out of scope. Context: the owner's WD 2 TB NTFS drive failed to mount because Paragon's kext was not loaded; with Paragon removed, macOS mounts it read-only and it is readable (`MDI-F90`, `MDI-C27`). |
+
 ---
 
 ## Scope at a glance
@@ -117,7 +134,12 @@ and Memory modes (D17), Hosted mode still open (`Q11`); starting
 enrichment on existing catalogs (D8); the interaction with the catalog's
 *Include metadata* level; an *Activity* page with a core resource monitor and
 per-step activity reporting from the runner (D19, D21); the card layout of the
-Create page and the thumbnail tiles of Explore (D20, rows pending, `Q18`).
+Create page and the thumbnail tiles of Explore (D20, rows pending, `Q18`); an
+instant search index for text search (D22); WebP thumbnails, video contact
+sheets and technical data (D23); text snippets (D24); archive listings (D25);
+quick hashes and their use by the duplicates search (D26); the offline
+Inspector and the Explore column view (D27, D28); the simplified side menu
+(D29); the list of connected drives with read-only mounting (D30).
 
 **Later phase (in scope, `[Backlog]`):** text and Office documents beyond PDF;
 characterising information for applications and other files.
@@ -136,6 +158,7 @@ characterising information for applications and other files.
 
 - Bundling external tools or models in builds (D9, deferred).
 - Proposing any of this upstream (D1).
+- Reading raw devices, or any drive the system cannot mount (D30, `MDI-C27`).
 
 **Applies to:** K3 (`qt_quick`) and the shared `core/` of this fork only.
 
@@ -185,7 +208,7 @@ characterising information for applications and other files.
 | MDI-F1 | The K3 Create page offers two modes: the existing form (**standard** mode) and a **wizard** mode. Switching mode does not open another page and does not clear the values common to both (source path, catalog name, storage). In standard mode the page behaves exactly as before this spec; the mode switch is the only visible addition. The last mode used is restored when the page is opened again. | [Implemented — Phase A.1] |
 | MDI-F2 | The wizard presents its choices as ordered steps: (1) source drive or folder; (2) destination path for derived files; (3) file types to include; (4) preview options; (5) AI options; (6) a summary of every choice with a *Create* action. The user can go back to any previous step without losing later choices. | [Removed — superseded by `MDI-F60` (D15, 2026-10-28)] |
 | MDI-F3 | The file types section offers the file types Image, Video, Audio, Text and Other, each on or off independently. The document type is labelled with the existing catalog file type *Text* (user decision 2026-10-28; reuses an existing translation, no *Document* string). Only files of the selected types are enriched; the catalog itself is created with the same file selection standard mode would use for the same source. | [Implemented — Phase A.1] |
-| MDI-F4 | The previews section offers, per type: **Image** — thumbnail on/off. **Video** — poster frame on/off; keyframe strip on/off with a frame count (default 8, range 2–32); low-resolution clip off / full / partial, where partial takes a start offset and a duration in seconds (default 0 s and 30 s). **Audio** — clip off / full / partial (same parameters); waveform image on/off. | [Implemented — Phase A.1] |
+| MDI-F4 | The previews section offers, per type: **Image** — thumbnail on/off. **Video** — poster frame on/off; keyframe strip on/off with a frame count (default 4, range 2–32; default 8 until D23, 2026-10-29); low-resolution clip off / full / partial, where partial takes a start offset and a duration in seconds (default 0 s and 30 s). **Audio** — clip off / full / partial (same parameters); waveform image on/off. | [Implemented — Phase A.1] |
 | MDI-F5 | The *AI analysis* section offers a provider choice and the analyses: image caption and tags; document summary and key excerpts; transcript; topic segments; topic clusters; embeddings for semantic search. The default provider is the local one. A commercial provider appears in the list only when it is configured (`MDI-F23`). An analysis whose external tool or model is unavailable is shown disabled with the reason (`MDI-F20`). Topic segments require transcript; topic clusters require topic segments; selecting a dependent analysis selects its prerequisite. Generated text (captions, tags, summaries, segment titles and summaries, topics, cluster labels and descriptions) is in the source's language by default; an option sets it to the UI language instead (D12). Key excerpts stay verbatim (`MDI-F40`). | [Planned — part implemented in Phase B] |
 | MDI-F6 | *Create* is refused, with a `Kirigami.InlineMessage` at the top of the form and nothing created, when: the source is empty; the destination path is empty; the destination path is not writable; the destination path is the source or lies inside it; no file type is selected while at least one preview or analysis is selected. The message hides when the offending field is edited (`SpecValidationRules.md`). | [Implemented — Phase A] |
 | MDI-F7 | Confirming the wizard creates the catalog through the **existing** catalog-creation path (same entry point, same queue behaviour, same result as standard mode for the same inputs) and saves the enrichment profile for that catalog. Only when the creation **completes successfully** is an enrichment job for that catalog added to the enrichment list (`MDI-F16`). A creation that fails, is cancelled, or is removed from the operation queue creates no enrichment job. | [Implemented — Phase A] |
@@ -256,12 +279,15 @@ characterising information for applications and other files.
 
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
-| MDI-F29 | **Image thumbnail:** a JPEG whose longest side is 320 px (configurable 128–1024), aspect ratio kept, orientation tag applied. | [Planned — part implemented in Phase A] |
+| MDI-F29 | **Image thumbnail:** a JPEG whose longest side is 320 px (configurable 128–1024), aspect ratio kept, orientation tag applied. | [Removed — superseded by `MDI-F78` (D23, 2026-10-29)] |
 | MDI-F30 | **Video poster frame:** one frame taken at 10 % of the duration (from `ffprobe`), saved like a thumbnail. | [Implemented — Phase A] |
-| MDI-F31 | **Video keyframe strip:** the selected number of frames, evenly spaced over the duration, each saved like a thumbnail and recorded with its timecode. | [Implemented — Phase A] |
+| MDI-F31 | **Video keyframe strip:** the selected number of frames, evenly spaced over the duration, each saved like a thumbnail and recorded with its timecode. | [Removed — superseded by `MDI-F79` (D23, 2026-10-29)] |
 | MDI-F32 | **Video low-resolution clip:** an MP4 (H.264 video, AAC audio) no taller than 360 px, of the whole file or of the selected partial range. | [Implemented — Phase A] |
 | MDI-F33 | **Audio clip:** an M4A (AAC) of the whole file or of the selected partial range. **Waveform:** a PNG image of the whole file's amplitude. | [Implemented — Phase A] |
 | MDI-F34 | Derived files are written only under the catalog's destination path, in a layout that does not depend on the source file's name or folder (`MDI-C19`). Opening a derived clip or image opens it with the system's default application. | [Implemented — Phase A] |
+| MDI-F78 | **Image thumbnail:** a WebP file under the destination path whose longest side is 256 px, quality 75 (about 6 KB), aspect ratio kept, EXIF orientation applied. Where Qt has no WebP writer, a JPEG is written instead. Thumbnails are files, never database BLOBs (D23). The video poster frame (`MDI-F30`) is saved the same way. | [Implemented — increment 3] |
+| MDI-F79 | **Video keyframe strip:** one contact-sheet image holding the selected number of frames (`MDI-F4`, default 4), evenly spaced over the duration, side by side, each 144 px high. The datum records, per frame, its timecode, its horizontal position and its width in the sheet (D23). | [Implemented — increment 3] |
+| MDI-F80 | **Technical data:** for video and audio files, `ffprobe` gives codec, resolution, frame rate, duration, bit rate and audio stream details, stored as a derived datum and shown as *Technical data* in *Show analysis* and the Inspector (`MDI-F87`) (D23). | [Implemented — increment 3] |
 
 ### Video and audio — transcripts, segments, clusters {#transcripts}
 
@@ -292,6 +318,14 @@ characterising information for applications and other files.
 | ---- | ------------- | -------- |
 | MDI-F43 | **Characterising information:** for applications and other binary files, Katalog records where obtainable: version, publisher, architecture, bundle identifier and code-signature status. Each item absent from a file is left empty, not guessed. The means per platform need their own approval. | [Backlog] |
 
+### File contents — text snippet and archives {#contents}
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F81 | **Text snippet:** for a file with the extension `txt`, `md`, `csv`, `tsv`, `json`, `xml`, `log`, `srt`, `vtt`, `rtf`, `html`, `pdf`, `docx`, `odt`, `doc`, `pptx`, `odp`, `xlsx` or `ods`, the first 800 characters of its text, cleaned, are stored as a derived datum. A file whose content is binary is skipped. The choice is by extension, whatever file types the profile selects: an exception to `MDI-F3` (D24). | [Implemented — increment 3] |
+| MDI-F82 | **Archive contents:** for `zip`/`jar`, `tar` (plain, `.gz`, `.bz2`, `.xz`, `.zst`) and `7z` files, the list of entries is stored: at most 20,000 entries, while all entries are counted. A compressed tar larger than 2 GB is skipped; RAR is not supported. An archive KArchive cannot read (for example a tar made on macOS with pax/xattr headers) is recorded as failed with the reason. Entry names are part of the derived text of the instant search index (`MDI-F76`). The list is shown in *Show analysis* and the Inspector (`MDI-F87`). In a build without KArchive the analysis is skipped with its reason (`MDI-F21`, `MDI-C25`) (D25). | [Implemented — increment 3] |
+| MDI-F83 | **Archives in the Explore tree:** an archive with a stored entry list is shown as a folder in the Explore tree, its entries browsable like files (D25). | [Backlog] |
+
 ### Browsing derived data offline {#offline}
 
 | ID | Requirement | Status |
@@ -299,6 +333,8 @@ characterising information for applications and other files.
 | MDI-F44 | In Explore and in Search results, a file that has derived data is marked, and selecting it shows its derived data: thumbnail or frames, clip and waveform, caption and AI tags, summary and excerpts, transcript and segments. This works identically whether the device is connected, disconnected or inactive. | [Planned — part implemented in Phase A] |
 | MDI-F45 | When the destination path is unreachable (its drive disconnected, or the collection opened on another machine), the derived text (captions, tags, summaries, excerpts, transcripts, segments) is still shown from the database, and each derived file is replaced by a placeholder saying it is not available. No error dialog is shown. | [Planned — part implemented in Phase A] |
 | MDI-F46 | From a segment, *Open at timecode* opens the derived clip, or the original when the device is connected, with the system default application; the timecode is shown for the user to seek, because seeking an external player is not portable. There is no in-app playback (D7). | [Planned — part implemented in Phase A] |
+| MDI-F87 | **Inspector.** Explore and Search results have an *Inspector* side panel, shown or hidden by the *Inspector* action and by `Space` when the focus is not in a type-ahead; its visibility is remembered (settings key `View/InspectorVisible`). For the selected file it shows: the disk state, *online* (with the volume name; activating it opens the file) or *offline* (naming the device to connect); the preview or contact sheet; the caption or summary; the text snippet; the technical data; the extended metadata, with an *Open on map* link (OpenStreetMap, in the system browser) when GPS coordinates are present; the quick hash and the SHA-256; the archive entries; and *Show analysis*. With no file selected it says so. It works whether the device is connected or not (`MDI-F44`) (D27). | [Implemented — increment 3] |
+| MDI-F88 | **Explore column view.** A *Columns* action switches Explore to a Finder-style column view: one column per folder level, from the same entries as the Explore list, folders first, with thumbnails, navigable with the keyboard. The choice is remembered (settings key `View/ExploreColumns`) (D28). | [Implemented — increment 3] |
 
 ### Semantic search {#semantic}
 
@@ -309,6 +345,21 @@ characterising information for applications and other files.
 | MDI-F49 | Semantic search covers only the devices of the current selection (`SpecSelection.md`). Stored embeddings made by a model other than the collection's current embeddings model are not compared; their count is reported with the results. | [Planned — part implemented in Phase D] |
 | MDI-F50 | The query is embedded by the collection's embeddings provider. When that provider is not local, the first semantic search of the session shows the `MDI-F24` confirmation (without file count or cost estimate); declining runs no search. | [Planned] |
 | MDI-F51 | Semantic search returns at most 50 results by default (configurable 10–500), runs in the background, reports progress with the standard builder through the activity panel as a search does (`OPQ-F15`), and can be stopped. | [Planned] |
+
+### Instant search index {#instant-search-index}
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F76 | **Instant search index.** Each catalog has a full-text index of its files' names, folders and derived text (text snippet, summary, caption, AI tags, archive entry names). It is rebuilt in the background for every catalog whose index is missing or older than the catalog's last update, after the collection is opened and after each creation or update; the runner updates a file's entry after its analyses. Searches and Explore keep working while it is rebuilt (D22). | [Implemented — increment 3] |
+| MDI-F77 | **Text search fast path.** When a catalog's index is current, a K3 text search on that catalog first narrows its files to the index's matches, then applies the unchanged search criteria; the results are identical to the same search without the index. The index is not used, and the search runs as before, for: regular-expression criteria; a term shorter than 3 characters; a `/` in the text outside names-only mode; Hosted mode; a missing or stale index (D22). | [Implemented — increment 3] |
+
+### Quick hash and duplicates {#quick-hash}
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F84 | **Quick hash.** Right after a catalog is created or updated, and when the collection is opened, the runner computes a quick hash (`MDI-C26`) for every file of every catalog whose quick hashes do not cover its last update and whose source is reachable, whether or not the catalog has an enrichment profile, as its own pass (*Quick hash*). It is an exception to `MDI-F3` and to the user-started jobs of `MDI-F7`/`F8`. Hosted mode is not covered (D26). | [Implemented — increment 3] |
+| MDI-F85 | **Duplicates by quick hash.** A K3 duplicates search on checksum uses a file's quick hash as its key when it has one, and its SHA-256 otherwise. An option *Verify with full checksum* re-keys the candidate duplicates with their SHA-256, stored or computed from the file; the option holds for the session only and is not saved in the search history (D26). | [Implemented — increment 3] |
+| MDI-F86 | **Compare two devices by quick hash.** The comparison of two devices on checksum uses quick hashes as `MDI-F85` does (today it uses SHA-256) (D26). | [Backlog] |
 
 ### Provenance and storage {#provenance}
 
@@ -337,6 +388,18 @@ characterising information for applications and other files.
 > side effect of a metadata setting: lowering the level to *None* to reduce the
 > database keeps every caption, transcript and embedding. Removing derived data
 > is always the explicit action of `MDI-F59` (or a catalog deletion, `MDI-F57`).
+
+### Side menu {#side-menu}
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F89 | The K3 side menu's main entries are Selection, Search, Explore, Create, Activity and Settings; a *Tools* submenu holds Devices, Tags, Statistics, Backup and About. The drawer has no *Documentation* and no *Quit* entry; Quit stays available through the standard shortcut. The footer pins are icon buttons with tooltips (`SpecIconButtons.md`). The drawer's *Open* menu (`OPN-F7`, `OPN-F9`) is unchanged (D29). | [Implemented — increment 3] |
+
+### Connected drives {#connected-drives}
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F90 | The K3 Create page shows *Connected drives*: the external drives, mounted or not, with *Refresh*. A drive that is not mounted reads *Not mounted* and offers *Mount read-only*, which asks the system to mount it read-only and, on success, puts its mount point in the source path. When the mount fails and a third-party file-system driver (Paragon, Tuxera, macFUSE) handles the drive, the message names the driver and explains that the system reads NTFS drives on its own; otherwise it gives the system's reason. Windows lists mounted volumes only (D30). | [Implemented — increment 3] |
 
 ## Constructional requirements — *how it is built / limits / MUST-NOTs*
 
