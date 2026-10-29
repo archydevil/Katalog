@@ -889,8 +889,12 @@ private:
     // results per catalog (refreshed at most every 15 s)
     QHash<int, QPair<QString, QVariantMap>> m_homeTypeCache;
     QHash<int, QPair<qint64, int>>          m_homeAiCache;
-    QSet<int>                               m_homeCounting;   // catalogs being counted
+    QSet<int>                               m_homeCounting;   // catalogs counted or waiting
+    struct HomeCount { int deviceId; int catalogId; QString stamp; QString catalogFile; bool types; };
+    QList<HomeCount>                        m_homeQueue;      // one worker at a time
+    bool                                    m_homeWorkerBusy = false;
     void countHomeDrive(int deviceId, int catalogId, const QString &stamp, const QString &catalogFile, bool types);
+    void runNextHomeCount();
     void    holdOrDropMdiJob(const MdiData::PendingJob &job, const QString &error);
     QString startMdiJob(const MdiData::PendingJob &job, bool resumed);
     bool    mdiJobReachable(const MdiData::PendingJob &job);

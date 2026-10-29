@@ -17,7 +17,7 @@ ColumnLayout {
         wrapMode: Text.WordWrap
         color: KTheme.text
         font.weight: Font.Bold
-        font.pixelSize: parent.level === 1 ? KTheme.titlePage : parent.level === 2 ? KTheme.titleSection : KTheme.titleCard + 1
+        font.pixelSize: parent.level === 1 ? KTheme.titlePage : parent.level === 2 ? KTheme.titleSection : KTheme.titleSub
         Accessible.role: Accessible.Heading
     }
     Controls.Label {

@@ -52,6 +52,10 @@ QtObject {
     readonly property int titleCard:     15
     readonly property int body:          14
     readonly property int note:          12
+    readonly property int metric:        26    // key numbers
+    readonly property int titleSub:      16    // card titles in a section header
+    readonly property int groupLabel:    11    // sidebar group titles, upper case
+    readonly property real groupSpacing: 0.6   // their letter spacing
     readonly property string mono:       Qt.platform.os === "osx" ? "Menlo"
                                        : Qt.platform.os === "windows" ? "Consolas" : "monospace"
 

@@ -1279,6 +1279,11 @@ bool AppManager::reconnectToDatabase()
     }
     m_mdiHeld.clear();
     stopKnowledgeIndexing();   // its documents stay pending in the left collection
+    // Home counts belong to the collection being left
+    m_homeQueue.clear();
+    m_homeCounting.clear();
+    m_homeTypeCache.clear();
+    m_homeAiCache.clear();
     m_mdiStep.clear();
     m_mdiStepLog.clear();
     m_mdiStatusText.clear();
@@ -3363,18 +3368,28 @@ QVariantMap AppManager::homeOverview()
 //----------------------------------------------------------------------
 void AppManager::countHomeDrive(int deviceId, int catalogId, const QString &stamp, const QString &catalogFile, bool types)
 {
-    // One count per catalog at a time, on a worker thread with its own
-    // connections: the UI thread never reads a file list (MDI-C38)
+    // Counted on a worker thread with its own connections, one catalog at a
+    // time: the UI thread never reads a file list (MDI-C38)
     if (m_homeCounting.contains(deviceId))
         return;
     m_homeCounting.insert(deviceId);
+    m_homeQueue.append({deviceId, catalogId, stamp, catalogFile, types});
+    runNextHomeCount();
+}
+//----------------------------------------------------------------------
+void AppManager::runNextHomeCount()
+{
+    if (m_homeWorkerBusy || m_homeQueue.isEmpty())
+        return;
+    m_homeWorkerBusy = true;
+    const HomeCount job = m_homeQueue.takeFirst();
     const QString mode   = collection->databaseMode;
     const QString dbFile = collection->databaseFilePath;
     const QString mdiDb  = mdiDataPath();
-    QThread *worker = QThread::create([this, deviceId, catalogId, stamp, catalogFile, types, mode, dbFile, mdiDb]() {
-        const QString name = QStringLiteral("home_count_%1").arg(deviceId);
+    QThread *worker = QThread::create([this, job, mode, dbFile, mdiDb]() {
+        const QString name = QStringLiteral("home_count_%1").arg(job.deviceId);
         QVariantMap counts;
-        if (types && mode != QLatin1String("Hosted")) {
+        if (job.types && mode != QLatin1String("Hosted")) {
             {
                 if (mode == QLatin1String("File")) {
                     QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), name);
@@ -3382,7 +3397,7 @@ void AppManager::countHomeDrive(int deviceId, int catalogId, const QString &stam
                     db.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY"));
                     db.open();
                 }
-                for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(name, catalogId, mode, catalogFile))
+                for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(name, job.catalogId, mode, job.catalogFile))
                     counts[f.fileType] = counts.value(f.fileType).toInt() + 1;
             }
             QSqlDatabase::removeDatabase(name);
@@ -3390,16 +3405,18 @@ void AppManager::countHomeDrive(int deviceId, int catalogId, const QString &stam
         int aiFiles = -1;
         const QString mdiName = name + QStringLiteral("_mdi");
         if (QFileInfo::exists(mdiDb) && MdiData::open(mdiName, mdiDb)) {
-            aiFiles = int(MdiData::catalogIndex(mdiName, catalogId).size());
+            aiFiles = int(MdiData::catalogIndex(mdiName, job.catalogId).size());
             MdiData::close(mdiName);
         }
-        QMetaObject::invokeMethod(this, [this, deviceId, stamp, counts, types, aiFiles]() {
-            if (types)
-                m_homeTypeCache.insert(deviceId, {stamp, counts});
+        QMetaObject::invokeMethod(this, [this, job, counts, aiFiles]() {
+            if (job.types)
+                m_homeTypeCache.insert(job.deviceId, {job.stamp, counts});
             if (aiFiles >= 0)
-                m_homeAiCache.insert(deviceId, {QDateTime::currentSecsSinceEpoch(), aiFiles});
-            m_homeCounting.remove(deviceId);
+                m_homeAiCache.insert(job.deviceId, {QDateTime::currentSecsSinceEpoch(), aiFiles});
+            m_homeCounting.remove(job.deviceId);
+            m_homeWorkerBusy = false;
             emit homeOverviewChanged();
+            runNextHomeCount();
         }, Qt::QueuedConnection);
     });
     connect(worker, &QThread::finished, worker, &QObject::deleteLater);

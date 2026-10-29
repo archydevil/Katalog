@@ -912,7 +912,9 @@ Kirigami.ApplicationWindow {
 
     globalDrawer: Kirigami.GlobalDrawer {
         id: sidebar
-        modal: false
+        // Fixed beside the pages; on a narrow window it slides in over them
+        modal: root.width < Kirigami.Units.gridUnit * 48
+        drawerOpen: !modal
         width: 264
         actions: []
 
@@ -1004,7 +1006,7 @@ Kirigami.ApplicationWindow {
                     active: root.openFeaturePage === pageHome
                     onClicked: root.sidebarGo("Home", pageHome)
                 }
-                Controls.Label { text: qsTr("Archive").toUpperCase(); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 0.6; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
+                Controls.Label { text: qsTr("Archive").toUpperCase(); font.pixelSize: KTheme.groupLabel; font.weight: Font.DemiBold; font.letterSpacing: KTheme.groupSpacing; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
                 KSidebarItem {
                     iconName: "view-list-icons"
                     title: qsTr("My drives")
@@ -1033,7 +1035,7 @@ Kirigami.ApplicationWindow {
                     active: root.openFeaturePage === pageCreate
                     onClicked: root.sidebarGo("Create", pageCreate)
                 }
-                Controls.Label { text: qsTr("Intelligence").toUpperCase(); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 0.6; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
+                Controls.Label { text: qsTr("Intelligence").toUpperCase(); font.pixelSize: KTheme.groupLabel; font.weight: Font.DemiBold; font.letterSpacing: KTheme.groupSpacing; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
                 KSidebarItem {
                     iconName: "document-properties"
                     title: qsTr("Archive knowledge")
@@ -1048,7 +1050,7 @@ Kirigami.ApplicationWindow {
                     active: root.openFeaturePage === pageActivity
                     onClicked: root.sidebarGo("Activity", pageActivity)
                 }
-                Controls.Label { text: qsTr("Other").toUpperCase(); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 0.6; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
+                Controls.Label { text: qsTr("Other").toUpperCase(); font.pixelSize: KTheme.groupLabel; font.weight: Font.DemiBold; font.letterSpacing: KTheme.groupSpacing; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
                 KSidebarItem { iconName: "view-statistics"; title: qsTr("Archive in numbers"); active: root.openFeaturePage === pageStatistics; onClicked: root.sidebarGo("Statistics", pageStatistics) }
                 KSidebarItem { iconName: "tag"; title: qsTr("Labels"); active: root.openFeaturePage === pageTags; onClicked: root.sidebarGo("Tags", pageTags) }
                 KSidebarItem { iconName: "backup"; title: qsTr("Safety copies"); active: root.openFeaturePage === pageBackup; onClicked: root.sidebarGo("Backup", pageBackup) }

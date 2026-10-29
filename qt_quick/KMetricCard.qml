@@ -22,7 +22,7 @@ KCard {
     Controls.Label {
         text: metric.value
         color: KTheme.text
-        font.pixelSize: 26
+        font.pixelSize: KTheme.metric
         font.weight: Font.Bold
     }
     KInfoTag {
