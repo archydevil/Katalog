@@ -550,8 +550,9 @@ void MdiEnrichmentJob::run()
     }
 
     // Catalog-level clusters, when this run produced new topic segments or
-    // none exist yet (MDI-F37; scope per catalog, D-Q3)
-    if (!m_stop.load() && m_segmentsChanged) {
+    // none exist yet (MDI-F37; scope per catalog, D-Q3). Never in a quick-hash
+    // pass: it computes the quick hash only and asks no AI (MDI-F84).
+    if (!m_stop.load() && !m_config.quickHashOnly && m_segmentsChanged) {
         emit progress(fileCount, fileCount, QStringLiteral("clusters"), m_config.catalogName);
         QVariantMap step = stepInfo(QStringLiteral("clusters"));
         step[QStringLiteral("analysis")]  = QStringLiteral("clusters");
