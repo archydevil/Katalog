@@ -490,6 +490,7 @@ ColumnLayout {
         id: reinterpretDialog
         title: qsTr("Re-interpret with the context")
         modal: true
+        width: Kirigami.Units.gridUnit * 30
         anchors.centerIn: Controls.Overlay.overlay
         standardButtons: Controls.Dialog.Ok | Controls.Dialog.Cancel
         onAccepted: {
