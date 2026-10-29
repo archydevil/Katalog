@@ -79,6 +79,7 @@
 
 class BackupJobStoppable;
 #include "core/mdienrichmentjob.h"   // Config is passed by value
+#include "core/mdidata.h"           // PendingJob is held by value
 class QThread;
 
 class MdiSystemMonitor;
@@ -445,6 +446,30 @@ public slots:
     // that is away instead of being refused (D31)
     Q_INVOKABLE QString      startEnrichment(int deviceId, bool resumed = false);
     Q_INVOKABLE void         stopEnrichment();
+    // Classification only, on a folder and a file type, from the results
+    // already there (D33, MDI-F103); empty folder / type = the whole catalog
+    Q_INVOKABLE QString      startReinterpretation(int deviceId, const QString &folder, const QString &fileType);
+    // {files, seconds}: what a re-interpretation would cover and take
+    Q_INVOKABLE QVariantMap  reinterpretEstimate(int deviceId, const QString &folder, const QString &fileType);
+
+    // Domain context (fork, D33): the collection's, and notes per catalog
+    Q_INVOKABLE QVariantMap  getContext();
+    Q_INVOKABLE bool         saveContext(const QVariantMap &context);
+    Q_INVOKABLE QString      getCatalogNotes(int deviceId);
+    Q_INVOKABLE bool         saveCatalogNotes(int deviceId, const QString &notes);
+    Q_INVOKABLE QVariantList contextCatalogs();            // [{deviceId, name, path}]
+    // Draft of a context from a catalog's folders and results, by the local
+    // text model on a worker thread; the answer comes with contextDraftReady
+    Q_INVOKABLE void         draftContext(int deviceId);
+    // Knowledge base (MDI-F104..F106): reference documents, indexed in the
+    // background on their own thread
+    Q_INVOKABLE QVariantList knowledgeDocuments();
+    Q_INVOKABLE int          addKnowledgePaths(const QVariantList &urls);
+    Q_INVOKABLE bool         removeKnowledgeDocument(int documentId);
+    Q_PROPERTY(bool    knowledgeIsRunning  READ getKnowledgeIsRunning  NOTIFY knowledgeStateChanged)
+    Q_PROPERTY(QString knowledgeStatusText READ getKnowledgeStatusText NOTIFY knowledgeStateChanged)
+    bool    getKnowledgeIsRunning()  const { return m_kbJob != nullptr; }
+    QString getKnowledgeStatusText() const { return m_kbStatusText; }
     Q_INVOKABLE void         setEnrichmentPaused(bool paused);
     Q_INVOKABLE QVariantMap  getEnrichmentTools();
     QVariantMap  getMdiSystem()  const { return m_mdiSystem; }
@@ -705,6 +730,8 @@ signals:
     void mdiStepChanged();
     void mdiStepLogChanged();
     void enrichmentFinished(const QVariantMap &summary);
+    void contextDraftReady(const QVariantMap &draft, const QString &error);
+    void knowledgeStateChanged();
     void semanticResultsChanged();
     // End of a Memory-mode Explore load: the open's result, or stopped
     void exploreCatalogOpened(const QVariantMap &info);
@@ -831,7 +858,7 @@ private:
     bool              m_mdiIsPaused = false;
     QString           m_mdiStatusText;
     QString           m_mdiCatalogName;
-    QList<int>        m_mdiWaiting;
+    QList<MdiData::PendingJob> m_mdiWaiting;
     int               m_mdiRevision = 0;
     bool              m_mdiRevisionPending = false;
     bool              m_mdiQuitHooked = false;
@@ -844,17 +871,25 @@ private:
     void    refreshMdiIndex(int catalogId);
     void    startNextEnrichment();
     // Kept across restarts and collection switches in mdi_data.db (MDI-F12, MDI-C28)
-    int               m_mdiDeviceId = -1;          // device of the running job
+    MdiData::PendingJob m_mdiRunning{-1};          // the running job (device -1 when none)
     bool              m_mdiQuickHashOnly = false;  // the running job is a quick-hash pass
     bool              m_mdiWaitingForSource = false;   // a drive is away (MDI-F91)
     QString           m_mdiWaitingPath;                // the path waited for
     bool              m_mdiKeepPending = false;    // ends on quit or switch: stays pending (MDI-F93)
     bool              m_mdiLeaving = false;        // ends by Stop or by stepping aside (MDI-F92)
-    QSet<int>         m_mdiStartPaused;            // restored jobs that start paused (D6, D31)
     // Pending jobs that cannot start now (no profile, destination not
     // writable): kept, and tried again when the collection is opened (MDI-F12)
-    QList<int>        m_mdiHeld;
-    void    holdOrDropMdiJob(int deviceId, const QString &error);
+    QList<MdiData::PendingJob> m_mdiHeld;
+    void    holdOrDropMdiJob(const MdiData::PendingJob &job, const QString &error);
+    QString startMdiJob(const MdiData::PendingJob &job, bool resumed);
+    bool    mdiJobReachable(const MdiData::PendingJob &job);
+    // Knowledge-base indexing: its own runner instance and thread (MDI-C33)
+    MdiEnrichmentJob *m_kbJob    = nullptr;
+    QThread          *m_kbThread = nullptr;
+    bool              m_kbPending = false;   // documents added while it runs
+    QString           m_kbStatusText;
+    void    startKnowledgeIndexing();
+    void    stopKnowledgeIndexing();
     void    saveMdiJobs();
     void    restoreMdiJobs();
     void    stepAsideIfWaiting();
@@ -884,7 +919,7 @@ private:
     QList<int>        m_quickHashWaiting;
     QString           startQuickHash(int deviceId);
     void              scheduleQuickHashes();
-    QString           launchMdiJob(Device &device, MdiEnrichmentJob::Config config);
+    QString           launchMdiJob(Device &device, MdiEnrichmentJob::Config config, const MdiData::PendingJob &job);
     void    stopFtsIndexing();
     QString mdiAnalysisLabel(const QString &analysis) const;
     QVariantList m_semanticResults;
