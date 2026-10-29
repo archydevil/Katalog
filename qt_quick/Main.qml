@@ -449,6 +449,14 @@ Kirigami.ApplicationWindow {
         table.positionViewAtRow(row, TableView.Contain)
     }
 
+    // Fork: Space toggles the Inspector only outside a type-ahead (CDT-F9),
+    // where a space can be part of the name being typed
+    function typeAheadIdle(table) {
+        return _typeAheadTable !== table || _typeAheadText === ""
+               || Date.now() - _typeAheadTime > Qt.styleHints.keyboardInputInterval
+    }
+    property bool inspectorVisible: false
+
     function tableKeyPressed(table, event, actions) {
         const rows    = table.rows
         const current = table.selectedRow
@@ -2524,6 +2532,14 @@ Kirigami.ApplicationWindow {
         padding: 0
 
         actions: [
+            Kirigami.Action {
+                // Offline Inspector beside the file list (fork); also Space
+                text: qsTr("Inspector")
+                icon.name: "view-sidetree"
+                checkable: true
+                checked: root.inspectorVisible
+                onTriggered: root.inspectorVisible = !root.inspectorVisible
+            },
             // Enrich the catalog shown (fork, SpecMediaIntelligence.md MDI-F8, Q9)
             Kirigami.Action {
                 text: qsTr("Analyze")
@@ -2630,10 +2646,20 @@ Kirigami.ApplicationWindow {
                 Controls.SplitView.fillWidth:    true
                 Controls.SplitView.minimumWidth: exploreSplit.filesMinimum
 
+                onInspectorToggleRequested: root.inspectorVisible = !root.inspectorVisible
                 onFolderNavigated: function(folderPath) {
                     exploreFolders.selectedFolderPath = folderPath
                     exploreFiles.currentFolderPath    = folderPath
                 }
+            }
+
+            // Offline Inspector (fork): follows the selected file
+            Inspector {
+                visible: root.inspectorVisible
+                Controls.SplitView.preferredWidth: Kirigami.Units.gridUnit * 18
+                Controls.SplitView.minimumWidth:   Kirigami.Units.gridUnit * 12
+                catalogId: exploreFiles.catalogId
+                fullPath:  exploreFiles.selectedFullPath
             }
         }
 

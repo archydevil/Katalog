@@ -74,6 +74,9 @@ Item {
     property string _activeEntryType:  ""
 
     signal folderNavigated(string folderPath)
+    // Fork: the Inspector follows the selected file; Space shows or hides it
+    property string selectedFullPath: ""
+    signal inspectorToggleRequested()
 
     function loadEntries() {
         if (currentFolderPath === "") return
@@ -328,6 +331,10 @@ Item {
                 model: appManager1.exploreSortModel
 
                 property int selectedRow: -1
+                onSelectedRowChanged: {
+                    const info = selectedRow >= 0 ? appManager1.exploreRowInfo(selectedRow) : ({})
+                    root.selectedFullPath = info.entryType === "file" ? info.fullPath : ""
+                }
 
                 ScrollBar.vertical:   ScrollBar { policy: ScrollBar.AsNeeded }
                 ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
@@ -338,6 +345,13 @@ Item {
                 // the Menu key go through the selected row's own cell.
                 activeFocusOnTab: true
                 Keys.onPressed: function(event) {
+                    // Space shows/hides the Inspector, unless it continues a type-ahead name
+                    if (event.key === Qt.Key_Space && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+                            && applicationWindow().typeAheadIdle(exploreTableView)) {
+                        root.inspectorToggleRequested()
+                        event.accepted = true
+                        return
+                    }
                     applicationWindow().tableKeyPressed(exploreTableView, event, {
                         activate: function(r) {
                             let cell = exploreTableView.itemAtCell(exploreTableView.leftColumn, r)
