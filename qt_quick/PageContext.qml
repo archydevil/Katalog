@@ -152,7 +152,7 @@ ColumnLayout {
                 return
             }
             pageContext.applyDraft(draft)
-            applicationWindow().showPassiveNotification(qsTr("Draft ready: review it, then save."))
+            applicationWindow().showPassiveNotification(qsTr("Draft ready, not saved yet."))
         }
         function onKnowledgeStateChanged() {
             pageContext.documents = appManager1.knowledgeDocuments()
