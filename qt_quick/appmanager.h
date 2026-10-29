@@ -464,6 +464,9 @@ public slots:
     Q_INVOKABLE QVariantMap  inspectorInfo(int catalogId, const QString &fullPath);
     // The Explore file list's row, for the Inspector (proxy row of exploreSortModel)
     Q_INVOKABLE QVariantMap  exploreRowInfo(int proxyRow);
+    // View choices kept across sessions (fork): Inspector shown, Explore columns
+    Q_INVOKABLE bool         getViewSetting(const QString &key) const;
+    Q_INVOKABLE void         setViewSetting(const QString &key, bool value);
     QVariantList getSemanticResults() const { return m_semanticResults; }
     bool         getSemanticActive()  const { return m_semanticActive; }
     bool         getSemanticOnly()    const { return m_semanticOnly; }

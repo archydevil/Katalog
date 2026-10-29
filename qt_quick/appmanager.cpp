@@ -3293,6 +3293,19 @@ QVariantMap AppManager::exploreRowInfo(int proxyRow)
     return info;
 }
 //----------------------------------------------------------------------
+bool AppManager::getViewSetting(const QString &key) const
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    return settings.value("View/" + key, false).toBool();
+}
+//----------------------------------------------------------------------
+void AppManager::setViewSetting(const QString &key, bool value)
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    settings.setValue("View/" + key, value);
+    settings.sync();
+}
+//----------------------------------------------------------------------
 QVariantMap AppManager::inspectorInfo(int catalogId, const QString &fullPath)
 {
     QVariantMap info;

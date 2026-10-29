@@ -455,7 +455,10 @@ Kirigami.ApplicationWindow {
         return _typeAheadTable !== table || _typeAheadText === ""
                || Date.now() - _typeAheadTime > Qt.styleHints.keyboardInputInterval
     }
-    property bool inspectorVisible: false
+    property bool inspectorVisible: appManager1.getViewSetting("InspectorVisible")
+    property bool exploreColumns: appManager1.getViewSetting("ExploreColumns")   // column view instead of tree + list (fork)
+    onInspectorVisibleChanged: appManager1.setViewSetting("InspectorVisible", inspectorVisible)
+    onExploreColumnsChanged:   appManager1.setViewSetting("ExploreColumns", exploreColumns)
 
     function tableKeyPressed(table, event, actions) {
         const rows    = table.rows
@@ -2386,6 +2389,14 @@ Kirigami.ApplicationWindow {
 
         actions: [
             Kirigami.Action {
+                // Offline Inspector beside the results (fork); also Space
+                text: qsTr("Inspector")
+                icon.name: "view-sidetree"
+                checkable: true
+                checked: root.inspectorVisible
+                onTriggered: root.inspectorVisible = !root.inspectorVisible
+            },
+            Kirigami.Action {
                 id: pageSearchResultsEscapeAction
                 text: qsTr("Close")
                 icon.name: "view-close"
@@ -2533,6 +2544,14 @@ Kirigami.ApplicationWindow {
 
         actions: [
             Kirigami.Action {
+                // Finder-style column view instead of tree + list (fork)
+                text: qsTr("Columns")
+                icon.name: "view-split-left-right"
+                checkable: true
+                checked: root.exploreColumns
+                onTriggered: root.exploreColumns = !root.exploreColumns
+            },
+            Kirigami.Action {
                 // Offline Inspector beside the file list (fork); also Space
                 text: qsTr("Inspector")
                 icon.name: "view-sidetree"
@@ -2624,6 +2643,7 @@ Kirigami.ApplicationWindow {
 
             PageExploreFolders {
                 id: exploreFolders
+                visible: !root.exploreColumns
                 Controls.SplitView.preferredWidth: Kirigami.Units.gridUnit * 16
                 Controls.SplitView.minimumWidth:   exploreSplit.treeMinimum
 
@@ -2643,6 +2663,7 @@ Kirigami.ApplicationWindow {
 
             PageExploreFiles {
                 id: exploreFiles
+                visible: !root.exploreColumns
                 Controls.SplitView.fillWidth:    true
                 Controls.SplitView.minimumWidth: exploreSplit.filesMinimum
 
@@ -2653,13 +2674,24 @@ Kirigami.ApplicationWindow {
                 }
             }
 
+            // Column view (fork): replaces the tree and the list when chosen
+            ColumnBrowser {
+                id: exploreColumnBrowser
+                visible: root.exploreColumns
+                Controls.SplitView.fillWidth: true
+                rootPath:  exploreFiles.catalogPath
+                catalogId: exploreFiles.catalogId
+                onInspectorToggleRequested: root.inspectorVisible = !root.inspectorVisible
+            }
+
             // Offline Inspector (fork): follows the selected file
             Inspector {
                 visible: root.inspectorVisible
                 Controls.SplitView.preferredWidth: Kirigami.Units.gridUnit * 18
                 Controls.SplitView.minimumWidth:   Kirigami.Units.gridUnit * 12
                 catalogId: exploreFiles.catalogId
-                fullPath:  exploreFiles.selectedFullPath
+                fullPath:  root.exploreColumns ? exploreColumnBrowser.selectedFullPath
+                                               : exploreFiles.selectedFullPath
             }
         }
 
