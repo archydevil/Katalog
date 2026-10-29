@@ -2749,7 +2749,8 @@ const QStringList kMdiAnalysisOrder = {
     QStringLiteral("clip_video"), QStringLiteral("clip_audio"), QStringLiteral("waveform"),
     QStringLiteral("caption"), QStringLiteral("transcript"), QStringLiteral("segments"),
     QStringLiteral("summary"), QStringLiteral("mediainfo"), QStringLiteral("snippet"),
-    QStringLiteral("archive"), QStringLiteral("quickhash"), QStringLiteral("embeddings")
+    QStringLiteral("archive"), QStringLiteral("classification"), QStringLiteral("quickhash"),
+    QStringLiteral("embeddings")
 };
 }
 //----------------------------------------------------------------------
@@ -3245,6 +3246,232 @@ void AppManager::holdOrDropMdiJob(const MdiData::PendingJob &job, const QString 
         qWarning() << "Enrichment kept pending for device" << job.deviceId << ":" << error;
     } else {
         qWarning() << "Enrichment removed for device" << job.deviceId << ": the catalog no longer exists";
+    }
+}
+//----------------------------------------------------------------------
+// Domain context (fork, D33)
+QVariantMap AppManager::getContext()
+{
+    if (!openMdiMainConnection())
+        return QVariantMap();
+    return MdiContext::load(kMdiMainConnection, MdiContext::kCollectionScope).toVariantMap();
+}
+//----------------------------------------------------------------------
+bool AppManager::saveContext(const QVariantMap &context)
+{
+    // A changed context re-runs nothing by itself (MDI-F99): new files use it,
+    // the others are re-interpreted on request
+    return openMdiMainConnection()
+        && MdiContext::save(kMdiMainConnection, MdiContext::kCollectionScope, QJsonObject::fromVariantMap(context));
+}
+//----------------------------------------------------------------------
+QString AppManager::getCatalogNotes(int deviceId)
+{
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog") || !openMdiMainConnection())
+        return QString();
+    return MdiContext::load(kMdiMainConnection, device.externalID).value("notes").toString();
+}
+//----------------------------------------------------------------------
+bool AppManager::saveCatalogNotes(int deviceId, const QString &notes)
+{
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog") || !openMdiMainConnection())
+        return false;
+    if (notes.trimmed().isEmpty())
+        return MdiContext::remove(kMdiMainConnection, device.externalID);
+    return MdiContext::save(kMdiMainConnection, device.externalID, QJsonObject{{"notes", notes.trimmed()}});
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::contextCatalogs()
+{
+    // Every catalog: no pass is ever recorded under this name
+    QVariantList list;
+    for (const QVariantMap &c : MdiFts::catalogsNeedingPass(m_connectionName, mdiDataPath(), QStringLiteral("context-list")))
+        list.append(QVariantMap{{QStringLiteral("deviceId"), c.value(QStringLiteral("deviceId"))},
+                                {QStringLiteral("name"),     c.value(QStringLiteral("name"))},
+                                {QStringLiteral("path"),     c.value(QStringLiteral("sourcePath"))}});
+    return list;
+}
+//----------------------------------------------------------------------
+void AppManager::draftContext(int deviceId)
+{
+    // What the draft reads: the catalog's folders (by number of files) and a
+    // sample of its descriptions, gathered here; the model answers on a
+    // worker thread (MDI-F97). Nothing is saved: the page fills its fields.
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog") || !openMdiMainConnection()) {
+        emit contextDraftReady(QVariantMap(), QStringLiteral("not a catalog"));
+        return;
+    }
+    QHash<QString, int> folderCount;
+    for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(m_connectionName, device.externalID,
+                                                                                 collection->databaseMode, device.catalog->filePath)) {
+        QString folder = QFileInfo(f.fullPath).path();
+        if (folder.startsWith(device.path))
+            folder = folder.mid(device.path.size());
+        // Three levels are enough to see the archive's structure
+        folder = folder.section('/', 0, 3, QString::SectionSkipEmpty);
+        if (!folder.isEmpty())
+            folderCount[folder]++;
+    }
+    QList<QPair<int, QString>> ranked;
+    for (auto it = folderCount.cbegin(); it != folderCount.cend(); ++it)
+        ranked.append({it.value(), it.key()});
+    std::sort(ranked.begin(), ranked.end(), [](const auto &a, const auto &b) { return a.first > b.first; });
+    QStringList folders;
+    for (int i = 0; i < ranked.size() && i < 200; ++i)
+        folders << QStringLiteral("%1 (%2 files)").arg(ranked.at(i).second).arg(ranked.at(i).first);
+
+    QStringList samples;
+    for (const QString &analysis : {QStringLiteral("caption"), QStringLiteral("summary"), QStringLiteral("snippet")}) {
+        const QList<MdiData::Datum> data = MdiData::forCatalog(kMdiMainConnection, device.externalID, analysis);
+        const int step = qMax(1, int(data.size()) / 25);
+        for (int i = 0; i < data.size(); i += step) {
+            const QJsonObject &v = data.at(i).value;
+            const QString text = analysis == QLatin1String("caption") ? v.value("caption").toString()
+                               : analysis == QLatin1String("summary") ? v.value("summary").toString()
+                               : v.value("text").toString().left(300);
+            if (!text.isEmpty())
+                samples << QStringLiteral("- ") + QFileInfo(data.at(i).fullPath).fileName() + QStringLiteral(": ") + text;
+        }
+    }
+
+    const QVariantMap tools = getEnrichmentTools();
+    const QString url   = tools.value(QStringLiteral("ollamaUrl")).toString();
+    const QString model = tools.value(QStringLiteral("textModel")).toString();
+    const QString prompt = MdiContext::draftPrompt(folders, samples,
+                                                   QLocale::languageToString(QLocale(getCurrentLanguage()).language()));
+    QThread *worker = QThread::create([this, url, model, prompt]() {
+        QString error;
+        const QJsonObject answer = MdiContext::askText(url, model, prompt, &error);
+        const QVariantMap draft = answer.isEmpty() ? QVariantMap() : MdiContext::parseDraft(answer).toVariantMap();
+        QMetaObject::invokeMethod(this, [this, draft, error]() { emit contextDraftReady(draft, error); },
+                                  Qt::QueuedConnection);
+    });
+    connect(worker, &QThread::finished, worker, &QObject::deleteLater);
+    worker->start();
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::reinterpretEstimate(int deviceId, const QString &folder, const QString &fileType)
+{
+    // Files in the scope, at the pace of the classifications seen in this
+    // session (else a typical local pace)
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog"))
+        return QVariantMap();
+    const QString prefix = folder.isEmpty() || folder.endsWith('/') ? folder : folder + '/';
+    int files = 0;
+    for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(m_connectionName, device.externalID,
+                                                                                 collection->databaseMode, device.catalog->filePath))
+        if ((prefix.isEmpty() || f.fullPath.startsWith(prefix)) && (fileType.isEmpty() || f.fileType == fileType))
+            ++files;
+    double total = 0;
+    int count = 0;
+    for (const QVariant &v : std::as_const(m_mdiStepLog)) {
+        const QVariantMap e = v.toMap();
+        if (e.value(QStringLiteral("analysis")).toString() == QLatin1String("classification")
+            && e.value(QStringLiteral("outcome")).toString() == QLatin1String("completed")) {
+            total += e.value(QStringLiteral("durationMs")).toDouble() / 1000.0;
+            ++count;
+        }
+    }
+    const double perFile = (count > 0 ? total / count : 6.0) + 0.5;   // + the embeddings refresh
+    return QVariantMap{{QStringLiteral("files"), files},
+                       {QStringLiteral("seconds"), qRound64(files * perFile)}};
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::knowledgeDocuments()
+{
+    return openMdiMainConnection() ? MdiKnowledge::documents(kMdiMainConnection) : QVariantList();
+}
+//----------------------------------------------------------------------
+int AppManager::addKnowledgePaths(const QVariantList &urls)
+{
+    // Referenced, never copied or modified (MDI-F104)
+    QStringList paths;
+    for (const QVariant &u : urls) {
+        const QUrl url = u.toUrl();
+        paths << (url.isLocalFile() ? url.toLocalFile() : u.toString());
+    }
+    if (!openMdiMainConnection())
+        return 0;
+    const int added = MdiKnowledge::addPaths(kMdiMainConnection, paths);
+    if (added > 0)
+        startKnowledgeIndexing();
+    emit knowledgeStateChanged();
+    return added;
+}
+//----------------------------------------------------------------------
+bool AppManager::removeKnowledgeDocument(int documentId)
+{
+    // From the knowledge base only: the file itself stays where it is
+    const bool removed = openMdiMainConnection() && MdiKnowledge::removeDocument(kMdiMainConnection, documentId);
+    emit knowledgeStateChanged();
+    return removed;
+}
+//----------------------------------------------------------------------
+void AppManager::startKnowledgeIndexing()
+{
+    // Its own runner instance and thread: enrichment keeps going (MDI-C33)
+    if (m_kbJob) {
+        m_kbPending = true;
+        return;
+    }
+    const QVariantMap tools = getEnrichmentTools();
+    MdiEnrichmentJob::Config config;
+    config.knowledgeOnly = true;
+    config.dataDbPath    = mdiDataPath();
+    config.pdftotextPath = tools.value(QStringLiteral("pdftotext")).toString();
+    config.ollamaUrl     = tools.value(QStringLiteral("ollamaUrl")).toString();
+    config.embedModel    = tools.value(QStringLiteral("embedModel")).toString();
+    m_kbPending = false;
+    m_kbJob    = new MdiEnrichmentJob(config, {});
+    m_kbThread = new QThread();
+    m_kbJob->moveToThread(m_kbThread);
+    connect(m_kbThread, &QThread::started, m_kbJob, &MdiEnrichmentJob::run);
+    connect(m_kbJob, &MdiEnrichmentJob::progress, this,
+            [this](int index, int count, const QString &, const QString &path) {
+        m_kbStatusText = StatusBarMessageBuilder().setOperation(mdiAnalysisLabel(QStringLiteral("knowledge")))
+                             .setStatus(tr("In Progress")).setProcess(tr("Loaded"), index, count)
+                             .setCurrentItem(path).build();
+        emit knowledgeStateChanged();
+    });
+    connect(m_kbJob, &MdiEnrichmentJob::finished, this, [this](const QVariantMap &summary) {
+        m_kbStatusText = StatusBarMessageBuilder().setOperation(mdiAnalysisLabel(QStringLiteral("knowledge")))
+                             .setStatus(summary.value(QStringLiteral("stopped")).toBool() ? tr("Cancelled") : tr("Completed"))
+                             .setResult(tr("Completed"), summary.value(QStringLiteral("completed")).toInt()).build();
+        m_kbJob = nullptr;   // deleted with its thread
+        emit knowledgeStateChanged();
+        if (m_kbPending)
+            QTimer::singleShot(0, this, &AppManager::startKnowledgeIndexing);
+    });
+    connect(m_kbJob,    &MdiEnrichmentJob::finished, m_kbThread, &QThread::quit);
+    connect(m_kbThread, &QThread::finished, m_kbJob,    &QObject::deleteLater);
+    connect(m_kbThread, &QThread::finished, m_kbThread, &QObject::deleteLater);
+    connect(m_kbThread, &QThread::finished, this, [this]() { m_kbThread = nullptr; });
+    connect(qApp, &QCoreApplication::aboutToQuit, m_kbJob, [this]() { stopKnowledgeIndexing(); });
+    m_kbThread->start();
+    emit knowledgeStateChanged();
+}
+//----------------------------------------------------------------------
+void AppManager::stopKnowledgeIndexing()
+{
+    // The document being read stays pending for next time
+    m_kbPending = false;
+    if (m_kbJob)
+        m_kbJob->requestStop();
+    if (m_kbThread) {
+        m_kbThread->quit();
+        m_kbThread->wait(5000);
     }
 }
 //----------------------------------------------------------------------

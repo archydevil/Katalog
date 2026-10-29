@@ -158,6 +158,9 @@ class AppManager : public QObject
     Q_PROPERTY(QVariantMap  mdiStep    READ getMdiStep    NOTIFY mdiStepChanged)
     Q_PROPERTY(QVariantMap  mdiJobInfo READ getMdiJobInfo NOTIFY mdiStepChanged)
     Q_PROPERTY(QVariantList mdiStepLog READ getMdiStepLog NOTIFY mdiStepLogChanged)
+    // Knowledge-base indexing (fork, D33)
+    Q_PROPERTY(bool    knowledgeIsRunning  READ getKnowledgeIsRunning  NOTIFY knowledgeStateChanged)
+    Q_PROPERTY(QString knowledgeStatusText READ getKnowledgeStatusText NOTIFY knowledgeStateChanged)
     // Search by meaning (fork, MDI-F47..F51): its own result list, beside the table
     Q_PROPERTY(QVariantList semanticResults READ getSemanticResults NOTIFY semanticResultsChanged)
     Q_PROPERTY(bool         semanticActive  READ getSemanticActive  NOTIFY semanticResultsChanged)
@@ -466,8 +469,6 @@ public slots:
     Q_INVOKABLE QVariantList knowledgeDocuments();
     Q_INVOKABLE int          addKnowledgePaths(const QVariantList &urls);
     Q_INVOKABLE bool         removeKnowledgeDocument(int documentId);
-    Q_PROPERTY(bool    knowledgeIsRunning  READ getKnowledgeIsRunning  NOTIFY knowledgeStateChanged)
-    Q_PROPERTY(QString knowledgeStatusText READ getKnowledgeStatusText NOTIFY knowledgeStateChanged)
     bool    getKnowledgeIsRunning()  const { return m_kbJob != nullptr; }
     QString getKnowledgeStatusText() const { return m_kbStatusText; }
     Q_INVOKABLE void         setEnrichmentPaused(bool paused);
