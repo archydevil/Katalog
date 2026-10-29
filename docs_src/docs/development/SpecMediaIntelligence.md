@@ -1,7 +1,7 @@
 ---
 id: SpecMediaIntelligence
 title: "Media Intelligence: Previews, AI Enrichment and Semantic Search"
-description: "Requirements for the fork-only K3 enrichment of catalogs: previews, transcripts, AI summaries, provenance and semantic search"
+description: "Requirements for the fork-only K3 enrichment of catalogs: previews, transcripts, AI summaries, provenance and semantic search; and the fork's K3 redesign (D34)"
 version: "3.1"
 ---
 
@@ -1577,3 +1577,10 @@ target spec is edited.
 | `SpecOperationQueue.md` (D19) | `OPQ-C16` note: the enrichment row of the activity panel opens the Activity page (`MDI-F69`); the panel itself is unchanged otherwise. |
 | `SpecProgressReport.md` (D33) | Operation name and process titles for knowledge-base indexing (`MDI-F105`) and for re-interpretation (`MDI-F103`), and the classification's process title. Each new string needs approval (D16). |
 | `SpecOperationQueue.md` (D33) | Knowledge-base indexing (`MDI-F105`) is, like the runner, not a queue entry (`MDI-C3`); state it next to the `MDI-C3` constraint listed above. |
+| `SpecTheme.md` (D34) | Per `Q35`: where the design system's colours are defined (`THM-C1`, `THM-C19`, `THM-C20`, `THM-C23` define colours once in `Main.qml`); the accent and the tag tones against `THM-C2`, `THM-C21`, `THM-C22`; what becomes of the *Theme* setting (`THM-C3`) and of the drawer logo band (`THM-F20`). |
+| `SpecTypography.md` (D34) | Per `Q34`, only if the design system gets its own text scale (`TYP-F3`, `TYP-F4`, `TYP-C3`). `TYP-F11` names the drawer's collection name: name the sidebar instead. |
+| `SpecCollectionIdentity.md` (D34) | `CID-F1`–`CID-F5` speak of the "drawer header": name the sidebar and the *Home* header. |
+| `SpecCollectionOpen.md` (D34) | `OPN-O3`, `OPN-F7`, `OPN-F9` speak of the drawer's *Open* menu: its new place (`Q36`). |
+| `SpecSettingsPage.md` (D34) | `SET-F4`, `SET-F5` speak of the drawer's entries and of the last page restored at startup: the sidebar entry and the start page (`Q36`, `Q37`). |
+| `SpecSelection.md`, `SpecDevicesPage.md` (D34) | Phase R1: what *I miei dischi* opens and whether the Selection column stays (`Q36`); phase R7: the merged page. |
+| `CLAUDE.md` (D34, not a spec) | The three lines named in `MDI-C39`, and the FORK block's statement of what this spec authorises. Only the fork owner amends `CLAUDE.md` (`Q33`). |
