@@ -1123,6 +1123,12 @@ Kirigami.ApplicationWindow {
                     onTriggered: { appManager1.setLastPage("Backup"); root.showPage(pageBackup) }
                 }
                 Kirigami.Action {
+                    // The domain the AI interprets the collection in (fork, D33, MDI-F107)
+                    icon.name: "documentinfo"
+                    text: qsTr("Context")
+                    onTriggered: { appManager1.setLastPage("Context"); root.showPage(pageContext) }
+                }
+                Kirigami.Action {
                     text: qsTr("About") //i18n("About")
                     icon.name: "help-about"
                     onTriggered: root.showLayer(aboutPage)
@@ -1245,7 +1251,8 @@ Kirigami.ApplicationWindow {
                 "Statistics": pageStatistics,
                 "Tags":       pageTags,
                 "Backup":     pageBackup,
-                "Activity":   pageActivity
+                "Activity":   pageActivity,
+                "Context":    pageContext
             }
             if (last !== "Selection" && pageMap[last])
                 root.showPage(pageMap[last])
@@ -2720,6 +2727,40 @@ Kirigami.ApplicationWindow {
         ]
         PageActivity {
             id: pageActivity_form
+        }
+    }
+
+    //Pages - Context (fork, SpecMediaIntelligence.md D33, MDI-F94..F107)
+    ScrollablePageFitted {
+        id: pageContext
+        property Kirigami.Action escapeAction: pageContextEscapeAction  // Esc (KBS-F1)
+        visible: false
+        title: qsTr("Context")
+        onVisibleChanged: pageContext_form.setShown(visible)
+        actions: [
+            Kirigami.Action {
+                icon.name: "document-save"
+                text: qsTr("Save")
+                enabled: pageContext_form.dirty
+                onTriggered: pageContext_form.save()
+            },
+            Kirigami.Action {
+                // Classification only, for files already analysed (MDI-F103)
+                icon.name: "view-refresh"
+                text: qsTr("Re-interpret with the context")
+                enabled: pageContext_form.hasSavedContext && !pageContext_form.dirty
+                         && pageContext_form.catalogDeviceId >= 0
+                onTriggered: pageContext_form.openReinterpret()
+            },
+            Kirigami.Action {
+                id: pageContextEscapeAction
+                text: qsTr("Close")
+                icon.name: "view-close"
+                onTriggered: root.closeFeaturePage(pageContext)
+            }
+        ]
+        PageContext {
+            id: pageContext_form
         }
     }
 

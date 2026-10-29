@@ -68,6 +68,7 @@ qt_add_qml_module(Katalog3
         CreateWizard.qml
         MdiDetailsDialog.qml
         PageActivity.qml
+        PageContext.qml
         Inspector.qml
         ColumnBrowser.qml
         PageDeviceEditForm.qml
