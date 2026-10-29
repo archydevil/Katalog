@@ -92,7 +92,7 @@ public:
         int         httpTimeoutMs = 120 * 1000;                   // MDI-C20
         bool        quickHashOnly = false;   // a pass computing only the quick hash
         QString     catalogStamp;            // catalog state the passes complete on
-        QString     sourceRoot;              // catalog's device path: the drive waited for (MDI-F91)
+        QString     sourceRoot;              // catalog's device path: waited for when away (MDI-F91)
     };
 
     MdiEnrichmentJob(const Config &config, const QList<FileItem> &files, QObject *parent = nullptr);
@@ -138,8 +138,8 @@ signals:
     //   start:    startedAt (ISO time)
     //   progress: progress (0..1), detail (e.g. "9 / 15 min")
     //   end:      outcome, reason, durationMs, tokensPerSecond (AI analyses, when known)
-    // and, apart from steps, "waiting" with waiting (bool) and sourcePath when
-    // the job starts and stops waiting for its drive (MDI-F91)
+    // and, apart from steps, "waiting" with waiting (bool) and drivePath when
+    // the job starts and stops waiting for a drive (MDI-F91)
     void activity(const QVariantMap &step);
 
 private:
@@ -192,9 +192,9 @@ private:
     QString derivedRelative(const FileItem &file, const QString &analysis, const QString &suffix) const;
     QString absoluteDerived(const QString &relative) const;
     bool    waitWhilePaused();   // false when stopped while paused
-    // The catalog's drive is away and the job waits for it (MDI-F91, MDI-C29);
-    // a quick-hash pass never waits
-    bool    sourceGone() const;
+    // The path of the drive the job waits for (MDI-F91, MDI-C29): the source,
+    // or the destination of the derived files; empty when both are there
+    QString driveAway() const;
     bool    waitForSource();     // false when stopped while waiting
 
     Config          m_config;

@@ -328,26 +328,36 @@ bool MdiEnrichmentJob::waitWhilePaused()
     return !m_stop.load();
 }
 
-bool MdiEnrichmentJob::sourceGone() const
+QString MdiEnrichmentJob::driveAway() const
 {
-    if (m_config.quickHashOnly || m_config.sourceRoot.isEmpty())
-        return false;   // a quick-hash pass is scheduled again instead (MDI-F84)
-    // A fixed mount point stays as an empty folder when its drive is gone
-    return !QFileInfo::exists(m_config.sourceRoot) || QDir(m_config.sourceRoot).isEmpty();
+    // The source drive; a quick-hash pass never waits, it is scheduled again
+    // (MDI-F84). A fixed mount point stays as an empty folder when its drive
+    // is gone.
+    if (!m_config.quickHashOnly && !m_config.sourceRoot.isEmpty()
+        && (!QFileInfo::exists(m_config.sourceRoot) || QDir(m_config.sourceRoot).isEmpty()))
+        return m_config.sourceRoot;
+    // The drive of the derived files, waited for as well (D31). The folder
+    // itself is created when first used: only a folder that cannot be created
+    // (its drive is away) is waited for.
+    if (!m_config.destinationPath.isEmpty() && !QFileInfo::exists(m_config.destinationPath)
+        && !QDir().mkpath(m_config.destinationPath))
+        return m_config.destinationPath;
+    return QString();
 }
 
 bool MdiEnrichmentJob::waitForSource()
 {
-    if (!sourceGone())
+    const QString path = driveAway();
+    if (path.isEmpty())
         return !m_stop.load();
-    // Nothing runs, nothing is read but the source path itself, every 2 s;
+    // Nothing runs, nothing is read but the path itself, every 2 s;
     // Pause and Stop are seen in between (MDI-F91, MDI-C29)
     QVariantMap waiting;
     waiting[QStringLiteral("event")]      = QStringLiteral("waiting");
     waiting[QStringLiteral("waiting")]    = true;
-    waiting[QStringLiteral("sourcePath")] = m_config.sourceRoot;
+    waiting[QStringLiteral("drivePath")]  = path;
     emit activity(waiting);
-    while (!m_stop.load() && sourceGone()) {
+    while (!m_stop.load() && !driveAway().isEmpty()) {
         QMutexLocker locker(&m_pauseMutex);
         if (!m_stop.load())
             m_pauseCondition.wait(&m_pauseMutex, 2000);
@@ -393,7 +403,8 @@ void MdiEnrichmentJob::run()
         if (!waitWhilePaused())
             break;
         if (i / kParallelChunk != precomputedChunk) {
-            if (!waitForSource())
+            // Paused while waiting: still paused when the drive is back
+            if (!waitForSource() || !waitWhilePaused())
                 break;
             precomputedChunk = i / kParallelChunk;
             precomputeThumbnails(i, qMin(fileCount, (precomputedChunk + 1) * kParallelChunk));
@@ -408,7 +419,7 @@ void MdiEnrichmentJob::run()
         // while its drive is there is skipped; a drive gone is waited for,
         // and the job goes on with this same file once it is back (MDI-F91).
         if (!QFileInfo::exists(file.fullPath)) {
-            if (sourceGone()) {
+            if (!driveAway().isEmpty()) {
                 if (!waitForSource())
                     break;
                 --i;
@@ -463,7 +474,7 @@ void MdiEnrichmentJob::run()
 
             Result r = runAnalysis(analysis, file);
             // The drive went away during the step (MDI-F91)
-            const bool sourceLost = r.outcome != QLatin1String("completed") && sourceGone();
+            const bool sourceLost = r.outcome != QLatin1String("completed") && !driveAway().isEmpty();
 
             QVariantMap ended = step;
             ended[QStringLiteral("event")]      = QStringLiteral("end");

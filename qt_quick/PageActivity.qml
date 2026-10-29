@@ -170,7 +170,7 @@ ColumnLayout {
                       : appManager1.mdiIsPaused ? qsTr("Paused")
                       // MDI-F91: nothing runs until the source drive is back
                       : pageActivity.job.waitingForSource
-                        ? qsTr("The analysis continues by itself when %1 is back.").arg(pageActivity.job.sourcePath)
+                        ? qsTr("The analysis continues by itself when %1 is back.").arg(pageActivity.job.drivePath)
                         : qsTr("Checking what is already done")
             }
             Controls.Label {

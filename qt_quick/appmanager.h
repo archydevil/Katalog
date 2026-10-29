@@ -441,7 +441,9 @@ public slots:
     int     getMdiRevision()   const { return m_mdiRevision; }
     Q_INVOKABLE QVariantMap  getEnrichmentProfile(int deviceId);
     Q_INVOKABLE bool         saveEnrichmentProfile(int deviceId, const QVariantMap &profile);
-    Q_INVOKABLE QString      startEnrichment(int deviceId);
+    // resumed: a restored or waiting job, which waits for a destination drive
+    // that is away instead of being refused (D31)
+    Q_INVOKABLE QString      startEnrichment(int deviceId, bool resumed = false);
     Q_INVOKABLE void         stopEnrichment();
     Q_INVOKABLE void         setEnrichmentPaused(bool paused);
     Q_INVOKABLE QVariantMap  getEnrichmentTools();
@@ -844,7 +846,8 @@ private:
     // Kept across restarts and collection switches in mdi_data.db (MDI-F12, MDI-C28)
     int               m_mdiDeviceId = -1;          // device of the running job
     bool              m_mdiQuickHashOnly = false;  // the running job is a quick-hash pass
-    bool              m_mdiWaitingForSource = false;   // its drive is away (MDI-F91)
+    bool              m_mdiWaitingForSource = false;   // a drive is away (MDI-F91)
+    QString           m_mdiWaitingPath;                // the path waited for
     bool              m_mdiKeepPending = false;    // ends on quit or switch: stays pending (MDI-F93)
     bool              m_mdiLeaving = false;        // ends by Stop or by stepping aside (MDI-F92)
     QSet<int>         m_mdiStartPaused;            // restored jobs that start paused (D6, D31)

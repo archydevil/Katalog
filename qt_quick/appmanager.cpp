@@ -2829,7 +2829,7 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
     return analysis;
 }
 //----------------------------------------------------------------------
-QString AppManager::startEnrichment(int deviceId)
+QString AppManager::startEnrichment(int deviceId, bool resumed)
 {
     // One job at a time; a request for another catalog waits its turn and a
     // catalog already running or waiting is not added twice (MDI-F16)
@@ -2852,7 +2852,8 @@ QString AppManager::startEnrichment(int deviceId)
     MdiProfile profile;
     if (!profile.load(m_connectionName, deviceId))
         return tr("Provide a destination path for the previews and derived data.");
-    if (!isPathWritable(profile.destinationPath))
+    // A resumed job whose destination drive is away waits for it (D31)
+    if (!isPathWritable(profile.destinationPath) && (!resumed || QFileInfo::exists(profile.destinationPath)))
         return tr("Select a destination path that can be written to.");
 
     const QVariantMap tools = getEnrichmentTools();
@@ -3028,7 +3029,7 @@ void AppManager::startNextEnrichment()
     // quick-hash passes; then the jobs that will wait for their drive (MDI-F92)
     bool dropped = false;
     auto startJob = [this, &dropped](int next) {
-        const QString error = startEnrichment(next);
+        const QString error = startEnrichment(next, true);
         if (!error.isEmpty()) {
             dropped = true;
             m_mdiStartPaused.remove(next);
@@ -3089,7 +3090,7 @@ QString AppManager::mdiStateStatus() const
     if (m_mdiIsPaused)
         builder.setStatus(tr("Paused"));
     else if (m_mdiWaitingForSource)   // MDI-F91: the path waited for as current item
-        builder.setStatus(tr("Waiting for the drive")).setCurrentItem(m_mdiSourcePath);
+        builder.setStatus(tr("Waiting for the drive")).setCurrentItem(m_mdiWaitingPath);
     else
         builder.setStatus(tr("In Progress"));
     return builder.build();
@@ -3159,7 +3160,7 @@ void AppManager::restoreMdiJobs()
     for (const MdiData::PendingJob &job : jobs) {
         if (job.paused || !localProvider)
             m_mdiStartPaused.insert(job.deviceId);
-        const QString error = startEnrichment(job.deviceId);
+        const QString error = startEnrichment(job.deviceId, true);
         if (!error.isEmpty()) {
             m_mdiStartPaused.remove(job.deviceId);
             qWarning() << "Enrichment not resumed for device" << job.deviceId << ":" << error;
@@ -3220,8 +3221,9 @@ void AppManager::onMdiActivity(const QVariantMap &step)
         return;   // the job of a collection being left shows nothing (MDI-F93)
     const QString event = step.value(QStringLiteral("event")).toString();
     if (event == QLatin1String("waiting")) {
-        // Its drive is away: the job waits for it (MDI-F91)
+        // A drive is away: the job waits for it (MDI-F91)
         m_mdiWaitingForSource = step.value(QStringLiteral("waiting")).toBool();
+        m_mdiWaitingPath      = step.value(QStringLiteral("drivePath")).toString();
         m_mdiStatusText = mdiStateStatus();
         emit mdiStatusTextChanged();
         emit mdiStateChanged();
@@ -3272,7 +3274,7 @@ QVariantMap AppManager::getMdiJobInfo() const
             info[QStringLiteral("endsAt")] = QDateTime::currentDateTime().addSecs(remaining).toString(QStringLiteral("HH:mm"));
         }
         info[QStringLiteral("sourceConnected")] = !m_mdiSourcePath.isEmpty() && QFileInfo::exists(m_mdiSourcePath);
-        info[QStringLiteral("sourcePath")]       = m_mdiSourcePath;
+        info[QStringLiteral("drivePath")]        = m_mdiWaitingPath;
         info[QStringLiteral("waitingForSource")] = m_mdiWaitingForSource;
     }
     QStringList waiting;
