@@ -847,6 +847,13 @@ increment 2 rows for `MDI-F11`, `F12` and `F16`.
   after Stop. Destination drive away for a resumed job: the job waits, commits
   nothing, then 70 of 70 once it is back, none failed. A destination folder not
   created yet is created, without waiting.
+- **Fix (`MDI-F84`).** A quick-hash pass also computed the catalog's topic
+  clusters with the local model at its end, when the catalog had topic segments
+  without clusters: the clusters block of `run()` was not gated (seen in the
+  owner's data, catalog 2, 2026-10-29 19:00:51). The block now requires
+  `!quickHashOnly`; a quick-hash pass computes quick hashes only and asks no
+  model, and the clusters are computed by the next enrichment run. Harness still
+  24 of 24.
 - **Limit (Linux).** A destination under a fixed mount point the user owns
   can still be created when its drive is gone, so the job writes into the empty
   mount point on the system disk instead of waiting (`MDI-F91` waits only for a
@@ -957,6 +964,9 @@ increment 2 rows for `MDI-F11`, `F12` and `F16`.
   `MDI-F91`).** Resolved 2026-10-29: the job waits for that drive like the
   source drive and leaves the list only when its catalog no longer exists
   ("Aspetta anche quel disco").
+- **Topic clusters in a quick-hash pass (`MDI-F84`).** Resolved 2026-10-29:
+  a quick-hash pass called the local model to compute topic clusters, which no
+  row authorises; removed, the pass computes quick hashes only (D31 section).
 - **Other lasting reasons a pending job could not start (D31, `MDI-F12`).**
   Resolved 2026-10-29: such a job (no enrichment profile, or a destination that
   exists but cannot be written) is no longer removed; it is kept, listed among
@@ -1070,7 +1080,7 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F80** — Open the technical data of a video and an audio file: codec, resolution, frame rate, duration, bit rate and audio match `ffprobe`.
 - **MDI-F81** — A `.docx`, a `.pdf` and a `.md` get an 800-character snippet even with *Text* off in the profile; a binary file renamed `.txt` gets none.
 - **MDI-F82 / C25** — List a `zip`, a `.tar.zst` and a `7z`: entries shown, total counted beyond 20,000; a RAR is not supported; a macOS pax tar fails with its reason; a build without KArchive skips the analysis with its reason.
-- **MDI-F84 / C26** — Create a catalog without a profile: quick hashes are computed for all its files; the catalog's `file` table and checksum option are unchanged; the hash of a sample file matches an independent implementation.
+- **MDI-F84 / C26** — Create a catalog without a profile: quick hashes are computed for all its files; the catalog's `file` table and checksum option are unchanged; the hash of a sample file matches an independent implementation. On a catalog with topic segments and no clusters, a quick-hash pass asks no model and leaves the clusters to the next enrichment run.
 - **MDI-F85** — Duplicates search on checksum: groups by quick hash; with *Verify with full checksum* only true SHA-256 duplicates remain; the option is absent from the saved search history.
 - **MDI-F87** — In Explore and Search results, `Space` toggles the Inspector except while typing ahead; restart: its visibility is kept. Disconnect the device: the badge reads offline with the device name; a photo with GPS shows *Open on map*.
 - **MDI-F88** — Switch Explore to *Columns*: folders first, thumbnails, arrow keys move between columns; restart: the view is kept.
