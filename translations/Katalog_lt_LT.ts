@@ -1373,14 +1373,22 @@ Pasirinkite kitą pavadinimą.</translation>
         <translation>Nepasirinktas joks failas.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>Prijungta – spustelėkite, kad atidarytumėte</translation>
+        <translation type="vanished">Prijungta – spustelėkite, kad atidarytumėte</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Neprijungta – prijunkite %1, kad atidarytumėte failą</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Neprijungta – prijunkite %1, kad atidarytumėte failą</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7600,9 +7608,13 @@ Patikrinkite, ar šaltinio aplankas (%1) teisingas, arba ar įrenginys prijungta
         <translation>Sumontuoti tik skaitymui</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>Programai %1 nepavyko sumontuoti šio disko. Patikrinkite jos licenciją ir leidimą sistemos nustatymuose arba ją pašalinkite: sistema pati skaito NTFS diskus, o Katalog užtenka skaitymo.</translation>
+        <translation type="vanished">Programai %1 nepavyko sumontuoti šio disko. Patikrinkite jos licenciją ir leidimą sistemos nustatymuose arba ją pašalinkite: sistema pati skaito NTFS diskus, o Katalog užtenka skaitymo.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

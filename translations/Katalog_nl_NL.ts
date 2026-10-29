@@ -1373,14 +1373,22 @@ Kies een andere naam.</translation>
         <translation>Geen bestand geselecteerd.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>Online – klik om te openen</translation>
+        <translation type="vanished">Online – klik om te openen</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Offline – sluit %1 aan om het bestand te openen</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Offline – sluit %1 aan om het bestand te openen</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7600,9 +7608,13 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation>Alleen-lezen aankoppelen</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>%1 kon deze schijf niet aankoppelen. Controleer de licentie en de toestemming ervan in Systeeminstellingen, of verwijder het programma: het systeem leest NTFS-schijven zelf, en lezen is alles wat Katalog nodig heeft.</translation>
+        <translation type="vanished">%1 kon deze schijf niet aankoppelen. Controleer de licentie en de toestemming ervan in Systeeminstellingen, of verwijder het programma: het systeem leest NTFS-schijven zelf, en lezen is alles wat Katalog nodig heeft.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

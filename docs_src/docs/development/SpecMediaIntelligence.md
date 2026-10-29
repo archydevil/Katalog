@@ -602,14 +602,14 @@ New strings:
 | "Inspector" | Panel title and action (`MDI-F87`) |
 | "Columns" | Explore action (`MDI-F88`) |
 | "No file selected." | Inspector with no selection (`MDI-F87`) |
-| "Online – click to open" | Inspector disk state (`MDI-F87`) |
-| "Offline – connect %1 to open the file" | Inspector disk state (`MDI-F87`) |
+| "Online – opens with a click" | Inspector disk state (`MDI-F87`) |
+| "Offline – %1 is needed to open the file" | Inspector disk state (`MDI-F87`) |
 | "Open on map" | Inspector, GPS link (`MDI-F87`) |
 | "Connected drives" | Create page list (`MDI-F90`) |
 | "Not mounted" | Drive state (`MDI-F90`) |
 | "Mount read-only" | Drive action (`MDI-F90`) |
 | "Refresh" | Drive list action (`MDI-F90`) |
-| "%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs." | Mount failure with a third-party driver (`MDI-F90`) |
+| "%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs." | Mount failure with a third-party driver (`MDI-F90`) |
 | "The system could not mount this drive: %1" | Mount failure, other cause (`MDI-F90`) |
 
 Reused existing strings: "Tools", "Extended Metadata", "Checksum", "Show
@@ -849,10 +849,15 @@ measurements. Rows `MDI-F76`–`F82`, `F84`, `F85`, `F87`–`F90` and
   without one (for example on a device whose source was not reachable) get
   different keys (`q:` versus SHA-256), so a pair the SHA-256 search found
   before can be missed. Accept, or fall back to SHA-256 when a group is mixed?
-- **Copy rule.** Three approved strings give orders: "Online – click to
-  open", "Offline – connect %1 to open the file" and "%1 could not mount this
-  drive. Check its license…" (`MDI-C17`: copy states what is needed, without
-  orders). Approved by the owner as they are; recorded here for traceability.
+- **Copy rule.** Resolved 2026-10-29: the three strings that gave orders were
+  reworded with the owner's approval (`MDI-C17`): "Online – opens with a
+  click", "Offline – %1 is needed to open the file", "%1 could not mount this
+  drive: its license or its permission in System Settings may need attention.
+  Without it, the system reads NTFS drives on its own, and reading is all
+  Katalog needs."
+- **Map link.** "Open on map" opens openstreetmap.org with the photo's
+  coordinates. Owner's decision 2026-10-29: kept as is; the explicit click is
+  the consent (`MDI-C11` governs automatic sending, not links the user opens).
 - **KArchive and K2.** `KF6::Archive` is linked `PUBLIC` to `katalog-core`, so a
   K2 build links it too when it is found (no K2 code uses it). `MDI-C1` holds
   (no file under `qt_widgets/` changed); a build without it is unaffected.

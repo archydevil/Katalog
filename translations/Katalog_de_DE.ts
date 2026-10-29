@@ -1373,14 +1373,22 @@ Wählen Sie einen anderen Namen.</translation>
         <translation>Keine Datei ausgewählt.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>Online – zum Öffnen klicken</translation>
+        <translation type="vanished">Online – zum Öffnen klicken</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Offline – %1 anschließen, um die Datei zu öffnen</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Offline – %1 anschließen, um die Datei zu öffnen</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7601,9 +7609,13 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
         <translation>Schreibgeschützt einhängen</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>%1 konnte dieses Laufwerk nicht einhängen. Prüfen Sie Lizenz und Berechtigung in den Systemeinstellungen oder deinstallieren Sie das Programm: Das System liest NTFS-Laufwerke selbst, und Katalog braucht nur Lesezugriff.</translation>
+        <translation type="vanished">%1 konnte dieses Laufwerk nicht einhängen. Prüfen Sie Lizenz und Berechtigung in den Systemeinstellungen oder deinstallieren Sie das Programm: Das System liest NTFS-Laufwerke selbst, und Katalog braucht nur Lesezugriff.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

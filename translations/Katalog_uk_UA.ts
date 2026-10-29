@@ -1373,14 +1373,22 @@ Choose a different name.</source>
         <translation>Файл не вибрано.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>Онлайн – клацніть, щоб відкрити</translation>
+        <translation type="vanished">Онлайн – клацніть, щоб відкрити</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Офлайн – підключіть %1, щоб відкрити файл</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Офлайн – підключіть %1, щоб відкрити файл</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7601,9 +7609,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>Змонтувати лише для читання</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>Програмі %1 не вдалося змонтувати цей диск. Перевірте її ліцензію та дозвіл у Системних параметрах або видаліть її: система сама читає диски NTFS, а для Katalog достатньо читання.</translation>
+        <translation type="vanished">Програмі %1 не вдалося змонтувати цей диск. Перевірте її ліцензію та дозвіл у Системних параметрах або видаліть її: система сама читає диски NTFS, а для Katalog достатньо читання.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

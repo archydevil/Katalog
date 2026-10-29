@@ -1373,14 +1373,22 @@ Choose a different name.</source>
         <translation>ファイルが選択されていません。</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>オンライン – クリックして開く</translation>
+        <translation type="vanished">オンライン – クリックして開く</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">オフライン – ファイルを開くには %1 を接続してください</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>オフライン – ファイルを開くには %1 を接続してください</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7600,9 +7608,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>読み取り専用でマウント</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>%1 はこのドライブをマウントできませんでした。システム設定でライセンスと権限を確認するか、アンインストールしてください。システムは NTFS ドライブを単独で読み取れます。Katalog に必要なのは読み取りだけです。</translation>
+        <translation type="vanished">%1 はこのドライブをマウントできませんでした。システム設定でライセンスと権限を確認するか、アンインストールしてください。システムは NTFS ドライブを単独で読み取れます。Katalog に必要なのは読み取りだけです。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

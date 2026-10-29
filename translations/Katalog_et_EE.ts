@@ -1373,14 +1373,22 @@ Vali teine nimi.</translation>
         <translation>Faili pole valitud.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>Ühendatud – klõpsa avamiseks</translation>
+        <translation type="vanished">Ühendatud – klõpsa avamiseks</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Ühendamata – faili avamiseks ühenda %1</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Ühendamata – faili avamiseks ühenda %1</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7601,9 +7609,13 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
         <translation>Haagi kirjutuskaitstult</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>%1 ei saanud seda draivi haakida. Kontrolli selle litsentsi ja luba süsteemiseadetes või eemalda see: süsteem loeb NTFS-draive ise ning Katalogile piisab lugemisest.</translation>
+        <translation type="vanished">%1 ei saanud seda draivi haakida. Kontrolli selle litsentsi ja luba süsteemiseadetes või eemalda see: süsteem loeb NTFS-draive ise ning Katalogile piisab lugemisest.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

@@ -95,8 +95,8 @@ Rectangle {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         text: badge.online
-                              ? qsTr("Online – click to open")
-                              : qsTr("Offline – connect %1 to open the file").arg(inspector.info.volumeName || "")
+                              ? qsTr("Online – opens with a click")
+                              : qsTr("Offline – %1 is needed to open the file").arg(inspector.info.volumeName || "")
                     }
                 }
                 MouseArea {

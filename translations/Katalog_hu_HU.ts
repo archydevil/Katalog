@@ -1373,14 +1373,22 @@ Válasszon másik nevet.</translation>
         <translation>Nincs kijelölt fájl.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>Online – kattintson a megnyitáshoz</translation>
+        <translation type="vanished">Online – kattintson a megnyitáshoz</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Offline – a fájl megnyitásához csatlakoztassa: %1</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Offline – a fájl megnyitásához csatlakoztassa: %1</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7600,9 +7608,13 @@ Ellenőrizze, hogy a forrásmappa (%1) helyes-e, vagy hogy az eszköz a forrásm
         <translation>Csatolás csak olvasásra</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>A(z) %1 nem tudta csatolni ezt a meghajtót. Ellenőrizze a licencét és az engedélyét a Rendszerbeállításokban, vagy távolítsa el: a rendszer magától is olvassa az NTFS-meghajtókat, és a Katalognak csak olvasásra van szüksége.</translation>
+        <translation type="vanished">A(z) %1 nem tudta csatolni ezt a meghajtót. Ellenőrizze a licencét és az engedélyét a Rendszerbeállításokban, vagy távolítsa el: a rendszer magától is olvassa az NTFS-meghajtókat, és a Katalognak csak olvasásra van szüksége.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

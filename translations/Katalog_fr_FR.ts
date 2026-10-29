@@ -626,7 +626,7 @@ Choisissez un autre nom.</translation>
     <message>
         <location line="+1"/>
         <source>Archive contents</source>
-        <translation>Contenu de l'archive</translation>
+        <translation>Contenu de l&apos;archive</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1373,14 +1373,22 @@ Choisissez un autre nom.</translation>
         <translation>Aucun fichier sélectionné.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>En ligne – cliquez pour ouvrir</translation>
+        <translation type="vanished">En ligne – cliquez pour ouvrir</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Hors ligne – connectez %1 pour ouvrir le fichier</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Hors ligne – connectez %1 pour ouvrir le fichier</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -1400,7 +1408,7 @@ Choisissez un autre nom.</translation>
     <message>
         <location line="+44"/>
         <source>Show analysis</source>
-        <translation>Afficher l'analyse</translation>
+        <translation>Afficher l&apos;analyse</translation>
     </message>
 </context>
 <context>
@@ -7602,14 +7610,18 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
         <translation>Monter en lecture seule</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>%1 n'a pas pu monter ce lecteur. Vérifiez sa licence et son autorisation dans les Paramètres système, ou désinstallez-le : le système lit lui-même les lecteurs NTFS, et Katalog n'a besoin que de la lecture.</translation>
+        <translation type="vanished">%1 n&apos;a pas pu monter ce lecteur. Vérifiez sa licence et son autorisation dans les Paramètres système, ou désinstallez-le : le système lit lui-même les lecteurs NTFS, et Katalog n&apos;a besoin que de la lecture.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The system could not mount this drive: %1</source>
-        <translation>Le système n'a pas pu monter ce lecteur : %1</translation>
+        <translation>Le système n&apos;a pas pu monter ce lecteur : %1</translation>
     </message>
     <message>
         <location line="+16"/>

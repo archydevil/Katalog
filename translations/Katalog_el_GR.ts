@@ -1373,14 +1373,22 @@ Choose a different name.</source>
         <translation>Δεν έχει επιλεγεί αρχείο.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>Συνδεδεμένο – κάντε κλικ για άνοιγμα</translation>
+        <translation type="vanished">Συνδεδεμένο – κάντε κλικ για άνοιγμα</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Μη συνδεδεμένο – συνδέστε το %1 για να ανοίξετε το αρχείο</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Μη συνδεδεμένο – συνδέστε το %1 για να ανοίξετε το αρχείο</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7602,9 +7610,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>Προσάρτηση μόνο για ανάγνωση</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>Το %1 δεν μπόρεσε να προσαρτήσει αυτή τη μονάδα δίσκου. Ελέγξτε την άδεια χρήσης και τα δικαιώματά του στις Ρυθμίσεις συστήματος ή απεγκαταστήστε το: το σύστημα διαβάζει μόνο του τις μονάδες NTFS και το Katalog χρειάζεται μόνο ανάγνωση.</translation>
+        <translation type="vanished">Το %1 δεν μπόρεσε να προσαρτήσει αυτή τη μονάδα δίσκου. Ελέγξτε την άδεια χρήσης και τα δικαιώματά του στις Ρυθμίσεις συστήματος ή απεγκαταστήστε το: το σύστημα διαβάζει μόνο του τις μονάδες NTFS και το Katalog χρειάζεται μόνο ανάγνωση.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

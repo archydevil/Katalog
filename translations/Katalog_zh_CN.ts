@@ -1373,14 +1373,22 @@ Choose a different name.</source>
         <translation>未选择文件。</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>在线 – 单击打开</translation>
+        <translation type="vanished">在线 – 单击打开</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">离线 – 连接 %1 以打开文件</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>离线 – 连接 %1 以打开文件</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7601,9 +7609,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>以只读方式挂载</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>%1 无法挂载此驱动器。在系统设置中检查其许可证和权限，或将其卸载：系统本身即可读取 NTFS 驱动器，而 Katalog 只需要读取。</translation>
+        <translation type="vanished">%1 无法挂载此驱动器。在系统设置中检查其许可证和权限，或将其卸载：系统本身即可读取 NTFS 驱动器，而 Katalog 只需要读取。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>

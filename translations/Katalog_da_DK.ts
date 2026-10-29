@@ -1373,14 +1373,22 @@ Vælg et andet navn.</translation>
         <translation>Ingen fil valgt.</translation>
     </message>
     <message>
-        <location line="+48"/>
         <source>Online – click to open</source>
-        <translation>Online – klik for at åbne</translation>
+        <translation type="vanished">Online – klik for at åbne</translation>
+    </message>
+    <message>
+        <source>Offline – connect %1 to open the file</source>
+        <translation type="vanished">Offline – tilslut %1 for at åbne filen</translation>
+    </message>
+    <message>
+        <location line="+48"/>
+        <source>Online – opens with a click</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Offline – connect %1 to open the file</source>
-        <translation>Offline – tilslut %1 for at åbne filen</translation>
+        <source>Offline – %1 is needed to open the file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7601,9 +7609,13 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
         <translation>Montér skrivebeskyttet</translation>
     </message>
     <message>
-        <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>%1 kunne ikke montere dette drev. Kontrollér programmets licens og tilladelse i Systemindstillinger, eller afinstaller det: systemet læser selv NTFS-drev, og læsning er alt, hvad Katalog har brug for.</translation>
+        <translation type="vanished">%1 kunne ikke montere dette drev. Kontrollér programmets licens og tilladelse i Systemindstillinger, eller afinstaller det: systemet læser selv NTFS-drev, og læsning er alt, hvad Katalog har brug for.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
