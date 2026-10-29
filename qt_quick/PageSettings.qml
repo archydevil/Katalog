@@ -87,6 +87,13 @@ ScrollablePageFitted {
     // Quality Check report, SpecQualityCheck.md phase 1: read-only, reports only.
     Kirigami.Dialog {
         id: qualityCheckDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         property var results: []   // QVariantList of {check, rows, error}
 
         // Keyed by check number: checks 2 and 5 are retired and the others keep

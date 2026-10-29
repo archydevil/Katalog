@@ -1217,6 +1217,13 @@ ColumnLayout {
     // ── Checksum result dialog ────────────────────────────────────────────
     Kirigami.Dialog {
         id: checksumResultDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         property string checksumText: ""
         property bool   wasSaved: false
         // "MD5" for an on-demand MD5, which is never stored (SpecCatalogChecksum CKS-F2)
@@ -1256,6 +1263,13 @@ ColumnLayout {
     // ── Checksum mismatch dialog ──────────────────────────────────────────
     Kirigami.Dialog {
         id: checksumMismatchDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         property string expectedChecksum: ""
         property string actualChecksum:   ""
         title: qsTr("Checksum Mismatch")
@@ -1314,6 +1328,13 @@ ColumnLayout {
     // ── Delete confirmation dialog ────────────────────────────────────────
     Kirigami.Dialog {
         id: deleteFileDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         title: qsTr("Delete File")
         preferredWidth: Kirigami.Units.gridUnit * 28
         padding: Kirigami.Units.largeSpacing
@@ -1490,6 +1511,13 @@ ColumnLayout {
 
     Kirigami.Dialog {
         id: batchConfirmDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         property string batchAction: ""
         title: {
             if (batchAction === "trash")            return qsTr("Move to Trash")
@@ -1548,6 +1576,13 @@ ColumnLayout {
 
     Kirigami.Dialog {
         id: batchResultDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         property string batchAction: ""
         property string resultText: ""
         title: batchAction === "verify-checksums" ? qsTr("Verify Checksums") : qsTr("Include Metadata")

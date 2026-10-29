@@ -1250,6 +1250,10 @@ Kirigami.ApplicationWindow {
 
     Controls.Dialog {
         id: alphaWarningDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: "Teca"
         modal: true
         anchors.centerIn: parent
@@ -1310,6 +1314,10 @@ Kirigami.ApplicationWindow {
     // A newer release is published (SpecVersionCheck.md VCK-F2). K2's message, verbatim.
     Controls.Dialog {
         id: newVersionDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: "Teca"
         modal: true
         anchors.centerIn: parent
@@ -1352,6 +1360,10 @@ Kirigami.ApplicationWindow {
     // First-run welcome dialog
     Controls.Dialog {
         id: firstRunWelcomeDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: "Teca"
         modal: true
         anchors.centerIn: parent
@@ -1395,6 +1407,10 @@ Kirigami.ApplicationWindow {
     // First-run ready dialog (shown after the collection is created)
     Controls.Dialog {
         id: firstRunReadyDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: "Teca"
         modal: true
         anchors.centerIn: parent
@@ -1424,6 +1440,10 @@ Kirigami.ApplicationWindow {
     // Edit device dialogs
     Controls.Dialog {
         id: editDeleteDeviceDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property string deviceName: ""
         property string deviceType: ""
         property int    deviceId:   0
@@ -1469,6 +1489,10 @@ Kirigami.ApplicationWindow {
 
     Controls.Dialog {
         id: editValidationDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property alias message: editValidationLabel.text
         title: "Teca"
         modal: true
@@ -1492,6 +1516,10 @@ Kirigami.ApplicationWindow {
 
     Controls.Dialog {
         id: editCatalogConfirmDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property bool rescanNeeded: false
         property bool pathChanged:  false
         title: "Teca"
@@ -1525,6 +1553,10 @@ Kirigami.ApplicationWindow {
 
     Controls.Dialog {
         id: editCatalogUpdateDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: "Teca"
 
         // Set when the user accepts; consumed once the dialog is off screen.
@@ -1570,6 +1602,10 @@ Kirigami.ApplicationWindow {
 
     Controls.Dialog {
         id: editStoragePathDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property string previousPath: ""
         property string newPath: ""
         title: "Teca"
@@ -1627,6 +1663,10 @@ Kirigami.ApplicationWindow {
     // Device page snapshot dialog
     Controls.Dialog {
         id: devSnapshotDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property var data: null
         title: "Teca"
         modal: true
@@ -1673,6 +1713,10 @@ Kirigami.ApplicationWindow {
     // (SpecHostedSecurity.md HST-F3). Used by Settings Connect and recent entries.
     Controls.Dialog {
         id: privateHostDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property var entry: null
         title: "Teca"
         modal: true
@@ -1738,6 +1782,10 @@ Kirigami.ApplicationWindow {
     // Update All Active — pre-confirmation dialog
     Controls.Dialog {
         id: devUpdateAllDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: "Teca"
         modal: true
         anchors.centerIn: parent
@@ -1771,6 +1819,10 @@ Kirigami.ApplicationWindow {
     // Device update result dialog — shown after single update or each catalog in "All active" with Yes
     Controls.Dialog {
         id: devUpdateReportDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property var report: ({})
         title: "Teca"
         modal: true
@@ -1938,6 +1990,13 @@ Kirigami.ApplicationWindow {
 
         width: Math.min(root.width - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 38)
         preferredHeight: Kirigami.Units.gridUnit * 34
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         standardButtons: Kirigami.Dialog.Cancel
         customFooterActions: [
             Kirigami.Action {
@@ -1972,6 +2031,10 @@ Kirigami.ApplicationWindow {
     // Create empty-source confirmation (Yes/No decision → modal)
     Controls.Dialog {
         id: createEmptyDirDialog
+        // Fusion paints the dialog, its title and its buttons from the
+        // window palette: the design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: "Teca"
         modal: true
         anchors.centerIn: parent
@@ -2041,42 +2104,44 @@ Kirigami.ApplicationWindow {
 
         header: ColumnLayout {
             width: parent.width
-            spacing: 0
+            spacing: 10
 
-            // A reminder of what is currently selected, at the very top and with
-            // no label of its own — the icon and type styling say what it is
-            // (SpecSelection.md SEL-F5). Always present, including the All state,
-            // so the rows below never shift as the selection changes.
+            // What the page is for, like every page of the redesign (D34)
+            Controls.Label {
+                Layout.fillWidth: true
+                Layout.leftMargin:  KTheme.gap
+                Layout.rightMargin: KTheme.gap
+                Layout.topMargin:   KTheme.gap
+                wrapMode: Text.WordWrap
+                color: KTheme.text2
+                text: qsTr("The drive or folder chosen here is the one searched, browsed and counted.")
+            }
+
+            // A reminder of what is currently selected, with no label of its
+            // own — the icon and type styling say what it is (SpecSelection.md
+            // SEL-F5). Always present, including the All state, so the rows below
+            // never shift as the selection changes. It paints its own surface
+            // (THM-F10: Fusion's ItemDelegate background is opaque), from the
+            // design system tokens (D34). Not a list row: no stripe and no
+            // highlighted state, it mirrors the selection rather than being
+            // selectable.
             Controls.ItemDelegate {
                 id: selectionReminder
                 Layout.fillWidth: true
-                Layout.leftMargin:  Kirigami.Units.gridUnit
-                Layout.rightMargin: Kirigami.Units.gridUnit
-                Layout.preferredHeight: root.headerRowHeight
+                Layout.leftMargin:  KTheme.gap
+                Layout.rightMargin: KTheme.gap
+                Layout.preferredHeight: root.headerRowHeight + 12
+                leftPadding: 12
+                rightPadding: 12
                 topPadding: 0
                 bottomPadding: 0
+                hoverEnabled: true
 
-                // The row paints its own surface instead of taking the active Qt
-                // Quick Controls style's (THM-F10, the rule THM-F9 set for the
-                // Explore lists). Under Fusion — the style every packaged build
-                // resolves to — ItemDelegate's background is an opaque #ffffff
-                // rectangle that paints unconditionally, which covered the tinted
-                // Selection page surface; under org.kde.desktop the same delegate
-                // is transparent until hovered, so a development build never
-                // showed it. Idle is fully transparent so selectionPageColor shows
-                // through; the hover tint stays because the row is clickable
-                // (SEL-F6), and comes from Kirigami.Theme, never a literal
-                // (THM-C13). Not a list row: no stripe and no highlighted state,
-                // it mirrors the selection rather than being selectable.
                 background: Rectangle {
-                    color: !selectionReminder.hovered ? "transparent"
-                         : appManager1.themeId === 1   // THM-F21
-                           ? Qt.rgba(root.katalogBlueLight.r, root.katalogBlueLight.g,
-                                     root.katalogBlueLight.b, 0.20)
-                           : appManager1.themeId === 2   // THM-F21, THM-C22
-                             ? Qt.rgba(Kirigami.Theme.textColor.r, Kirigami.Theme.textColor.g,
-                                       Kirigami.Theme.textColor.b, 0.08)
-                             : Kirigami.Theme.hoverColor
+                    radius: KTheme.radiusControl
+                    color: selectionReminder.hovered ? KTheme.hover : KTheme.accentSoft
+                    border.width: 1
+                    border.color: KTheme.line
                 }
 
                 // Scrolls the list to the selected card — the "where is it?" half
@@ -2099,18 +2164,12 @@ Kirigami.ApplicationWindow {
                 }
             }
 
-            Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: root.headerRowHeight
             RowLayout {
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    verticalCenter: parent.verticalCenter
-                    leftMargin: Kirigami.Units.gridUnit
-                    rightMargin: Kirigami.Units.gridUnit
-                }
-                spacing: Kirigami.Units.smallSpacing
+                Layout.fillWidth: true
+                Layout.leftMargin:   KTheme.gap
+                Layout.rightMargin:  KTheme.gap
+                Layout.bottomMargin: 4
+                spacing: 10
                 // Filters the device list, not files: a filter icon and
                 // placeholder keep it from reading as a file search.
                 // ActionTextField, not SearchField: SearchField draws its own
@@ -2130,6 +2189,16 @@ Kirigami.ApplicationWindow {
                                   ? Kirigami.Units.iconSizes.small + Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
                                   : undefined
                     onTextChanged: appManager1.setDeviceFilter(text)
+                    color: KTheme.text
+                    placeholderTextColor: KTheme.text3
+                    topPadding: 9
+                    bottomPadding: 9
+                    background: Rectangle {
+                        radius: KTheme.radiusControl
+                        color: KTheme.surface
+                        border.width: deviceSearchField.activeFocus ? 2 : 1
+                        border.color: deviceSearchField.activeFocus ? KTheme.accent : KTheme.line
+                    }
 
                     Kirigami.Icon {
                         id: filterIcon
@@ -2160,37 +2229,83 @@ Kirigami.ApplicationWindow {
                         }
                     }
                 }
+                // The device details on the cards, as a switch with its name in
+                // view, like the criteria of the Search page (D34)
                 Controls.CheckBox {
+                    id: deviceInfoSwitch
+                    text: qsTr("Show device info")
                     checked: appManager1.showDeviceInfo
                     onToggled: appManager1.showDeviceInfo = checked
-                    Controls.ToolTip.text: qsTr("Show device info")
-                    Controls.ToolTip.visible: hovered
+                    hoverEnabled: true
+                    spacing: 8
+                    leftPadding: mirrored ? 0 : indicator.width + spacing
+                    rightPadding: mirrored ? indicator.width + spacing : 0
+                    indicator: Rectangle {
+                        implicitWidth: 40
+                        implicitHeight: 24
+                        x: deviceInfoSwitch.mirrored ? deviceInfoSwitch.width - width : 0
+                        y: (deviceInfoSwitch.height - height) / 2
+                        radius: height / 2
+                        color: deviceInfoSwitch.checked ? KTheme.accent : KTheme.neutralSoft
+                        border.width: deviceInfoSwitch.visualFocus ? 2 : 1
+                        border.color: deviceInfoSwitch.checked || deviceInfoSwitch.visualFocus ? KTheme.accent : KTheme.line
+                        Rectangle {
+                            width: 18
+                            height: 18
+                            radius: 9
+                            y: 3
+                            x: deviceInfoSwitch.checked ? parent.width - width - 3 : 3
+                            color: deviceInfoSwitch.checked ? KTheme.onAccent : KTheme.surface
+                            border.width: deviceInfoSwitch.checked ? 0 : 1
+                            border.color: KTheme.line
+                            Behavior on x { NumberAnimation { duration: Kirigami.Units.shortDuration } }
+                        }
+                    }
+                    contentItem: Controls.Label {
+                        text: deviceInfoSwitch.text
+                        color: KTheme.text2
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Item {}
                 }
                 Controls.ToolButton {
                     icon.name: "go-up"
                     icon.width:  Kirigami.Units.iconSizes.small
                     icon.height: Kirigami.Units.iconSizes.small
-                    implicitWidth:  root.selectionButton
-                    implicitHeight: root.selectionButton
+                    implicitWidth:  root.selectionButton + 8
+                    implicitHeight: root.selectionButton + 8
                     padding: 0
                     enabled: appManager1.canCollapseDevices
                     onClicked: appManager1.collapseDevices()
                     Controls.ToolTip.text: qsTr("Collapse one level")
                     Controls.ToolTip.visible: hovered
+                    background: Rectangle {
+                        radius: KTheme.radiusItem
+                        color: parent.hovered ? KTheme.hover : KTheme.surface
+                        border.width: 1
+                        border.color: KTheme.line
+                        opacity: parent.enabled ? 1 : 0.5
+                    }
                 }
                 Controls.ToolButton {
                     icon.name: "go-down"
                     icon.width:  Kirigami.Units.iconSizes.small
                     icon.height: Kirigami.Units.iconSizes.small
-                    implicitWidth:  root.selectionButton
-                    implicitHeight: root.selectionButton
+                    implicitWidth:  root.selectionButton + 8
+                    implicitHeight: root.selectionButton + 8
                     padding: 0
                     enabled: appManager1.canExpandDevices
                     onClicked: appManager1.expandDevices()
                     Controls.ToolTip.text: qsTr("Expand one level")
                     Controls.ToolTip.visible: hovered
+                    background: Rectangle {
+                        radius: KTheme.radiusItem
+                        color: parent.hovered ? KTheme.hover : KTheme.surface
+                        border.width: 1
+                        border.color: KTheme.line
+                        opacity: parent.enabled ? 1 : 0.5
+                    }
                 }
-            }
             }
         }
 

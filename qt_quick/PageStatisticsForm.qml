@@ -171,6 +171,13 @@ Controls.ScrollView {
 
     Kirigami.Dialog {
         id: statsDateDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         title: qsTr("Select start date")
 
         function applyDate(d) {

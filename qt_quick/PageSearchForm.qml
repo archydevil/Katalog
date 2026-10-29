@@ -501,6 +501,13 @@ ColumnLayout {
 
     Kirigami.Dialog {
         id: dateDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         property string selectedDateField
         title: qsTr("Select a date")
 
@@ -597,6 +604,13 @@ ColumnLayout {
 
     Kirigami.PromptDialog {
         id: clearHistoryConfirmDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         title: qsTr("Delete search history")
         subtitle: qsTr("This will delete all search history entries. Continue?")
         standardButtons: Kirigami.Dialog.Ok | Kirigami.Dialog.Cancel
@@ -608,6 +622,13 @@ ColumnLayout {
 
     Kirigami.PromptDialog {
         id: keepLastHistoryConfirmDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         title: qsTr("Keep last 10")
         subtitle: qsTr("This will delete all but the last 10 search history entries. Continue?")
         standardButtons: Kirigami.Dialog.Ok | Kirigami.Dialog.Cancel
@@ -619,6 +640,13 @@ ColumnLayout {
 
     Kirigami.Dialog {
         id: searchHistoryDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         title: qsTr("Search History")
 
         // Roles rather than source order, so Cancel follows the platform instead
@@ -752,7 +780,7 @@ ColumnLayout {
     KSectionHeader {
         level: 1
         title: qsTr("Search the drives")
-        description: qsTr("Katalog searches its catalogs, so the drives can stay disconnected. By meaning, it also searches the descriptions and transcripts made by the AI.")
+        description: qsTr("Teca searches its catalogs, so the drives can stay disconnected. By meaning, it also searches the descriptions and transcripts made by the AI.")
     }
 
     // ── What to look for: the ways to search (MDI-F117) ──────────────────────

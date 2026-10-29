@@ -10,6 +10,13 @@ import org.kde.kirigami as Kirigami
 // on the design system's ground, AI results as AI tags.
 Kirigami.Dialog {
     id: mdiDetailsDialog
+    // The design system surface, not Kirigami's View colours (D34)
+    background: Rectangle {
+        color: KTheme.surface
+        radius: KTheme.radiusCard
+        border.width: 1
+        border.color: KTheme.line
+    }
 
     property string fileLabel: ""
     property var    entries:   []      // appManager1.mdiDetails(): {analysis, label, outcome, reason, value, files, model, tool, date}

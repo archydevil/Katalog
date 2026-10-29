@@ -831,6 +831,13 @@ Item {
     // the Explore menu destroyed a file on a single click, unrecoverably.
     Kirigami.Dialog {
         id: exploreDeleteFileDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         title: qsTr("Delete File")
         preferredWidth: Kirigami.Units.gridUnit * 28
         padding: Kirigami.Units.largeSpacing
@@ -878,6 +885,13 @@ Item {
     // ── Checksum result dialog ────────────────────────────────────────────
     Kirigami.Dialog {
         id: exploreChecksumResultDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         property string checksumText: ""
         property bool   wasSaved: false
         // "MD5" for an on-demand MD5, which is never stored (SpecCatalogChecksum CKS-F2)
@@ -918,6 +932,13 @@ Item {
     // ── Checksum mismatch dialog ──────────────────────────────────────────
     Kirigami.Dialog {
         id: exploreChecksumMismatchDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         property string expectedChecksum: ""
         property string actualChecksum:   ""
         title: qsTr("Checksum Mismatch")

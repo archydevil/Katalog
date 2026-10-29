@@ -937,6 +937,9 @@ ColumnLayout {
     }
     Controls.Dialog {
         id: reinterpretDialog
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: qsTr("Re-interpret with the context")
         modal: true
         width: Kirigami.Units.gridUnit * 30

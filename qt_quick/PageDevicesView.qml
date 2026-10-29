@@ -212,6 +212,9 @@ Item {
 
     Controls.Dialog {
         id: splitSubDirConfirmDialog
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property int deviceId: 0
         title: qsTr("Split Catalog")
         modal: true
@@ -251,6 +254,9 @@ Item {
 
     Controls.Dialog {
         id: splitFileTypeDialog
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property int  deviceId:    0
         property bool deviceActive: false
         title: qsTr("Split Catalog")
@@ -302,6 +308,9 @@ Item {
 
     Controls.Dialog {
         id: verifyConfirmDialog
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property int deviceId: 0
         title: qsTr("Verify Checksums")
         modal: true
@@ -347,6 +356,9 @@ Item {
 
     Controls.Dialog {
         id: verifyResultDialog
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         title: qsTr("Checksum Verification")
         modal: true
         anchors.centerIn: parent
@@ -369,6 +381,9 @@ Item {
 
     Controls.Dialog {
         id: unassignDialog
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property int deviceId: 0
         property int parentId: 0
         title: qsTr("Unassign Device")
@@ -406,6 +421,9 @@ Item {
 
     Controls.Dialog {
         id: deleteConfirmDialog
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property int    deviceId:   0
         property string deviceType: ""
         title: qsTr("Delete Device")
@@ -446,6 +464,9 @@ Item {
     // MIME verification with mismatches: report path, and a choice to open it (MIV-F4)
     Controls.Dialog {
         id: mimeResultDialog
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
         property string reportPath: ""
         title: qsTr("MIME Verification Complete")
         modal: true
@@ -479,7 +500,10 @@ Item {
 
     Controls.Dialog {
         id: operationResultDialog
-        title: "Katalog"
+        // The design system surface and line (D34)
+        palette.window: KTheme.surface
+        palette.mid:    KTheme.line
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(420, root.width - Kirigami.Units.largeSpacing * 4)

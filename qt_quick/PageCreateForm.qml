@@ -553,7 +553,7 @@ ColumnLayout {
                                             create_lineEdit_NewCatalogPath.text = appManager1.normalizeSourcePath(r.mountPoint)
                                         } else {
                                             driveMessage.text = driveCard.modelData.driver !== ""
-                                                ? qsTr("%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.").arg(driveCard.modelData.driver)
+                                                ? qsTr("%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Teca needs.").arg(driveCard.modelData.driver)
                                                 : qsTr("The system could not mount this drive: %1").arg(r.reason)
                                             driveMessage.visible = true
                                         }

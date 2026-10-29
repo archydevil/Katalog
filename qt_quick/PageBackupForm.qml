@@ -397,6 +397,13 @@ ColumnLayout {
 
     Kirigami.PromptDialog {
         id: runListedDialog
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
         title: qsTr("Run listed links")
         // Roles rather than source order, so Cancel follows the platform instead
         // of a position hard-coded for KDE (SpecValidationRules D1/D2). BKP-F19
@@ -829,6 +836,13 @@ ColumnLayout {
 
                         Kirigami.PromptDialog {
                             id: deleteDialog
+                            // The design system surface, not Kirigami's View colours (D34)
+                            background: Rectangle {
+                                color: KTheme.surface
+                                radius: KTheme.radiusCard
+                                border.width: 1
+                                border.color: KTheme.line
+                            }
                             title: qsTr("Delete link")
                             subtitle: qsTr("Delete link \"%1\"? This cannot be undone.").arg(mappingCard.modelData.mappingName)
                             standardButtons: Kirigami.Dialog.Yes | Kirigami.Dialog.No
