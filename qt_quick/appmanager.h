@@ -459,6 +459,11 @@ public slots:
     Q_INVOKABLE bool         mdiHasData(int catalogId, const QString &fullPath, int revision = 0);
     Q_INVOKABLE QVariantList mdiDetails(int catalogId, const QString &fullPath);
     Q_INVOKABLE QVariantMap  mdiClusters(int catalogId);
+    // Inspector panel (fork, owner's request 2026-10-29): everything known about
+    // one file, readable with its disk disconnected
+    Q_INVOKABLE QVariantMap  inspectorInfo(int catalogId, const QString &fullPath);
+    // The Explore file list's row, for the Inspector (proxy row of exploreSortModel)
+    Q_INVOKABLE QVariantMap  exploreRowInfo(int proxyRow);
     QVariantList getSemanticResults() const { return m_semanticResults; }
     bool         getSemanticActive()  const { return m_semanticActive; }
     bool         getSemanticOnly()    const { return m_semanticOnly; }

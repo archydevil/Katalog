@@ -3278,6 +3278,81 @@ QVariantList AppManager::mdiDetails(int catalogId, const QString &fullPath)
     return list;
 }
 //----------------------------------------------------------------------
+QVariantMap AppManager::exploreRowInfo(int proxyRow)
+{
+    QVariantMap info;
+    if (!m_exploreSortModel || !m_exploreFilesModel || proxyRow < 0)
+        return info;
+    const QModelIndex source = m_exploreSortModel->mapToSource(m_exploreSortModel->index(proxyRow, 0));
+    if (!source.isValid())
+        return info;
+    info[QStringLiteral("name")]       = m_exploreFilesModel->data(source, ExploreFilesModel::NameRole);
+    info[QStringLiteral("folderPath")] = m_exploreFilesModel->data(source, ExploreFilesModel::FolderPathRole);
+    info[QStringLiteral("fullPath")]   = m_exploreFilesModel->data(source, ExploreFilesModel::FullPathRole);
+    info[QStringLiteral("entryType")]  = m_exploreFilesModel->data(source, ExploreFilesModel::EntryTypeRole);
+    return info;
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::inspectorInfo(int catalogId, const QString &fullPath)
+{
+    QVariantMap info;
+    const QFileInfo file(fullPath);
+    const QString name   = file.fileName();
+    const QString folder = file.path();
+    info[QStringLiteral("name")]     = name;
+    info[QStringLiteral("folder")]   = folder;
+    info[QStringLiteral("fullPath")] = fullPath;
+    info[QStringLiteral("url")]      = QUrl::fromLocalFile(fullPath).toString();
+
+    // Where the file lives: its catalog and the storage above it; online when
+    // the file itself can be reached now
+    info[QStringLiteral("online")] = file.exists();
+    const QList<Device::DeviceTreeNode> tree = Device::loadDeviceTree(m_connectionName);
+    QHash<int, const Device::DeviceTreeNode *> byId;
+    const Device::DeviceTreeNode *catalogNode = nullptr;
+    for (const Device::DeviceTreeNode &n : tree) {
+        byId.insert(n.id, &n);
+        if (n.type == QLatin1String("Catalog") && n.externalId == catalogId)
+            catalogNode = &n;
+    }
+    if (catalogNode) {
+        info[QStringLiteral("catalogName")] = catalogNode->name;
+        const Device::DeviceTreeNode *up = byId.value(catalogNode->parentId, nullptr);
+        while (up && up->type != QLatin1String("Storage"))
+            up = byId.value(up->parentId, nullptr);
+        info[QStringLiteral("volumeName")] = up ? up->name : catalogNode->name;
+        info[QStringLiteral("volumePath")] = up ? up->path : catalogNode->path;
+    }
+
+    // Stored SHA-256 (catalogs with checksums) and extended metadata
+    Catalog catalog;
+    catalog.ID = catalogId;
+    catalog.setConnectionName(m_connectionName);
+    info[QStringLiteral("sha256")]   = catalog.getFileChecksum(name, folder);
+    info[QStringLiteral("metadata")] = getFileMetadataParsedFields(catalogId, name, folder);
+
+    // GPS position from the photo metadata, as a map link (no map library)
+    const QJsonObject meta = QJsonDocument::fromJson(
+        Catalog::getFileMetadataJson(catalogId, name, folder, m_connectionName).toUtf8()).object();
+    double lat = 0, lon = 0;
+    bool hasLat = false, hasLon = false;
+    for (auto it = meta.begin(); it != meta.end(); ++it) {
+        const QString key = it.key().toLower();
+        if (key.contains(QLatin1String("latitude")))  { lat = it.value().toVariant().toDouble(&hasLat); }
+        if (key.contains(QLatin1String("longitude"))) { lon = it.value().toVariant().toDouble(&hasLon); }
+    }
+    if (hasLat && hasLon && (lat != 0.0 || lon != 0.0)) {
+        info[QStringLiteral("gps")] = QVariantMap{
+            {QStringLiteral("lat"), lat}, {QStringLiteral("lon"), lon},
+            {QStringLiteral("url"), QStringLiteral("https://www.openstreetmap.org/?mlat=%1&mlon=%2#map=16/%1/%2")
+                                        .arg(lat, 0, 'f', 6).arg(lon, 0, 'f', 6)}};
+    }
+
+    // Everything the enrichment job derived (previews, snippet, archive, hashes...)
+    info[QStringLiteral("analysis")] = mdiDetails(catalogId, fullPath);
+    return info;
+}
+//----------------------------------------------------------------------
 QVariantMap AppManager::mdiClusters(int catalogId)
 {
     // Catalog-level datum: empty file path, analysis "clusters" (MDI-F37)
