@@ -4,15 +4,15 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../qt_quick/appmanager.cpp" line="+168"/>
+        <location filename="../qt_quick/appmanager.cpp" line="+170"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+6018"/>
+        <location line="+6298"/>
         <source>Search</source>
         <translation>Keresés</translation>
     </message>
     <message>
-        <location line="-6142"/>
+        <location line="-6422"/>
         <source>Stopped</source>
         <translation>Leállítva</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+4451"/>
+        <location line="+4731"/>
         <source>Evaluated</source>
         <translation>Kiértékelve</translation>
     </message>
     <message>
-        <location line="-4573"/>
+        <location line="-4853"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -46,9 +46,10 @@
         <location line="+7"/>
         <location line="+83"/>
         <location line="+2329"/>
-        <location line="+337"/>
+        <location line="+380"/>
         <location line="+152"/>
-        <location line="+1192"/>
+        <location line="+301"/>
+        <location line="+1128"/>
         <location line="+26"/>
         <location line="+20"/>
         <location line="+380"/>
@@ -69,10 +70,12 @@
         <translation>Folyamatban</translation>
     </message>
     <message>
-        <location line="-6019"/>
-        <location line="+2676"/>
+        <location line="-6299"/>
+        <location line="+2719"/>
         <location line="+1"/>
-        <location line="+2434"/>
+        <location line="+432"/>
+        <location line="+1"/>
+        <location line="+2238"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -82,7 +85,7 @@
         <translation>Befejezve</translation>
     </message>
     <message>
-        <location line="-5606"/>
+        <location line="-5886"/>
         <source>Empty database path provided</source>
         <translation>Üres adatbázis-elérési út lett megadva</translation>
     </message>
@@ -168,12 +171,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+4000"/>
+        <location line="+4280"/>
         <source>Size</source>
         <translation>Méret</translation>
     </message>
     <message>
-        <location line="-3999"/>
+        <location line="-4279"/>
         <source>Date</source>
         <translation>Dátum</translation>
     </message>
@@ -267,14 +270,14 @@ Válasszon másik nevet, és próbálja újra.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+2186"/>
+        <location line="+2466"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>Egy eszközművelet már fut.</translation>
     </message>
     <message>
-        <location line="-2707"/>
-        <location line="+1706"/>
+        <location line="-2987"/>
+        <location line="+1986"/>
         <source>Create</source>
         <translation>Létrehozás</translation>
     </message>
@@ -466,9 +469,9 @@ Válasszon másik nevet.</translation>
         <translation type="vanished">Már létezik ilyen azonosítójú tároló. Válasszon másik azonosítót.</translation>
     </message>
     <message>
-        <location line="-2281"/>
-        <location line="+44"/>
-        <location line="+2436"/>
+        <location line="-2538"/>
+        <location line="+61"/>
+        <location line="+2676"/>
         <source>Selected device is not a catalog</source>
         <translation>A kijelölt eszköz nem katalógus</translation>
     </message>
@@ -525,8 +528,9 @@ Válasszon másik nevet.</translation>
         <translation>Exportálás</translation>
     </message>
     <message>
-        <location line="-2924"/>
-        <location line="+2432"/>
+        <location line="-3161"/>
+        <location line="+433"/>
+        <location line="+2236"/>
         <location line="+411"/>
         <location line="+26"/>
         <location line="+17"/>
@@ -537,7 +541,7 @@ Válasszon másik nevet.</translation>
         <translation>Megszakítva</translation>
     </message>
     <message>
-        <location line="-3871"/>
+        <location line="-4150"/>
         <source>Thumbnail</source>
         <translation>Bélyegkép</translation>
     </message>
@@ -628,17 +632,17 @@ Válasszon másik nevet.</translation>
         <translation>Archívum tartalma</translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+49"/>
         <source>Provide a destination path for the previews and derived data.</source>
         <translation>Adjon meg egy célútvonalat az előnézetek és a származtatott adatok számára.</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>Select a destination path that can be written to.</source>
         <translation>Válasszon egy írható célútvonalat.</translation>
     </message>
     <message>
-        <location line="+77"/>
+        <location line="+94"/>
         <location line="+157"/>
         <source>Enrichment</source>
         <translation>Bővítés</translation>
@@ -655,20 +659,31 @@ Válasszon másik nevet.</translation>
         <translation>Várakozás a meghajtóra</translation>
     </message>
     <message>
-        <location line="+2248"/>
+        <location line="+2485"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>Tallózás</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-2211"/>
+        <location line="+2213"/>
         <location line="+450"/>
         <location line="+10"/>
         <source>Loaded</source>
         <translation>Betöltve</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="-3284"/>
+        <source>Classification</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reference documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3328"/>
         <source>The export folder must be empty.</source>
         <translation>Az exportálási mappának üresnek kell lennie.</translation>
     </message>
@@ -950,7 +965,7 @@ Válasszon másik nevet.</translation>
         <translation type="vanished">Forrás</translation>
     </message>
     <message>
-        <location filename="../qt_quick/CreateWizard.qml" line="+154"/>
+        <location filename="../qt_quick/CreateWizard.qml" line="+157"/>
         <source>Destination path</source>
         <translation>Célútvonal</translation>
     </message>
@@ -969,7 +984,7 @@ Válasszon másik nevet.</translation>
         <translation type="vanished">Összegzés</translation>
     </message>
     <message>
-        <location line="-148"/>
+        <location line="-150"/>
         <source>Off</source>
         <translation>Ki</translation>
     </message>
@@ -992,7 +1007,7 @@ Válasszon másik nevet.</translation>
         <translation type="vanished">%1. lépés / %2</translation>
     </message>
     <message>
-        <location line="+109"/>
+        <location line="+111"/>
         <source>Path for previews and derived data</source>
         <translation>Az előnézetek és származtatott adatok útvonala</translation>
     </message>
@@ -1091,6 +1106,11 @@ Válasszon másik nevet.</translation>
     </message>
     <message>
         <location line="+10"/>
+        <source>Classification</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Topic segments</source>
         <translation>Témaszakaszok</translation>
     </message>
@@ -1395,7 +1415,12 @@ Válasszon másik nevet.</translation>
         <translation>Offline – a fájl megnyitásához szükséges: %1</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+82"/>
+        <source>Reference documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+48"/>
         <source>Extended Metadata</source>
         <translation>Bővített metaadatok</translation>
     </message>
@@ -1418,7 +1443,7 @@ Válasszon másik nevet.</translation>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1460"/>
+        <location filename="../qt_quick/Main.qml" line="+1467"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>Biztosan &lt;b&gt;törli&lt;/b&gt; ezt a(z) %1 eszközt?&lt;br/&gt;&lt;br/&gt;Név: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1436,13 +1461,13 @@ Válasszon másik nevet.</translation>
         <location line="-538"/>
         <location line="+64"/>
         <location line="+250"/>
-        <location line="+1067"/>
+        <location line="+1101"/>
         <location line="+125"/>
         <source>Cancel</source>
         <translation>Mégse</translation>
     </message>
     <message>
-        <location line="-1657"/>
+        <location line="-1691"/>
         <location line="+114"/>
         <location line="+73"/>
         <location line="+179"/>
@@ -1460,13 +1485,13 @@ Válasszon másik nevet.</translation>
         <translation type="vanished">Rendszer</translation>
     </message>
     <message>
-        <location line="-252"/>
-        <location line="+258"/>
+        <location line="-253"/>
+        <location line="+259"/>
         <source>Settings</source>
         <translation>Beállítások</translation>
     </message>
     <message>
-        <location line="-423"/>
+        <location line="-430"/>
         <source>Open...</source>
         <translation>Megnyitás...</translation>
     </message>
@@ -1498,43 +1523,43 @@ Válasszon másik nevet.</translation>
     </message>
     <message>
         <location line="+18"/>
-        <location line="+984"/>
+        <location line="+991"/>
         <source>Selection</source>
         <translation>Kiválasztás</translation>
     </message>
     <message>
-        <location line="-955"/>
-        <location line="+1315"/>
+        <location line="-962"/>
+        <location line="+1322"/>
         <source>Devices</source>
         <translation>Eszközök</translation>
     </message>
     <message>
-        <location line="-1334"/>
-        <location line="+1431"/>
+        <location line="-1341"/>
+        <location line="+1438"/>
         <source>Explore</source>
         <translation>Tallózás</translation>
     </message>
     <message>
-        <location line="-1397"/>
-        <location line="+1796"/>
+        <location line="-1404"/>
+        <location line="+1837"/>
         <source>Backup</source>
         <translation>Biztonsági mentés</translation>
     </message>
     <message>
-        <location line="-1801"/>
-        <location line="+1758"/>
+        <location line="-1842"/>
+        <location line="+1799"/>
         <source>Statistics</source>
         <translation>Statisztikák</translation>
     </message>
     <message>
-        <location line="-1763"/>
-        <location line="+1785"/>
+        <location line="-1804"/>
+        <location line="+1826"/>
         <source>Tags</source>
         <translation>Címkék</translation>
     </message>
     <message>
-        <location line="-1798"/>
-        <location line="+1611"/>
+        <location line="-1839"/>
+        <location line="+1618"/>
         <source>Activity</source>
         <translation>Tevékenység</translation>
     </message>
@@ -1543,7 +1568,7 @@ Válasszon másik nevet.</translation>
         <translation type="vanished">Dokumentáció</translation>
     </message>
     <message>
-        <location line="-1584"/>
+        <location line="-1585"/>
         <source>About</source>
         <translation>Névjegy</translation>
     </message>
@@ -1584,7 +1609,7 @@ Válasszon másik nevet.</translation>
 </translation>
     </message>
     <message>
-        <location line="+156"/>
+        <location line="+157"/>
         <source>Do not show again</source>
         <translation>Ne jelenjen meg újra</translation>
     </message>
@@ -1887,19 +1912,25 @@ Ez azt jelentheti, hogy a forrás üres, vagy az eszköz nincs csatolva ehhez a 
 Mindenképpen menti (a katalógus üres lesz)?</translation>
     </message>
     <message>
-        <location line="-921"/>
-        <location line="+1158"/>
+        <location line="-928"/>
+        <location line="+1165"/>
         <location line="+51"/>
         <source>Search</source>
         <translation>Keresés</translation>
     </message>
     <message>
-        <location line="-1189"/>
+        <location line="-1196"/>
         <source>Tools</source>
         <translation>Eszközök</translation>
     </message>
     <message>
-        <location line="+186"/>
+        <location line="+25"/>
+        <location line="+1610"/>
+        <source>Context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1442"/>
         <source>Welcome to Katalog 3. News, questions and feedback are shared on the project discussions:</source>
         <translation>Üdvözli a Katalog 3. A híreket, kérdéseket és visszajelzéseket a projekt beszélgetéseiben osztjuk meg:</translation>
     </message>
@@ -1921,12 +1952,12 @@ Mindenképpen menti (a katalógus üres lesz)?</translation>
     <message>
         <location line="+7"/>
         <location line="+124"/>
-        <location line="+337"/>
+        <location line="+371"/>
         <source>Stop</source>
         <translation>Leállítás</translation>
     </message>
     <message>
-        <location line="-454"/>
+        <location line="-488"/>
         <source>Reset</source>
         <translation>Visszaállítás</translation>
     </message>
@@ -1942,6 +1973,7 @@ Mindenképpen menti (a katalógus üres lesz)?</translation>
         <location line="+108"/>
         <location line="+73"/>
         <location line="+157"/>
+        <location line="+34"/>
         <location line="+61"/>
         <location line="+104"/>
         <location line="+20"/>
@@ -1958,7 +1990,7 @@ Mindenképpen menti (a katalógus üres lesz)?</translation>
 </translation>
     </message>
     <message>
-        <location line="-910"/>
+        <location line="-944"/>
         <source>Copy version and system information</source>
         <translation>Verzió- és rendszerinformációk másolása</translation>
     </message>
@@ -2042,19 +2074,19 @@ Mindenképpen menti (a katalógus üres lesz)?</translation>
         <translation type="vanished">A katalógus sikeresen létrejött.</translation>
     </message>
     <message>
-        <location line="+283"/>
+        <location line="+317"/>
         <source>Catalog creation failed: </source>
         <translation>A katalógus létrehozása sikertelen: </translation>
     </message>
     <message>
-        <location line="-1654"/>
-        <location line="+1638"/>
+        <location line="-1695"/>
+        <location line="+1679"/>
         <location line="+32"/>
         <source>Create</source>
         <translation>Létrehozás</translation>
     </message>
     <message>
-        <location line="-238"/>
+        <location line="-272"/>
         <source>Columns</source>
         <translation>Oszlopok</translation>
     </message>
@@ -2064,7 +2096,12 @@ Mindenképpen menti (a katalógus üres lesz)?</translation>
         <translation>Témacsoportok</translation>
     </message>
     <message>
-        <location line="+247"/>
+        <location line="+194"/>
+        <source>Re-interpret with the context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+87"/>
         <source>Edit Device</source>
         <translation>Eszköz szerkesztése</translation>
     </message>
@@ -2082,7 +2119,8 @@ Mindenképpen menti (a katalógus üres lesz)?</translation>
 (A katalógust frissíteni kell a módosítások érvényesítéséhez)</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="-102"/>
+        <location line="+127"/>
         <source>Save</source>
         <translation>Mentés</translation>
     </message>
@@ -6623,7 +6661,12 @@ Ellenőrizze, hogy a forrásmappa (%1) helyes-e, vagy hogy az eszköz a forrásm
         <translation>Időtartam</translation>
     </message>
     <message>
-        <location line="+94"/>
+        <location line="+51"/>
+        <source>Reference documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+93"/>
         <source>Files</source>
         <translation>Fájlok</translation>
     </message>
@@ -7516,6 +7559,260 @@ Ellenőrizze, hogy a forrásmappa (%1) helyes-e, vagy hogy az eszköz a forrásm
         <location line="+1"/>
         <source>No files need to be copied or moved.</source>
         <translation>Nincs másolandó vagy áthelyezendő fájl.</translation>
+    </message>
+</context>
+<context>
+    <name>PageContext</name>
+    <message>
+        <location filename="../qt_quick/PageContext.qml" line="+108"/>
+        <source>Context saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>The draft could not be made: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Draft ready, not saved yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Archive</source>
+        <translation>Archívum</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <location line="+170"/>
+        <source>Organisation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-164"/>
+        <source>Period</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Domain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Language</source>
+        <translation>Nyelv</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Narrative style and terminology</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+150"/>
+        <source>Notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-142"/>
+        <source>Suggest the glossary terms to the transcription</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Glossary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Term</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Preferred form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+106"/>
+        <source>Also written as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-100"/>
+        <location line="+38"/>
+        <source>Definition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-32"/>
+        <location line="+54"/>
+        <location line="+52"/>
+        <location line="+82"/>
+        <source>Remove</source>
+        <translation>Eltávolítás</translation>
+    </message>
+    <message>
+        <location line="-180"/>
+        <location line="+54"/>
+        <location line="+52"/>
+        <source>Add</source>
+        <translation>Hozzáad</translation>
+    </message>
+    <message>
+        <location line="-101"/>
+        <source>Categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <location line="+56"/>
+        <source>Name</source>
+        <translation>Név</translation>
+    </message>
+    <message>
+        <location line="-44"/>
+        <source>Values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Only these values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>More than one value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Known names</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Event</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Other</source>
+        <translation>Egyéb</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <location line="+130"/>
+        <source>Catalog</source>
+        <translation>Katalógus</translation>
+    </message>
+    <message>
+        <location line="-119"/>
+        <source>Draft from the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Notes for this catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Reference documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>%1 passages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Error</source>
+        <translation>Hiba</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>To be indexed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Add files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Add folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Re-interpret with the context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Folder</source>
+        <translation>Mappa</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Select the path</source>
+        <translation>Elérési út kiválasztása</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>File type</source>
+        <translation>Fájltípus</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>All</source>
+        <translation>Minden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Image</source>
+        <translation>Kép</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Video</source>
+        <translation>Videó</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Audio</source>
+        <translation>Hang</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Text</source>
+        <translation>Szöveg</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Files</source>
+        <translation>Fájlok</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1, about %2</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8853,7 +9150,7 @@ Ellenőrizze, hogy a forrásmappa (%1) helyes-e, vagy hogy az eszköz a forrásm
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-4946"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-5226"/>
         <source>Exact Phrase</source>
         <translation>Pontos kifejezés</translation>
     </message>
