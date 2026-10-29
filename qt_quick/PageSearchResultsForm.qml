@@ -499,7 +499,8 @@ ColumnLayout {
 
         Controls.HorizontalHeaderView {
             id: headerView
-            anchors { top: parent.top; left: parent.left; right: parent.right }
+            anchors { top: parent.top; left: parent.left; right: parent.right
+                      rightMargin: searchInspector.visible ? searchInspector.width : 0 }
             syncView: tableView
             clip: true
             implicitHeight: 34
@@ -565,7 +566,16 @@ ColumnLayout {
 
         Kirigami.Separator {
             id: headerSep
-            anchors { top: headerView.bottom; left: parent.left; right: parent.right }
+            anchors { top: headerView.bottom; left: parent.left; right: parent.right
+                      rightMargin: searchInspector.visible ? searchInspector.width : 0 }
+        }
+
+        // Offline Inspector (fork), on the right of the results table
+        Inspector {
+            id: searchInspector
+            visible: applicationWindow().inspectorVisible
+            anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
+            width: Kirigami.Units.gridUnit * 18
         }
 
         Rectangle { // List background (empty area)
@@ -580,7 +590,8 @@ ColumnLayout {
             // bottom, so it always floats over the last row whatever margin is
             // applied; the bar therefore lives outside the view, below it.
             anchors { top: headerSep.bottom; left: parent.left; right: parent.right
-                      bottom: horizontalScrollBar.top }
+                      bottom: horizontalScrollBar.top
+                      rightMargin: searchInspector.visible ? searchInspector.width : 0 }
                 // Without this the view paints rows past its own bottom edge, and
                 // the scroll bar below — a later sibling, so drawn on top — cut
                 // through the row hanging over it. Only visible mid-list: at the
@@ -591,6 +602,14 @@ ColumnLayout {
                 model: appManager1.searchSortModel
 
                 property int selectedRow: -1
+                // Fork: the Inspector follows the selected file
+                onSelectedRowChanged: {
+                    const m = appManager1.searchSortModel
+                    const name   = selectedRow >= 0 ? String(m.data(m.index(selectedRow, 0), Qt.DisplayRole) ?? "") : ""
+                    const folder = selectedRow >= 0 ? String(m.data(m.index(selectedRow, 3), Qt.DisplayRole) ?? "") : ""
+                    searchInspector.catalogId = selectedRow >= 0 ? Number(m.data(m.index(selectedRow, 5), Qt.DisplayRole) ?? 0) : 0
+                    searchInspector.fullPath  = name !== "" ? folder + "/" + name : ""
+                }
 
                 ScrollBar.vertical:   ScrollBar { policy: ScrollBar.AsNeeded }
 
@@ -599,6 +618,13 @@ ColumnLayout {
                 // Keyboard navigation (CDT-F5–F11), shared in Main.qml.
                 activeFocusOnTab: true
                 Keys.onPressed: function(event) {
+                    // Space shows/hides the Inspector, unless it continues a type-ahead name
+                    if (event.key === Qt.Key_Space && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+                            && applicationWindow().typeAheadIdle(tableView)) {
+                        applicationWindow().inspectorVisible = !applicationWindow().inspectorVisible
+                        event.accepted = true
+                        return
+                    }
                     applicationWindow().tableKeyPressed(tableView, event, {
                         activate: function(r) { pageSearchResults_column.activateResultRow(r) },
                         openMenu: function(r) {
@@ -803,7 +829,8 @@ ColumnLayout {
         ScrollBar {
             id: horizontalScrollBar
             orientation: Qt.Horizontal
-            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+            anchors { left: parent.left; right: parent.right; bottom: parent.bottom
+                      rightMargin: searchInspector.visible ? searchInspector.width : 0 }
 
             readonly property bool overflowing: tableView.contentWidth > tableView.width
             visible: overflowing
