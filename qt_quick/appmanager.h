@@ -11,6 +11,7 @@
 #include <QFileInfo>
 #include <QLocale>
 #include <QStringList>
+#include <QSet>
 #include <QStringListModel>
 #include <QTranslator>
 #include <QDateTime>
@@ -840,6 +841,18 @@ private:
     bool    openMdiMainConnection();
     void    refreshMdiIndex(int catalogId);
     void    startNextEnrichment();
+    // Kept across restarts and collection switches in mdi_data.db (MDI-F12, MDI-C28)
+    int               m_mdiDeviceId = -1;          // device of the running job
+    bool              m_mdiQuickHashOnly = false;  // the running job is a quick-hash pass
+    bool              m_mdiWaitingForSource = false;   // its drive is away (MDI-F91)
+    bool              m_mdiKeepPending = false;    // ends on quit or switch: stays pending (MDI-F93)
+    bool              m_mdiLeaving = false;        // ends by Stop or by stepping aside (MDI-F92)
+    QSet<int>         m_mdiStartPaused;            // restored jobs that start paused (D6, D31)
+    void    saveMdiJobs();
+    void    restoreMdiJobs();
+    void    stepAsideIfWaiting();
+    bool    mdiSourceReachable(int deviceId);
+    QString mdiStateStatus() const;   // In Progress, Paused or waiting for the drive
 
     // Activity page
     MdiSystemMonitor *m_monitor       = nullptr;

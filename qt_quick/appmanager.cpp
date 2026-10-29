@@ -486,8 +486,10 @@ QString AppManager::startDatabase()
     emit databaseModeChanged();
     emit recentCollectionsChanged();
     qInfo() << "Katalog" << currentVersion << "– database ready:" << collection->databaseMode;
-    // Instant-search index for catalogs not indexed yet (fork, D5), once the
-    // window is up; the background pass is stopped before the application ends
+    // Pending enrichment jobs (MDI-F12), then the instant-search index for
+    // catalogs not indexed yet (fork, D5), once the window is up; the
+    // background pass is stopped before the application ends
+    QTimer::singleShot(2500, this, &AppManager::restoreMdiJobs);
     QTimer::singleShot(3000, this, &AppManager::scheduleFtsIndexing);
     connect(qApp, &QCoreApplication::aboutToQuit, this, &AppManager::stopFtsIndexing, Qt::UniqueConnection);
     return "startDatabase: No Error";
@@ -1265,6 +1267,23 @@ bool AppManager::reconnectToDatabase()
 {
     const QString conn = m_connectionName;
 
+    // The running job belongs to the collection being left: it ends as on
+    // quit and stays pending there, with its waiting list (MDI-F93). The list
+    // is already saved there: the caller may have pointed the collection at
+    // the new folder, so nothing is written now.
+    if (m_mdiJob) {
+        m_mdiKeepPending = true;
+        m_mdiJob->requestStop();
+    }
+    m_mdiStartPaused.clear();
+    m_mdiStep.clear();
+    m_mdiStepLog.clear();
+    m_mdiStatusText.clear();
+    emit mdiStatusTextChanged();
+    emit mdiStepChanged();
+    emit mdiStepLogChanged();
+    emit mdiStateChanged();
+
     // Pending wizard profiles belong to the collection being left
     m_pendingEnrichmentProfiles.clear();
     // The index being built belongs to it too
@@ -1308,6 +1327,8 @@ bool AppManager::reconnectToDatabase()
     // collection name through this signal, and the rollback path above reconnects
     // without going through saveToRecentCollections().
     emit recentCollectionsChanged();
+    // Its own pending enrichment jobs first, then the background passes (MDI-F92)
+    QTimer::singleShot(800, this, &AppManager::restoreMdiJobs);
     QTimer::singleShot(1000, this, &AppManager::scheduleFtsIndexing);
     return true;
 }
@@ -2813,8 +2834,12 @@ QString AppManager::startEnrichment(int deviceId)
     // One job at a time; a request for another catalog waits its turn and a
     // catalog already running or waiting is not added twice (MDI-F16)
     if (m_mdiJob) {
-        if (!m_mdiWaiting.contains(deviceId))
+        const bool running = deviceId == m_mdiDeviceId && !m_mdiLeaving && !m_mdiKeepPending;
+        if (!running && !m_mdiWaiting.contains(deviceId)) {
             m_mdiWaiting.append(deviceId);
+            saveMdiJobs();
+            stepAsideIfWaiting();
+        }
         return QString();
     }
 
@@ -2847,6 +2872,7 @@ QString AppManager::startEnrichment(int deviceId)
     config.textModel       = tools.value(QStringLiteral("textModel")).toString();
     config.embedModel      = tools.value(QStringLiteral("embedModel")).toString();
     config.uiLanguageName  = QLocale::languageToString(QLocale(getCurrentLanguage()).language());
+    config.sourceRoot      = device.path;   // waited for when disconnected (MDI-F91)
     return launchMdiJob(device, config);
 }
 //----------------------------------------------------------------------
@@ -2854,8 +2880,10 @@ QString AppManager::startQuickHash(int deviceId)
 {
     // A quick-hash pass waits behind any running job (MDI-F16)
     if (m_mdiJob) {
-        if (!m_quickHashWaiting.contains(deviceId))
+        if (!m_quickHashWaiting.contains(deviceId)) {
             m_quickHashWaiting.append(deviceId);
+            stepAsideIfWaiting();
+        }
         return QString();
     }
     Device device;
@@ -2884,23 +2912,33 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
                                            collection->databaseMode, device.catalog->filePath);
 
     m_mdiCatalogName = device.name;
-    m_mdiIsPaused    = false;
+    // A restored job that was paused, or that uses a provider not on this
+    // computer, starts paused (D6, D31)
+    m_mdiIsPaused    = !config.quickHashOnly && m_mdiStartPaused.remove(device.ID);
     m_mdiJobStart    = QDateTime::currentDateTime();
     m_mdiSourcePath  = device.path;
+    m_mdiDeviceId         = device.ID;
+    m_mdiQuickHashOnly    = config.quickHashOnly;
+    m_mdiWaitingForSource = false;
+    m_mdiLeaving          = false;
     m_mdiJob    = new MdiEnrichmentJob(config, files);
     m_mdiThread = new QThread();
     m_mdiJob->moveToThread(m_mdiThread);
+    if (m_mdiIsPaused)
+        m_mdiJob->setPaused(true);
 
     auto status = [this](const QString &state) {
         return StatusBarMessageBuilder().setOperation(tr("Enrichment")).setStatus(state)
                                         .setDeviceContext(1, 1, m_mdiCatalogName);
     };
-    m_mdiStatusText = status(tr("In Progress")).build();
+    m_mdiStatusText = mdiStateStatus();
     emit mdiStatusTextChanged();
 
     connect(m_mdiThread, &QThread::started, m_mdiJob, &MdiEnrichmentJob::run);
     connect(m_mdiJob, &MdiEnrichmentJob::progress, this,
             [this, status](int fileIndex, int fileCount, const QString &analysis, const QString &filePath) {
+        if (m_mdiKeepPending)
+            return;   // the job of a collection being left shows nothing (MDI-F93)
         m_mdiStatusText = status(m_mdiIsPaused ? tr("Paused") : tr("In Progress"))
                               .setProcess(mdiAnalysisLabel(analysis), fileIndex, fileCount)
                               .setCurrentItem(filePath)
@@ -2921,12 +2959,26 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
     });
     connect(m_mdiJob, &MdiEnrichmentJob::finished, this, [this, status](const QVariantMap &summary) {
         const bool stopped = summary.value(QStringLiteral("stopped")).toBool();
-        StatusBarMessageBuilder builder = status(stopped ? tr("Cancelled") : tr("Completed"));
-        builder.setResult(tr("Completed"), summary.value(QStringLiteral("completed")).toInt());
-        m_mdiStatusText = builder.build();
+        // Ended by quitting or by opening another collection: it stays pending
+        // in its own collection and shows nothing here (MDI-F12, MDI-F93)
+        const bool keptPending = m_mdiKeepPending;
+        if (keptPending) {
+            m_mdiStatusText.clear();
+        } else {
+            StatusBarMessageBuilder builder = status(stopped ? tr("Cancelled") : tr("Completed"));
+            builder.setResult(tr("Completed"), summary.value(QStringLiteral("completed")).toInt());
+            m_mdiStatusText = builder.build();
+        }
         emit mdiStatusTextChanged();
         m_mdiJob = nullptr;           // deleted with its thread
         m_mdiIsPaused = false;
+        m_mdiDeviceId         = -1;
+        m_mdiQuickHashOnly    = false;
+        m_mdiWaitingForSource = false;
+        m_mdiKeepPending      = false;
+        m_mdiLeaving          = false;
+        if (!keptPending)
+            saveMdiJobs();
         m_mdiStep.clear();
         emit mdiStepChanged();
         m_mdiRevision++;
@@ -2944,8 +2996,11 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
     if (!m_mdiQuitHooked) {
         m_mdiQuitHooked = true;
         connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
-            if (m_mdiJob)
+            // Quitting keeps the enrichment list for next time (MDI-F12)
+            if (m_mdiJob) {
+                m_mdiKeepPending = true;
                 m_mdiJob->requestStop();
+            }
             if (m_mdiThread) {
                 m_mdiThread->quit();
                 m_mdiThread->wait(5000);
@@ -2959,6 +3014,8 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
     }
 
     m_mdiThread->start();
+    if (!config.quickHashOnly)
+        saveMdiJobs();
     emit mdiStateChanged();
     emit mdiStepChanged();
     updateMonitoring();
@@ -2967,11 +3024,25 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
 //----------------------------------------------------------------------
 void AppManager::startNextEnrichment()
 {
-    while (!m_mdiJob && !m_mdiWaiting.isEmpty()) {
-        const int next = m_mdiWaiting.takeFirst();
+    // Jobs whose source is reachable first, in their order; then the
+    // quick-hash passes; then the jobs that will wait for their drive (MDI-F92)
+    bool dropped = false;
+    auto startJob = [this, &dropped](int next) {
         const QString error = startEnrichment(next);
-        if (!error.isEmpty())
+        if (!error.isEmpty()) {
+            dropped = true;
+            m_mdiStartPaused.remove(next);
             qWarning() << "Enrichment not started for device" << next << ":" << error;
+        }
+    };
+    while (!m_mdiJob && !m_mdiWaiting.isEmpty()) {
+        int next = -1;
+        for (int k = 0; k < m_mdiWaiting.size() && next < 0; ++k)
+            if (mdiSourceReachable(m_mdiWaiting.at(k)))
+                next = k;
+        if (next < 0)
+            break;
+        startJob(m_mdiWaiting.takeAt(next));
     }
     while (!m_mdiJob && !m_quickHashWaiting.isEmpty()) {
         const int next = m_quickHashWaiting.takeFirst();
@@ -2979,15 +3050,24 @@ void AppManager::startNextEnrichment()
         if (!error.isEmpty())
             qWarning() << "Quick hash not started for device" << next << ":" << error;
     }
+    while (!m_mdiJob && !m_mdiWaiting.isEmpty())
+        startJob(m_mdiWaiting.takeFirst());
+    if (!m_mdiJob && dropped)
+        saveMdiJobs();    // jobs that could not start leave the list
     updateMonitoring();   // stops sampling when nothing runs and the page is closed
 }
 //----------------------------------------------------------------------
 void AppManager::stopEnrichment()
 {
+    // Stop empties the enrichment list (MDI-C28)
     m_mdiWaiting.clear();
     m_quickHashWaiting.clear();
-    if (m_mdiJob)
+    m_mdiStartPaused.clear();
+    if (m_mdiJob) {
+        m_mdiLeaving = true;
         m_mdiJob->requestStop();
+    }
+    saveMdiJobs();
 }
 //----------------------------------------------------------------------
 void AppManager::setEnrichmentPaused(bool paused)
@@ -2996,11 +3076,95 @@ void AppManager::setEnrichmentPaused(bool paused)
         return;
     m_mdiIsPaused = paused;
     m_mdiJob->setPaused(paused);
-    m_mdiStatusText = StatusBarMessageBuilder().setOperation(tr("Enrichment"))
-                          .setStatus(paused ? tr("Paused") : tr("In Progress"))
-                          .setDeviceContext(1, 1, m_mdiCatalogName).build();
+    m_mdiStatusText = mdiStateStatus();
     emit mdiStatusTextChanged();
     emit mdiStateChanged();
+    saveMdiJobs();   // a job paused when Katalog closes comes back paused (MDI-F12)
+}
+//----------------------------------------------------------------------
+QString AppManager::mdiStateStatus() const
+{
+    StatusBarMessageBuilder builder;
+    builder.setOperation(tr("Enrichment")).setDeviceContext(1, 1, m_mdiCatalogName);
+    if (m_mdiIsPaused)
+        builder.setStatus(tr("Paused"));
+    else if (m_mdiWaitingForSource)   // MDI-F91: the path waited for as current item
+        builder.setStatus(tr("Waiting for the drive")).setCurrentItem(m_mdiSourcePath);
+    else
+        builder.setStatus(tr("In Progress"));
+    return builder.build();
+}
+//----------------------------------------------------------------------
+bool AppManager::mdiSourceReachable(int deviceId)
+{
+    // Same rule as the runner (MDI-C29): present, and not an empty mount point
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    return !device.path.isEmpty() && QFileInfo::exists(device.path) && !QDir(device.path).isEmpty();
+}
+//----------------------------------------------------------------------
+void AppManager::stepAsideIfWaiting()
+{
+    // A job waiting for its drive lets a waiting catalog whose source is
+    // there run first, and goes to the end of the list; it never steps aside
+    // for nothing (MDI-F92)
+    if (!m_mdiJob || !m_mdiWaitingForSource || m_mdiQuickHashOnly || m_mdiLeaving || m_mdiKeepPending)
+        return;
+    const auto reachable = [this](const QList<int> &ids) {
+        return std::any_of(ids.cbegin(), ids.cend(), [this](int id) { return mdiSourceReachable(id); });
+    };
+    if (!reachable(m_mdiWaiting) && !reachable(m_quickHashWaiting))
+        return;
+    m_mdiLeaving = true;
+    m_mdiWaiting.append(m_mdiDeviceId);
+    if (m_mdiIsPaused)
+        m_mdiStartPaused.insert(m_mdiDeviceId);
+    saveMdiJobs();
+    m_mdiJob->requestStop();
+}
+//----------------------------------------------------------------------
+void AppManager::saveMdiJobs()
+{
+    // The running job (unless it is leaving the list or its collection), then
+    // the waiting ones, in mdi_data.db of the collection open (MDI-C28)
+    if (!openMdiMainConnection())
+        return;
+    QList<MdiData::PendingJob> jobs;
+    if (m_mdiJob && !m_mdiQuickHashOnly && !m_mdiLeaving && !m_mdiKeepPending)
+        jobs.append({ m_mdiDeviceId, m_mdiIsPaused });
+    for (int id : std::as_const(m_mdiWaiting))
+        jobs.append({ id, m_mdiStartPaused.contains(id) });
+    if (!MdiData::savePendingJobs(kMdiMainConnection, jobs))
+        qWarning() << "Enrichment list not saved in" << mdiDataPath();
+}
+//----------------------------------------------------------------------
+void AppManager::restoreMdiJobs()
+{
+    // Jobs not finished when this collection was last open (MDI-F12): one
+    // paused then, or using a provider not on this computer, comes back
+    // paused (D6, D31); the others continue by themselves, and one whose
+    // drive is away waits for it (MDI-F91). Resuming is incremental (MDI-F13).
+    if (!openMdiMainConnection())
+        return;
+    QList<MdiData::PendingJob> jobs = MdiData::pendingJobs(kMdiMainConnection);
+    if (jobs.isEmpty())
+        return;
+    // Those whose source is reachable first, in their order (MDI-F92)
+    std::stable_partition(jobs.begin(), jobs.end(),
+                          [this](const MdiData::PendingJob &job) { return mdiSourceReachable(job.deviceId); });
+    const QString host = QUrl(getEnrichmentTools().value(QStringLiteral("ollamaUrl")).toString()).host();
+    const bool localProvider = host == QLatin1String("localhost") || host == QLatin1String("127.0.0.1")
+                               || host == QLatin1String("::1");
+    for (const MdiData::PendingJob &job : jobs) {
+        if (job.paused || !localProvider)
+            m_mdiStartPaused.insert(job.deviceId);
+        const QString error = startEnrichment(job.deviceId);
+        if (!error.isEmpty()) {
+            m_mdiStartPaused.remove(job.deviceId);
+            qWarning() << "Enrichment not resumed for device" << job.deviceId << ":" << error;
+        }
+    }
 }
 //----------------------------------------------------------------------
 // Activity page (MDI-F61..F75)
@@ -3022,6 +3186,9 @@ void AppManager::updateMonitoring()
         connect(m_monitorThread, &QThread::finished, m_monitor, &QObject::deleteLater);
         connect(m_monitorThread, &QThread::finished, m_monitorThread, &QObject::deleteLater);
         connect(m_monitor, &MdiSystemMonitor::snapshot, this, [this](const QVariantMap &snapshot) {
+            // A waiting catalog's drive may be connected while the job waits (MDI-F92)
+            if (m_mdiWaitingForSource)
+                stepAsideIfWaiting();
             m_mdiSystem = snapshot;
             QVariantMap point;
             point[QStringLiteral("t")]   = QDateTime::currentDateTime().toString(QStringLiteral("HH:mm:ss"));
@@ -3049,8 +3216,18 @@ void AppManager::updateMonitoring()
 //----------------------------------------------------------------------
 void AppManager::onMdiActivity(const QVariantMap &step)
 {
+    if (m_mdiKeepPending)
+        return;   // the job of a collection being left shows nothing (MDI-F93)
     const QString event = step.value(QStringLiteral("event")).toString();
-    if (event == QLatin1String("start")) {
+    if (event == QLatin1String("waiting")) {
+        // Its drive is away: the job waits for it (MDI-F91)
+        m_mdiWaitingForSource = step.value(QStringLiteral("waiting")).toBool();
+        m_mdiStatusText = mdiStateStatus();
+        emit mdiStatusTextChanged();
+        emit mdiStateChanged();
+        emit mdiStepChanged();
+        stepAsideIfWaiting();
+    } else if (event == QLatin1String("start")) {
         m_mdiStep = step;
         m_mdiStep[QStringLiteral("label")]    = mdiAnalysisLabel(step.value(QStringLiteral("analysis")).toString());
         m_mdiStep[QStringLiteral("fileName")] = QFileInfo(step.value(QStringLiteral("filePath")).toString()).fileName();
@@ -3090,11 +3267,13 @@ QVariantMap AppManager::getMdiJobInfo() const
         info[QStringLiteral("startedAt")] = m_mdiJobStart.toString(QStringLiteral("HH:mm"));
         // Estimate from the pace of the files already done
         const qint64 elapsed = m_mdiJobStart.secsTo(QDateTime::currentDateTime());
-        if (index > 1 && count >= index && elapsed > 0) {
+        if (index > 1 && count >= index && elapsed > 0 && !m_mdiWaitingForSource) {
             const qint64 remaining = elapsed * (count - index + 1) / (index - 1);
             info[QStringLiteral("endsAt")] = QDateTime::currentDateTime().addSecs(remaining).toString(QStringLiteral("HH:mm"));
         }
         info[QStringLiteral("sourceConnected")] = !m_mdiSourcePath.isEmpty() && QFileInfo::exists(m_mdiSourcePath);
+        info[QStringLiteral("sourcePath")]       = m_mdiSourcePath;
+        info[QStringLiteral("waitingForSource")] = m_mdiWaitingForSource;
     }
     QStringList waiting;
     for (int id : m_mdiWaiting) {

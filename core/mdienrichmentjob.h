@@ -27,8 +27,9 @@
 // Description: Worker for one catalog's enrichment, run on its own QThread like
 //              BackupJobStoppable (MDI-C3). One file at a time, each analysis
 //              committed before the next (MDI-F9); stoppable (F10), pausable
-//              (F11), incremental (F13). External tools through QProcess with
-//              an argument list (MDI-C7); local AI over HTTP (Ollama).
+//              (F11), incremental (F13), waits for a disconnected drive (F91).
+//              External tools through QProcess with an argument list (MDI-C7);
+//              local AI over HTTP (Ollama).
 //
 // Usage:
 //   QThread *thread = new QThread();
@@ -91,6 +92,7 @@ public:
         int         httpTimeoutMs = 120 * 1000;                   // MDI-C20
         bool        quickHashOnly = false;   // a pass computing only the quick hash
         QString     catalogStamp;            // catalog state the passes complete on
+        QString     sourceRoot;              // catalog's device path: the drive waited for (MDI-F91)
     };
 
     MdiEnrichmentJob(const Config &config, const QList<FileItem> &files, QObject *parent = nullptr);
@@ -136,6 +138,8 @@ signals:
     //   start:    startedAt (ISO time)
     //   progress: progress (0..1), detail (e.g. "9 / 15 min")
     //   end:      outcome, reason, durationMs, tokensPerSecond (AI analyses, when known)
+    // and, apart from steps, "waiting" with waiting (bool) and sourcePath when
+    // the job starts and stops waiting for its drive (MDI-F91)
     void activity(const QVariantMap &step);
 
 private:
@@ -188,6 +192,10 @@ private:
     QString derivedRelative(const FileItem &file, const QString &analysis, const QString &suffix) const;
     QString absoluteDerived(const QString &relative) const;
     bool    waitWhilePaused();   // false when stopped while paused
+    // The catalog's drive is away and the job waits for it (MDI-F91, MDI-C29);
+    // a quick-hash pass never waits
+    bool    sourceGone() const;
+    bool    waitForSource();     // false when stopped while waiting
 
     Config          m_config;
     QList<FileItem> m_files;

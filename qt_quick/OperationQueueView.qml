@@ -151,6 +151,7 @@ Controls.ToolBar {
 
             Controls.BusyIndicator {
                 running: appManager1.mdiIsRunning && !appManager1.mdiIsPaused
+                         && !appManager1.mdiJobInfo.waitingForSource
                 opacity: appManager1.mdiIsRunning ? 1 : 0
                 Layout.leftMargin: Kirigami.Units.largeSpacing
                 implicitWidth:  Kirigami.Units.gridUnit * 1.2

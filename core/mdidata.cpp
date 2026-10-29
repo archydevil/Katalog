@@ -156,6 +156,15 @@ bool MdiData::open(const QString &connectionName, const QString &dbPath)
         )
     )"));
     q.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS mdi_embedding_file ON mdi_embedding (emb_catalog_id, emb_full_path)"));
+
+    // Enrichment jobs not finished, in run order (MDI-C28)
+    q.exec(QLatin1String(R"(
+        CREATE TABLE IF NOT EXISTS mdi_job (
+            job_order     INTEGER NOT NULL PRIMARY KEY,
+            job_device_id INTEGER NOT NULL,
+            job_paused    INTEGER NOT NULL DEFAULT 0
+        )
+    )"));
     return ok;
 }
 
@@ -454,4 +463,38 @@ QStringList MdiData::clearCatalog(const QString &connectionName, int catalogId)
     delEmb.bindValue(":catalog_id", catalogId);
     delEmb.exec();
     return derived;
+}
+
+QList<MdiData::PendingJob> MdiData::pendingJobs(const QString &connectionName)
+{
+    QList<PendingJob> jobs;
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    if (!q.exec(QStringLiteral("SELECT job_device_id, job_paused FROM mdi_job ORDER BY job_order")))
+        return jobs;
+    while (q.next())
+        jobs.append({ q.value(0).toInt(), q.value(1).toBool() });
+    return jobs;
+}
+
+bool MdiData::savePendingJobs(const QString &connectionName, const QList<PendingJob> &jobs)
+{
+    // One short transaction on the main-thread connection (MDI-C4)
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
+    if (!db.transaction())
+        return false;
+    QSqlQuery q(db);
+    bool ok = q.exec(QStringLiteral("DELETE FROM mdi_job"));
+    q.prepare(QStringLiteral("INSERT INTO mdi_job (job_order, job_device_id, job_paused) VALUES (:order, :device, :paused)"));
+    for (int i = 0; ok && i < jobs.size(); ++i) {
+        q.bindValue(":order",  i);
+        q.bindValue(":device", jobs.at(i).deviceId);
+        q.bindValue(":paused", jobs.at(i).paused ? 1 : 0);
+        ok = q.exec();
+    }
+    if (!ok) {
+        qWarning() << "MdiData::savePendingJobs failed:" << q.lastError().text();
+        db.rollback();
+        return false;
+    }
+    return db.commit();
 }

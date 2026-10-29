@@ -328,6 +328,35 @@ bool MdiEnrichmentJob::waitWhilePaused()
     return !m_stop.load();
 }
 
+bool MdiEnrichmentJob::sourceGone() const
+{
+    if (m_config.quickHashOnly || m_config.sourceRoot.isEmpty())
+        return false;   // a quick-hash pass is scheduled again instead (MDI-F84)
+    // A fixed mount point stays as an empty folder when its drive is gone
+    return !QFileInfo::exists(m_config.sourceRoot) || QDir(m_config.sourceRoot).isEmpty();
+}
+
+bool MdiEnrichmentJob::waitForSource()
+{
+    if (!sourceGone())
+        return !m_stop.load();
+    // Nothing runs, nothing is read but the source path itself, every 2 s;
+    // Pause and Stop are seen in between (MDI-F91, MDI-C29)
+    QVariantMap waiting;
+    waiting[QStringLiteral("event")]      = QStringLiteral("waiting");
+    waiting[QStringLiteral("waiting")]    = true;
+    waiting[QStringLiteral("sourcePath")] = m_config.sourceRoot;
+    emit activity(waiting);
+    while (!m_stop.load() && sourceGone()) {
+        QMutexLocker locker(&m_pauseMutex);
+        if (!m_stop.load())
+            m_pauseCondition.wait(&m_pauseMutex, 2000);
+    }
+    waiting[QStringLiteral("waiting")] = false;
+    emit activity(waiting);
+    return !m_stop.load();
+}
+
 //----------------------------------------------------------------------
 void MdiEnrichmentJob::run()
 {
@@ -357,17 +386,34 @@ void MdiEnrichmentJob::run()
     m_segmentsChanged = !hasClusters && !MdiData::forCatalog(m_connectionName, m_config.catalogId,
                                                              QStringLiteral("segments")).isEmpty();
 
+    int precomputedChunk = -1;
     for (int i = 0; i < fileCount && !m_stop.load(); ++i) {
-        if (i % kParallelChunk == 0)
-            precomputeThumbnails(i, qMin(fileCount, i + kParallelChunk));
+        // Nothing is read from the source while paused or while its drive is
+        // away, the thumbnail pre-pass included (MDI-F11, MDI-F91)
+        if (!waitWhilePaused())
+            break;
+        if (i / kParallelChunk != precomputedChunk) {
+            if (!waitForSource())
+                break;
+            precomputedChunk = i / kParallelChunk;
+            precomputeThumbnails(i, qMin(fileCount, (precomputedChunk + 1) * kParallelChunk));
+        }
         const FileItem &file = m_files.at(i);
         const QStringList analyses = plannedAnalyses(file);
         if (analyses.isEmpty())
             continue;
 
-        // A source that cannot be reached (disconnected drive) keeps its data:
-        // nothing is overwritten, so it stays browsable offline (MDI-F44).
+        // A source that cannot be reached keeps its data: nothing is
+        // overwritten, so it stays browsable offline (MDI-F44). A file gone
+        // while its drive is there is skipped; a drive gone is waited for,
+        // and the job goes on with this same file once it is back (MDI-F91).
         if (!QFileInfo::exists(file.fullPath)) {
+            if (sourceGone()) {
+                if (!waitForSource())
+                    break;
+                --i;
+                continue;
+            }
             skipped += analyses.size();
             ++m_unreachable;
             continue;
@@ -376,7 +422,8 @@ void MdiEnrichmentJob::run()
         // Embeddings index the file's other data: redone whenever one of them
         // was produced in this run
         bool fileChanged = false;
-        for (const QString &analysis : analyses) {
+        for (int a = 0; a < analyses.size(); ++a) {
+            const QString &analysis = analyses.at(a);
             if (!waitWhilePaused())
                 break;
 
@@ -415,10 +462,12 @@ void MdiEnrichmentJob::run()
             stepClock.start();
 
             Result r = runAnalysis(analysis, file);
+            // The drive went away during the step (MDI-F91)
+            const bool sourceLost = r.outcome != QLatin1String("completed") && sourceGone();
 
             QVariantMap ended = step;
             ended[QStringLiteral("event")]      = QStringLiteral("end");
-            ended[QStringLiteral("outcome")]    = m_stop.load() ? QStringLiteral("stopped") : r.outcome;
+            ended[QStringLiteral("outcome")]    = m_stop.load() || sourceLost ? QStringLiteral("stopped") : r.outcome;
             ended[QStringLiteral("reason")]     = r.reason;
             ended[QStringLiteral("durationMs")] = stepClock.elapsed();
             if (m_lastTokensPerSecond > 0)
@@ -426,6 +475,14 @@ void MdiEnrichmentJob::run()
             emit activity(ended);
             if (m_stop.load())
                 break;   // the abandoned step is not recorded (MDI-F10)
+            if (sourceLost) {
+                // Not recorded either: the file's datum and derived files stay,
+                // and the step runs again once the drive is back
+                if (!waitForSource())
+                    break;
+                --a;
+                continue;
+            }
 
             // Derived files of the datum being replaced (e.g. JPEG thumbnails
             // becoming WebP): removed once the new datum is committed
@@ -876,7 +933,9 @@ void MdiEnrichmentJob::precomputeThumbnails(int from, int to)
     QMutex mutex;
     for (const Task &task : tasks) {
         pool.start([this, task, &mutex]() {
-            if (m_stop.load())
+            // Decodes not started yet do not start after Pause (MDI-F11); the
+            // file then takes the sequential path after Resume
+            if (m_stop.load() || m_paused.load())
                 return;
             QString error;
             if (qtImageThumbnail(task.source, task.target, &error)) {

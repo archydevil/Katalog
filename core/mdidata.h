@@ -77,6 +77,12 @@ public:
         QVector<float> vector;        // unit length
     };
 
+    // One enrichment job not finished, in run order (MDI-F12, MDI-C28)
+    struct PendingJob {
+        int  deviceId = 0;
+        bool paused   = false;   // paused when it was last written
+    };
+
     static QString filePath(const QString &collectionFolder);
 
     // Opens (creating when absent) the store on a connection of the caller's
@@ -118,6 +124,12 @@ public:
 
     // Removes the catalog's data and returns the derived files it recorded (absolute)
     static QStringList clearCatalog(const QString &connectionName, int catalogId);
+
+    // The enrichment list (running job first, then the waiting ones), kept
+    // across restarts and collection switches (MDI-C28). No file position:
+    // resuming relies on the incremental check (MDI-F13).
+    static QList<PendingJob> pendingJobs(const QString &connectionName);
+    static bool              savePendingJobs(const QString &connectionName, const QList<PendingJob> &jobs);
 };
 
 #endif // MDIDATA_H

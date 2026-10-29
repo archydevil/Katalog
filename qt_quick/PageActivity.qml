@@ -54,7 +54,7 @@ ColumnLayout {
             Rectangle {
                 width: Kirigami.Units.gridUnit * 0.8; height: width; radius: width / 2
                 color: !appManager1.mdiIsRunning ? Kirigami.Theme.disabledTextColor
-                       : appManager1.mdiIsPaused ? Kirigami.Theme.neutralTextColor
+                       : appManager1.mdiIsPaused || pageActivity.job.waitingForSource ? Kirigami.Theme.neutralTextColor
                                                  : Kirigami.Theme.positiveTextColor
             }
             ColumnLayout {
@@ -66,7 +66,8 @@ ColumnLayout {
                     font.bold: true
                     text: !appManager1.mdiIsRunning
                           ? qsTr("Nothing running")
-                          : (appManager1.mdiIsPaused ? qsTr("Paused") : qsTr("In Progress"))
+                          : (appManager1.mdiIsPaused ? qsTr("Paused")
+                             : pageActivity.job.waitingForSource ? qsTr("Waiting for the drive") : qsTr("In Progress"))
                             + " · " + pageActivity.job.catalog
                             + (pageActivity.job.fileCount > 0
                                ? " · " + qsTr("File %1 of %2").arg(pageActivity.job.fileIndex).arg(pageActivity.job.fileCount) : "")
@@ -166,7 +167,11 @@ ColumnLayout {
                 font.bold: true
                 text: pageActivity.step.label
                       ? pageActivity.step.label + " · " + pageActivity.step.fileName
-                      : (appManager1.mdiIsPaused ? qsTr("Paused") : qsTr("Checking what is already done"))
+                      : appManager1.mdiIsPaused ? qsTr("Paused")
+                      // MDI-F91: nothing runs until the source drive is back
+                      : pageActivity.job.waitingForSource
+                        ? qsTr("The analysis continues by itself when %1 is back.").arg(pageActivity.job.sourcePath)
+                        : qsTr("Checking what is already done")
             }
             Controls.Label {
                 Layout.fillWidth: true
@@ -180,6 +185,7 @@ ColumnLayout {
             }
             Controls.ProgressBar {
                 Layout.fillWidth: true
+                visible: !pageActivity.job.waitingForSource
                 from: 0; to: 1
                 indeterminate: pageActivity.step.progress === undefined
                 value: pageActivity.step.progress ?? 0
