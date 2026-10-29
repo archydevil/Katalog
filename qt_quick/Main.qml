@@ -992,7 +992,9 @@ Kirigami.ApplicationWindow {
 
         topContent: [
             ColumnLayout {
+                // The drawer stretches its top area: the entries stay at the top
                 Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
                 spacing: 2
                 KSidebarItem {
                     iconName: "go-home"
