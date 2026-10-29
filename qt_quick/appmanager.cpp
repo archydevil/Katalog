@@ -3298,6 +3298,73 @@ QVariantList AppManager::contextCatalogs()
     return list;
 }
 //----------------------------------------------------------------------
+QVariantMap AppManager::homeOverview()
+{
+    QVariantMap overview;
+    QVariantList drives;
+    qint64 totalFiles = 0;
+    int aiFiles = 0;
+    const bool mdi = openMdiMainConnection();
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    for (const QVariant &c : contextCatalogs()) {
+        Device device;
+        device.ID = c.toMap().value(QStringLiteral("deviceId")).toInt();
+        device.loadDevice(m_connectionName);
+        if (device.type != QLatin1String("Catalog"))
+            continue;
+        QVariantMap drive;
+        drive[QStringLiteral("deviceId")]  = device.ID;
+        drive[QStringLiteral("name")]      = device.name;
+        drive[QStringLiteral("path")]      = device.path;
+        drive[QStringLiteral("connected")] = mdiSourceReachable(device.ID);
+        drive[QStringLiteral("files")]     = device.totalFileCount;
+        drive[QStringLiteral("size")]      = formatDataSize(device.totalFileSize);
+        drive[QStringLiteral("updated")]   = QLocale().toString(device.dateTimeUpdated.date(), QLocale::ShortFormat);
+
+        // Files by type, once per catalog state
+        const QString stamp = device.catalog ? device.catalog->dateUpdated.toString(Qt::ISODate) : QString();
+        auto types = m_homeTypeCache.constFind(device.ID);
+        if (types == m_homeTypeCache.constEnd() || types->first != stamp) {
+            QVariantMap counts;
+            if (device.catalog)
+                for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(
+                         m_connectionName, device.externalID, collection->databaseMode, device.catalog->filePath))
+                    counts[f.fileType] = counts.value(f.fileType).toInt() + 1;
+            types = m_homeTypeCache.insert(device.ID, {stamp, counts});
+        }
+        drive[QStringLiteral("types")] = types->second;
+
+        // Files with AI results, at most every 15 s
+        auto ai = m_homeAiCache.constFind(device.ID);
+        if (mdi && (ai == m_homeAiCache.constEnd() || now - ai->first > 15))
+            ai = m_homeAiCache.insert(device.ID, {now, int(MdiData::catalogIndex(kMdiMainConnection, device.externalID).size())});
+        drive[QStringLiteral("aiFiles")] = ai != m_homeAiCache.constEnd() ? ai->second : 0;
+
+        totalFiles += device.totalFileCount;
+        aiFiles    += drive.value(QStringLiteral("aiFiles")).toInt();
+        drives.append(drive);
+    }
+    overview[QStringLiteral("drives")]     = drives;
+    overview[QStringLiteral("totalFiles")] = totalFiles;
+    overview[QStringLiteral("aiFiles")]    = aiFiles;
+
+    // The archive's context and knowledge base
+    const QJsonObject context = mdi ? MdiContext::load(kMdiMainConnection, MdiContext::kCollectionScope) : QJsonObject();
+    overview[QStringLiteral("hasContext")]   = !MdiContext::isEmpty(context);
+    overview[QStringLiteral("organisation")] = context.value("organisation").toString();
+    overview[QStringLiteral("period")]       = context.value("period").toString();
+    overview[QStringLiteral("terms")]        = int(context.value("glossary").toArray().size());
+    overview[QStringLiteral("categories")]   = int(context.value("categories").toArray().size());
+    overview[QStringLiteral("names")]        = int(context.value("entities").toArray().size());
+    int passages = 0;
+    const QVariantList documents = mdi ? MdiKnowledge::documents(kMdiMainConnection) : QVariantList();
+    for (const QVariant &d : documents)
+        passages += d.toMap().value(QStringLiteral("passages")).toInt();
+    overview[QStringLiteral("documents")] = int(documents.size());
+    overview[QStringLiteral("passages")]  = passages;
+    return overview;
+}
+//----------------------------------------------------------------------
 void AppManager::draftContext(int deviceId)
 {
     // What the draft reads: the catalog's folders (by number of files) and a

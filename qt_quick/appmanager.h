@@ -461,6 +461,9 @@ public slots:
     Q_INVOKABLE QString      getCatalogNotes(int deviceId);
     Q_INVOKABLE bool         saveCatalogNotes(int deviceId, const QString &notes);
     Q_INVOKABLE QVariantList contextCatalogs();            // [{deviceId, name, path}]
+    // Home page (fork, D34): drives with their state and contents, totals, the
+    // archive's context and knowledge. Heavy counts are cached.
+    Q_INVOKABLE QVariantMap  homeOverview();
     // Draft of a context from a catalog's folders and results, by the local
     // text model on a worker thread; the answer comes with contextDraftReady
     Q_INVOKABLE void         draftContext(int deviceId);
@@ -881,6 +884,10 @@ private:
     // Pending jobs that cannot start now (no profile, destination not
     // writable): kept, and tried again when the collection is opened (MDI-F12)
     QList<MdiData::PendingJob> m_mdiHeld;
+    // Home page caches: file types per catalog (by catalog date), files with AI
+    // results per catalog (refreshed at most every 15 s)
+    QHash<int, QPair<QString, QVariantMap>> m_homeTypeCache;
+    QHash<int, QPair<qint64, int>>          m_homeAiCache;
     void    holdOrDropMdiJob(const MdiData::PendingJob &job, const QString &error);
     QString startMdiJob(const MdiData::PendingJob &job, bool resumed);
     bool    mdiJobReachable(const MdiData::PendingJob &job);
