@@ -606,27 +606,27 @@ Choose a different name.</source>
     <message>
         <location line="+1"/>
         <source>Text snippet</source>
-        <translation type="unfinished"></translation>
+        <translation>Текстов фрагмент</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Instant search index</source>
-        <translation type="unfinished"></translation>
+        <translation>Индекс за мигновено търсене</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Quick hash</source>
-        <translation type="unfinished"></translation>
+        <translation>Бърз хеш</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Technical data</source>
-        <translation type="unfinished"></translation>
+        <translation>Технически данни</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Archive contents</source>
-        <translation type="unfinished"></translation>
+        <translation>Съдържание на архива</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1370,17 +1370,17 @@ Choose a different name.</source>
     <message>
         <location filename="../qt_quick/Inspector.qml" line="+50"/>
         <source>No file selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Няма избран файл.</translation>
     </message>
     <message>
         <location line="+48"/>
         <source>Online – click to open</source>
-        <translation type="unfinished"></translation>
+        <translation>Онлайн – щракни, за да отвориш</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – connect %1 to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Офлайн – свържи %1, за да отвориш файла</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -1390,7 +1390,7 @@ Choose a different name.</source>
     <message>
         <location line="+23"/>
         <source>Open on map</source>
-        <translation type="unfinished"></translation>
+        <translation>Отвори на картата</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1999,7 +1999,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <location line="+7"/>
         <location line="+163"/>
         <source>Inspector</source>
-        <translation type="unfinished"></translation>
+        <translation>Инспектор</translation>
     </message>
     <message>
         <location line="-108"/>
@@ -2044,7 +2044,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     <message>
         <location line="-238"/>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Колони</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -7588,32 +7588,32 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-322"/>
         <source>Connected drives</source>
-        <translation type="unfinished"></translation>
+        <translation>Свързани устройства</translation>
     </message>
     <message>
         <location line="+37"/>
         <source>Not mounted</source>
-        <translation type="unfinished"></translation>
+        <translation>Не е монтирано</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Mount read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>Монтирай само за четене</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 не успя да монтира това устройство. Провери лиценза и разрешението му в Системни настройки или го деинсталирай: системата сама чете NTFS устройства, а на Katalog му трябва само четене.</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The system could not mount this drive: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Системата не успя да монтира това устройство: %1</translation>
     </message>
     <message>
         <location line="+16"/>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>Опресни</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -9028,7 +9028,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-130"/>
         <source>Verify with full checksum</source>
-        <translation type="unfinished"></translation>
+        <translation>Проверка с пълна контролна сума</translation>
     </message>
     <message>
         <location line="+10"/>

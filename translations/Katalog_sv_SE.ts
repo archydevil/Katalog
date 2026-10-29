@@ -606,27 +606,27 @@ Välj ett annat namn.</translation>
     <message>
         <location line="+1"/>
         <source>Text snippet</source>
-        <translation type="unfinished"></translation>
+        <translation>Textsnutt</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Instant search index</source>
-        <translation type="unfinished"></translation>
+        <translation>Index för direktsökning</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Quick hash</source>
-        <translation type="unfinished"></translation>
+        <translation>Snabb hash</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Technical data</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekniska data</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Archive contents</source>
-        <translation type="unfinished"></translation>
+        <translation>Arkivinnehåll</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1370,17 +1370,17 @@ Välj ett annat namn.</translation>
     <message>
         <location filename="../qt_quick/Inspector.qml" line="+50"/>
         <source>No file selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ingen fil vald.</translation>
     </message>
     <message>
         <location line="+48"/>
         <source>Online – click to open</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – klicka för att öppna</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – connect %1 to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – anslut %1 för att öppna filen</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -1390,7 +1390,7 @@ Välj ett annat namn.</translation>
     <message>
         <location line="+23"/>
         <source>Open on map</source>
-        <translation type="unfinished"></translation>
+        <translation>Öppna på karta</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1999,7 +1999,7 @@ Vill du spara den ändå (katalogen blir tom)?</translation>
         <location line="+7"/>
         <location line="+163"/>
         <source>Inspector</source>
-        <translation type="unfinished"></translation>
+        <translation>Inspektör</translation>
     </message>
     <message>
         <location line="-108"/>
@@ -2044,7 +2044,7 @@ Vill du spara den ändå (katalogen blir tom)?</translation>
     <message>
         <location line="-238"/>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolumner</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -7588,32 +7588,32 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="-322"/>
         <source>Connected drives</source>
-        <translation type="unfinished"></translation>
+        <translation>Anslutna enheter</translation>
     </message>
     <message>
         <location line="+37"/>
         <source>Not mounted</source>
-        <translation type="unfinished"></translation>
+        <translation>Inte monterad</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Mount read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>Montera skrivskyddat</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 kunde inte montera den här enheten. Kontrollera dess licens och behörighet i Systeminställningar, eller avinstallera programmet: systemet läser NTFS-enheter på egen hand, och läsning är allt Katalog behöver.</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The system could not mount this drive: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Systemet kunde inte montera den här enheten: %1</translation>
     </message>
     <message>
         <location line="+16"/>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>Uppdatera</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -9028,7 +9028,7 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="-130"/>
         <source>Verify with full checksum</source>
-        <translation type="unfinished"></translation>
+        <translation>Verifiera med fullständig kontrollsumma</translation>
     </message>
     <message>
         <location line="+10"/>

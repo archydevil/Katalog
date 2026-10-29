@@ -606,27 +606,27 @@ Izberite drugo ime.</translation>
     <message>
         <location line="+1"/>
         <source>Text snippet</source>
-        <translation type="unfinished"></translation>
+        <translation>Odlomek besedila</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Instant search index</source>
-        <translation type="unfinished"></translation>
+        <translation>Indeks za takojšnje iskanje</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Quick hash</source>
-        <translation type="unfinished"></translation>
+        <translation>Hitra zgoščena vrednost</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Technical data</source>
-        <translation type="unfinished"></translation>
+        <translation>Tehnični podatki</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Archive contents</source>
-        <translation type="unfinished"></translation>
+        <translation>Vsebina arhiva</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1370,17 +1370,17 @@ Izberite drugo ime.</translation>
     <message>
         <location filename="../qt_quick/Inspector.qml" line="+50"/>
         <source>No file selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nobena datoteka ni izbrana.</translation>
     </message>
     <message>
         <location line="+48"/>
         <source>Online – click to open</source>
-        <translation type="unfinished"></translation>
+        <translation>Povezano – klikni za odpiranje</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – connect %1 to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Ni povezano – poveži %1, da odpreš datoteko</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -1390,7 +1390,7 @@ Izberite drugo ime.</translation>
     <message>
         <location line="+23"/>
         <source>Open on map</source>
-        <translation type="unfinished"></translation>
+        <translation>Odpri na zemljevidu</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1999,7 +1999,7 @@ Ali ga vseeno želite shraniti (katalog bi bil prazen)?</translation>
         <location line="+7"/>
         <location line="+163"/>
         <source>Inspector</source>
-        <translation type="unfinished"></translation>
+        <translation>Inšpektor</translation>
     </message>
     <message>
         <location line="-108"/>
@@ -2044,7 +2044,7 @@ Ali ga vseeno želite shraniti (katalog bi bil prazen)?</translation>
     <message>
         <location line="-238"/>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Stolpci</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -7589,32 +7589,32 @@ Preverite, ali je izvorna mapa (%1) pravilna ali ali je naprava priklopljena v i
     <message>
         <location line="-322"/>
         <source>Connected drives</source>
-        <translation type="unfinished"></translation>
+        <translation>Povezane enote</translation>
     </message>
     <message>
         <location line="+37"/>
         <source>Not mounted</source>
-        <translation type="unfinished"></translation>
+        <translation>Ni priklopljeno</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Mount read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>Priklopi samo za branje</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Program %1 ni mogel priklopiti te enote. Preveri njegovo licenco in dovoljenje v Sistemskih nastavitvah ali ga odstrani: sistem sam bere enote NTFS, Katalog pa potrebuje le branje.</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The system could not mount this drive: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Sistem ni mogel priklopiti te enote: %1</translation>
     </message>
     <message>
         <location line="+16"/>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>Osveži</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -9029,7 +9029,7 @@ Preverite, ali je izvorna mapa (%1) pravilna ali ali je naprava priklopljena v i
     <message>
         <location line="-130"/>
         <source>Verify with full checksum</source>
-        <translation type="unfinished"></translation>
+        <translation>Preveri s polno nadzorno vsoto</translation>
     </message>
     <message>
         <location line="+10"/>

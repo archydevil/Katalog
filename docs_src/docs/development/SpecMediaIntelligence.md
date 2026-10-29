@@ -412,7 +412,7 @@ characterising information for applications and other files.
 | MDI-C5 | **Memory mode.** The in-memory collection database is never shared with the runner's thread. Derived data lives in `mdi_data.db` exactly as in File mode (`MDI-C4`), so no derived table is loaded into the in-memory database. The enrichment profile (`mdi_profile`) stays in the in-memory database, is persisted to `mdi_profile.csv` in the collection folder and is loaded when the collection is opened, before any query on it (Memory Mode Caveat in `CLAUDE.md`). | [Implemented — Phase A] |
 | MDI-C6 | **Hosted mode.** The runner opens its own connection with the collection's already validated host settings. Derived-file locations are stored relative to the destination path, which is recorded per catalog, so a second machine can point to its own copy. Whether several machines share one destination path or use one each is `Q11` (deferred). | [Planned] |
 | MDI-C7 | External tools are started with `QProcess` using a program path and an argument list — never through a shell or a command string. Standard output and error are captured; the process is terminated on Stop, on time limit and on application exit. Tool paths are application settings (machine-specific); per-collection choices (profile, provider enablement) are stored with the collection. New settings keys only add to `katalog3_prerelease_settings.ini`; existing keys keep their meaning, so a beta settings file stays readable. | [Implemented — Phase A] |
-| MDI-C8 | No new linked library and no new Qt or KF6 module: `ffmpeg`, `whisper.cpp` and poppler are external programs; HTTP uses `Qt6::Network`; no vector-index library, no keychain library, no Qt Multimedia. Adding any of these needs explicit user approval and an amendment here first. | [Implemented — Phase A] |
+| MDI-C8 | No new linked library and no new Qt or KF6 module: `ffmpeg`, `whisper.cpp` and poppler are external programs; HTTP uses `Qt6::Network`; no vector-index library, no keychain library, no Qt Multimedia. Adding any of these needs explicit user approval and an amendment here first. **Exception (D25, 2026-10-29):** KArchive (`KF6::Archive`), optional, under `MDI-C25`; this exception covers that library only. | [Implemented — Phase A] |
 | MDI-C9 | Embeddings are stored in the database with the model name, model version and dimension. Similarity (cosine) is computed in `core/` by scanning stored vectors in batches; the scan is stoppable between batches and reports progress. A performance target is `Q14`, decided in Phase D. | [Planned — part implemented in Phase D] |
 | MDI-C10 | The runner MUST NOT write, modify, rename or delete anything on the cataloged source. It reads source files only, and only while their device is connected. All derived files go under the destination path, which is validated as outside the source (`MDI-F6`). | [Implemented — Phase A] |
 | MDI-C11 | Katalog MUST NOT send any content, query or metadata off the machine except to a provider enabled and confirmed under `MDI-F23`/`MDI-F24`/`MDI-F50`. With default settings the only network destination is `localhost`. No telemetry is added. | [Implemented — Phase A] |
@@ -422,10 +422,16 @@ characterising information for applications and other files.
 | MDI-C15 | **`mdi_` tables outside the core schema (D5).** The core schema stays 3.0: this fork MUST NOT change the core schema version, never stamps 3.1, and MUST NOT edit `runMigration_3_0`. The new tables (at least: enrichment profile, enrichment job, derived datum with provenance, derived file, transcript passage, topic segment, topic cluster and membership, embedding) all have the prefix `mdi_`. The enrichment profile table (`mdi_profile`) and a `mdi_schema` record are in the collection database; the derived-data tables and their own `mdi_schema` record are in `mdi_data.db` (D17, `MDI-C4`). Their own version ("media intelligence schema version 1") is stored separately from the core schema version, in a single-row `mdi_schema` table or equivalent. A separate migration creates the `mdi_` tables when they are absent and upgrades them when their version is older; it is idempotent and touches only `mdi_` tables. No 3.0 table or column is altered, added to or removed. File and Memory modes add the new `mdi_data.db` to the collection folder; Memory mode also adds `mdi_profile.csv`. No existing file format changes. | [Planned — part implemented in Phase A] |
 | MDI-C16 | Every progress and status message is built with `StatusBarMessageBuilder` (`SpecProgressReport.md`); no raw status string. | [Implemented — Phase A] |
 | MDI-C17 | **User-visible text.** New strings are written in English while a step is built, reusing existing K2/K3 strings wherever they fit; the fork owner approves all of a step's new strings together at the end of the step, before its commit, and translations run after that approval (D16). Existing strings are never changed without per-string approval. Copy states what is needed, without "Please" or orders. Blocking validation uses `Kirigami.InlineMessage`; decisions (egress confirmation, deletions) use modal dialogs; transient success uses `showPassiveNotification`. No string is approved by this spec; approved strings are listed under *User-visible text*. | [Implemented — process, D16] |
-| MDI-C18 | **UI structure.** No new Page: the wizard is a mode of the existing `PageCreateForm.qml`, derived data is shown inside the existing Explore and Search results pages, provider and tool settings inside the existing Settings page. Creating any new `.qml`, `.cpp` or `.h` file needs the user's explicit request first. **Exception (D19, 2026-10-28):** the *Activity* page (`MDI-F61`) is approved as a new Page; this exception covers that page only. | [Planned] |
+| MDI-C18 | **UI structure.** No new Page: the wizard is a mode of the existing `PageCreateForm.qml`, derived data is shown inside the existing Explore and Search results pages, provider and tool settings inside the existing Settings page. Creating any new `.qml`, `.cpp` or `.h` file needs the user's explicit request first. **Exception (D19, 2026-10-28):** the *Activity* page (`MDI-F61`) is approved as a new Page; this exception covers that page only. **New files approved by the fork owner (2026-10-28/29), none of them a Page:** `core/mdifts.{h,cpp}` (D22), `core/mdivolumes.{h,cpp}` (D30), `qt_quick/Inspector.qml` (D27), `qt_quick/ColumnBrowser.qml` (D28). | [Planned] |
 | MDI-C19 | **Cross-platform.** Tools are resolved with the platform's executable suffix; paths are built with Qt path functions. Derived-file names are short identifiers, not source names, so they stay within Windows path limits and cannot collide. No platform-specific API is used in phases A–D. | [Planned — part implemented in Phase A] |
 | MDI-C20 | HTTP requests have a time limit (default 120 s, configurable) and are aborted on Stop. A provider response that cannot be parsed into the expected fields is recorded as a failed datum with the reason, never stored as a result. | [Planned — part implemented in Phase B] |
 | MDI-C21 | **Resource monitor sources.** The resource monitor (`MDI-F70`) obtains its values on macOS through the external programs `ps`, `vm_stat`, `sysctl`, `memory_pressure`, `ioreg` and `pmset`; on Linux by reading `/proc` and running `ps`; Ollama's loaded models through its `/api/ps` over `Qt6::Network`. Programs are started as `MDI-C7` requires; no library is linked (`MDI-C8`). On Windows no platform-specific API is used; values not obtainable otherwise are unavailable (`MDI-F73`). The monitor runs on its own thread and never on the UI thread or the runner's thread. | [Planned — part implemented in Activity phase] |
+| MDI-C22 | **Instant search index store (D22, D5).** The index is the FTS5 table `mdi_fts` (trigram tokenizer) with `mdi_fts_doc` and `mdi_fts_state` in `mdi_data.db`, written by `core/mdifts.*`, never in the collection database. Its per-catalog stamp is `catalog_date_updated` normalised to `yyyy-MM-dd hh:mm:ss`; an index whose stamp differs from the catalog's is stale and not used. The rebuild runs on its own thread, never on the UI thread. No SQLite trigger maintains it (a trigger cannot write another database file, and an update rewrites all the catalog's rows). FTS5 `detail=column` is not used (it rules out phrase queries). | [Implemented — increment 3] |
+| MDI-C23 | **Search fast path (D22).** The prefilter is in `SearchJobStoppable::searchFilesInCatalog`: `mdi_data.db` is attached as `mdi` and the file query is restricted to `file_full_path IN (… MATCH …)`. The prefilter MUST match a superset of the files the search criteria match, so the index never changes a result set. It is active only when the data path is set (`setMdiDataPath`), which K3 does and K2 never does: K2's search is unchanged (`MDI-C1`). | [Implemented — increment 3] |
+| MDI-C24 | **Image decoding (D23).** Images are decoded in-process by Qt (`QImageReader`, scaled decode, EXIF auto-transform) in a parallel pre-pass on a `QThreadPool` of at most 4 threads, with QtCore only (no QtConcurrent); `ffmpeg` is used only for formats Qt cannot read. The pre-pass is the one exception to the one-file-at-a-time rule of `MDI-F9`. A replaced derived file is deleted only after the new datum is committed (D13, `MDI-F14`). | [Implemented — increment 3] |
+| MDI-C25 | **KArchive, optional (D25).** `KF6::Archive` is linked to `katalog-core` only when CMake finds it, and then defines `KATALOG_HAS_KARCHIVE`; without it the build succeeds and the archive analysis is skipped (`MDI-F82`). | [Implemented — increment 3] |
+| MDI-C26 | **Quick hash (D26).** `FileChecksum::computeQuickHash`: a file of at most 192 KB is hashed whole; a larger one as its size (little-endian) + its first 64 KB + 64 KB at size/2 + its last 64 KB; BLAKE2b-256. Quick hashes and the pass stamp (`mdi_pass`) are stored in `mdi_data.db` only: no core column is added (`CKS-C4`, D5), the catalog scan is unchanged, and there is no "Quick" value of the catalog's checksum option. In the duplicates search the quick-hash key carries the prefix `q:` and exists only in `filetemp`; the `file` table and its SHA-256 are never changed. K2 never sets the data path, so its duplicates search is unchanged. | [Implemented — increment 3] |
+| MDI-C27 | **Connected drives (D30).** `core/mdivolumes.*` lists drives with external programs (`diskutil` on macOS, `lsblk` and `udisksctl` on Linux), started as `MDI-C7` requires, and lists mounted volumes on Windows. Mounting is always read-only. Katalog MUST NOT open or read a raw device (that would need administrator rights); a drive the system cannot mount is out of scope. | [Implemented — increment 3] |
 
 ---
 
@@ -439,6 +445,7 @@ characterising information for applications and other files.
 | **D** | Embeddings and semantic search. | `MDI-F47`–`F51` |
 | **E** | Other documents; applications and other files. | `MDI-F42`, `F43` (`[Backlog]`) |
 | **Activity** | Activity page, core resource monitor, per-step activity reporting from the runner (D19, D21). Not bound to the A–E order. | `MDI-F61`–`F75`, `MDI-C21` |
+| **Increment 3** | Instant search index, WebP thumbnails and contact sheets, technical data, text snippets, archive listings, quick hash and duplicates, Inspector, column view, side menu, connected drives (D22–D30). Not bound to the A–E order. | `MDI-F76`–`F90`, `MDI-C22`–`C27` |
 
 A phase starts only when the previous one is implemented, and each phase starts
 with the core design approval required by `MDI-C14` and the string approvals of
@@ -575,6 +582,38 @@ New strings:
 
 Reused existing strings: "In Progress", "Memory", "Pause", "Paused", "Resume",
 "Stop", "Transcript", "Close".
+
+### Approved 2026-10-29 — increment 3
+
+Approved together at the end of the step (D16), by the fork owner in the main
+session on 2026-10-29; reported to the specifications agent by the main agent,
+which did not see the reply itself.
+
+New strings:
+
+| String | Where |
+| --- | --- |
+| "Text snippet" | Analysis label; Inspector and *Show analysis* section (`MDI-F81`, `MDI-F87`) |
+| "Instant search index" | Analysis label (`MDI-F76`) |
+| "Quick hash" | Analysis label; Inspector (`MDI-F84`, `MDI-F87`) |
+| "Verify with full checksum" | Duplicates option on the Search page (`MDI-F85`) |
+| "Technical data" | Analysis label; Inspector and *Show analysis* section (`MDI-F80`, `MDI-F87`) |
+| "Archive contents" | Analysis label; Inspector and *Show analysis* section (`MDI-F82`, `MDI-F87`) |
+| "Inspector" | Panel title and action (`MDI-F87`) |
+| "Columns" | Explore action (`MDI-F88`) |
+| "No file selected." | Inspector with no selection (`MDI-F87`) |
+| "Online – click to open" | Inspector disk state (`MDI-F87`) |
+| "Offline – connect %1 to open the file" | Inspector disk state (`MDI-F87`) |
+| "Open on map" | Inspector, GPS link (`MDI-F87`) |
+| "Connected drives" | Create page list (`MDI-F90`) |
+| "Not mounted" | Drive state (`MDI-F90`) |
+| "Mount read-only" | Drive action (`MDI-F90`) |
+| "Refresh" | Drive list action (`MDI-F90`) |
+| "%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs." | Mount failure with a third-party driver (`MDI-F90`) |
+| "The system could not mount this drive: %1" | Mount failure, other cause (`MDI-F90`) |
+
+Reused existing strings: "Tools", "Extended Metadata", "Checksum", "Show
+analysis", "Source path", "Duration", "Files", "Size".
 
 ### No longer used (D15)
 
@@ -733,6 +772,26 @@ owner may change them; `Q16` and `Q17` stay open until then):
 | `MDI-F75` | Audio minutes of a transcript, from `whisper.cpp` progress. | Tokens per second during a model call (now computed at the end of the call). |
 | `MDI-C21` | macOS and Linux sources as listed; monitor on its own thread; Ollama `/api/ps` over `Qt6::Network`. | Tool versions (`MdiSystemMonitor::toolsInfo`) are read on the UI thread through `AppManager::mdiToolsInfo`. |
 
+### Increment 3 (D22–D30) — reported 2026-10-29
+
+Reported by the main agent as built on `work/dev-fork`; the specifications
+agent checked the triggers and gates named below against the code, not the
+measurements. Rows `MDI-F76`–`F82`, `F84`, `F85`, `F87`–`F90` and
+`MDI-C22`–`C27` are implemented; `MDI-F83` and `MDI-F86` are backlog.
+`MDI-F29` and `MDI-F31` are superseded by `MDI-F78` and `MDI-F79` (D23).
+
+- **Instant search index (reported measurements).** 312 of 312 identical result
+  sets on a real catalog and 120 of 120 on a synthetic catalog of 1,002,310
+  files; 1.7 s → 0.17 s per search; the index takes about 900 MB per million
+  files.
+- **Quick hash.** Checked against an independent implementation (reported).
+- **Triggers.** The index rebuild and the quick-hash pass are started from
+  `AppManager` (`qt_quick/`) after collection open and after creation or
+  update, never from `CatalogJobStoppable`, `CatalogManager` or
+  `DeviceUpdateManager` (`MDI-C2` holds). Hosted mode is skipped for both.
+- **Settings keys** added (added keys only, `MDI-C7`): `View/InspectorVisible`,
+  `View/ExploreColumns`.
+
 ### Known gaps
 
 - Settings UI for tool paths and models (`MDI-F20`, `MDI-F23`).
@@ -778,6 +837,28 @@ owner may change them; `Q16` and `Q17` stay open until then):
   2 s) and has gaps while neither the page is shown nor a job runs, under the
   title "Since this session started" (`MDI-F68`). Keep, or cover the whole
   session?
+- **Create page in standard mode (increment 3).** *Connected drives*
+  (`MDI-F90`) is shown in standard mode too, while `MDI-F1` says the mode switch
+  is the only visible addition in standard mode. Amend `MDI-F1`, or show the
+  list in wizard mode only?
+- **Map link and `MDI-C11`.** *Open on map* (`MDI-F87`) hands the file's GPS
+  coordinates to openstreetmap.org through the system browser, on the user's
+  click. `MDI-C11` allows no metadata off the machine except to a confirmed
+  provider. Add an exception to `MDI-C11`, or remove the link?
+- **Mixed duplicate keys.** In `MDI-F85` a file with a quick hash and a copy
+  without one (for example on a device whose source was not reachable) get
+  different keys (`q:` versus SHA-256), so a pair the SHA-256 search found
+  before can be missed. Accept, or fall back to SHA-256 when a group is mixed?
+- **Copy rule.** Three approved strings give orders: "Online – click to
+  open", "Offline – connect %1 to open the file" and "%1 could not mount this
+  drive. Check its license…" (`MDI-C17`: copy states what is needed, without
+  orders). Approved by the owner as they are; recorded here for traceability.
+- **KArchive and K2.** `KF6::Archive` is linked `PUBLIC` to `katalog-core`, so a
+  K2 build links it too when it is found (no K2 code uses it). `MDI-C1` holds
+  (no file under `qt_widgets/` changed); a build without it is unaffected.
+- **Office text.** `MDI-F81` reads Office/OpenDocument text with KFileMetaData
+  for snippets; summaries of the same formats are still the open finding above
+  (`MDI-F42`).
 
 ---
 
@@ -822,7 +903,7 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F2** — Removed (D15); replaced by `MDI-F60`.
 - **MDI-F60** — Switch to wizard mode: one page shows *Catalog definition*, destination path, file-type toggle buttons, preview switches and *AI analysis*, with no *Next*/*Back*. Open *Analyze* in Explore: the same options appear.
 - **MDI-F3** — The file types shown are Image, Video, Audio, Text and Other; each turns on and off on its own. Create the same source in both modes: identical catalog.
-- **MDI-F4** — Keyframe count accepts 2–32 (default 8); a partial clip shows start and duration (default 0 and 30).
+- **MDI-F4** — Keyframe count accepts 2–32 (default 4); a partial clip shows start and duration (default 0 and 30).
 - **MDI-F6** — Set the destination path inside the source: *Create* shows the inline message at the top of the form and creates nothing; editing the path hides it. Repeat with an empty path, a read-only path, and no file type with a preview on. A destination that does not exist yet under a writable folder is accepted.
 - **MDI-F7** — Cancel a wizard creation while it runs: no enrichment job appears and no profile is saved (even when the catalog is kept). Remove a queued wizard creation: no profile. Let one complete: the profile is saved and the enrichment row appears in the activity panel for that catalog.
 - **MDI-F8 (A.1)** — Create a catalog in wizard mode, close and reopen the collection (File and Memory modes): its profile is still there.
@@ -843,7 +924,8 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F26** — Point the Ollama endpoint at a public host: the job asks for the `MDI-F24` confirmation.
 - **MDI-F27** — After a remote job: each datum shows a cost; the summary shows the total.
 - **MDI-F28** — Stop Ollama during a job: after three failures the job pauses and names the provider.
-- **MDI-F29–F33** — Check each derived file's format, size limit and range against the row.
+- **MDI-F29 / F31** — Removed (D23); replaced by `MDI-F78` and `MDI-F79`.
+- **MDI-F30, F32, F33** — Check each derived file's format, size limit and range against the row.
 - **MDI-F34 / C19** — Inspect the destination path: names are identifiers, not source names; nothing was written on the source.
 - **MDI-F35 / F36 / F38** — Transcribe a recording: passages carry timecodes; segments have title, summary, topics, contiguous `h:mm:ss` ranges.
 - **MDI-F37** — Cluster segments: each has a label, description, members; no segment in two clusters; no cluster holds segments of two catalogs.
@@ -877,6 +959,19 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F67 / F74** — Include a corrupt video: its step appears in the log with duration, outcome *failed* and the reason.
 - **MDI-F68** — Watch the charts during a job, restart Katalog: the charts start empty.
 - **MDI-F70 / F71 / C21** — During a transcription, the child-process list shows the tool with CPU and memory; on macOS and Linux CPU, memory and swap match the system monitor; no linked library added.
+- **MDI-F76 / C22** — Open a collection, then update a catalog: its index is rebuilt in the background while a search runs; `mdi_fts`, `mdi_fts_doc`, `mdi_fts_state` are in `mdi_data.db` only; the collection database is unchanged.
+- **MDI-F77 / C23** — Run the same text searches with a current index and with the index removed: identical result sets. A regex search, a 2-character term, a `/` outside names mode, a Hosted collection and a stale index all search as before. K2 search on the same collection: unchanged.
+- **MDI-F78 / C24** — Enrich a rotated JPEG: a WebP thumbnail, 256 px longest side, correctly oriented; a format Qt cannot read goes through `ffmpeg`; re-running replaces the file only after the new datum is saved.
+- **MDI-F79** — Enrich a video with 4 frames: one sheet, 4 frames 144 px high side by side; the datum lists each frame's timecode, position and width.
+- **MDI-F80** — Open the technical data of a video and an audio file: codec, resolution, frame rate, duration, bit rate and audio match `ffprobe`.
+- **MDI-F81** — A `.docx`, a `.pdf` and a `.md` get an 800-character snippet even with *Text* off in the profile; a binary file renamed `.txt` gets none.
+- **MDI-F82 / C25** — List a `zip`, a `.tar.zst` and a `7z`: entries shown, total counted beyond 20,000; a RAR is not supported; a macOS pax tar fails with its reason; a build without KArchive skips the analysis with its reason.
+- **MDI-F84 / C26** — Create a catalog without a profile: quick hashes are computed for all its files; the catalog's `file` table and checksum option are unchanged; the hash of a sample file matches an independent implementation.
+- **MDI-F85** — Duplicates search on checksum: groups by quick hash; with *Verify with full checksum* only true SHA-256 duplicates remain; the option is absent from the saved search history.
+- **MDI-F87** — In Explore and Search results, `Space` toggles the Inspector except while typing ahead; restart: its visibility is kept. Disconnect the device: the badge reads offline with the device name; a photo with GPS shows *Open on map*.
+- **MDI-F88** — Switch Explore to *Columns*: folders first, thumbnails, arrow keys move between columns; restart: the view is kept.
+- **MDI-F89** — Open the side menu: the six main entries and *Tools* with its five entries; no *Documentation* or *Quit*; the Quit shortcut still quits; footer icons show tooltips.
+- **MDI-F90 / C27** — With an unmounted external drive: it reads *Not mounted*; *Mount read-only* mounts it read-only and fills the source path. With a failing third-party driver: the message names the driver. No raw-device access is attempted.
 
 ---
 

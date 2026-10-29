@@ -606,27 +606,27 @@ Escolha um nome diferente.</translation>
     <message>
         <location line="+1"/>
         <source>Text snippet</source>
-        <translation type="unfinished"></translation>
+        <translation>Fragmento de texto</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Instant search index</source>
-        <translation type="unfinished"></translation>
+        <translation>Índice de pesquisa instantânea</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Quick hash</source>
-        <translation type="unfinished"></translation>
+        <translation>Hash rápido</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Technical data</source>
-        <translation type="unfinished"></translation>
+        <translation>Dados técnicos</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Archive contents</source>
-        <translation type="unfinished"></translation>
+        <translation>Conteúdo do arquivo</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1370,17 +1370,17 @@ Escolha um nome diferente.</translation>
     <message>
         <location filename="../qt_quick/Inspector.qml" line="+50"/>
         <source>No file selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nenhum ficheiro selecionado.</translation>
     </message>
     <message>
         <location line="+48"/>
         <source>Online – click to open</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – clique para abrir</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – connect %1 to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – ligue %1 para abrir o ficheiro</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -1390,7 +1390,7 @@ Escolha um nome diferente.</translation>
     <message>
         <location line="+23"/>
         <source>Open on map</source>
-        <translation type="unfinished"></translation>
+        <translation>Abrir no mapa</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1999,7 +1999,7 @@ Deseja guardá-lo mesmo assim (o catálogo ficaria vazio)?</translation>
         <location line="+7"/>
         <location line="+163"/>
         <source>Inspector</source>
-        <translation type="unfinished"></translation>
+        <translation>Inspetor</translation>
     </message>
     <message>
         <location line="-108"/>
@@ -2044,7 +2044,7 @@ Deseja guardá-lo mesmo assim (o catálogo ficaria vazio)?</translation>
     <message>
         <location line="-238"/>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Colunas</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -7588,32 +7588,32 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="-322"/>
         <source>Connected drives</source>
-        <translation type="unfinished"></translation>
+        <translation>Unidades ligadas</translation>
     </message>
     <message>
         <location line="+37"/>
         <source>Not mounted</source>
-        <translation type="unfinished"></translation>
+        <translation>Não montada</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Mount read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>Montar só de leitura</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 não conseguiu montar esta unidade. Verifique a respetiva licença e permissão nas Definições do Sistema, ou desinstale-o: o sistema lê sozinho as unidades NTFS, e o Katalog só precisa de ler.</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The system could not mount this drive: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>O sistema não conseguiu montar esta unidade: %1</translation>
     </message>
     <message>
         <location line="+16"/>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>Atualizar</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -9028,7 +9028,7 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="-130"/>
         <source>Verify with full checksum</source>
-        <translation type="unfinished"></translation>
+        <translation>Verificar com a soma de verificação completa</translation>
     </message>
     <message>
         <location line="+10"/>

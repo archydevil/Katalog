@@ -606,27 +606,27 @@ Vali teine nimi.</translation>
     <message>
         <location line="+1"/>
         <source>Text snippet</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekstikatke</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Instant search index</source>
-        <translation type="unfinished"></translation>
+        <translation>Kiirotsingu indeks</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Quick hash</source>
-        <translation type="unfinished"></translation>
+        <translation>Kiirräsi</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Technical data</source>
-        <translation type="unfinished"></translation>
+        <translation>Tehnilised andmed</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Archive contents</source>
-        <translation type="unfinished"></translation>
+        <translation>Arhiivi sisu</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1370,17 +1370,17 @@ Vali teine nimi.</translation>
     <message>
         <location filename="../qt_quick/Inspector.qml" line="+50"/>
         <source>No file selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Faili pole valitud.</translation>
     </message>
     <message>
         <location line="+48"/>
         <source>Online – click to open</source>
-        <translation type="unfinished"></translation>
+        <translation>Ühendatud – klõpsa avamiseks</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – connect %1 to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Ühendamata – faili avamiseks ühenda %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -1390,7 +1390,7 @@ Vali teine nimi.</translation>
     <message>
         <location line="+23"/>
         <source>Open on map</source>
-        <translation type="unfinished"></translation>
+        <translation>Ava kaardil</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1999,7 +1999,7 @@ Kas soovite selle ikkagi salvestada (kataloog oleks tühi)?</translation>
         <location line="+7"/>
         <location line="+163"/>
         <source>Inspector</source>
-        <translation type="unfinished"></translation>
+        <translation>Inspektor</translation>
     </message>
     <message>
         <location line="-108"/>
@@ -2044,7 +2044,7 @@ Kas soovite selle ikkagi salvestada (kataloog oleks tühi)?</translation>
     <message>
         <location line="-238"/>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Veerud</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -7588,32 +7588,32 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
     <message>
         <location line="-322"/>
         <source>Connected drives</source>
-        <translation type="unfinished"></translation>
+        <translation>Ühendatud draivid</translation>
     </message>
     <message>
         <location line="+37"/>
         <source>Not mounted</source>
-        <translation type="unfinished"></translation>
+        <translation>Haakimata</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Mount read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>Haagi kirjutuskaitstult</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 ei saanud seda draivi haakida. Kontrolli selle litsentsi ja luba süsteemiseadetes või eemalda see: süsteem loeb NTFS-draive ise ning Katalogile piisab lugemisest.</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The system could not mount this drive: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Süsteem ei saanud seda draivi haakida: %1</translation>
     </message>
     <message>
         <location line="+16"/>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>Värskenda</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -9028,7 +9028,7 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
     <message>
         <location line="-130"/>
         <source>Verify with full checksum</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontrolli täieliku kontrollsummaga</translation>
     </message>
     <message>
         <location line="+10"/>

@@ -606,27 +606,27 @@ Choose a different name.</source>
     <message>
         <location line="+1"/>
         <source>Text snippet</source>
-        <translation type="unfinished"></translation>
+        <translation>Δείγμα κειμένου</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Instant search index</source>
-        <translation type="unfinished"></translation>
+        <translation>Ευρετήριο άμεσης αναζήτησης</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Quick hash</source>
-        <translation type="unfinished"></translation>
+        <translation>Γρήγορο hash</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Technical data</source>
-        <translation type="unfinished"></translation>
+        <translation>Τεχνικά στοιχεία</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Archive contents</source>
-        <translation type="unfinished"></translation>
+        <translation>Περιεχόμενα συμπιεσμένου αρχείου</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1370,17 +1370,17 @@ Choose a different name.</source>
     <message>
         <location filename="../qt_quick/Inspector.qml" line="+50"/>
         <source>No file selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Δεν έχει επιλεγεί αρχείο.</translation>
     </message>
     <message>
         <location line="+48"/>
         <source>Online – click to open</source>
-        <translation type="unfinished"></translation>
+        <translation>Συνδεδεμένο – κάντε κλικ για άνοιγμα</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – connect %1 to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Μη συνδεδεμένο – συνδέστε το %1 για να ανοίξετε το αρχείο</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -1390,7 +1390,7 @@ Choose a different name.</source>
     <message>
         <location line="+23"/>
         <source>Open on map</source>
-        <translation type="unfinished"></translation>
+        <translation>Άνοιγμα στον χάρτη</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1999,7 +1999,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <location line="+7"/>
         <location line="+163"/>
         <source>Inspector</source>
-        <translation type="unfinished"></translation>
+        <translation>Επιθεωρητής</translation>
     </message>
     <message>
         <location line="-108"/>
@@ -2044,7 +2044,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     <message>
         <location line="-238"/>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation>Στήλες</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -7589,32 +7589,32 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-322"/>
         <source>Connected drives</source>
-        <translation type="unfinished"></translation>
+        <translation>Συνδεδεμένες μονάδες δίσκου</translation>
     </message>
     <message>
         <location line="+37"/>
         <source>Not mounted</source>
-        <translation type="unfinished"></translation>
+        <translation>Μη προσαρτημένο</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Mount read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>Προσάρτηση μόνο για ανάγνωση</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Το %1 δεν μπόρεσε να προσαρτήσει αυτή τη μονάδα δίσκου. Ελέγξτε την άδεια χρήσης και τα δικαιώματά του στις Ρυθμίσεις συστήματος ή απεγκαταστήστε το: το σύστημα διαβάζει μόνο του τις μονάδες NTFS και το Katalog χρειάζεται μόνο ανάγνωση.</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The system could not mount this drive: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Το σύστημα δεν μπόρεσε να προσαρτήσει αυτή τη μονάδα δίσκου: %1</translation>
     </message>
     <message>
         <location line="+16"/>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>Ανανέωση</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -9029,7 +9029,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-130"/>
         <source>Verify with full checksum</source>
-        <translation type="unfinished"></translation>
+        <translation>Επαλήθευση με πλήρες άθροισμα ελέγχου</translation>
     </message>
     <message>
         <location line="+10"/>

@@ -606,27 +606,27 @@ Choose a different name.</source>
     <message>
         <location line="+1"/>
         <source>Text snippet</source>
-        <translation type="unfinished"></translation>
+        <translation>टेक्स्ट स्निपेट</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Instant search index</source>
-        <translation type="unfinished"></translation>
+        <translation>त्वरित खोज इंडेक्स</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Quick hash</source>
-        <translation type="unfinished"></translation>
+        <translation>त्वरित हैश</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Technical data</source>
-        <translation type="unfinished"></translation>
+        <translation>तकनीकी डेटा</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Archive contents</source>
-        <translation type="unfinished"></translation>
+        <translation>आर्काइव की सामग्री</translation>
     </message>
     <message>
         <location line="+22"/>
@@ -1370,17 +1370,17 @@ Choose a different name.</source>
     <message>
         <location filename="../qt_quick/Inspector.qml" line="+50"/>
         <source>No file selected.</source>
-        <translation type="unfinished"></translation>
+        <translation>कोई फ़ाइल चयनित नहीं है।</translation>
     </message>
     <message>
         <location line="+48"/>
         <source>Online – click to open</source>
-        <translation type="unfinished"></translation>
+        <translation>ऑनलाइन – खोलने के लिए क्लिक करें</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – connect %1 to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>ऑफ़लाइन – फ़ाइल खोलने के लिए %1 कनेक्ट करें</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -1390,7 +1390,7 @@ Choose a different name.</source>
     <message>
         <location line="+23"/>
         <source>Open on map</source>
-        <translation type="unfinished"></translation>
+        <translation>मानचित्र पर खोलें</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -1999,7 +1999,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <location line="+7"/>
         <location line="+163"/>
         <source>Inspector</source>
-        <translation type="unfinished"></translation>
+        <translation>निरीक्षक</translation>
     </message>
     <message>
         <location line="-108"/>
@@ -2044,7 +2044,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     <message>
         <location line="-238"/>
         <source>Columns</source>
-        <translation type="unfinished"></translation>
+        <translation>कॉलम</translation>
     </message>
     <message>
         <location line="+24"/>
@@ -7587,32 +7587,32 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-322"/>
         <source>Connected drives</source>
-        <translation type="unfinished"></translation>
+        <translation>कनेक्टेड ड्राइव</translation>
     </message>
     <message>
         <location line="+37"/>
         <source>Not mounted</source>
-        <translation type="unfinished"></translation>
+        <translation>माउंट नहीं है</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Mount read-only</source>
-        <translation type="unfinished"></translation>
+        <translation>केवल-पठन माउंट करें</translation>
     </message>
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 इस ड्राइव को माउंट नहीं कर सका। सिस्टम सेटिंग्स में इसका लाइसेंस और अनुमति जाँचें, या इसे अनइंस्टॉल करें: सिस्टम NTFS ड्राइव को स्वयं पढ़ता है, और Katalog को केवल पढ़ने की आवश्यकता है।</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The system could not mount this drive: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>सिस्टम इस ड्राइव को माउंट नहीं कर सका: %1</translation>
     </message>
     <message>
         <location line="+16"/>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>रीफ़्रेश करें</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -9027,7 +9027,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-130"/>
         <source>Verify with full checksum</source>
-        <translation type="unfinished"></translation>
+        <translation>पूर्ण चेकसम से सत्यापित करें</translation>
     </message>
     <message>
         <location line="+10"/>
