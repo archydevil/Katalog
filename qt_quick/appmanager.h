@@ -464,6 +464,9 @@ public slots:
     Q_INVOKABLE QVariantMap  inspectorInfo(int catalogId, const QString &fullPath);
     // The Explore file list's row, for the Inspector (proxy row of exploreSortModel)
     Q_INVOKABLE QVariantMap  exploreRowInfo(int proxyRow);
+    // Connected drives, mounted or not, and read-only mounting (fork, 2026-10-29)
+    Q_INVOKABLE QVariantList connectedDrives();
+    Q_INVOKABLE QVariantMap  mountDriveReadOnly(const QString &device);
     // View choices kept across sessions (fork): Inspector shown, Explore columns
     Q_INVOKABLE bool         getViewSetting(const QString &key) const;
     Q_INVOKABLE void         setViewSetting(const QString &key, bool value);

@@ -41,6 +41,7 @@ set(CORE_HEADERS
     mdienrichmentjob.h
     mdisystemmonitor.h
     mdifts.h
+    mdivolumes.h
 )
 
 set(CORE_SOURCES
@@ -86,6 +87,7 @@ set(CORE_SOURCES
     mdienrichmentjob.cpp
     mdisystemmonitor.cpp
     mdifts.cpp
+    mdivolumes.cpp
 )
 
 add_library(katalog-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

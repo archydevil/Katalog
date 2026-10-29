@@ -21,6 +21,7 @@
 #include "core/mdienrichmentjob.h"
 #include "core/mdisystemmonitor.h"
 #include "core/mdifts.h"
+#include "core/mdivolumes.h"
 #include <QThread>
 #include <QThread>
 #include <QJsonDocument>
@@ -3291,6 +3292,23 @@ QVariantMap AppManager::exploreRowInfo(int proxyRow)
     info[QStringLiteral("fullPath")]   = m_exploreFilesModel->data(source, ExploreFilesModel::FullPathRole);
     info[QStringLiteral("entryType")]  = m_exploreFilesModel->data(source, ExploreFilesModel::EntryTypeRole);
     return info;
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::connectedDrives()
+{
+    QVariantList list;
+    for (const QVariantMap &v : MdiVolumes::list())
+        list.append(v);
+    return list;
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::mountDriveReadOnly(const QString &device)
+{
+    QString mountPoint, reason;
+    const bool ok = MdiVolumes::mountReadOnly(device, &mountPoint, &reason);
+    return QVariantMap{{QStringLiteral("ok"), ok},
+                       {QStringLiteral("mountPoint"), mountPoint},
+                       {QStringLiteral("reason"), reason}};
 }
 //----------------------------------------------------------------------
 bool AppManager::getViewSetting(const QString &key) const

@@ -255,6 +255,92 @@ ColumnLayout {
             }
         }
 
+        // ── Connected drives (fork, 2026-10-29) ──────────────────────────
+        // Katalog catalogs any drive the system has mounted, NTFS included;
+        // this shows the external drives, mounted or not, and asks the system
+        // to mount one read-only when it did not.
+        Controls.Label {
+            text: qsTr("Connected drives")
+            opacity: 0.7
+            visible: pageCreateForm.showSource
+            Layout.alignment: Qt.AlignTop
+        }
+        ColumnLayout {
+            id: drivesBox
+            visible: pageCreateForm.showSource
+            Layout.fillWidth: true
+            spacing: 2
+            property var drives: []
+            function refresh() { drives = appManager1.connectedDrives() }
+            Component.onCompleted: refresh()
+
+            Kirigami.InlineMessage {
+                id: driveMessage
+                Layout.fillWidth: true
+                type: Kirigami.MessageType.Error
+                showCloseButton: true
+                visible: false
+            }
+            Repeater {
+                model: drivesBox.drives
+                delegate: RowLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Kirigami.Icon {
+                        source: "drive-harddisk"
+                        implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth
+                        opacity: modelData.mounted ? 1.0 : 0.5
+                    }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        // File system names and sizes are technical notation
+                        text: (modelData.name || modelData.device) + " · " + modelData.fileSystem
+                              + " · " + appManager1.formatDataSize(modelData.size)
+                              + (modelData.mounted ? " · " + modelData.mountPoint : " · " + qsTr("Not mounted"))
+                        opacity: modelData.mounted ? 1.0 : 0.7
+                    }
+                    Controls.Button {
+                        visible: modelData.mounted
+                        icon.name: "go-next"
+                        text: qsTr("Source path")
+                        onClicked: create_lineEdit_NewCatalogPath.text = appManager1.normalizeSourcePath(modelData.mountPoint)
+                    }
+                    Controls.Button {
+                        visible: !modelData.mounted
+                        icon.name: "drive-harddisk"
+                        text: qsTr("Mount read-only")
+                        onClicked: {
+                            driveMessage.visible = false
+                            const r = appManager1.mountDriveReadOnly(modelData.device)
+                            if (r.ok) {
+                                create_lineEdit_NewCatalogPath.text = appManager1.normalizeSourcePath(r.mountPoint)
+                            } else {
+                                driveMessage.text = modelData.driver !== ""
+                                    ? qsTr("%1 could not mount this drive. Check its license and its permission in System Settings, or remove it: the system reads NTFS drives on its own, and reading is all Katalog needs.").arg(modelData.driver)
+                                    : qsTr("The system could not mount this drive: %1").arg(r.reason)
+                                driveMessage.visible = true
+                            }
+                            drivesBox.refresh()
+                        }
+                    }
+                }
+            }
+            RowLayout {
+                Controls.Label {
+                    visible: drivesBox.drives.length === 0
+                    text: "—"
+                    opacity: 0.6
+                }
+                IconButton {
+                    icon.name: "view-refresh"
+                    text: qsTr("Refresh")
+                    flat: true
+                    onClicked: { driveMessage.visible = false; drivesBox.refresh() }
+                }
+            }
+        }
+
         Controls.Label { text: qsTr("Storage"); opacity: 0.7; visible: pageCreateForm.showSource }
         DeviceTreeComboBox {
             visible: pageCreateForm.showSource
