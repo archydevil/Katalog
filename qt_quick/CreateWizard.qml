@@ -10,9 +10,11 @@ import QtQuick.Dialogs
 // standard form's "Catalog definition", and by the enrichment dialog for a
 // catalog that already exists. It only collects choices; the caller validates
 // and starts the work.
+// Redesign (fork, D34, phase R6): each part has a title and a line saying what
+// it is for; file types are chips that say whether they are chosen.
 ColumnLayout {
     id: createWizard
-    spacing: Kirigami.Units.smallSpacing
+    spacing: 10
 
     signal choiceEdited()                // hides the caller's validation message (MDI-F6)
 
@@ -144,22 +146,18 @@ ColumnLayout {
         }
     }
 
-    component SectionHeader: RowLayout {
-        property alias text: sectionLabel.text
-        Layout.fillWidth: true
-        Layout.topMargin: Kirigami.Units.largeSpacing
-        spacing: Kirigami.Units.largeSpacing
-        Controls.Label { id: sectionLabel; color: applicationWindow().titleColor }
-        Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-    }
-
     // ── Destination path ──────────────────────────────────────────────────────
-    SectionHeader { text: qsTr("Destination path"); Layout.topMargin: 0 }
+    KSectionHeader {
+        level: 3
+        title: qsTr("Destination path")
+        description: qsTr("Previews and other derived data are written here, outside the drive being catalogued.")
+    }
     RowLayout {
         Layout.fillWidth: true
         Controls.TextField {
             id: wizard_lineEdit_Destination
             Layout.fillWidth: true
+            font.family: KTheme.mono
             placeholderText: qsTr("Path for previews and derived data")
             onTextChanged: createWizard.choiceEdited()
             onEditingFinished: text = appManager1.normalizeSourcePath(text)
@@ -173,10 +171,15 @@ ColumnLayout {
     }
 
     // ── File types ────────────────────────────────────────────────────────────
-    SectionHeader { text: qsTr("File types") }
+    KSectionHeader {
+        Layout.topMargin: 10
+        level: 3
+        title: qsTr("File types")
+        description: qsTr("The kinds of files that get previews and AI analysis.")
+    }
     Flow {
         Layout.fillWidth: true
-        spacing: Kirigami.Units.smallSpacing
+        spacing: 8
         Repeater {
             model: [
                 { key: "typeImage", text: qsTr("Image"), icon: "image-jpeg"      },
@@ -185,27 +188,96 @@ ColumnLayout {
                 { key: "typeText",  text: qsTr("Text"),  icon: "view-list-text"  },
                 { key: "typeOther", text: qsTr("Other"), icon: "document-open"   }
             ]
-            delegate: Controls.Button {
+            // A chip: chosen ones take the accent and a check mark, so the
+            // choice is not told by colour alone.
+            delegate: Controls.AbstractButton {
+                id: typeChip
                 required property var modelData
                 text: modelData.text
-                icon.name: modelData.icon
                 checkable: true
                 checked: createWizard[modelData.key]
                 onToggled: { createWizard[modelData.key] = checked; createWizard.choiceEdited() }
+                hoverEnabled: true
+                implicitHeight: 40
+                implicitWidth: chipRow.implicitWidth + leftPadding + rightPadding
+                leftPadding: 12
+                rightPadding: 14
+                Accessible.role: Accessible.CheckBox
+                Accessible.name: text
+                Accessible.checked: checked
+
+                background: Rectangle {
+                    radius: KTheme.radiusItem
+                    color: typeChip.checked ? KTheme.accentSoft
+                         : typeChip.hovered ? KTheme.hover : KTheme.surface
+                    border.width: typeChip.checked || typeChip.visualFocus ? 2 : 1
+                    border.color: typeChip.checked || typeChip.visualFocus ? KTheme.accent : KTheme.line
+                }
+                contentItem: Item {
+                    implicitWidth: chipRow.implicitWidth
+                    implicitHeight: chipRow.implicitHeight
+                    Row {
+                        id: chipRow
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 8
+                        Kirigami.Icon {
+                            source: typeChip.modelData.icon
+                            width: 18
+                            height: 18
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Controls.Label {
+                            text: typeChip.text
+                            color: typeChip.checked ? KTheme.accentText : KTheme.text
+                            font.pixelSize: KTheme.body
+                            font.weight: typeChip.checked ? Font.DemiBold : Font.Normal
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Kirigami.Icon {
+                            visible: typeChip.checked
+                            source: "checkmark"
+                            isMask: true
+                            color: KTheme.accentText
+                            width: 16
+                            height: 16
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
             }
         }
     }
 
     // ── Previews ──────────────────────────────────────────────────────────────
-    SectionHeader { text: qsTr("Previews") }
+    KSectionHeader {
+        Layout.topMargin: 10
+        level: 3
+        title: qsTr("Previews")
+        description: qsTr("Small copies to look at the files, even when the drive is not connected.")
+    }
+    Controls.Label {
+        Layout.fillWidth: true
+        visible: !createWizard.typeImage && !createWizard.typeVideo && !createWizard.typeAudio
+        wrapMode: Text.WordWrap
+        color: KTheme.text3
+        text: qsTr("Previews apply to Image, Video and Audio files, and none of them is chosen.")
+    }
     GridLayout {
         Layout.fillWidth: true
-        columns: 2
-        columnSpacing: Kirigami.Units.largeSpacing
-        rowSpacing: Kirigami.Units.smallSpacing
+        columns: createWizard.width < 420 ? 1 : 2
+        columnSpacing: KTheme.gap
+        rowSpacing: 8
 
         // Image
-        Kirigami.Icon { source: "image-jpeg"; implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth; visible: createWizard.typeImage }
+        Row {
+            visible: createWizard.typeImage
+            spacing: 8
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 10
+            Layout.preferredWidth: 110
+            Kirigami.Icon { source: "image-jpeg"; width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter }
+            Controls.Label { text: qsTr("Image"); color: KTheme.text2; font.weight: Font.Medium; anchors.verticalCenter: parent.verticalCenter }
+        }
         Controls.Switch {
             visible: createWizard.typeImage
             text: qsTr("Thumbnail")
@@ -214,7 +286,15 @@ ColumnLayout {
         }
 
         // Video
-        Kirigami.Icon { source: "video-mp4"; implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth; visible: createWizard.typeVideo; Layout.alignment: Qt.AlignTop; Layout.topMargin: Kirigami.Units.smallSpacing }
+        Row {
+            visible: createWizard.typeVideo
+            spacing: 8
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 10
+            Layout.preferredWidth: 110
+            Kirigami.Icon { source: "video-mp4"; width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter }
+            Controls.Label { text: qsTr("Video"); color: KTheme.text2; font.weight: Font.Medium; anchors.verticalCenter: parent.verticalCenter }
+        }
         Flow {
             visible: createWizard.typeVideo
             Layout.fillWidth: true
@@ -242,7 +322,7 @@ ColumnLayout {
             }
             Row {
                 spacing: Kirigami.Units.smallSpacing
-                Controls.Label { text: qsTr("Clip"); anchors.verticalCenter: parent.verticalCenter }
+                Controls.Label { text: qsTr("Clip"); color: KTheme.text2; anchors.verticalCenter: parent.verticalCenter }
                 ComboBoxFitted {
                     textRole: "text"; valueRole: "value"
                     model: createWizard.clipModel
@@ -269,7 +349,15 @@ ColumnLayout {
         }
 
         // Audio
-        Kirigami.Icon { source: "audio-x-mpeg"; implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth; visible: createWizard.typeAudio; Layout.alignment: Qt.AlignTop; Layout.topMargin: Kirigami.Units.smallSpacing }
+        Row {
+            visible: createWizard.typeAudio
+            spacing: 8
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 10
+            Layout.preferredWidth: 110
+            Kirigami.Icon { source: "audio-x-mpeg"; width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter }
+            Controls.Label { text: qsTr("Audio"); color: KTheme.text2; font.weight: Font.Medium; anchors.verticalCenter: parent.verticalCenter }
+        }
         Flow {
             visible: createWizard.typeAudio
             Layout.fillWidth: true
@@ -281,7 +369,7 @@ ColumnLayout {
             }
             Row {
                 spacing: Kirigami.Units.smallSpacing
-                Controls.Label { text: qsTr("Clip"); anchors.verticalCenter: parent.verticalCenter }
+                Controls.Label { text: qsTr("Clip"); color: KTheme.text2; anchors.verticalCenter: parent.verticalCenter }
                 ComboBoxFitted {
                     textRole: "text"; valueRole: "value"
                     model: createWizard.clipModel
@@ -309,7 +397,21 @@ ColumnLayout {
     }
 
     // ── AI analysis (local model, MDI-F5) ─────────────────────────────────────
-    SectionHeader { text: qsTr("AI analysis") }
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.topMargin: 10
+        spacing: 12
+        KSectionHeader {
+            level: 3
+            title: qsTr("AI analysis")
+            description: qsTr("Descriptions, transcripts and classification, made by the local model.")
+        }
+        KInfoTag {
+            Layout.alignment: Qt.AlignTop
+            text: qsTr("On this computer")
+            tone: "ok"
+        }
+    }
     Controls.Switch {
         enabled: createWizard.typeImage || createWizard.typeVideo
         text: qsTr("Caption and tags")
@@ -333,11 +435,23 @@ ColumnLayout {
         }
     }
     Controls.Switch {
+        id: classificationSwitch
         // Uses the Context page; off while the collection has none (MDI-F100)
         enabled: Object.keys(appManager1.getContext()).length > 0
         text: qsTr("Classification")
         checked: createWizard.aiClassification
         onToggled: { createWizard.aiClassification = checked; createWizard.choiceEdited() }
+    }
+    // Why Classification cannot be chosen, rather than a switch that simply
+    // does not respond
+    Controls.Label {
+        Layout.fillWidth: true
+        Layout.leftMargin: 8
+        visible: !classificationSwitch.enabled
+        wrapMode: Text.WordWrap
+        color: KTheme.text3
+        font.pixelSize: KTheme.note
+        text: qsTr("Classification uses the archive's context; it is available once the archive is described in Archive knowledge.")
     }
     Controls.Switch {
         enabled: createWizard.typeAudio || createWizard.typeVideo
@@ -352,7 +466,8 @@ ColumnLayout {
     Controls.Label {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
-        opacity: 0.7
+        color: KTheme.text2
+        font.pixelSize: KTheme.note
         text: qsTr("Analysed on this computer by the local model (%1). Nothing is sent to the internet.")
                   .arg(appManager1.getEnrichmentTools().visionModel)
     }

@@ -42,17 +42,6 @@ Rectangle {
         const e = entry(analysis)
         return e && e.files.length > 0 && e.files[0].exists ? e.files[0].url : ""
     }
-    function timecode(seconds) {
-        let s = Math.floor(Number(seconds) || 0)
-        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60)
-        s = s % 60
-        return h + ":" + (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s
-    }
-    function provenance(e) {
-        if (!e) return ""
-        const who = e.model !== "" ? e.model : e.tool
-        return who + (e.date !== "" ? " · " + e.date.replace("T", " ") : "")
-    }
 
     readonly property bool online: info.online === true
     readonly property var classification: entry("classification")
@@ -209,7 +198,7 @@ Rectangle {
                         }
                     }
 
-                    // State of the file's disk, and the disk it lives on
+                    // State of the file's disk; offline, the disk it needs
                     Flow {
                         Layout.fillWidth: true
                         spacing: 6
@@ -218,7 +207,7 @@ Rectangle {
                             tone: inspector.online ? "ok" : "warn"
                         }
                         KInfoTag {
-                            visible: (inspector.info.volumeName || "") !== ""
+                            visible: !inspector.online && (inspector.info.volumeName || "") !== ""
                             text: inspector.info.volumeName || ""
                         }
                     }
@@ -259,13 +248,6 @@ Rectangle {
                             text: qsTr("Open file")
                             enabled: inspector.online
                             onClicked: Qt.openUrlExternally(inspector.info.url)
-                        }
-                        KButton {
-                            variant: "secondary"
-                            icon.name: "folder-open"
-                            text: qsTr("Open folder")
-                            enabled: inspector.online && (inspector.info.folder || "") !== ""
-                            onClicked: appManager1.openFolder(inspector.info.folder)
                         }
                         KButton {
                             visible: (inspector.info.analysis || []).length > 0
@@ -339,11 +321,13 @@ Rectangle {
                             font.pixelSize: KTheme.note
                             font.weight: Font.DemiBold
                         }
-                        Controls.Label {
+                        Flow {
                             Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                            color: KTheme.text
-                            text: (classificationBox.v.entities || []).join(", ")
+                            spacing: 6
+                            Repeater {
+                                model: classificationBox.v.entities || []
+                                delegate: KInfoTag { required property var modelData; text: modelData; tone: "ai" }
+                            }
                         }
                     }
                     Controls.Label {
@@ -354,13 +338,6 @@ Rectangle {
                         visible: (classificationBox.v.sources || []).length > 0
                         text: qsTr("Reference documents") + ": "
                               + [...new Set((classificationBox.v.sources || []).map(function (s) { return s.title }))].join(", ")
-                    }
-                    Controls.Label {
-                        Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        color: KTheme.text3
-                        font.pixelSize: KTheme.note
-                        text: inspector.provenance(classificationBox.e)
                     }
                 }
 
@@ -398,8 +375,8 @@ Rectangle {
                         columns: 2
                         columnSpacing: 10
                         rowSpacing: 4
+                        // Short keys: beside their value at every width
                         Controls.Label { visible: mediaBox.v !== null; text: qsTr("Video"); color: KTheme.text3; font.pixelSize: KTheme.note }
-                        // (short keys: beside their value at every width)
                         Controls.Label {
                             visible: mediaBox.v !== null
                             Layout.fillWidth: true
@@ -416,17 +393,6 @@ Rectangle {
                             color: KTheme.text
                             text: mediaBox.a ? String(mediaBox.a.codec).toUpperCase() + " · " + mediaBox.a.sampleRate
                                                + " Hz · " + mediaBox.a.channels + " ch" : ""
-                        }
-                        Controls.Label {
-                            visible: mediaBox.e !== null && Number(mediaBox.e.value.duration) > 0
-                            text: qsTr("Duration"); color: KTheme.text3; font.pixelSize: KTheme.note
-                        }
-                        Controls.Label {
-                            visible: mediaBox.e !== null && Number(mediaBox.e.value.duration) > 0
-                            Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                            color: KTheme.text
-                            text: mediaBox.e ? inspector.timecode(mediaBox.e.value.duration) : ""
                         }
                     }
                 }

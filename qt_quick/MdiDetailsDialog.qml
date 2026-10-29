@@ -127,7 +127,9 @@ Kirigami.Dialog {
                                 required property var modelData
                                 readonly property string url: mdiDetailsDialog.firstFileUrl(modelData)
                                 visible: url !== ""
-                                variant: "secondary"
+                                // One primary action: the video clip, else the audio one
+                                variant: modelData === "clip_video" || mdiDetailsDialog.firstFileUrl("clip_video") === ""
+                                         ? "primary" : "secondary"
                                 icon.name: modelData === "clip_video" ? "video-mp4" : "audio-x-mpeg"
                                 text: mdiDetailsDialog.entry(modelData) ? mdiDetailsDialog.entry(modelData).label : ""
                                 onClicked: Qt.openUrlExternally(url)
@@ -261,11 +263,13 @@ Kirigami.Dialog {
                             font.pixelSize: KTheme.note
                             font.weight: Font.DemiBold
                         }
-                        Controls.Label {
+                        Flow {
                             Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                            color: KTheme.text
-                            text: (classificationBox.v.entities || []).join(", ")
+                            spacing: 6
+                            Repeater {
+                                model: classificationBox.v.entities || []
+                                delegate: KInfoTag { required property var modelData; text: modelData; tone: "ai" }
+                            }
                         }
                     }
                     Controls.Label {

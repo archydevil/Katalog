@@ -2513,7 +2513,8 @@ Kirigami.ApplicationWindow {
             // A 1 px line, as the separator it replaces. Wider, its transparent
             // sides showed the window background as a grey band; the grab
             // area is the strip laid over it below (exploreSplitGrab).
-            handle: Kirigami.Separator { implicitWidth: 1 }
+            // The panes are cards with their own edges: the handle is a gap
+            handle: Item { implicitWidth: 6 }
 
             readonly property real treeMinimum:  Kirigami.Units.gridUnit * 10
             readonly property real filesMinimum: Kirigami.Units.gridUnit * 8
