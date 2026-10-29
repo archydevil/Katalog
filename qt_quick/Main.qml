@@ -30,8 +30,8 @@ Kirigami.ApplicationWindow {
     // platform's header set, so it sits on the same ground as the pages
     pageStack.globalToolBar.colorSet: Kirigami.Theme.Window
     pageStack.globalToolBar.separatorVisible: false
-    // The Qt Quick style (Fusion on macOS) paints toolbars, buttons, fields
-    // and menus from the window palette: the same tokens
+    // The Qt Quick style (TecaStyle, on Fusion) paints toolbars, buttons,
+    // fields and menus from the window palette: the same tokens
     palette.window:          KTheme.ground
     palette.windowText:      KTheme.text
     palette.base:            KTheme.surface
@@ -45,6 +45,9 @@ Kirigami.ApplicationWindow {
     palette.link:            KTheme.accentText
     palette.toolTipBase:     KTheme.surface2
     palette.toolTipText:     KTheme.text
+    palette.mid:             KTheme.line      // TecaStyle: frames and pressed states
+    palette.midlight:        KTheme.hover     // TecaStyle: hover tint
+    palette.brightText:      KTheme.onAccent  // text on the accent
 
     // Global activity panel: running job progress plus the queue behind it.
     // Anchored to pageStack rather than used as the window footer: the window

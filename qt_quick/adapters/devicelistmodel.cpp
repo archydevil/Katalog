@@ -89,10 +89,12 @@ QString DeviceListModel::formatDescription(const DeviceItem &device) const
 
     // Space details — Storage and Virtual only, and independent of the file count.
     // Used space alone: with the total appended as well, the line wrapped onto a
-    // second row at the default card size, which is what SEL-F8 recovers.
+    // second row at the default card size, which is what SEL-F8 recovers. Named,
+    // because each part is its own info tag on the card and would otherwise read
+    // as a second copy of the file size (D34); the wording is K2's existing one.
     if ((device.type == "Storage" || device.type == "Virtual") && device.totalSpace > 0) {
         qint64 usedSpace = device.totalSpace - device.freeSpace;
-        parts << locale.formattedDataSize(usedSpace);
+        parts << tr("Used Space: ") + locale.formattedDataSize(usedSpace);
     }
 
     if (!parts.isEmpty())

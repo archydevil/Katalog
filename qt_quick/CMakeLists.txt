@@ -138,9 +138,13 @@ if(APPLE)
     endif()
 endif()
 
+# The Teca control style (D34): a QML module of its own, linked in statically
+add_subdirectory(TecaStyle)
+
 target_link_libraries(Katalog3
     PRIVATE
     katalog-core
+    tecastyleplugin
     Qt6::Quick
     Qt6::Qml
     Qt6::Gui

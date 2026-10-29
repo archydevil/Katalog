@@ -9,6 +9,7 @@
 #include <QQuickItem>
 #include <QStyleHints>
 #include <QWindow>
+#include <QtQml/qqmlextensionplugin.h>
 
 #include "appmanager.h"
 #include "core/collection.h"
@@ -22,6 +23,9 @@
 #include <KLocalizedString>
 
 #include "version.h"
+
+// The Teca control style, a static QML module (D34)
+Q_IMPORT_QML_PLUGIN(TecaStylePlugin)
 
 int main(int argc, char *argv[])
 {
@@ -63,9 +67,10 @@ int main(int argc, char *argv[])
     // buttons size to their text (uneven OK/Yes/No/Cancel widths). Force Fusion
     // there for a consistent look across all dialogs — set once, before the QML
     // engine loads, so it covers every current and future button.
-#if !defined(Q_OS_LINUX)
-    QQuickStyle::setStyle(QStringLiteral("Fusion"));
-#endif
+    // The fork's redesign (D34) draws the native controls itself, on every
+    // platform: TecaStyle derives each one from Fusion and changes only its
+    // look, and falls back to Fusion for every other control.
+    QQuickStyle::setStyle(QStringLiteral("TecaStyle"));
 
     //Set the application icon
     // On Linux the window icon is handed to the Wayland compositor as an
