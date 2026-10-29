@@ -161,8 +161,14 @@ ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 6
                         KInfoTag {
+                            visible: driveCard.modelData.isDrive
                             text: driveCard.modelData.connected ? qsTr("Connected") : qsTr("Not connected")
                             tone: driveCard.modelData.connected ? "ok" : "warn"
+                        }
+                        KInfoTag {
+                            visible: !driveCard.modelData.isDrive
+                            text: qsTr("Saved search results")
+                            tone: "info"
                         }
                         KInfoTag { text: qsTr("%1 files").arg(home.count(driveCard.modelData.files)) }
                         KInfoTag { text: driveCard.modelData.size }
@@ -202,7 +208,7 @@ ColumnLayout {
                         Controls.Label { text: qsTr("Video") + " " + home.count(driveCard.types.video); color: KTheme.text2; font.pixelSize: KTheme.note }
                     }
                     Controls.Label {
-                        visible: !driveCard.modelData.connected
+                        visible: driveCard.modelData.isDrive && !driveCard.modelData.connected
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         color: KTheme.text2

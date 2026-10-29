@@ -3316,6 +3316,8 @@ QVariantMap AppManager::homeOverview()
         drive[QStringLiteral("deviceId")]  = device.ID;
         drive[QStringLiteral("name")]      = device.name;
         drive[QStringLiteral("path")]      = device.path;
+        // A catalog of saved search results has no drive behind it (path "EXPORT")
+        drive[QStringLiteral("isDrive")]   = QDir::isAbsolutePath(device.path);
         drive[QStringLiteral("connected")] = mdiSourceReachable(device.ID);
         drive[QStringLiteral("files")]     = device.totalFileCount;
         drive[QStringLiteral("size")]      = formatDataSize(device.totalFileSize);
