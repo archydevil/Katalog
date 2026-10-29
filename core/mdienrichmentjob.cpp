@@ -1422,6 +1422,20 @@ QString MdiEnrichmentJob::extractText(const QString &path, QString *tool, QStrin
             return result.text();
         }
     }
+#if defined(Q_OS_MACOS)
+    // Word 97-2004: KFileMetaData needs catdoc, which macOS lacks; the
+    // system's textutil reads the file and writes nothing (owner, 2026-10-29)
+    static const QString textutil = QStringLiteral("/usr/bin/textutil");
+    if (suffix == QLatin1String("doc") && QFileInfo::exists(textutil)) {
+        QByteArray out;
+        QString err;
+        if (runTool(textutil, {"-convert", "txt", "-stdout", path}, &out, &err)
+            && !out.trimmed().isEmpty()) {
+            *tool = QStringLiteral("textutil");
+            return QString::fromUtf8(out);
+        }
+    }
+#endif
     *reason = QStringLiteral("no text extracted (%1)").arg(mime);
     return QString();
 }
@@ -1508,6 +1522,19 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
     }
     r.tool = QStringLiteral("whisper.cpp");
     r.model = QString();   // local program, not an AI provider over HTTP
+
+    // A video without a sound track has nothing to transcribe
+    if (!m_config.ffprobePath.isEmpty()) {
+        QByteArray streams;
+        QString probeError;
+        if (runTool(m_config.ffprobePath, {"-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
+                                           "-of", "csv=p=0", file.fullPath}, &streams, &probeError)
+            && streams.trimmed().isEmpty()) {
+            r.outcome = QStringLiteral("skipped");
+            r.reason  = QStringLiteral("no audio track");
+            return r;
+        }
+    }
 
     QTemporaryDir tmp;
     if (!tmp.isValid()) {
