@@ -907,7 +907,7 @@ Kirigami.ApplicationWindow {
     globalDrawer: Kirigami.GlobalDrawer {
         //isMenu: true
         modal: !windowSettings.drawerPinned
-        width: 200
+        width: 220
 
         header: ColumnLayout {
             spacing: 0
@@ -1072,6 +1072,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 separator: true
             },
+            // Fork: the everyday pages first; the rest under "Tools"
             Kirigami.Action {
                 icon.name: "edit-select"
                 text: qsTr("Selection")
@@ -1081,11 +1082,6 @@ Kirigami.ApplicationWindow {
                 icon.name: "edit-find"
                 text: qsTr("Search")
                 onTriggered: { appManager1.setLastPage("Search"); root.showPage(pageSearch) }
-            },
-            Kirigami.Action {
-                icon.name: "drive-multidisk"
-                text: qsTr("Devices")
-                onTriggered: { appManager1.setLastPage("Devices"); root.showPage(pageDevices) }
             },
             Kirigami.Action {
                 icon.name: "view-list-tree"
@@ -1098,100 +1094,81 @@ Kirigami.ApplicationWindow {
                 onTriggered: { appManager1.setLastPage("Create"); root.showPage(pageCreate) }
             },
             Kirigami.Action {
-                icon.name: "backup"
-                text: qsTr("Backup")
-                onTriggered: { appManager1.setLastPage("Backup"); root.showPage(pageBackup) }
-            },
-            Kirigami.Action {
-                icon.name: "view-statistics"
-                text: qsTr("Statistics")
-                onTriggered: { appManager1.setLastPage("Statistics"); root.showPage(pageStatistics) }
-            },
-            Kirigami.Action {
-                icon.name: "tag"
-                text: qsTr("Tags")
-                onTriggered: { appManager1.setLastPage("Tags"); root.showPage(pageTags) }
-            },
-            Kirigami.Action {
                 // What runs, where, with which resources (fork, MDI-F61)
                 icon.name: "utilities-system-monitor"
                 text: qsTr("Activity")
                 onTriggered: { appManager1.setLastPage("Activity"); root.showPage(pageActivity) }
             },
             Kirigami.Action {
+                text: qsTr("Tools")
+                icon.name: "applications-utilities"
+                Kirigami.Action {
+                    icon.name: "drive-multidisk"
+                    text: qsTr("Devices")
+                    onTriggered: { appManager1.setLastPage("Devices"); root.showPage(pageDevices) }
+                }
+                Kirigami.Action {
+                    icon.name: "tag"
+                    text: qsTr("Tags")
+                    onTriggered: { appManager1.setLastPage("Tags"); root.showPage(pageTags) }
+                }
+                Kirigami.Action {
+                    icon.name: "view-statistics"
+                    text: qsTr("Statistics")
+                    onTriggered: { appManager1.setLastPage("Statistics"); root.showPage(pageStatistics) }
+                }
+                Kirigami.Action {
+                    icon.name: "backup"
+                    text: qsTr("Backup")
+                    onTriggered: { appManager1.setLastPage("Backup"); root.showPage(pageBackup) }
+                }
+                Kirigami.Action {
+                    text: qsTr("About") //i18n("About")
+                    icon.name: "help-about"
+                    onTriggered: root.showLayer(aboutPage)
+                }
+            },
+            Kirigami.Action {
                 icon.name: "configure"
                 text: qsTr("Settings")
                 onTriggered: { appManager1.setLastPage("Settings"); root.showLayer(settingsPageComponent) }
-            },
-            Kirigami.Action {
-                separator: true
-            },
-            Kirigami.Action {
-                icon.name: "help-about"
-                text: qsTr("Documentation")
-                onTriggered: Qt.openUrlExternally("https://stephanecouturier.github.io/Katalog/");
-            },
-            Kirigami.Action {
-                text: qsTr("About") //i18n("About")
-                icon.name: "help-about"
-                onTriggered: root.showLayer(aboutPage)
-            },
-            Kirigami.Action {
-                text: qsTr("Quit")
-                icon.name: "application-exit"
-                shortcut: StandardKey.Quit
-                onTriggered: Qt.quit()
             }
         ]
 
-        footer: Column {
-            Controls.MenuSeparator { width: parent.width - 20}
-
+        footer: RowLayout {
             spacing: Kirigami.Units.smallSpacing
-            padding: Kirigami.Units.largeSpacing
-
-            Row {
-                width: parent.width - Kirigami.Units.largeSpacing * 2
-                spacing: Kirigami.Units.smallSpacing
-
-                IconButton { flat: true;
-                    icon.name: windowSettings.drawerPinned ? "window-unpin" : "window-pin"
-                    checkable: true
-                    checked: windowSettings.drawerPinned
-                    onToggled: windowSettings.drawerPinned = checked
-                }
-
-                Controls.Label {
-                    text: windowSettings.drawerPinned ? qsTr("Drawer pinned") : qsTr("Drawer floating")
-                    anchors.verticalCenter: parent.verticalCenter
-                    opacity: 0.7
-                }
+            height: implicitHeight + Kirigami.Units.largeSpacing
+            // Compact (fork): the two pins as icon buttons, their state in the tooltip
+            Item { Layout.preferredWidth: Kirigami.Units.smallSpacing }
+            IconButton {
+                flat: true
+                // Plain buttons: the checked style painted a filled square over the icon
+                icon.name: windowSettings.drawerPinned ? "window-unpin" : "window-pin"
+                onClicked: windowSettings.drawerPinned = !windowSettings.drawerPinned
+                Controls.ToolTip.text: windowSettings.drawerPinned ? qsTr("Drawer pinned") : qsTr("Drawer floating")
+                Controls.ToolTip.visible: hovered
             }
-
-            Row {
-                width: parent.width - Kirigami.Units.largeSpacing * 2
-                spacing: Kirigami.Units.smallSpacing
-
-                IconButton { flat: true;
-                    // Collapse/restore the Selection column beside the open feature
-                    // page (K2 ShowHideFilters portage). Disabled when Selection is
-                    // the only page — there is nothing to collapse to.
-                    icon.name: appManager1.showSelectionPage ? "window-unpin" : "window-pin"
-                    checkable: true
-                    // Pressed while Selection is shown, matching the drawer button
-                    // above: both read "this panel is held open".
-                    checked: appManager1.showSelectionPage
-                    enabled: root.featureOpen
-                    onToggled: appManager1.showSelectionPage = checked
-                }
-
-                Controls.Label {
-                    text: appManager1.showSelectionPage ? qsTr("Selection shown") : qsTr("Selection hidden")
-                    anchors.verticalCenter: parent.verticalCenter
-                    opacity: 0.7
-                }
+            IconButton {
+                flat: true
+                // Collapse/restore the Selection column beside the open feature
+                // page (K2 ShowHideFilters portage). Disabled when Selection is
+                // the only page — there is nothing to collapse to.
+                icon.name: "edit-select"   // the Selection page's own icon
+                opacity: appManager1.showSelectionPage ? 1.0 : 0.5
+                enabled: root.featureOpen
+                onClicked: appManager1.showSelectionPage = !appManager1.showSelectionPage
+                Controls.ToolTip.text: appManager1.showSelectionPage ? qsTr("Selection shown") : qsTr("Selection hidden")
+                Controls.ToolTip.visible: hovered
             }
+            Item { Layout.fillWidth: true }
         }
+    }
+
+    // Quit stays on its standard shortcut (Cmd+Q / Ctrl+Q) without a drawer entry
+    Shortcut {
+        sequences: [StandardKey.Quit]
+        context: Qt.ApplicationShortcut
+        onActivated: Qt.quit()
     }
 
     // Database status notification
@@ -2391,7 +2368,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 // Offline Inspector beside the results (fork); also Space
                 text: qsTr("Inspector")
-                icon.name: "view-sidetree"
+                icon.name: "document-properties"
                 checkable: true
                 checked: root.inspectorVisible
                 onTriggered: root.inspectorVisible = !root.inspectorVisible
@@ -2546,7 +2523,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 // Finder-style column view instead of tree + list (fork)
                 text: qsTr("Columns")
-                icon.name: "view-split-left-right"
+                icon.name: "view-list-details"
                 checkable: true
                 checked: root.exploreColumns
                 onTriggered: root.exploreColumns = !root.exploreColumns
@@ -2554,7 +2531,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 // Offline Inspector beside the file list (fork); also Space
                 text: qsTr("Inspector")
-                icon.name: "view-sidetree"
+                icon.name: "document-properties"
                 checkable: true
                 checked: root.inspectorVisible
                 onTriggered: root.inspectorVisible = !root.inspectorVisible

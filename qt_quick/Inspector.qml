@@ -88,7 +88,7 @@ Rectangle {
                     id: badgeRow
                     anchors { fill: parent; margins: Kirigami.Units.smallSpacing }
                     Kirigami.Icon {
-                        source: badge.online ? "document-open" : "drive-removable-media"
+                        source: badge.online ? "document-open" : "drive-harddisk"
                         implicitWidth: Kirigami.Units.iconSizes.small; implicitHeight: implicitWidth
                     }
                     Controls.Label {
@@ -199,7 +199,7 @@ Rectangle {
                 Controls.Button {
                     visible: inspector.info.gps !== undefined
                     flat: true
-                    icon.name: "mark-location"
+                    icon.name: "globe"
                     text: qsTr("Open on map")
                     onClicked: Qt.openUrlExternally(inspector.info.gps.url)
                 }
