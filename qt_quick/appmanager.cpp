@@ -1276,6 +1276,7 @@ bool AppManager::reconnectToDatabase()
         m_mdiJob->requestStop();
     }
     m_mdiStartPaused.clear();
+    m_mdiHeld.clear();
     m_mdiStep.clear();
     m_mdiStepLog.clear();
     m_mdiStatusText.clear();
@@ -2920,6 +2921,8 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
     m_mdiSourcePath  = device.path;
     m_mdiDeviceId         = device.ID;
     m_mdiQuickHashOnly    = config.quickHashOnly;
+    if (!config.quickHashOnly)
+        m_mdiHeld.removeAll(device.ID);
     m_mdiWaitingForSource = false;
     m_mdiLeaving          = false;
     m_mdiJob    = new MdiEnrichmentJob(config, files);
@@ -3027,13 +3030,12 @@ void AppManager::startNextEnrichment()
 {
     // Jobs whose source is reachable first, in their order; then the
     // quick-hash passes; then the jobs that will wait for their drive (MDI-F92)
-    bool dropped = false;
-    auto startJob = [this, &dropped](int next) {
+    bool notStarted = false;
+    auto startJob = [this, &notStarted](int next) {
         const QString error = startEnrichment(next, true);
         if (!error.isEmpty()) {
-            dropped = true;
-            m_mdiStartPaused.remove(next);
-            qWarning() << "Enrichment not started for device" << next << ":" << error;
+            notStarted = true;
+            holdOrDropMdiJob(next, error);
         }
     };
     while (!m_mdiJob && !m_mdiWaiting.isEmpty()) {
@@ -3053,8 +3055,8 @@ void AppManager::startNextEnrichment()
     }
     while (!m_mdiJob && !m_mdiWaiting.isEmpty())
         startJob(m_mdiWaiting.takeFirst());
-    if (!m_mdiJob && dropped)
-        saveMdiJobs();    // jobs that could not start leave the list
+    if (!m_mdiJob && notStarted)
+        saveMdiJobs();
     updateMonitoring();   // stops sampling when nothing runs and the page is closed
 }
 //----------------------------------------------------------------------
@@ -3064,6 +3066,7 @@ void AppManager::stopEnrichment()
     m_mdiWaiting.clear();
     m_quickHashWaiting.clear();
     m_mdiStartPaused.clear();
+    m_mdiHeld.clear();
     if (m_mdiJob) {
         m_mdiLeaving = true;
         m_mdiJob->requestStop();
@@ -3136,6 +3139,9 @@ void AppManager::saveMdiJobs()
         jobs.append({ m_mdiDeviceId, m_mdiIsPaused });
     for (int id : std::as_const(m_mdiWaiting))
         jobs.append({ id, m_mdiStartPaused.contains(id) });
+    for (int id : std::as_const(m_mdiHeld))
+        if (!m_mdiWaiting.contains(id) && id != m_mdiDeviceId)
+            jobs.append({ id, m_mdiStartPaused.contains(id) });
     if (!MdiData::savePendingJobs(kMdiMainConnection, jobs))
         qWarning() << "Enrichment list not saved in" << mdiDataPath();
 }
@@ -3157,14 +3163,34 @@ void AppManager::restoreMdiJobs()
     const QString host = QUrl(getEnrichmentTools().value(QStringLiteral("ollamaUrl")).toString()).host();
     const bool localProvider = host == QLatin1String("localhost") || host == QLatin1String("127.0.0.1")
                                || host == QLatin1String("::1");
+    bool notStarted = false;
     for (const MdiData::PendingJob &job : jobs) {
         if (job.paused || !localProvider)
             m_mdiStartPaused.insert(job.deviceId);
         const QString error = startEnrichment(job.deviceId, true);
         if (!error.isEmpty()) {
-            m_mdiStartPaused.remove(job.deviceId);
-            qWarning() << "Enrichment not resumed for device" << job.deviceId << ":" << error;
+            notStarted = true;
+            holdOrDropMdiJob(job.deviceId, error);
         }
+    }
+    if (notStarted)
+        saveMdiJobs();
+}
+//----------------------------------------------------------------------
+void AppManager::holdOrDropMdiJob(int deviceId, const QString &error)
+{
+    // A pending job leaves the list only when its catalog no longer exists;
+    // otherwise it is kept and tried again at the next opening (MDI-F12)
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type == QLatin1String("Catalog")) {
+        if (!m_mdiHeld.contains(deviceId))
+            m_mdiHeld.append(deviceId);
+        qWarning() << "Enrichment kept pending for device" << deviceId << ":" << error;
+    } else {
+        m_mdiStartPaused.remove(deviceId);
+        qWarning() << "Enrichment removed for device" << deviceId << ": the catalog no longer exists";
     }
 }
 //----------------------------------------------------------------------
@@ -3278,7 +3304,11 @@ QVariantMap AppManager::getMdiJobInfo() const
         info[QStringLiteral("waitingForSource")] = m_mdiWaitingForSource;
     }
     QStringList waiting;
-    for (int id : m_mdiWaiting) {
+    QList<int> ids = m_mdiWaiting;
+    for (int id : m_mdiHeld)
+        if (!ids.contains(id))
+            ids.append(id);
+    for (int id : std::as_const(ids)) {
         Device d;
         d.ID = id;
         d.loadDevice(m_connectionName);

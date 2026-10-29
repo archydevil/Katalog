@@ -7,12 +7,12 @@
         <location filename="../qt_quick/appmanager.cpp" line="+168"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+5807"/>
+        <location line="+6018"/>
         <source>Search</source>
         <translation>Chercher</translation>
     </message>
     <message>
-        <location line="-5931"/>
+        <location line="-6142"/>
         <source>Stopped</source>
         <translation>Arrêté</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+4240"/>
+        <location line="+4451"/>
         <source>Evaluated</source>
         <translation>Évalué</translation>
     </message>
     <message>
-        <location line="-4362"/>
+        <location line="-4573"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -45,11 +45,10 @@
         <location line="+9"/>
         <location line="+7"/>
         <location line="+83"/>
-        <location line="+2307"/>
-        <location line="+311"/>
-        <location line="+6"/>
-        <location line="+96"/>
-        <location line="+1079"/>
+        <location line="+2329"/>
+        <location line="+337"/>
+        <location line="+152"/>
+        <location line="+1192"/>
         <location line="+26"/>
         <location line="+20"/>
         <location line="+380"/>
@@ -70,10 +69,10 @@
         <translation>En cours</translation>
     </message>
     <message>
-        <location line="-5808"/>
-        <location line="+2628"/>
+        <location line="-6019"/>
+        <location line="+2676"/>
         <location line="+1"/>
-        <location line="+2271"/>
+        <location line="+2434"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -83,7 +82,7 @@
         <translation>Terminé</translation>
     </message>
     <message>
-        <location line="-5397"/>
+        <location line="-5606"/>
         <source>Empty database path provided</source>
         <translation>Chemin de base de données vide fourni</translation>
     </message>
@@ -123,7 +122,7 @@
         <translation>Disque local</translation>
     </message>
     <message>
-        <location line="+485"/>
+        <location line="+505"/>
         <source>search_results</source>
         <translation>Résultats_de_recherche</translation>
     </message>
@@ -169,12 +168,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+3811"/>
+        <location line="+4000"/>
         <source>Size</source>
         <translation>Taille</translation>
     </message>
     <message>
-        <location line="-3810"/>
+        <location line="-3999"/>
         <source>Date</source>
         <translation>Date</translation>
     </message>
@@ -268,14 +267,14 @@ Choisissez un autre nom et réessayez.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+1997"/>
+        <location line="+2186"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>Une opération de périphérique est déjà en cours.</translation>
     </message>
     <message>
-        <location line="-2518"/>
-        <location line="+1517"/>
+        <location line="-2707"/>
+        <location line="+1706"/>
         <source>Create</source>
         <translation>Créer</translation>
     </message>
@@ -467,9 +466,9 @@ Choisissez un autre nom.</translation>
         <translation type="vanished">Il existe déjà un stockage avec cet identifiant. Choisissez un autre identifiant.</translation>
     </message>
     <message>
-        <location line="-2096"/>
-        <location line="+40"/>
-        <location line="+2255"/>
+        <location line="-2281"/>
+        <location line="+44"/>
+        <location line="+2436"/>
         <source>Selected device is not a catalog</source>
         <translation>Le périphérique sélectionné n’est pas un catalogue</translation>
     </message>
@@ -526,8 +525,8 @@ Choisissez un autre nom.</translation>
         <translation>Exporter</translation>
     </message>
     <message>
-        <location line="-2761"/>
-        <location line="+2269"/>
+        <location line="-2924"/>
+        <location line="+2432"/>
         <location line="+411"/>
         <location line="+26"/>
         <location line="+17"/>
@@ -538,7 +537,7 @@ Choisissez un autre nom.</translation>
         <translation>Annulé</translation>
     </message>
     <message>
-        <location line="-3682"/>
+        <location line="-3871"/>
         <source>Thumbnail</source>
         <translation>Miniature</translation>
     </message>
@@ -629,29 +628,34 @@ Choisissez un autre nom.</translation>
         <translation>Contenu de l&apos;archive</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+26"/>
         <source>Provide a destination path for the previews and derived data.</source>
         <translation>Indiquez un chemin de destination pour les aperçus et les données dérivées.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Select a destination path that can be written to.</source>
         <translation>Sélectionnez un chemin de destination accessible en écriture.</translation>
     </message>
     <message>
-        <location line="+64"/>
-        <location line="+104"/>
+        <location line="+77"/>
+        <location line="+157"/>
         <source>Enrichment</source>
         <translation>Enrichissement</translation>
     </message>
     <message>
-        <location line="-95"/>
-        <location line="+96"/>
+        <location line="-146"/>
+        <location line="+148"/>
         <source>Paused</source>
         <translation>En pause</translation>
     </message>
     <message>
-        <location line="+2133"/>
+        <location line="+2"/>
+        <source>Waiting for the drive</source>
+        <translation>En attente du lecteur</translation>
+    </message>
+    <message>
+        <location line="+2248"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>Explorer</translation>
@@ -1383,7 +1387,7 @@ Choisissez un autre nom.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation>En ligne – s'ouvre d'un clic</translation>
+        <translation>En ligne – s&apos;ouvre d&apos;un clic</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -6678,7 +6682,7 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
     <name>OperationQueueView</name>
     <message>
         <location filename="../qt_quick/OperationQueueView.qml" line="+129"/>
-        <location line="+52"/>
+        <location line="+53"/>
         <source>Stop</source>
         <translation>Stop</translation>
     </message>
@@ -6752,7 +6756,7 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
     </message>
     <message>
         <location line="+1"/>
-        <location line="+100"/>
+        <location line="+101"/>
         <source>Paused</source>
         <translation>En pause</translation>
     </message>
@@ -6760,6 +6764,11 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
         <location line="-100"/>
         <source>In Progress</source>
         <translation>En cours</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Waiting for the drive</source>
+        <translation>En attente du lecteur</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6798,25 +6807,25 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
     </message>
     <message>
         <location line="+16"/>
-        <location line="+135"/>
+        <location line="+140"/>
         <location line="+42"/>
         <source>CPU</source>
         <translation>CPU</translation>
     </message>
     <message>
-        <location line="-175"/>
-        <location line="+134"/>
+        <location line="-180"/>
+        <location line="+139"/>
         <source>GPU</source>
         <translation>GPU</translation>
     </message>
     <message>
-        <location line="-132"/>
-        <location line="+133"/>
+        <location line="-137"/>
+        <location line="+138"/>
         <source>Memory</source>
         <translation>Mémoire</translation>
     </message>
     <message>
-        <location line="-131"/>
+        <location line="-136"/>
         <source>%1 of %2 GB</source>
         <translation>%1 sur %2 GB</translation>
     </message>
@@ -6852,18 +6861,18 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
     </message>
     <message>
         <location line="+2"/>
-        <location line="+178"/>
+        <location line="+183"/>
         <source>Connected</source>
         <translation>Connecté</translation>
     </message>
     <message>
-        <location line="-178"/>
-        <location line="+178"/>
+        <location line="-183"/>
+        <location line="+183"/>
         <source>Not connected</source>
         <translation>Non connecté</translation>
     </message>
     <message>
-        <location line="-176"/>
+        <location line="-181"/>
         <source>Data sent</source>
         <translation>Données envoyées</translation>
     </message>
@@ -6878,12 +6887,17 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
         <translation>En ce moment</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+12"/>
+        <source>The analysis continues by itself when %1 is back.</source>
+        <translation>L&apos;analyse reprendra d&apos;elle-même lorsque %1 sera de nouveau disponible.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Checking what is already done</source>
         <translation>Vérification de ce qui est déjà fait</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+30"/>
         <source>Since this session started</source>
         <translation>Depuis le début de cette session</translation>
     </message>
@@ -7616,7 +7630,7 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation>%1 n'a pas pu monter ce lecteur : sa licence ou son autorisation dans les Paramètres système peuvent nécessiter une vérification. Sans ce pilote, le système lit lui-même les lecteurs NTFS, et Katalog n'a besoin que de la lecture.</translation>
+        <translation>%1 n&apos;a pas pu monter ce lecteur : sa licence ou son autorisation dans les Paramètres système peuvent nécessiter une vérification. Sans ce pilote, le système lit lui-même les lecteurs NTFS, et Katalog n&apos;a besoin que de la lecture.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -8841,7 +8855,7 @@ Vérifiez que le dossier source (%1) est correct, ou que le périphérique est m
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-4757"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-4946"/>
         <source>Exact Phrase</source>
         <translation>Phrase exacte</translation>
     </message>

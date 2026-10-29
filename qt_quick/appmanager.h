@@ -851,6 +851,10 @@ private:
     bool              m_mdiKeepPending = false;    // ends on quit or switch: stays pending (MDI-F93)
     bool              m_mdiLeaving = false;        // ends by Stop or by stepping aside (MDI-F92)
     QSet<int>         m_mdiStartPaused;            // restored jobs that start paused (D6, D31)
+    // Pending jobs that cannot start now (no profile, destination not
+    // writable): kept, and tried again when the collection is opened (MDI-F12)
+    QList<int>        m_mdiHeld;
+    void    holdOrDropMdiJob(int deviceId, const QString &error);
     void    saveMdiJobs();
     void    restoreMdiJobs();
     void    stepAsideIfWaiting();

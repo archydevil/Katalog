@@ -7,12 +7,12 @@
         <location filename="../qt_quick/appmanager.cpp" line="+168"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+5807"/>
+        <location line="+6018"/>
         <source>Search</source>
         <translation>Suche</translation>
     </message>
     <message>
-        <location line="-5931"/>
+        <location line="-6142"/>
         <source>Stopped</source>
         <translation>Gestoppt</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+4240"/>
+        <location line="+4451"/>
         <source>Evaluated</source>
         <translation>Ausgewertet</translation>
     </message>
     <message>
-        <location line="-4362"/>
+        <location line="-4573"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -45,11 +45,10 @@
         <location line="+9"/>
         <location line="+7"/>
         <location line="+83"/>
-        <location line="+2307"/>
-        <location line="+311"/>
-        <location line="+6"/>
-        <location line="+96"/>
-        <location line="+1079"/>
+        <location line="+2329"/>
+        <location line="+337"/>
+        <location line="+152"/>
+        <location line="+1192"/>
         <location line="+26"/>
         <location line="+20"/>
         <location line="+380"/>
@@ -70,10 +69,10 @@
         <translation>In Bearbeitung</translation>
     </message>
     <message>
-        <location line="-5808"/>
-        <location line="+2628"/>
+        <location line="-6019"/>
+        <location line="+2676"/>
         <location line="+1"/>
-        <location line="+2271"/>
+        <location line="+2434"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -83,7 +82,7 @@
         <translation>Abgeschlossen</translation>
     </message>
     <message>
-        <location line="-5397"/>
+        <location line="-5606"/>
         <source>Empty database path provided</source>
         <translation>Leerer Datenbankpfad angegeben</translation>
     </message>
@@ -123,7 +122,7 @@
         <translation>Lokale Festplatte</translation>
     </message>
     <message>
-        <location line="+485"/>
+        <location line="+505"/>
         <source>search_results</source>
         <translation>Suchergebnisse</translation>
     </message>
@@ -169,12 +168,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+3811"/>
+        <location line="+4000"/>
         <source>Size</source>
         <translation>Größe</translation>
     </message>
     <message>
-        <location line="-3810"/>
+        <location line="-3999"/>
         <source>Date</source>
         <translation>Datum</translation>
     </message>
@@ -268,14 +267,14 @@ Wählen Sie einen anderen Namen und versuchen Sie es erneut.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+1997"/>
+        <location line="+2186"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>Eine Geräteoperation läuft bereits.</translation>
     </message>
     <message>
-        <location line="-2518"/>
-        <location line="+1517"/>
+        <location line="-2707"/>
+        <location line="+1706"/>
         <source>Create</source>
         <translation>Erstellen</translation>
     </message>
@@ -467,9 +466,9 @@ Wählen Sie einen anderen Namen.</translation>
         <translation type="vanished">Es existiert bereits ein Speichergerät mit dieser ID. Wählen Sie eine andere ID.</translation>
     </message>
     <message>
-        <location line="-2096"/>
-        <location line="+40"/>
-        <location line="+2255"/>
+        <location line="-2281"/>
+        <location line="+44"/>
+        <location line="+2436"/>
         <source>Selected device is not a catalog</source>
         <translation>Ausgewähltes Gerät ist kein Katalog</translation>
     </message>
@@ -526,8 +525,8 @@ Wählen Sie einen anderen Namen.</translation>
         <translation>Exportieren</translation>
     </message>
     <message>
-        <location line="-2761"/>
-        <location line="+2269"/>
+        <location line="-2924"/>
+        <location line="+2432"/>
         <location line="+411"/>
         <location line="+26"/>
         <location line="+17"/>
@@ -538,7 +537,7 @@ Wählen Sie einen anderen Namen.</translation>
         <translation>Abgebrochen</translation>
     </message>
     <message>
-        <location line="-3682"/>
+        <location line="-3871"/>
         <source>Thumbnail</source>
         <translation>Miniaturansicht</translation>
     </message>
@@ -629,29 +628,34 @@ Wählen Sie einen anderen Namen.</translation>
         <translation>Archivinhalt</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+26"/>
         <source>Provide a destination path for the previews and derived data.</source>
         <translation>Geben Sie einen Zielpfad für die Vorschauen und abgeleiteten Daten an.</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
         <source>Select a destination path that can be written to.</source>
         <translation>Wählen Sie einen beschreibbaren Zielpfad.</translation>
     </message>
     <message>
-        <location line="+64"/>
-        <location line="+104"/>
+        <location line="+77"/>
+        <location line="+157"/>
         <source>Enrichment</source>
         <translation>Anreicherung</translation>
     </message>
     <message>
-        <location line="-95"/>
-        <location line="+96"/>
+        <location line="-146"/>
+        <location line="+148"/>
         <source>Paused</source>
         <translation>Pausiert</translation>
     </message>
     <message>
-        <location line="+2133"/>
+        <location line="+2"/>
+        <source>Waiting for the drive</source>
+        <translation>Warten auf das Laufwerk</translation>
+    </message>
+    <message>
+        <location line="+2248"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>Entdecken</translation>
@@ -6677,7 +6681,7 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
     <name>OperationQueueView</name>
     <message>
         <location filename="../qt_quick/OperationQueueView.qml" line="+129"/>
-        <location line="+52"/>
+        <location line="+53"/>
         <source>Stop</source>
         <translation>Stoppen</translation>
     </message>
@@ -6751,7 +6755,7 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
     </message>
     <message>
         <location line="+1"/>
-        <location line="+100"/>
+        <location line="+101"/>
         <source>Paused</source>
         <translation>Pausiert</translation>
     </message>
@@ -6759,6 +6763,11 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
         <location line="-100"/>
         <source>In Progress</source>
         <translation>In Bearbeitung</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Waiting for the drive</source>
+        <translation>Warten auf das Laufwerk</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6797,25 +6806,25 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
     </message>
     <message>
         <location line="+16"/>
-        <location line="+135"/>
+        <location line="+140"/>
         <location line="+42"/>
         <source>CPU</source>
         <translation>CPU</translation>
     </message>
     <message>
-        <location line="-175"/>
-        <location line="+134"/>
+        <location line="-180"/>
+        <location line="+139"/>
         <source>GPU</source>
         <translation>GPU</translation>
     </message>
     <message>
-        <location line="-132"/>
-        <location line="+133"/>
+        <location line="-137"/>
+        <location line="+138"/>
         <source>Memory</source>
         <translation>Speicher</translation>
     </message>
     <message>
-        <location line="-131"/>
+        <location line="-136"/>
         <source>%1 of %2 GB</source>
         <translation>%1 von %2 GB</translation>
     </message>
@@ -6851,18 +6860,18 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
     </message>
     <message>
         <location line="+2"/>
-        <location line="+178"/>
+        <location line="+183"/>
         <source>Connected</source>
         <translation>Verbunden</translation>
     </message>
     <message>
-        <location line="-178"/>
-        <location line="+178"/>
+        <location line="-183"/>
+        <location line="+183"/>
         <source>Not connected</source>
         <translation>Nicht verbunden</translation>
     </message>
     <message>
-        <location line="-176"/>
+        <location line="-181"/>
         <source>Data sent</source>
         <translation>Gesendete Daten</translation>
     </message>
@@ -6877,12 +6886,17 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
         <translation>Aktuell</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+12"/>
+        <source>The analysis continues by itself when %1 is back.</source>
+        <translation>Die Analyse wird automatisch fortgesetzt, sobald %1 wieder verfügbar ist.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Checking what is already done</source>
         <translation>Es wird geprüft, was bereits erledigt ist</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+30"/>
         <source>Since this session started</source>
         <translation>Seit Beginn dieser Sitzung</translation>
     </message>
@@ -8840,7 +8854,7 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-4757"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-4946"/>
         <source>Exact Phrase</source>
         <translation>Exakte Formulierung</translation>
     </message>

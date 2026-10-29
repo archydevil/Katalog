@@ -121,12 +121,15 @@ its details approved on **2026-10-29**, answering explicit question prompts
 (a job paused at quit stays paused; a job waiting for its drive lets a queued
 catalog with a connected drive go first; opening another collection stops the
 job and keeps it pending; the four technical rules of `MDI-F11`, `F91` and
-`MDI-C29`: "Sì, tutte"). Reported to the specifications agent by the main agent
-(the agent did not see the replies itself).
+`MDI-C29`: "Sì, tutte"). Follow-up replies the same day, after the first
+implementation: the destination drive is waited for too ("Aspetta anche quel
+disco"), and checking the queued catalogs' drives on the UI thread is accepted
+("Va bene così"). Reported to the specifications agent by the main agent (the
+agent did not see the replies itself).
 
 | # | Decision (2026-10-29, fork owner) |
 | --- | ------------------------ |
-| D31 | **Resume after unplugging the drive** (owner's request, 2026-10-29: "se metto in pausa l'analisi ai dei contenuti, e stacco il disco, posso riprendere in un secondo momento dal punto in cui ho interrotto? Se no, inseriamo questa opzione"). A job whose source drive is disconnected, paused or not, waits for the drive and continues with the same file when it is back, instead of skipping the remaining files; Pause reads nothing from the source; the running job and the waiting list are kept in `mdi_data.db` across restarts and collection switches; a job paused when Katalog closed comes back paused; a job waiting for its drive lets a queued catalog with a reachable source run first (`MDI-F11`, `F12`, `F16`, `F91`–`F93`, `MDI-C15`, `C28`, `C29`). |
+| D31 | **Resume after unplugging the drive** (owner's request, 2026-10-29: "se metto in pausa l'analisi ai dei contenuti, e stacco il disco, posso riprendere in un secondo momento dal punto in cui ho interrotto? Se no, inseriamo questa opzione"). A job whose source drive is disconnected, paused or not, waits for the drive and continues with the same file when it is back, instead of skipping the remaining files; Pause reads nothing from the source; the running job and the waiting list are kept in `mdi_data.db` across restarts and collection switches; a job paused when Katalog closed comes back paused; a job waiting for its drive lets a queued catalog with a reachable source run first. Follow-up, same day: the drive of the destination path is waited for like the source drive, and a pending job leaves the list only when its catalog no longer exists; checking the drives of queued catalogs on the UI thread is accepted, with the risk of network volumes (`MDI-F11`, `F12`, `F16`, `F91`–`F93`, `MDI-C15`, `C28`, `C29`). |
 
 ---
 
@@ -233,8 +236,8 @@ characterising information for applications and other files.
 | ---- | ------------- | -------- |
 | MDI-F9 | The runner processes one file at a time. For each file it runs the profile's analyses in a fixed order and commits each analysis's result and provenance before starting the next. Stopping, a crash or a power loss loses at most the analysis in progress. | [Implemented — Phase A] |
 | MDI-F10 | **Stop** ends the running job after the current analysis step is abandoned (its external process is terminated, its HTTP request aborted); results already committed are kept. The job's final status is *Stopped*. | [Planned — part implemented in Phase A] |
-| MDI-F11 | **Pause** halts the job before its next analysis step; **Resume** continues from there. While paused, no external process of the job runs, no request is sent and no source file is read — the parallel thumbnail pre-pass (`MDI-C24`) included: it does not start while the job is paused, and its decodes not yet started do not start after Pause (D31). The drive can therefore be disconnected while the job is paused (`MDI-F91`). | [Planned — part implemented in Phase A and D31] |
-| MDI-F12 | A job that had not finished when Katalog closed — the running job and the waiting jobs, in their order — continues from the first file without a completed result for each selected analysis when the collection is opened again. A job whose analyses use only local tools and the local provider resumes automatically. Any other job (one using a commercial, remote or local-network provider) is listed as *Paused* and sends nothing until the user resumes it; resuming it is subject to `MDI-F24` (D6). A job that was paused when Katalog closed — by Pause or by `MDI-F28` — is listed as *Paused* whatever its provider (D31). A restored job whose source is unreachable waits for its drive (`MDI-F91`). Quick-hash passes are not kept; `MDI-F84` schedules them again. The list is kept as `MDI-C28` states. | [Planned — part implemented in D31] |
+| MDI-F11 | **Pause** halts the job before its next analysis step; **Resume** continues from there. While paused, no external process of the job runs, no request is sent and no source file is read — the parallel thumbnail pre-pass (`MDI-C24`) included: it does not start while the job is paused, and its decodes not yet started do not start after Pause (D31). The drive can therefore be disconnected while the job is paused (`MDI-F91`). | [Implemented — D31] |
+| MDI-F12 | A job that had not finished when Katalog closed — the running job and the waiting jobs, in their order — continues from the first file without a completed result for each selected analysis when the collection is opened again. A job whose analyses use only local tools and the local provider resumes automatically. Any other job (one using a commercial, remote or local-network provider) is listed as *Paused* and sends nothing until the user resumes it; resuming it is subject to `MDI-F24` (D6). A job that was paused when Katalog closed — by Pause or by `MDI-F28` — is listed as *Paused* whatever its provider (D31). A restored job whose source or destination drive is away waits for it (`MDI-F91`); a pending job leaves the list only when its catalog no longer exists (D31). Quick-hash passes are not kept; `MDI-F84` schedules them again. The list is kept as `MDI-C28` states. | [Implemented — D31] |
 | MDI-F13 | **Incremental.** A file is processed for an analysis only when it has no completed datum for that analysis, or when its current size or modified date differs from the values recorded with that datum (`MDI-F52`), or when the profile's parameters for that analysis changed. Every other file is counted as *unchanged* and skipped. Running a job twice in a row with no file change processes zero files. | [Implemented — Phase A] |
 | MDI-F14 | When a file has left the catalog (removed by a device update), the next job on that catalog removes its derived data from the database and deletes the derived files recorded for it. Only derived files the runner itself created and recorded are ever deleted. | [Planned] |
 | MDI-F15 | While a job runs: a search, an Explore load, a catalog creation and a device update of **another** catalog are not refused because of it. A device update, re-scan or deletion of the catalog **being enriched** first pauses that job; after an update it resumes automatically and picks up the changes through `MDI-F13`; after a deletion the job and the catalog's derived data are removed (`MDI-F57`). | [Planned — part implemented in Phase A] |
@@ -244,7 +247,7 @@ characterising information for applications and other files.
 | MDI-F19 | Before a job starts, the destination path's free space is checked against an estimate of the derived files' size. With insufficient space the job does not start and the summary reports it; when free space exceeds the estimate by less than 10 %, it starts and the summary warns. | [Planned] |
 | MDI-F74 | **Per-step activity reporting.** For each analysis step, the runner reports its start (analysis, file, tool and its version, model, where it runs — local / local-network / remote with the endpoint host) and its end (duration, outcome completed / failed / skipped, and the reason when not completed). These reports feed the Activity page (`MDI-F64`, `MDI-F67`) and are built with the standard builder (`MDI-C16`). | [Planned — part implemented in Activity phase] |
 | MDI-F75 | **Progress inside a step.** During a transcription step, the runner reports the audio minutes transcribed out of the file's total. During a model call, it reports tokens per second when the provider returns token counts. | [Planned — part implemented in Activity phase] |
-| MDI-F91 | **Waiting for the drive.** When a file of an enrichment job cannot be reached and the catalog's source path (its device path) cannot be reached either, the job does not skip the file: it waits for the drive — no tool runs, no source file is read, no request is sent — and continues by itself with that same file as soon as the source path is reachable again. A file that cannot be reached while the source path is reachable (deleted or moved) is skipped as before. An analysis step during which the source becomes unreachable is not recorded: like an abandoned step (`MDI-F10`) it neither replaces the file's datum nor deletes its derived files, and it runs again when the drive is back (an exception to `MDI-F22`). Pause and Stop act while waiting (`MDI-F10`, `MDI-F11`); a job paused while waiting stays paused when the drive is back. The activity-panel row (`MDI-F17`) and the Activity page status line (`MDI-F62`) show the waiting state with the catalog and the source path waited for. A quick-hash pass (`MDI-F84`) does not wait: it ends unfinished and is scheduled again as `MDI-F84` states (D31). | [Implemented — D31] |
+| MDI-F91 | **Waiting for the drive.** When a file of an enrichment job cannot be reached and the catalog's source path (its device path) cannot be reached either, the job does not skip the file: it waits for the drive — no tool runs, no source file is read, no request is sent — and continues by itself with that same file as soon as the source path is reachable again. A file that cannot be reached while the source path is reachable (deleted or moved) is skipped as before. The job waits in the same way for the drive of its destination path when that path does not exist and cannot be created; a destination path not created yet is created as before, and a job the user starts is still refused when its destination cannot be written (`MDI-F6`, `MDI-F8`) (D31). An analysis step during which the source or the destination becomes unreachable is not recorded: like an abandoned step (`MDI-F10`) it neither replaces the file's datum nor deletes its derived files, and it runs again when the drive is back (an exception to `MDI-F22`). Pause and Stop act while waiting (`MDI-F10`, `MDI-F11`); a job paused while waiting stays paused when the drive is back. The activity-panel row (`MDI-F17`) and the Activity page status line (`MDI-F62`) show the waiting state with the catalog and the path waited for (source or destination). A quick-hash pass (`MDI-F84`) does not wait: it ends unfinished and is scheduled again as `MDI-F84` states (D31). | [Implemented — D31] |
 | MDI-F92 | **A job waiting for its drive does not block the list.** When the running job waits for its drive (`MDI-F91`) and a waiting enrichment job or quick-hash pass has a reachable source, the job waiting for its drive ends its run, goes to the end of the enrichment list, and the next one with a reachable source runs. When the next run is chosen, enrichment jobs whose source is reachable go first in their order, then quick-hash passes, then jobs whose source is unreachable. When no waiting job has a reachable source the job keeps waiting; it never steps aside for nothing (D31). | [Implemented — D31] |
 | MDI-F93 | **Switching collection.** Opening another collection while an enrichment job or quick-hash pass runs ends it as quitting does: the step in progress is abandoned and not recorded (`MDI-F10`); the job and the waiting jobs stay pending in the left collection's `mdi_data.db` and are restored when that collection is opened again (`MDI-F12`). The activity panel and the Activity page then show nothing of the left collection. The pending jobs of the collection being opened are restored as `MDI-F12` states (D31). | [Implemented — D31] |
 
@@ -448,7 +451,7 @@ characterising information for applications and other files.
 | MDI-C26 | **Quick hash (D26).** `FileChecksum::computeQuickHash`: a file of at most 192 KB is hashed whole; a larger one as its size (little-endian) + its first 64 KB + 64 KB at size/2 + its last 64 KB; BLAKE2b-256. Quick hashes and the pass stamp (`mdi_pass`) are stored in `mdi_data.db` only: no core column is added (`CKS-C4`, D5), the catalog scan is unchanged, and there is no "Quick" value of the catalog's checksum option. In the duplicates search the quick-hash key carries the prefix `q:` and exists only in `filetemp`; the `file` table and its SHA-256 are never changed. K2 never sets the data path, so its duplicates search is unchanged. | [Implemented — increment 3] |
 | MDI-C27 | **Connected drives (D30).** `core/mdivolumes.*` lists drives with external programs (`diskutil` on macOS, `lsblk` and `udisksctl` on Linux), started as `MDI-C7` requires, and lists mounted volumes on Windows. Mounting is always read-only. Katalog MUST NOT open or read a raw device (that would need administrator rights); a drive the system cannot mount is out of scope. | [Implemented — increment 3] |
 | MDI-C28 | **Enrichment list store (D31).** The enrichment list — the running job and the waiting jobs — is kept in the table `mdi_job` of `mdi_data.db` (run order, device ID, paused flag), the *enrichment job* table of `MDI-C15`, created when absent by the `mdi_` migration. No core table, no settings key and no new Memory-mode file is added, so a beta settings file, K2 and upstream K3 3.0 are unaffected (`MDI-C1`, `MDI-C7`). It is read and written only through `MdiData::pendingJobs()` and `MdiData::savePendingJobs()`, on the main-thread connection of `MDI-C4`, each write one short transaction; a failed write is logged and changes nothing else. It is written when a job is added, starts, is paused or resumed, ends, is stopped or is removed; quitting Katalog and opening another collection do not clear it (`MDI-F12`, `MDI-F93`). No file position is stored: resuming relies on `MDI-F13`. The provider class that decides D6 is evaluated when a job is restored, from the current profile and provider settings (`MDI-F26`), never stored. Hosted mode: nothing beyond `Q11`. | [Implemented — D31] |
-| MDI-C29 | **Waiting state in the runner (D31).** Approved core changes, nothing else: in `MdiEnrichmentJob`, the catalog's source path in `Config`, the waiting state of `MDI-F91` in `run()`, its start and end reported through the existing `activity` signal, and the Pause check of `MDI-F11` in `precomputeThumbnails()`; in `MdiData`, the `mdi_job` table and `pendingJobs()` / `savePendingJobs()` (`MDI-C28`). The source path counts as reachable when it exists and lists at least one entry (a fixed Linux mount point stays as an empty folder when its drive is gone). The check runs on the runner's thread only, at most every 2 s while waiting, reads nothing else from the source and never runs on the UI thread; Pause and Stop are checked between checks. | [Planned — part implemented in D31] |
+| MDI-C29 | **Waiting state in the runner (D31).** Approved core changes, nothing else: in `MdiEnrichmentJob`, the catalog's source path in `Config`, the waiting state of `MDI-F91` in `run()`, its start and end reported through the existing `activity` signal, and the Pause check of `MDI-F11` in `precomputeThumbnails()`; in `MdiData`, the `mdi_job` table and `pendingJobs()` / `savePendingJobs()` (`MDI-C28`). The source path counts as reachable when it exists and lists at least one entry (a fixed Linux mount point stays as an empty folder when its drive is gone); the destination path, when it exists or can be created. The runner's check runs on the runner's thread only, at most every 2 s while waiting, and reads nothing else from the source; Pause and Stop are checked between checks. The choice among waiting catalogs (`MDI-F92`, and the order of restored jobs, `MDI-F12`) checks their source paths with the same rule on the UI thread, as `Device::loadDevice()`'s own active-state check does: when a job is queued, when the running job starts waiting, every 2 s while it waits, and when the next run is chosen. A source on an unresponsive network volume can then hold the window until the system answers; the fork owner accepted this on 2026-10-29. | [Implemented — D31] |
 
 ---
 
@@ -632,15 +635,18 @@ New strings:
 Reused existing strings: "Tools", "Extended Metadata", "Checksum", "Show
 analysis", "Source path", "Duration", "Files", "Size".
 
-### Awaiting approval — D31 (2026-10-29)
+### Approved 2026-10-29 — D31
 
-Written while the step was built; not approved yet. The fork owner approves
-them together at the end of the step, before its commit (D16).
+Approved together at the end of the step (D16), by the fork owner in the main
+session on 2026-10-29 ("Approvo entrambi"); reported to the specifications
+agent by the main agent, which did not see the reply itself.
+
+New strings:
 
 | String | Where |
 | --- | --- |
-| "Waiting for the drive" | Enrichment status built with `StatusBarMessageBuilder`, the source path as Current Item (`SpecProgressReport.md` Part 2); Activity page status line (`MDI-F91`, `MDI-F62`) |
-| "The analysis continues by itself when %1 is back." | Activity page "Right now" card while the job waits; `%1` is the source path (`MDI-F91`, `MDI-F64`) |
+| "Waiting for the drive" | Enrichment status built with `StatusBarMessageBuilder`, the path waited for as Current Item (`SpecProgressReport.md` Part 2); Activity page status line (`MDI-F91`, `MDI-F62`) |
+| "The analysis continues by itself when %1 is back." | Activity page "Right now" card while the job waits; `%1` is the path waited for, source or destination (`MDI-F91`, `MDI-F64`) |
 
 Reused existing strings: "Paused", "Resume", "In Progress".
 
@@ -829,7 +835,8 @@ specifications agent checked the working-tree diff of `core/mdidata.*`,
 `OperationQueueView.qml` against the rows. This section supersedes the
 increment 2 rows for `MDI-F11`, `F12` and `F16`.
 
-- **Core harness (reported, synthetic data, 20 of 20 checks pass).** Resume
+- **Core harness (reported, synthetic data, 24 of 24 checks pass, three
+  consecutive runs).** Resume
   with the drive away: the job waits, processes nothing, and continues after the
   drive is back (1,200 of 1,200 data, 0 skipped or failed); a second run
   processes zero files. Drive unplugged mid-run leaving an empty mount point:
@@ -837,27 +844,34 @@ increment 2 rows for `MDI-F11`, `F12` and `F16`.
   with the drive present is skipped without waiting. A quick-hash pass with the
   drive away ends without waiting. A job started paused decodes no thumbnail
   until Resume, then 70 of 70. `mdi_job` round trip: order, paused flag, empty
-  after Stop.
+  after Stop. Destination drive away for a resumed job: the job waits, commits
+  nothing, then 70 of 70 once it is back, none failed. A destination folder not
+  created yet is created, without waiting.
+- **Limit (Linux).** A destination under a fixed mount point the user owns
+  can still be created when its drive is gone, so the job writes into the empty
+  mount point on the system disk instead of waiting (`MDI-F91` waits only for a
+  destination that cannot be created).
 - **Not verified by the harness** (UI level, manual test charter): restore after
   restart (`MDI-F12`), stepping aside (`MDI-F92`), switching collection
   (`MDI-F93`), and the step whose source is lost mid-step (logic only).
 - **Core changes** (`MDI-C29`): `Config::sourceRoot`; the waiting state in
-  `run()`, through two private helpers (`sourceGone()`, `waitForSource()`); the
-  `waiting` event of the `activity` signal; the Pause check at the top of each
+  `run()`, through two private helpers (`driveAway()`, returning the path waited
+  for, and `waitForSource()`); the `waiting` event of the `activity` signal,
+  with `drivePath`; the Pause check at the top of each
   file iteration, before the chunk pre-pass, and in each queued pre-pass decode;
   `mdi_job` in `MdiData::open`; `MdiData::PendingJob`, `pendingJobs()`,
   `savePendingJobs()`. No settings key, no core table.
 
 | Row | Built | Still planned |
 | --- | --- | --- |
-| `MDI-F11` | Pause is checked at the top of every file iteration, before the chunk pre-pass; a queued pre-pass decode returns without reading when the job is paused, and that file takes the sequential path after Resume. | When Pause is pressed while the job waits for its drive and the drive comes back, the pre-pass of the next chunk is planned while paused (file existence checks and `isCurrent` reads, no decode): `waitForSource()` is not followed by a Pause check before `precomputeThumbnails()`. |
-| `MDI-F12` | The running job and the waiting jobs are restored in order when the collection opens (startup and switch); a job paused when Katalog closed comes back *Paused*; with a non-local Ollama endpoint every restored job comes back *Paused* (D6); a restored job without its drive waits for it; jobs whose source is reachable are ordered first (`MDI-F92`). | A pending job that cannot start (device gone, destination path not writable — for example a destination drive also unplugged) leaves the list with a log line only (see findings). Locality for D6 is decided in `qt_quick/` from the Ollama URL host (`localhost`, `127.0.0.1`, `::1`), not with the core classification of `MDI-F26`; any other loopback form restores *Paused*. |
+| `MDI-F11` | Pause is checked at the top of every file iteration and again after a wait for the drive, before the chunk pre-pass; a queued pre-pass decode returns without reading when the job is paused, and that file takes the sequential path after Resume. | — |
+| `MDI-F12` | The running job and the waiting jobs are restored in order when the collection opens (startup and switch); a job paused when Katalog closed comes back *Paused*; with a non-local Ollama endpoint every restored job comes back *Paused* (D6); a restored job without its source or destination drive is launched and waits for it (`startEnrichment(deviceId, resumed)`); jobs whose source is reachable are ordered first (`MDI-F92`). Locality for D6 is decided in `qt_quick/` from the Ollama URL host (`localhost`, `127.0.0.1`, `::1`), not with the core classification of `MDI-F26`: any other loopback form restores *Paused*, the safe side. A job restored *Paused* under D6 and not resumed is saved as paused, so it stays *Paused* after the next restart even if the provider has become local (the safe side). A pending job that cannot start for another lasting reason (no enrichment profile, or a destination that exists but cannot be written) is kept (`AppManager::holdOrDropMdiJob`, held list): saved in `mdi_job` after the running and waiting jobs with its paused flag, listed among the waiting jobs on the Activity page (also when nothing runs), and tried again when the collection is opened again or when the user starts it; only a job whose catalog no longer exists leaves the list (logged). Stop empties the held list; a collection switch leaves it saved in the left collection. | — |
 | `MDI-F16` | A request for the catalog already running is now ignored too (before D31 only the waiting list was checked). | Removing one waiting job (Stop clears the whole waiting list). |
-| `MDI-F91` | All. A step whose source is lost reports the outcome *stopped* in its activity `end` event (the step log shows the stop icon); it is not recorded. The activity-panel status reads "Waiting for the drive" with the catalog and the source path as Current Item; the Activity page status line and "Right now" card show the wait; no busy indicator, no progress bar, no estimated end while waiting. | — |
+| `MDI-F91` | All, the destination drive included (`driveAway()`: the source first, then a destination that does not exist and cannot be created). A step whose drive is lost reports the outcome *stopped* in its activity `end` event (the step log shows the stop icon); it is not recorded. The activity-panel status reads "Waiting for the drive" with the catalog and the path waited for as Current Item; the Activity page status line and "Right now" card show the wait; no busy indicator, no progress bar, no estimated end while waiting. | — |
 | `MDI-F92` | All: on a job being queued, on the running job starting to wait, at every monitor sample (2 s) while it waits, and when the next run is chosen. | — (see `MDI-C29`) |
 | `MDI-F93` | All. The step log and status of the left collection are cleared. | — |
-| `MDI-C28` | All. The list is written when a job is queued, starts, is paused or resumed, ends, is stopped, steps aside, or cannot start; quitting and switching collection write nothing. | — |
-| `MDI-C29` | The runner's check is on the runner's thread, every 2 s while waiting, existence and non-empty listing of the source path only; Pause and Stop wake it. | The source paths of waiting catalogs (`MDI-F92`) are checked on the UI thread (`AppManager::mdiSourceReachable`, a device load and a directory listing per waiting job), at every 2 s monitor sample while a job waits; `MDI-C29` says the check never runs on the UI thread (see findings). |
+| `MDI-C28` | All. The list is written when a job is queued, starts, is paused or resumed, ends, is stopped, steps aside, or leaves the list (`MDI-F12`); quitting and switching collection write nothing. | — |
+| `MDI-C29` | All. The runner's check is on the runner's thread, every 2 s while waiting; Pause and Stop wake it. The waiting catalogs' source paths are checked on the UI thread by `AppManager::mdiSourceReachable` (a device load and a directory listing per waiting job), as amended. | — |
 
 ### Known gaps
 
@@ -869,9 +883,10 @@ increment 2 rows for `MDI-F11`, `F12` and `F16`.
 - `MDI-F59`: no *Clear derived data* action.
 - `MDI-F19`: no free-space check.
 - `MDI-F18`: no failure *Report* action.
-- D31 residuals: `MDI-F11` (pre-pass planned while paused after a wait for the
-  drive), `MDI-F12` (a pending job that cannot start is dropped), `MDI-C29`
-  (UI-thread reachability checks) — see the D31 section and the findings.
+- D31: on Linux a destination under a user-owned fixed mount point is not
+  waited for (see the D31 section). A held pending job (`MDI-F12`) is listed
+  among the waiting jobs although it runs only after the collection is opened
+  again or the user starts it (no new string, owner's choice).
 - `MDI-F14`, `MDI-F28`, `MDI-F41`, `MDI-F51` (semantic search is not
   in the background, not stoppable, no progress, at most 30 files), `MDI-F53`.
 - Semantic search and search history (`Q8`).
@@ -934,21 +949,20 @@ increment 2 rows for `MDI-F11`, `F12` and `F16`.
 - **Office text.** `MDI-F81` reads Office/OpenDocument text with KFileMetaData
   for snippets; summaries of the same formats are still the open finding above
   (`MDI-F42`).
-- **Reachability checks on the UI thread (D31, `MDI-C29`).** To step aside
-  (`MDI-F92`) the K3 layer checks the source path of every waiting catalog on
-  the UI thread, every 2 s while a job waits, like the existing source-drive
-  tile and the quick-hash scheduler. A source on an unresponsive network volume
-  can then freeze the window while the system answers. `MDI-C29` forbids it.
-  Either amend `MDI-C29` to allow it with this risk stated, or move the check
-  off the UI thread (the core resource monitor of `MDI-F70` is specified to
-  check whether a device path is connected on its own thread).
-- **Pending job dropped when it cannot start (D31, `MDI-F12`).** A restored or
-  stepped-aside job that cannot start — its device is gone, or its destination
-  path is not writable, which happens when the destination drive is unplugged
-  too — leaves the enrichment list with a log line only; the user is not told
-  and the job does not come back. No row authorises dropping it. Keep it
-  pending (for example listed as *Paused* with the reason), or drop it with a
-  visible notice (a new string)?
+- **Reachability checks on the UI thread (D31, `MDI-C29`).** Resolved
+  2026-10-29: the owner accepted the UI-thread check of the waiting catalogs'
+  drives ("Va bene così"); `MDI-C29` describes it and states the risk of
+  network volumes.
+- **Pending job when its destination drive is away (D31, `MDI-F12`,
+  `MDI-F91`).** Resolved 2026-10-29: the job waits for that drive like the
+  source drive and leaves the list only when its catalog no longer exists
+  ("Aspetta anche quel disco").
+- **Other lasting reasons a pending job could not start (D31, `MDI-F12`).**
+  Resolved 2026-10-29: such a job (no enrichment profile, or a destination that
+  exists but cannot be written) is no longer removed; it is kept, listed among
+  the waiting jobs, and tried again at the next opening or when the user starts
+  it. Only a job whose catalog no longer exists leaves the list, as the owner
+  chose; no new string.
 
 ---
 
@@ -1000,7 +1014,7 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F9 / F10** — Stop a job mid-run: files already done keep their results; the status is *Stopped*; no orphan `ffmpeg` process remains.
 - **MDI-F11** — Pause: no tool process runs and no request is sent until Resume. Pause just before a 64-image boundary while watching file access (`fs_usage` / `inotifywait`): no image is read until Resume. Unplug and replug the drive while paused, then Resume: the job continues.
 - **MDI-F8** — On a catalog created in standard mode, open its page and Explore: the profile can be created or edited and a job started from each; the job appears in the enrichment list.
-- **MDI-F12** — Quit during a local-only job, reopen: it resumes by itself without redoing finished files. Quit during a job using a commercial provider, reopen: it is *Paused*, nothing is sent until Resume and its confirmation. Pause, quit, reopen: the job is *Paused*; Resume redoes no finished file. Queue three jobs, quit during the first: the same three come back in the same order. Quit with the drive unplugged, reopen: the job waits for the drive (`MDI-F91`).
+- **MDI-F12** — Quit during a local-only job, reopen: it resumes by itself without redoing finished files. Quit during a job using a commercial provider, reopen: it is *Paused*, nothing is sent until Resume and its confirmation. Pause, quit, reopen: the job is *Paused*; Resume redoes no finished file. Queue three jobs, quit during the first: the same three come back in the same order. Quit with the drive unplugged, reopen: the job waits for the drive (`MDI-F91`). Make a pending job's existing destination read-only, reopen: the job stays listed among the waiting jobs and is tried again at the next opening; delete its catalog, reopen: it leaves the list.
 - **MDI-F13** — Run a job twice with no change: the second processes zero files. Modify one file and update the catalog: only that file is reprocessed.
 - **MDI-F14** — Delete a source file, update the catalog, run the job: its derived data and files are gone; no other file in the destination path is touched.
 - **MDI-F15** — Run a search and an Explore load during a job: both work. Update the enriched catalog: the job pauses, then resumes after the update.
@@ -1087,7 +1101,7 @@ target spec is edited.
 | `SpecCollection.md` | "Data coverage" and "ID remapping": state whether derived tables are imported/updated across collections and how their IDs are remapped. |
 | `SpecCollectionExport.md` | `CEX-O1` content list: add derived data. `CEX-F6`/`CEX-F7`: export derived tables (and their Memory-mode files). `CEX-C1` ("only core change allowed") must be amended for the derived-table export. Add that derived files are not copied (`MDI-F56`). |
 | `SpecSettingsPage.md` | `SET-F2`: add an "External tools" section (`MDI-F20`) and a providers section (`MDI-F23`) to the Application tab. `SET-F3`: add the per-collection provider enablement to the Collection tab. `SET-C1` ("no change to core") scoped to the tab split. `SET-C2`: the new section titles need string approval. |
-| `SpecProgressReport.md` | Component table: a new operation name for enrichment, process titles per analysis, use of Time to Completion (part 10, today metadata extraction only) and Current Item for enrichment and semantic search; a new block in the Message Sources table; a status value for the waiting state of `MDI-F91` (an extended value, like *Loading* / *Verifying*), with the source path as Current Item (applied 2026-10-29). Each new string needs approval. |
+| `SpecProgressReport.md` | Component table: a new operation name for enrichment, process titles per analysis, use of Time to Completion (part 10, today metadata extraction only) and Current Item for enrichment and semantic search; a new block in the Message Sources table; a status value for the waiting state of `MDI-F91` (an extended value, like *Loading* / *Verifying*), with the path waited for as Current Item (applied 2026-10-29). Each new string needs approval. |
 | `SpecValidationRules.md` | Create page: add wizard rules after C4 for the `MDI-F6` refusals. Dialogs: add the egress confirmation (`MDI-F24`), the *Clear derived data* confirmation (`MDI-F59`) and the extended catalog-deletion text (`MDI-F57`) to the dialogs the button-order rules cover. |
 | `SpecHostedSecurity.md` | `HST-C1` (classification only by `Database::validateHostname()`): state that provider endpoints reuse it (`MDI-F26`). |
 | `SpecDevicesPage.md` | Catalog deletion text (`MDI-F57`); the location of *Clear derived data*, profile editing and starting enrichment on the catalog's page (`MDI-F8`, D8). |
