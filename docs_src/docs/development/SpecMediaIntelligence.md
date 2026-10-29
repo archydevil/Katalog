@@ -150,16 +150,35 @@ four choices were answered the same day through explicit question prompts, each
 with the recommended option. Reported to the specifications agent by the main
 agent (the agent did not see the replies itself).
 
-**Ratification pending.** The rows written from D33 (`MDI-O8`,
-`MDI-F94`–`F110`, `MDI-C30`–`C35`) add the main agent's design to the four
-answers: the context's fields, the classification's inputs and outputs, the
-knowledge base's formats and passage size, the tables and the files. That design
-has not yet been approved by the fork owner. No code is written for these rows
-until the owner approves them; `Q19`–`Q31` stay open until answered.
+**Ratified 2026-10-29.** Follow-up replies the same day, through explicit
+question prompts, relayed by the main agent (the agent did not see the replies
+itself):
+
+- `Q19` "Dove vuoi l'editor del Contesto …?" → "Pagina nel menu Strumenti
+  (Consigliato)" — "Una pagina "Contesto" dentro il sottomenu Strumenti: il menu
+  principale resta con le sue 6 voci."
+- `Q21` "Il pulsante "Rielabora con il contesto" … cosa deve rifare?" → "Solo
+  la classificazione (Consigliato)".
+- `Q22` "Quando attivi la classificazione su un catalogo già analizzato …?" →
+  "Solo file nuovi; gli altri con Rielabora (Consigliato)".
+- Ratification of the drafted rows: "Dettagli proposti: (1) le aggiunte del
+  singolo catalogo sono solo note …; (2) la lingua del contesto vale per tutti i
+  testi dell'AI; (3) la rielaborazione interrotta riprende dopo il riavvio, come
+  l'analisi; (4) nei documenti di riferimento sì a PDF, Word, Excel/CSV e testo,
+  no agli archivi zip; (5) i termini del glossario passati alla trascrizione
+  come suggerimento sono un'opzione separata e spenta …; (6) senza contesto la
+  classificazione resta spenta, e usa i 5 passaggi più pertinenti dei documenti.
+  Li approvi?" → "Sì, tutti (Consigliato)". This answers `Q20`, `Q23`, `Q24`,
+  `Q27` and `Q28`, and ratifies the D33 rows as drafted, with these answers
+  applied.
+
+`Q25` and `Q26` stay open (not blocking); `Q29`–`Q31` belong to context
+phase 2. The core class and method design is the separate approval of
+`MDI-C14` (see *Context phase 1 — proposed core design*).
 
 | # | Decision (2026-10-29, fork owner) |
 | --- | ------------------------ |
-| D33 | **Domain context for interpretation** (owner's request, 2026-10-29: "creiamo un tool che permetta di inserire un contesto specifico su cui incentrare la classificazione dei file, immagini, video ecc. Ad esempio i dati che stiamo caricando e classificando appertengono a UITS e sono un archivio dal 1981 di dati. Dammi la possibilità di caricare archivi di dati e informazioni e di attingere a mcp, rag e kb locale o online e su cloud per arricchire e perfezionare le interpretazioni, e usare un linguaggio e una narrativa e terminologia specializzata e verticale."). Answers: (1) scope «Collezione + aggiunte» — one context for the whole collection (e.g. UITS), and each catalog can add its own notes; (2) re-interpretation «Solo su richiesta» — new files use the context at once; files already analysed are re-interpreted only through an explicit «Rielabora con il contesto» action, with a time estimate, limitable to a folder or a file type; a change of context never re-runs analyses by itself; (3) sources «Prima locale, poi MCP» — phase 1: context brief, glossary, categories, known-entity lists, and documents added and indexed on this computer (local knowledge base); phase 2: an MCP client (local and remote servers) and online or cloud sources, each enabled explicitly with a warning; (4) categories «Categorie fisse + tag liberi» — the AI assigns values of the owner's categories (e.g. Disciplina, Evento, Anno, Sezione TSN, Persone, Tipo di documento) using the glossary's terms, plus free tags (`MDI-O8`, `MDI-F94`–`F110`, `MDI-C30`–`C35`). |
+| D33 | **Domain context for interpretation** (owner's request, 2026-10-29: "creiamo un tool che permetta di inserire un contesto specifico su cui incentrare la classificazione dei file, immagini, video ecc. Ad esempio i dati che stiamo caricando e classificando appertengono a UITS e sono un archivio dal 1981 di dati. Dammi la possibilità di caricare archivi di dati e informazioni e di attingere a mcp, rag e kb locale o online e su cloud per arricchire e perfezionare le interpretazioni, e usare un linguaggio e una narrativa e terminologia specializzata e verticale."). Answers: (1) scope «Collezione + aggiunte» — one context for the whole collection (e.g. UITS), and each catalog can add its own notes; (2) re-interpretation «Solo su richiesta» — new files use the context at once; files already analysed are re-interpreted only through an explicit «Rielabora con il contesto» action, with a time estimate, limitable to a folder or a file type; a change of context never re-runs analyses by itself; (3) sources «Prima locale, poi MCP» — phase 1: context brief, glossary, categories, known-entity lists, and documents added and indexed on this computer (local knowledge base); phase 2: an MCP client (local and remote servers) and online or cloud sources, each enabled explicitly with a warning; (4) categories «Categorie fisse + tag liberi» — the AI assigns values of the owner's categories (e.g. Disciplina, Evento, Anno, Sezione TSN, Persone, Tipo di documento) using the glossary's terms, plus free tags. Follow-up, same day: the context editor is a page *Context* in the *Tools* submenu, the six main entries unchanged; re-interpretation redoes the classification only; *Analyze* classifies new or changed files only, the others through re-interpretation; catalog additions are notes only; the context's language applies to all AI-generated text; an interrupted re-interpretation resumes after a restart; reference documents are PDF, Word, Excel/CSV and text, not zip archives; glossary terms reach the transcription only through a separate option, off by default; without a context the classification is off, and it uses the 5 most relevant passages (`MDI-O8`, `MDI-F89`, `MDI-F94`–`F110`, `MDI-C18`, `MDI-C30`–`C36`). |
 
 ---
 
@@ -187,8 +206,8 @@ Inspector and the Explore column view (D27, D28); the simplified side menu
 (D29); the list of connected drives with read-only mounting (D30); a domain
 context per collection with catalog notes, a classification analysis that uses
 it, the context in the other AI analyses of new work, a local knowledge base of
-reference documents, and re-interpretation on request (D33, context phase 1,
-ratification pending).
+reference documents, re-interpretation on request, and the *Context* page in
+the *Tools* submenu (D33, context phase 1).
 
 **Later phase (in scope, `[Backlog]`):** text and Office documents beyond PDF;
 characterising information for applications and other files; MCP servers and
@@ -463,13 +482,12 @@ online or cloud sources for the context (D33, context phase 2).
 ### Domain context, classification and knowledge base {#context}
 
 D33. Rows `MDI-F94`–`F108` are context phase 1 (local only); `MDI-F109` and
-`F110` are context phase 2. Ratification by the fork owner is pending (see
-D33).
+`F110` are context phase 2. Ratified by the fork owner on 2026-10-29 (D33).
 
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
-| MDI-F94 | **Context of the collection.** A collection has one domain *context*, written by the user: organisation; period covered; domain description; narrative style and tone; free notes; a **glossary** (term, preferred form, aliases, definition); **categories** (name, description, one value or several, allowed values as a closed list or an open one); **known entities** (name, kind — person, place, event, organisation or other —, aliases, notes). It is saved only when the user saves it, and survives closing and reopening the collection, in File and Memory modes alike (D33, answers 1 and 4). | [Planned] |
-| MDI-F95 | **Catalog notes.** Each catalog can add its own notes to the collection's context. An analysis of a file of that catalog uses the collection's context and that catalog's notes; other catalogs are not affected (D33, answer 1). Whether a catalog can also add glossary terms, categories, entities or documents is `Q20`. | [Planned] |
+| MDI-F94 | **Context of the collection.** A collection has one domain *context*, written by the user: organisation; period covered; domain description; narrative style and tone; language of generated text (`MDI-F98`); free notes; a **glossary** (term, preferred form, aliases, definition); **categories** (name, description, one value or several, allowed values as a closed list or an open one); **known entities** (name, kind — person, place, event, organisation or other —, aliases, notes). It is saved only when the user saves it, and survives closing and reopening the collection, in File and Memory modes alike (D33, answers 1 and 4). | [Planned] |
+| MDI-F95 | **Catalog notes.** Each catalog can add its own notes to the collection's context. An analysis of a file of that catalog uses the collection's context and that catalog's notes; other catalogs are not affected (D33, answer 1). A catalog adds notes only: no glossary terms, categories, entities or documents of its own (`Q20`, 2026-10-29). | [Planned] |
 | MDI-F96 | **Context version.** Each save that changes the context or a catalog's notes gives it a new version, derived from its content, and a date. The version used and the knowledge-base documents used (`MDI-F106`) are recorded with every datum produced with a context (`MDI-F52`). | [Planned] |
 | MDI-F97 | **Draft from the catalog.** An action asks the text model for a proposed context — domain description, glossary, categories, known entities — from a catalog's folder names and a sample of its existing captions, AI tags and summaries. The proposal opens for editing; nothing is saved until the user saves, and discarding it leaves the context unchanged. | [Planned] |
 | MDI-F98 | **Context in new analyses.** When a context exists, the requests for caption and tags (`MDI-F39`), summary and excerpts (`MDI-F40`), topic segments (`MDI-F36`) and topic clusters (`MDI-F37`) include its domain description, narrative style and glossary, and the catalog's notes; a transcript (`MDI-F35`) gives the glossary's preferred forms to `whisper.cpp` as its initial prompt, within that program's prompt limit (`Q28`). This applies to every such step run after the context is saved: new files, changed files (`MDI-F13`) and re-interpretation (`MDI-F103`). Key excerpts stay verbatim (`MDI-F40`); a transcript stays what was said (D33, answer 2). | [Planned] |
