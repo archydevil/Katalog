@@ -4,13 +4,18 @@ import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import QtQuick.Dialogs
 
+// Labels (fork, D34 phase R8; K2 "Tags"): a label is put on a folder path and
+// then used by Search. Two cards: label a folder, and the labelled folders.
+// Behaviour unchanged: same validation (SpecValidationRules T3), same calls.
 ColumnLayout {
     id: root
-    spacing: 0
+    spacing: KTheme.gap * 2
 
     property var    tagEntries: []
     property var    tagNames:   []
     property string selectedTagFilter: ""
+
+    readonly property bool narrow: width < Kirigami.Units.gridUnit * 30
 
     function reload() {
         tagNames   = appManager1.getTagNames()
@@ -37,171 +42,233 @@ ColumnLayout {
         }
     }
 
-    Kirigami.InlineMessage {
-        id: tagValidationMessage
-        Layout.fillWidth: true
-        Layout.leftMargin:  Kirigami.Units.gridUnit
-        Layout.rightMargin: Kirigami.Units.gridUnit
-        Layout.topMargin:   Kirigami.Units.gridUnit
-        type: Kirigami.MessageType.Warning
-        showCloseButton: true
-        visible: false
+    // ── Intro ─────────────────────────────────────────────────────────────────
+    KSectionHeader {
+        level: 1
+        title: qsTr("Labels")
+        description: qsTr("A label marks folders, wherever they are, so a search can find just their files.")
     }
 
-    // ═══ Add a tag ════════════════════════════════════════════════════════════
-    GridLayout {
+    // ── Label a folder ────────────────────────────────────────────────────────
+    KCard {
         Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.gridUnit
-        columns: 2
-        columnSpacing: Kirigami.Units.largeSpacing
-        rowSpacing: Kirigami.Units.smallSpacing
 
-        RowLayout {
-            Layout.columnSpan: 2
-            Layout.topMargin: Kirigami.Units.smallSpacing
-            Layout.fillWidth: true
-            spacing: Kirigami.Units.largeSpacing
-            Controls.Label { text: qsTr("Add a tag"); color: applicationWindow().titleColor }
-            Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
+        KSectionHeader {
+            level: 3
+            title: qsTr("Label a folder")
+            description: qsTr("Choose the folder, then pick a label already in use or type a new one.")
         }
 
-        Controls.Label { text: qsTr("Folder"); opacity: 0.7 }
-        RowLayout {
+        // Blocking validation at the top of the form (SpecValidationRules)
+        Kirigami.InlineMessage {
+            id: tagValidationMessage
             Layout.fillWidth: true
-            Controls.TextField {
-                id: folderPathField
+            type: Kirigami.MessageType.Warning
+            showCloseButton: true
+            visible: false
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: root.narrow ? 1 : 2
+            columnSpacing: KTheme.gap
+            rowSpacing: root.narrow ? 4 : 10
+
+            Controls.Label {
+                text: qsTr("Folder")
+                color: KTheme.text2
+                font.weight: Font.Medium
+            }
+            RowLayout {
                 Layout.fillWidth: true
-                placeholderText: qsTr("Folder path")
-                onTextChanged: tagValidationMessage.visible = false
-            }
-            IconButton {
-                icon.name: "folder-open"
-                text: qsTr("Select a folder")
-                onClicked: {
-                    var p = folderPathField.text.trim()
-                    applicationWindow().openFreshDialog(tagFolderDialogComponent, p)
-                }
-            }
-        }
-
-        Controls.Label { text: qsTr("Tag"); opacity: 0.7 }
-        RowLayout {
-            Layout.fillWidth: true
-            ComboBoxFitted {
-                id: tagNameCombo
-                Layout.fillWidth: true
-                Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
-                editable: true
-                model: root.tagNames
-                onEditTextChanged: tagValidationMessage.visible = false
-            }
-            Controls.Button {
-                icon.name: "tag"
-                text: qsTr("Tag the folder")
-                onClicked: {
-                    var folder = folderPathField.text.trim()
-                    var name   = tagNameCombo.editText.trim()
-                    if (folder === "") {
-                        tagValidationMessage.text = qsTr("Select or enter a folder to tag.")
-                        tagValidationMessage.visible = true
-                        return
-                    }
-                    if (name === "") {
-                        tagValidationMessage.text = qsTr("Select or enter a tag name.")
-                        tagValidationMessage.visible = true
-                        return
-                    }
-                    // Same folder, same tag: refused (SpecValidationRules T3)
-                    var existing = appManager1.getTagEntries(name)
-                    for (var i = 0; i < existing.length; i++) {
-                        if (existing[i].folder === folder) {
-                            tagValidationMessage.text = qsTr("Folder already tagged with %1.").arg(name)
-                            tagValidationMessage.visible = true
-                            return
-                        }
-                    }
-                    appManager1.createTag(name, folder)
-                    folderPathField.text = ""
-                    tagNameCombo.currentIndex = -1
-                }
-            }
-        }
-    }
-
-    // ═══ Current folders and tags ════════════════════════════════════════════
-    GridLayout {
-        Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.gridUnit
-        columns: 2
-        columnSpacing: Kirigami.Units.largeSpacing
-        rowSpacing: Kirigami.Units.smallSpacing
-
-        RowLayout {
-            Layout.columnSpan: 2
-            Layout.fillWidth: true
-            Layout.topMargin: Kirigami.Units.smallSpacing
-            spacing: Kirigami.Units.largeSpacing
-            Controls.Label { text: qsTr("Current folders and tags"); color: applicationWindow().titleColor }
-            Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-        }
-        // Tag filter on the row below the title, above the Tag column (PGL-F7)
-        Item { Layout.fillWidth: true }
-        ComboBoxFitted {
-            id: filterCombo
-            model: [qsTr("All")].concat(root.tagNames)
-            onActivated: {
-                root.selectedTagFilter = currentIndex === 0 ? "" : currentText
-                root.reload()
-            }
-        }
-
-        // Column headers
-        Controls.Label {
-            text: qsTr("Folder")
-            opacity: 0.7
-            Layout.fillWidth: true
-        }
-        Controls.Label {
-            text: qsTr("Tag")
-            opacity: 0.7
-        }
-
-        Kirigami.Separator { Layout.fillWidth: true; Layout.columnSpan: 2 }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.columnSpan: 2
-            spacing: 2
-
-            Repeater {
-                model: root.tagEntries
-                delegate: RowLayout {
+                spacing: 6
+                Controls.TextField {
+                    id: folderPathField
                     Layout.fillWidth: true
-                    Controls.Label {
-                        text: modelData.folder
-                        elide: Text.ElideMiddle
-                        Layout.fillWidth: true
-                    }
-                    Controls.Label {
-                        text: modelData.name
-                        Layout.preferredWidth: 120
-                        horizontalAlignment: Text.AlignLeft
-                    }
-                    IconButton {
-                        icon.name: "edit-delete"
-                        text: qsTr("Remove this tag")
-                        flat: true
-                        onClicked: appManager1.deleteTag(modelData.tagId)
+                    Layout.preferredHeight: 40
+                    placeholderText: qsTr("Folder path")
+                    font.family: KTheme.mono
+                    onTextChanged: tagValidationMessage.visible = false
+                }
+                IconButton {
+                    Layout.preferredWidth: 40
+                    Layout.preferredHeight: 40
+                    icon.name: "folder-open"
+                    text: qsTr("Select a folder")
+                    onClicked: {
+                        var p = folderPathField.text.trim()
+                        applicationWindow().openFreshDialog(tagFolderDialogComponent, p)
                     }
                 }
             }
 
             Controls.Label {
+                Layout.topMargin: root.narrow ? 6 : 0
+                text: qsTr("Label")
+                color: KTheme.text2
+                font.weight: Font.Medium
+            }
+            ComboBoxFitted {
+                id: tagNameCombo
+                Layout.fillWidth: true
+                Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
+                Layout.preferredHeight: 40
+                editable: true
+                model: root.tagNames
+                onEditTextChanged: tagValidationMessage.visible = false
+            }
+        }
+
+        KButton {
+            Layout.alignment: Qt.AlignRight
+            variant: "primary"
+            icon.name: "tag"
+            text: qsTr("Label the folder")
+            onClicked: {
+                var folder = folderPathField.text.trim()
+                var name   = tagNameCombo.editText.trim()
+                if (folder === "") {
+                    tagValidationMessage.text = qsTr("Select or enter a folder to label.")
+                    tagValidationMessage.visible = true
+                    return
+                }
+                if (name === "") {
+                    tagValidationMessage.text = qsTr("Select or enter a label name.")
+                    tagValidationMessage.visible = true
+                    return
+                }
+                // Same folder, same label: refused (SpecValidationRules T3)
+                var existing = appManager1.getTagEntries(name)
+                for (var i = 0; i < existing.length; i++) {
+                    if (existing[i].folder === folder) {
+                        tagValidationMessage.text = qsTr("Folder already has the label %1.").arg(name)
+                        tagValidationMessage.visible = true
+                        return
+                    }
+                }
+                appManager1.createTag(name, folder)
+                folderPathField.text = ""
+                tagNameCombo.currentIndex = -1
+            }
+        }
+    }
+
+    // ── Labelled folders ──────────────────────────────────────────────────────
+    KCard {
+        Layout.fillWidth: true
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: root.narrow ? 1 : 2
+            columnSpacing: KTheme.gap
+            rowSpacing: 8
+
+            KSectionHeader {
+                level: 3
+                title: qsTr("Labelled folders")
+                description: qsTr("Removing a label leaves the folder and its files untouched.")
+            }
+            // Label filter (PGL-F7): one label, or all of them
+            RowLayout {
+                Layout.alignment: root.narrow ? Qt.AlignLeft : (Qt.AlignRight | Qt.AlignTop)
+                spacing: 8
+                Controls.Label {
+                    text: qsTr("Filter")
+                    color: KTheme.text2
+                    font.weight: Font.Medium
+                }
+                ComboBoxFitted {
+                    id: filterCombo
+                    Layout.preferredHeight: 40
+                    model: [qsTr("All")].concat(root.tagNames)
+                    onActivated: {
+                        root.selectedTagFilter = currentIndex === 0 ? "" : currentText
+                        root.reload()
+                    }
+                }
+            }
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            visible: root.tagEntries.length > 0
+            spacing: 6
+            KInfoTag { text: qsTr("Folders: %1").arg(root.tagEntries.length) }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 0
+
+            Repeater {
+                model: root.tagEntries
+                delegate: ColumnLayout {
+                    id: entryRow
+                    required property var modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    Rectangle {
+                        visible: entryRow.index > 0
+                        Layout.fillWidth: true
+                        implicitHeight: 1
+                        color: KTheme.line
+                    }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.topMargin: 6
+                        Layout.bottomMargin: 6
+                        spacing: 10
+                        Kirigami.Icon {
+                            source: "folder"
+                            Layout.preferredWidth: 20
+                            Layout.preferredHeight: 20
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                        // A path is never elided in a card (CDT-C1): it wraps
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: entryRow.modelData.folder
+                            wrapMode: Text.WrapAnywhere
+                            font.family: KTheme.mono
+                            font.pixelSize: KTheme.note
+                            color: KTheme.text
+                        }
+                        KInfoTag {
+                            Layout.alignment: Qt.AlignVCenter
+                            text: entryRow.modelData.name
+                            tone: "info"
+                        }
+                        IconButton {
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
+                            icon.name: "edit-delete"
+                            text: qsTr("Remove this label")
+                            flat: true
+                            onClicked: appManager1.deleteTag(entryRow.modelData.tagId)
+                        }
+                    }
+                }
+            }
+
+            ColumnLayout {
                 visible: root.tagEntries.length === 0
-                text: qsTr("No tags")
-                opacity: 0.5
-                Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: Kirigami.Units.gridUnit
+                Layout.fillWidth: true
+                Layout.topMargin: 6
+                spacing: 4
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: qsTr("No labels yet")
+                    font.weight: Font.DemiBold
+                    color: KTheme.text
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    color: KTheme.text2
+                    text: qsTr("A labelled folder shows here, with its label.")
+                }
             }
         }
     }

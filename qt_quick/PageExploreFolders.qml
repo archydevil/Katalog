@@ -5,6 +5,8 @@ import org.kde.kirigami as Kirigami
 
 // Left panel of the Explore page: folder tree for the active explore catalog.
 // Entry point: openByDeviceId(deviceId) called from context menus.
+// Redesign (D34, phase R2, "Browse the archive"): the tree is a card on the
+// design system's ground; rows are marked like the sidebar's entries.
 Item {
     id: root
 
@@ -334,199 +336,222 @@ Item {
             _revealSelected()
     }
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
-
-        // Directories count header. Fixed height, matching the Selection page and
-        // the Explore file list so the three line up when shown together.
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin:  Kirigami.Units.smallSpacing
-            Layout.rightMargin: Kirigami.Units.smallSpacing
-            Layout.preferredHeight: applicationWindow().headerRowHeight
-            spacing: Kirigami.Units.smallSpacing
-
-            Controls.Label {
-                text: qsTr("Directories")
-            }
-            Controls.Label {
-                text: root.folderCount.toLocaleString(Qt.locale(), "f", 0)
-                font.bold: true
-            }
-
-            Item { Layout.preferredWidth: Kirigami.Units.largeSpacing }
-
-            // The catalog's total size, beside the catalog-wide directory count
-            // that is already here. No label of its own: a formatted data size
-            // names its own unit.
-            Controls.Label {
-                text: appManager1.formatDataSizeDelta(root.catalogTotalSize)
-                font.bold: true
-                visible: root.catalogTotalSize > 0
-            }
-
-            Item { Layout.fillWidth: true }
+    // Depth control of the header: icon only, 40 px square (touch size),
+    // with its name as tooltip (ICB-F1)
+    component DepthButton: Controls.ToolButton {
+        id: depthButton
+        display: Controls.AbstractButton.IconOnly
+        implicitWidth: 40
+        implicitHeight: 40
+        icon.color: KTheme.text2
+        hoverEnabled: true
+        Controls.ToolTip.text: text
+        Controls.ToolTip.visible: hovered
+        background: Rectangle {
+            radius: KTheme.radiusItem
+            color: depthButton.hovered && depthButton.enabled ? KTheme.hover : "transparent"
         }
+    }
 
-        // Depth controls, on their own row: the panel is narrow enough that they
-        // would push the count off the end if they shared its row.
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin:  Kirigami.Units.smallSpacing
-            Layout.rightMargin: Kirigami.Units.smallSpacing
-            Layout.preferredHeight: applicationWindow().headerRowHeight
+    // The tree's card, on the page's ground
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: 10
+        color: KTheme.surface
+        border.color: KTheme.line
+        border.width: 1
+        radius: KTheme.radiusCard
+
+        ColumnLayout {
+            anchors.fill: parent
+            // Inside the rounded corners: the rows never cover the card's border
+            anchors.margins: 6
             spacing: 0
 
-            Controls.ToolButton {
-                icon.name: "go-up"
-                text: qsTr("Collapse one level")
-                display: Controls.AbstractButton.IconOnly
-                enabled: root.canCollapse
-                onClicked: root.collapseOneLevel()
-                Controls.ToolTip.text: text
-                Controls.ToolTip.visible: hovered
-            }
-            Controls.ToolButton {
-                icon.name: "go-down"
-                text: qsTr("Expand one level")
-                display: Controls.AbstractButton.IconOnly
-                enabled: root.canExpand
-                onClicked: root.expandOneLevel()
-                Controls.ToolTip.text: text
-                Controls.ToolTip.visible: hovered
-            }
-            Controls.ToolButton {
-                icon.name: "collapse-all"
-                text: qsTr("Collapse all")
-                display: Controls.AbstractButton.IconOnly
-                enabled: root.canCollapse
-                onClicked: root.collapseAll()
-                Controls.ToolTip.text: text
-                Controls.ToolTip.visible: hovered
-            }
-            Controls.ToolButton {
-                icon.name: "expand-all"
-                text: qsTr("Expand all")
-                display: Controls.AbstractButton.IconOnly
-                enabled: root.canExpand
-                onClicked: root.expandAll()
-                Controls.ToolTip.text: text
-                Controls.ToolTip.visible: hovered
+            // Folders count header. Fixed height, matching the Explore file list's
+            // card so the two lists line up when shown together.
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin:  8
+                Layout.rightMargin: 8
+                Layout.preferredHeight: applicationWindow().headerRowHeight
+                spacing: 6
+                clip: true
+
+                Controls.Label {
+                    text: qsTr("Folders")
+                    color: KTheme.text
+                    font.weight: Font.Bold
+                    font.pixelSize: KTheme.titleCard + 1
+                    Accessible.role: Accessible.Heading
+                }
+                KInfoTag {
+                    Layout.leftMargin: 4
+                    text: root.folderCount.toLocaleString(Qt.locale(), "f", 0)
+                }
+                // The catalog's total size, beside the catalog-wide folder count.
+                // A formatted data size names its own unit.
+                KInfoTag {
+                    text: appManager1.formatDataSizeDelta(root.catalogTotalSize)
+                    visible: root.catalogTotalSize > 0
+                }
+
+                Item { Layout.fillWidth: true }
             }
 
-            Item { Layout.fillWidth: true }
-        }
+            // Depth controls, on their own row: the panel is narrow enough that they
+            // would push the count off the end if they shared its row. Same height
+            // as the file list's tag row (PageExploreFiles.headerSecondRowHeight).
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin:  2
+                Layout.rightMargin: 2
+                Layout.preferredHeight: 40
+                spacing: 0
 
-        Kirigami.Separator { Layout.fillWidth: true }
+                DepthButton {
+                    icon.name: "go-up"
+                    text: qsTr("Collapse one level")
+                    enabled: root.canCollapse
+                    onClicked: root.collapseOneLevel()
+                }
+                DepthButton {
+                    icon.name: "go-down"
+                    text: qsTr("Expand one level")
+                    enabled: root.canExpand
+                    onClicked: root.expandOneLevel()
+                }
+                DepthButton {
+                    icon.name: "collapse-all"
+                    text: qsTr("Collapse all")
+                    enabled: root.canCollapse
+                    onClicked: root.collapseAll()
+                }
+                DepthButton {
+                    icon.name: "expand-all"
+                    text: qsTr("Expand all")
+                    enabled: root.canExpand
+                    onClicked: root.expandAll()
+                }
 
-        // Folder tree list
-        Controls.ScrollView {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Controls.ScrollBar.vertical.policy:   Controls.ScrollBar.AsNeeded
-            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AsNeeded
-            background: Rectangle { // List background (empty area)
-                color: applicationWindow().listBackgroundColor
+                Item { Layout.fillWidth: true }
             }
 
-            ListView {
-                id: folderListView
-                model: ListModel { id: folderListModel }
+            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: KTheme.line }
 
-                delegate: Controls.ItemDelegate {
-                    id: folderDelegate
-                    width: folderListView.width
-                    highlighted: model.fullPath === root.selectedFolderPath
+            // Folder tree list
+            Controls.ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.topMargin: 4
+                Controls.ScrollBar.vertical.policy:   Controls.ScrollBar.AsNeeded
+                Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AsNeeded
+                background: Rectangle { // List background (empty area)
+                    color: KTheme.surface
+                }
 
-                    // One fixed height for every row, the same as a Devices tree
-                    // row (CDT-F3). Left to itself an ItemDelegate takes its
-                    // height from the content plus whatever vertical padding the
-                    // active style applies, which made the rows both taller than
-                    // the Devices table and uneven between themselves. The
-                    // disclosure button is exactly this tall, so it sets the
-                    // floor and nothing else can push a row higher.
-                    implicitHeight: root.rowButton
-                    topPadding:    0
-                    bottomPadding: 0
+                ListView {
+                    id: folderListView
+                    model: ListModel { id: folderListModel }
 
-                    // Painted by the application, not left to the Qt Quick
-                    // Controls style (SpecTheme THM-F9). Without this the row
-                    // surface came from whichever style was active - Breeze on
-                    // Linux, Fusion on Windows and macOS, where main.cpp forces
-                    // it - so the list matched the rest of the app on one
-                    // platform and not the other, with Kirigami text sitting on
-                    // a Fusion background. The colours are the ones
-                    // applicationWindow() defines for every row surface; none is
-                    // derived here (THM-C11). Striped like the file list beside
-                    // it and like K2's own Explore directory tree (THM-F8).
-                    background: Rectangle {
-                        color: folderDelegate.highlighted
-                               ? applicationWindow().selectionHighlightColor
-                               : (index % 2 === 0
-                                  ? applicationWindow().rowBaseColor
-                                  : applicationWindow().rowStripeColor)
-                    }
+                    delegate: Controls.ItemDelegate {
+                        id: folderDelegate
+                        width: folderListView.width
+                        highlighted: model.fullPath === root.selectedFolderPath
 
-                    contentItem: RowLayout {
-                        spacing: Kirigami.Units.smallSpacing
+                        // One fixed height for every row, the same as a Devices tree
+                        // row (CDT-F3). Left to itself an ItemDelegate takes its
+                        // height from the content plus whatever vertical padding the
+                        // active style applies, which made the rows both taller than
+                        // the Devices table and uneven between themselves. The
+                        // disclosure button is exactly this tall, so it sets the
+                        // floor and nothing else can push a row higher.
+                        implicitHeight: root.rowButton
+                        topPadding:    0
+                        bottomPadding: 0
+                        leftPadding:   4
+                        rightPadding:  6
+                        hoverEnabled:  true
 
-                        // Depth is drawn rather than modelled: the list is already
-                        // in tree order, so indenting is all the view needs to do.
-                        Item {
-                            implicitWidth: model.level * root.indentStep
-                            implicitHeight: 1
+                        // Painted by the application, not left to the Qt Quick
+                        // Controls style (SpecTheme THM-F9): otherwise the row
+                        // surface came from whichever style was active - Breeze on
+                        // Linux, Fusion on Windows and macOS. Since the redesign
+                        // (D34, MDI-F115) the colours are the design system's, as
+                        // the sidebar's entries: the selected folder in the accent's
+                        // soft tone, the pointed one in the hover tone, no stripes.
+                        background: Item {
+                            Rectangle {
+                                anchors { fill: parent; leftMargin: 2; rightMargin: 2; topMargin: 1; bottomMargin: 1 }
+                                radius: KTheme.radiusItem
+                                color: folderDelegate.highlighted ? KTheme.accentSoft
+                                     : folderDelegate.hovered ? KTheme.hover : "transparent"
+                            }
                         }
 
-                        // Shown whenever the directory has something inside it:
-                        // whether a branch can be opened is a property of the
-                        // tree, not of where the pointer happens to be.
-                        Controls.ToolButton {
-                            padding: 0
-                            implicitWidth:  root.rowButton
-                            implicitHeight: root.rowButton
-                            icon.width:  Kirigami.Units.iconSizes.small
-                            icon.height: Kirigami.Units.iconSizes.small
-                            opacity: model.hasChildren ? 1.0 : 0.0
-                            enabled: model.hasChildren
-                            // Breeze's -symbolic pair are its tree disclosure
-                            // chevrons; go-next/go-down are navigation arrows.
-                            // Same control as the Devices tree (CDT-F3).
-                            icon.name: model.isCollapsed ? "go-next-symbolic" : "go-down-symbolic"
-                            // The text stays for accessibility, but no tooltip:
-                            // one per row means a pop-up follows the pointer all
-                            // the way down the tree, and a disclosure arrow is
-                            // self-explanatory in a way the header controls,
-                            // which keep theirs (EXP-F9), are not.
-                            text: model.isCollapsed ? qsTr("Expand") : qsTr("Collapse")
-                            display: Controls.AbstractButton.IconOnly
-                            onClicked: root.toggleCollapsed(model.fullPath)
+                        contentItem: RowLayout {
+                            spacing: Kirigami.Units.smallSpacing
+
+                            // Depth is drawn rather than modelled: the list is already
+                            // in tree order, so indenting is all the view needs to do.
+                            Item {
+                                implicitWidth: model.level * root.indentStep
+                                implicitHeight: 1
+                            }
+
+                            // Shown whenever the directory has something inside it:
+                            // whether a branch can be opened is a property of the
+                            // tree, not of where the pointer happens to be.
+                            Controls.ToolButton {
+                                padding: 0
+                                implicitWidth:  root.rowButton
+                                implicitHeight: root.rowButton
+                                icon.width:  Kirigami.Units.iconSizes.small
+                                icon.height: Kirigami.Units.iconSizes.small
+                                icon.color:  folderDelegate.highlighted ? KTheme.accentText : KTheme.text3
+                                background: Item {}
+                                opacity: model.hasChildren ? 1.0 : 0.0
+                                enabled: model.hasChildren
+                                // Breeze's -symbolic pair are its tree disclosure
+                                // chevrons; go-next/go-down are navigation arrows.
+                                // Same control as the Devices tree (CDT-F3).
+                                icon.name: model.isCollapsed ? "go-next-symbolic" : "go-down-symbolic"
+                                // The text stays for accessibility, but no tooltip:
+                                // one per row means a pop-up follows the pointer all
+                                // the way down the tree, and a disclosure arrow is
+                                // self-explanatory in a way the header controls,
+                                // which keep theirs (EXP-F9), are not.
+                                text: model.isCollapsed ? qsTr("Expand") : qsTr("Collapse")
+                                display: Controls.AbstractButton.IconOnly
+                                onClicked: root.toggleCollapsed(model.fullPath)
+                            }
+
+                            Kirigami.Icon {
+                                source: "folder"
+                                implicitWidth:  root.rowIconSize
+                                implicitHeight: root.rowIconSize
+                            }
+
+                            Controls.Label {
+                                text: model.name
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                                color: folderDelegate.highlighted ? KTheme.accentText : KTheme.text
+                                font.pixelSize: KTheme.body
+                                font.weight: folderDelegate.highlighted ? Font.DemiBold : Font.Normal
+                            }
                         }
 
-                        Kirigami.Icon {
-                            source: "folder"
-                            implicitWidth:  root.rowIconSize
-                            implicitHeight: root.rowIconSize
+                        onClicked: {
+                            root.selectedFolderPath = model.fullPath
+                            folderListView.currentIndex = index
+                            root.folderClicked(model.fullPath)
                         }
-
-                        Controls.Label {
-                            text: model.name
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                            color: folderDelegate.highlighted ? Kirigami.Theme.highlightedTextColor
-                                                              : Kirigami.Theme.textColor
+                        onPressAndHold: root.openFolderContextMenu(model.fullPath)
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            onTapped: root.openFolderContextMenu(model.fullPath)
                         }
-                    }
-
-                    onClicked: {
-                        root.selectedFolderPath = model.fullPath
-                        folderListView.currentIndex = index
-                        root.folderClicked(model.fullPath)
-                    }
-                    onPressAndHold: root.openFolderContextMenu(model.fullPath)
-                    TapHandler {
-                        acceptedButtons: Qt.RightButton
-                        onTapped: root.openFolderContextMenu(model.fullPath)
                     }
                 }
             }

@@ -4,15 +4,26 @@ import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import QtCharts
 
-ColumnLayout {
+// Archive in numbers (fork, D34 phase R8): how the selected drive changed over
+// time — its key numbers as metric cards, the chart options and the chart in
+// cards. Data, options and their persistence are unchanged; only the layout and
+// the look follow the design system. A scroll view, so a short window scrolls
+// instead of squeezing the chart.
+Controls.ScrollView {
     id: root
-    spacing: 0
+    contentWidth: availableWidth
+    contentHeight: pageColumn.implicitHeight
+    clip: true
 
     // Internal keys: source = "all"|"updates"|"snapshots", dataType = "size"|"count"
     property string selectedSource:   "all"
     property string selectedDataType: "size"
     property bool   displayEachValue: false
     property string startDateText:    ""
+    // The data last drawn, read by the key numbers
+    property var    stats:            ({})
+
+    readonly property bool narrow: width < Kirigami.Units.gridUnit * 36
 
     // Unit label map used in axis title and chart title
     function unitLabel(key) {
@@ -21,6 +32,29 @@ ColumnLayout {
         if (key === "MiB") return qsTr("MiB")
         if (key === "KiB") return qsTr("KiB")
         return ""
+    }
+
+    // ── Key numbers, read from the data drawn ────────────────────────────────
+    function lastPoint(list)  { return list && list.length > 0 ? list[list.length - 1] : null }
+    function firstPoint(list) { return list && list.length > 0 ? list[0] : null }
+    function formatValue(v) {
+        if (v === undefined || v === null) return "—"
+        var unit = root.stats.unitKey ? " " + unitLabel(root.stats.unitKey) : ""
+        var a = Math.abs(v)
+        var decimals = root.stats.unitKey ? (a < 10 ? 2 : a < 100 ? 1 : 0) : 0
+        return Number(v).toLocaleString(Qt.locale(), "f", decimals) + unit
+    }
+    function formatDate(ms) { return Qt.formatDate(new Date(ms), "yyyy-MM-dd") }
+    function changeText() {
+        var a = firstPoint(root.stats.series1), b = lastPoint(root.stats.series1)
+        if (!a || !b) return "—"
+        var d = b.y - a.y
+        return (d > 0 ? "+" : d < 0 ? "−" : "") + formatValue(Math.abs(d))
+    }
+    function sourceText(key) {
+        if (key === "updates")   return qsTr("updates only")
+        if (key === "snapshots") return qsTr("snapshots only")
+        return qsTr("all records")
     }
 
     function loadSettings() {
@@ -49,6 +83,7 @@ ColumnLayout {
     onVisibleChanged: if (visible && needsRefresh) { needsRefresh = false; refresh() }
 
     function updateChart(data) {
+        root.stats = data
         series1Line.clear()
         series2Line.clear()
         series3Line.clear()
@@ -134,100 +169,6 @@ ColumnLayout {
         function onStatisticsRefreshed()   { root.requestRefresh() }
     }
 
-    // ─── Controls bar ─────────────────────────────────────────────────────────
-    GridLayout {
-        Layout.fillWidth: true
-        Layout.topMargin:   Kirigami.Units.largeSpacing
-        Layout.leftMargin:  Kirigami.Units.largeSpacing
-        Layout.rightMargin: Kirigami.Units.largeSpacing
-        columns: 4
-        columnSpacing: Kirigami.Units.largeSpacing
-        rowSpacing: Kirigami.Units.smallSpacing
-
-        Controls.Label { text: qsTr("Device"); opacity: 0.7 }
-        Controls.Label {
-            // Guard the selectedDeviceId so the untranslated "No device selected"
-            // fallback in getSelectedDeviceName() never reaches the UI.
-            text: appManager1.selectedDeviceId > 0 ? appManager1.selectedDeviceName : ""
-            font.bold: true
-            elide: Text.ElideRight
-            Layout.columnSpan: 3
-            Layout.fillWidth: true
-        }
-
-        Controls.Label { text: qsTr("Source"); opacity: 0.7 }
-        ComboBoxFitted {
-            id: sourceCombo
-            textRole: "text"
-            valueRole: "value"
-            model: [
-                { value: "all",       text: qsTr("all records")    },
-                { value: "updates",   text: qsTr("updates only")   },
-                { value: "snapshots", text: qsTr("snapshots only") }
-            ]
-            onActivated: {
-                root.selectedSource = currentValue
-                appManager1.setStatisticsSetting("SelectedSource", currentValue)
-                root.refresh()
-            }
-        }
-
-        Controls.Label { text: qsTr("Data"); opacity: 0.7 }
-        ComboBoxFitted {
-            id: dataTypeCombo
-            textRole: "text"
-            valueRole: "value"
-            model: [
-                { value: "size",  text: qsTr("Total File Size")   },
-                { value: "count", text: qsTr("Number of Files") }
-            ]
-            onActivated: {
-                root.selectedDataType = currentValue
-                appManager1.setStatisticsSetting("TypeOfData", currentValue)
-                root.refresh()
-            }
-        }
-
-        Controls.Label { text: qsTr("From date"); opacity: 0.7 }
-        RowLayout {
-            Layout.columnSpan: 3
-            Controls.TextField {
-                id: startDateField
-                placeholderText: "yyyy-MM-dd"
-                readOnly: true
-                implicitWidth: 100
-            }
-            IconButton {
-                icon.name: "view-calendar"
-                text: qsTr("Select a date")
-                onClicked: statsDateDialog.open()
-            }
-            IconButton {
-                icon.name: "edit-clear-history"
-                text: qsTr("Clear")
-                onClicked: {
-                    startDateField.text = ""
-                    root.startDateText  = ""
-                    appManager1.setStatisticsSetting("graphStartDate", "")
-                    root.refresh()
-                }
-            }
-        }
-
-        Controls.Label { text: qsTr("Display each value"); opacity: 0.7 }
-        Controls.CheckBox {
-            id: displayEachValueCheck
-            Layout.columnSpan: 3
-            onCheckedChanged: {
-                root.displayEachValue = checked
-                appManager1.setStatisticsSetting("DisplayEachValue", checked ? "true" : "false")
-                series1Line.pointsVisible = checked && series1Line.visible
-                series2Line.pointsVisible = checked && series2Line.visible
-                series3Line.pointsVisible = checked && series3Line.visible
-            }
-        }
-    }
-
     Kirigami.Dialog {
         id: statsDateDialog
         title: qsTr("Select start date")
@@ -246,148 +187,369 @@ ColumnLayout {
         }
 
         contentItem: RowLayout {
-            Controls.Button {
+            spacing: Kirigami.Units.smallSpacing
+            KButton {
                 text: qsTr("1 day ago")
                 onClicked: { var d = new Date(); d.setDate(d.getDate() - 1);   statsDateDialog.applyDate(d) }
             }
-            Controls.Button {
+            KButton {
                 text: qsTr("1 week ago")
                 onClicked: { var d = new Date(); d.setDate(d.getDate() - 7);   statsDateDialog.applyDate(d) }
             }
-            Controls.Button {
+            KButton {
                 text: qsTr("1 month ago")
                 onClicked: { var d = new Date(); d.setMonth(d.getMonth() - 1); statsDateDialog.applyDate(d) }
             }
-            Controls.Button {
+            KButton {
                 text: qsTr("1 year ago")
                 onClicked: { var d = new Date(); d.setFullYear(d.getFullYear() - 1); statsDateDialog.applyDate(d) }
             }
         }
     }
 
-    // ─── Chart ────────────────────────────────────────────────────────────────
-    ChartView {
-        id: chart
-        Layout.fillWidth:  true
-        Layout.fillHeight: true
-        Layout.minimumHeight: Kirigami.Units.gridUnit * 20
-        antialiasing: true
-        legend.visible:    true
-        legend.alignment:  Qt.AlignBottom
-        // Charts copy the application font once at creation; bound here so the
-        // text-size setting reaches them (TYP-F7).
-        legend.font.pointSize:       appManager1.textPointSize
-        titleFont.pointSize:         appManager1.textPointSize
+    ColumnLayout {
+        id: pageColumn
+        x: root.narrow ? KTheme.gap : KTheme.pagePadding
+        width: root.availableWidth - 2 * x
+        spacing: KTheme.gap * 2
 
-        // Follows the desktop's light/dark mode (SpecTheme THM-F14, THM-C17).
-        // isDarkDesktop() is called inside the binding so a live scheme change
-        // re-evaluates it — see its comment in Main.qml. A theme switch resets
-        // the series colours, so they are re-applied after every switch.
-        readonly property bool darkDesktop: applicationWindow().isDarkDesktop()
-        theme: darkDesktop ? ChartView.ChartThemeDark : ChartView.ChartThemeLight
-        onDarkDesktopChanged: Qt.callLater(applySeriesColors)
-        Component.onCompleted: Qt.callLater(applySeriesColors)
-
-        // K2-matching series colours; kept across theme switches (THM-C17).
-        function applySeriesColors() {
-            series1Line.color = "#209fdf"
-            series2Line.color = "#f6a625"
-            series3Line.color = "#99ca53"
+        // ── Intro ─────────────────────────────────────────────────────────────
+        KSectionHeader {
+            Layout.topMargin: pageColumn.x
+            level: 1
+            title: qsTr("Archive in numbers")
+            description: qsTr("How the selected drive has changed over time: its files, their size and its space.")
         }
 
-        DateTimeAxis {
-            id: axisX
-            format:    "yyyy-MM-dd"
-            titleText: qsTr("Date")
-            labelsFont.pointSize: appManager1.textPointSize
-            titleFont.pointSize:  appManager1.textPointSize
-        }
-        ValueAxis {
-            id: axisY
-            titleText: qsTr("Total")
-            labelsFont.pointSize: appManager1.textPointSize
-            titleFont.pointSize:  appManager1.textPointSize
-            min: 0
-            max: 100
-        }
+        // ── Options ───────────────────────────────────────────────────────────
+        KCard {
+            Layout.fillWidth: true
+            KSectionHeader {
+                level: 3
+                title: qsTr("What is shown")
+                description: qsTr("The drive selected in My drives, which records to use and from which date.")
+            }
 
-        LineSeries {
-            id: series1Line
-            name:          qsTr("Catalogs") + " / " + qsTr("Total File Size")
-            color:         "#209fdf"
-            width:         2
-            pointsVisible: false
-            axisX: axisX
-            axisY: axisY
-        }
-
-        LineSeries {
-            id: series2Line
-            name:          qsTr("Storage") + " / " + qsTr("Used Space")
-            color:         "#f6a625"
-            width:         2
-            pointsVisible: false
-            axisX: axisX
-            axisY: axisY
-        }
-
-        LineSeries {
-            id: series3Line
-            name:          qsTr("Storage") + " / " + qsTr("Total Space")
-            color:         "#99ca53"
-            width:         2
-            pointsVisible: false
-            axisX: axisX
-            axisY: axisY
-        }
-
-        // Rubber-band zoom: drag a rectangle to zoom in (K2 RectangleRubberBand).
-        // Right-click or double-click resets the zoom.
-        Rectangle {
-            id: zoomSelection
-            visible: false
-            color:        "#3309c6f4"
-            border.color: "#09c6f4"
-            border.width: 1
-        }
-
-        MouseArea {
-            id: zoomArea
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            property real startX: 0
-            property real startY: 0
-
-            onPressed: (mouse) => {
-                if (mouse.button === Qt.LeftButton) {
-                    startX = mouse.x
-                    startY = mouse.y
-                    zoomSelection.x = mouse.x
-                    zoomSelection.y = mouse.y
-                    zoomSelection.width = 0
-                    zoomSelection.height = 0
-                    zoomSelection.visible = true
+            // The drive the numbers are about
+            Flow {
+                Layout.fillWidth: true
+                spacing: 8
+                Controls.Label {
+                    text: qsTr("Device")
+                    color: KTheme.text3
+                    font.pixelSize: KTheme.note
+                    font.weight: Font.Medium
+                    height: deviceNameLabel.height
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Controls.Label {
+                    id: deviceNameLabel
+                    // Guard the selectedDeviceId so the untranslated "No device selected"
+                    // fallback in getSelectedDeviceName() never reaches the UI.
+                    visible: appManager1.selectedDeviceId > 0
+                    text: appManager1.selectedDeviceId > 0 ? appManager1.selectedDeviceName : ""
+                    width: Math.min(implicitWidth, parent.width)
+                    wrapMode: Text.WrapAnywhere
+                    color: KTheme.text
+                    font.weight: Font.Bold
+                }
+                Controls.Label {
+                    visible: appManager1.selectedDeviceId <= 0
+                    width: parent.width
+                    text: qsTr("Select a drive in My drives to see its numbers.")
+                    wrapMode: Text.WordWrap
+                    color: KTheme.text2
                 }
             }
-            onPositionChanged: (mouse) => {
-                if (zoomSelection.visible) {
-                    zoomSelection.x = Math.min(startX, mouse.x)
-                    zoomSelection.y = Math.min(startY, mouse.y)
-                    zoomSelection.width  = Math.abs(mouse.x - startX)
-                    zoomSelection.height = Math.abs(mouse.y - startY)
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: KTheme.gap
+
+                ColumnLayout {
+                    spacing: 4
+                    Controls.Label { text: qsTr("Source"); color: KTheme.text3; font.pixelSize: KTheme.note; font.weight: Font.Medium }
+                    ComboBoxFitted {
+                        id: sourceCombo
+                        Layout.preferredHeight: 40
+                        textRole: "text"
+                        valueRole: "value"
+                        model: [
+                            { value: "all",       text: qsTr("all records")    },
+                            { value: "updates",   text: qsTr("updates only")   },
+                            { value: "snapshots", text: qsTr("snapshots only") }
+                        ]
+                        onActivated: {
+                            root.selectedSource = currentValue
+                            appManager1.setStatisticsSetting("SelectedSource", currentValue)
+                            root.refresh()
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: 4
+                    Controls.Label { text: qsTr("Data"); color: KTheme.text3; font.pixelSize: KTheme.note; font.weight: Font.Medium }
+                    ComboBoxFitted {
+                        id: dataTypeCombo
+                        Layout.preferredHeight: 40
+                        textRole: "text"
+                        valueRole: "value"
+                        model: [
+                            { value: "size",  text: qsTr("Total File Size")   },
+                            { value: "count", text: qsTr("Number of Files") }
+                        ]
+                        onActivated: {
+                            root.selectedDataType = currentValue
+                            appManager1.setStatisticsSetting("TypeOfData", currentValue)
+                            root.refresh()
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: 4
+                    Controls.Label { text: qsTr("From date"); color: KTheme.text3; font.pixelSize: KTheme.note; font.weight: Font.Medium }
+                    RowLayout {
+                        spacing: 6
+                        Controls.TextField {
+                            id: startDateField
+                            placeholderText: "yyyy-MM-dd"
+                            readOnly: true
+                            implicitWidth: 110
+                            Layout.preferredHeight: 40
+                        }
+                        IconButton {
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
+                            icon.name: "view-calendar"
+                            text: qsTr("Select a date")
+                            onClicked: statsDateDialog.open()
+                        }
+                        IconButton {
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
+                            icon.name: "edit-clear-history"
+                            text: qsTr("Clear")
+                            onClicked: {
+                                startDateField.text = ""
+                                root.startDateText  = ""
+                                appManager1.setStatisticsSetting("graphStartDate", "")
+                                root.refresh()
+                            }
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: 4
+                    // Keeps the checkbox level with the fields beside it
+                    Controls.Label { text: " "; font.pixelSize: KTheme.note }
+                    Controls.CheckBox {
+                        id: displayEachValueCheck
+                        Layout.preferredHeight: 40
+                        text: qsTr("Display each value")
+                        onCheckedChanged: {
+                            root.displayEachValue = checked
+                            appManager1.setStatisticsSetting("DisplayEachValue", checked ? "true" : "false")
+                            series1Line.pointsVisible = checked && series1Line.visible
+                            series2Line.pointsVisible = checked && series2Line.visible
+                            series3Line.pointsVisible = checked && series3Line.visible
+                        }
+                    }
                 }
             }
-            onReleased: (mouse) => {
-                if (mouse.button === Qt.RightButton) {
-                    chart.zoomReset()
-                    return
-                }
-                zoomSelection.visible = false
-                if (zoomSelection.width > 5 && zoomSelection.height > 5)
-                    chart.zoomIn(Qt.rect(zoomSelection.x, zoomSelection.y,
-                                         zoomSelection.width, zoomSelection.height))
+        }
+
+        // ── Key numbers ───────────────────────────────────────────────────────
+        GridLayout {
+            Layout.fillWidth: true
+            visible: root.stats.hasData === true
+            columns: Math.max(1, Math.min(4, Math.floor(width / 220)))
+            columnSpacing: KTheme.gap
+            rowSpacing: KTheme.gap
+            KMetricCard {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                label: root.selectedDataType === "size" ? qsTr("Total File Size") : qsTr("Number of Files")
+                value: root.formatValue((root.lastPoint(root.stats.series1) || {}).y)
+                tagText: root.lastPoint(root.stats.series1)
+                         ? qsTr("On %1").arg(root.formatDate(root.lastPoint(root.stats.series1).x)) : ""
             }
-            onDoubleClicked: chart.zoomReset()
+            KMetricCard {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                label: qsTr("Change over the period")
+                value: root.changeText()
+                tagText: root.firstPoint(root.stats.series1)
+                         ? qsTr("Since %1").arg(root.formatDate(root.firstPoint(root.stats.series1).x)) : ""
+                tagTone: "info"
+            }
+            KMetricCard {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                label: qsTr("Records")
+                value: Number((root.stats.series1 || []).length).toLocaleString(Qt.locale(), "f", 0)
+                tagText: root.sourceText(root.selectedSource)
+            }
+            KMetricCard {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                visible: root.stats.loadSeries2 === true && root.stats.loadSeries3 === true
+                label: qsTr("Used Space")
+                value: root.formatValue((root.lastPoint(root.stats.series2) || {}).y)
+                tagText: qsTr("Total Space") + ": " + root.formatValue((root.lastPoint(root.stats.series3) || {}).y)
+            }
+        }
+
+        // ── Chart ─────────────────────────────────────────────────────────────
+        KCard {
+            Layout.fillWidth: true
+            Layout.bottomMargin: pageColumn.x
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+                KSectionHeader {
+                    level: 3
+                    title: qsTr("Over time")
+                    description: qsTr("Drag across the chart to zoom in; double-click or right-click to see it whole again.")
+                }
+                KInfoTag {
+                    Layout.alignment: Qt.AlignTop
+                    visible: root.stats.hasData !== true
+                    text: qsTr("No data")
+                }
+            }
+
+            ChartView {
+                id: chart
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.max(Kirigami.Units.gridUnit * 20, root.availableHeight * 0.6)
+                antialiasing: true
+                legend.visible:    true
+                legend.alignment:  Qt.AlignBottom
+                // Fixed design-system sizes, as on every redesigned page (D34,
+                // MDI-F115): they no longer follow the text-size setting.
+                legend.font.pixelSize: KTheme.note
+                titleFont.pixelSize:   KTheme.body
+                titleFont.bold:        true
+                backgroundRoundness: 0
+
+                // Follows the system's light/dark scheme, as the design system and
+                // the card it sits on do (THM-F14 within D34). A theme switch resets
+                // the series colours and the background, so both are re-applied
+                // after every switch.
+                readonly property bool darkDesktop: KTheme.dark
+                theme: darkDesktop ? ChartView.ChartThemeDark : ChartView.ChartThemeLight
+                onDarkDesktopChanged: Qt.callLater(applySeriesColors)
+                Component.onCompleted: Qt.callLater(applySeriesColors)
+
+                // K2-matching series colours; kept across theme switches (THM-C17).
+                // The chart is drawn on the card itself.
+                function applySeriesColors() {
+                    series1Line.color = "#209fdf"
+                    series2Line.color = "#f6a625"
+                    series3Line.color = "#99ca53"
+                    chart.backgroundColor = "transparent"
+                }
+
+                DateTimeAxis {
+                    id: axisX
+                    format:    "yyyy-MM-dd"
+                    titleText: qsTr("Date")
+                    labelsFont.pixelSize: KTheme.note
+                    titleFont.pixelSize:  KTheme.note
+                }
+                ValueAxis {
+                    id: axisY
+                    titleText: qsTr("Total")
+                    labelsFont.pixelSize: KTheme.note
+                    titleFont.pixelSize:  KTheme.note
+                    min: 0
+                    max: 100
+                }
+
+                LineSeries {
+                    id: series1Line
+                    name:          qsTr("Catalogs") + " / " + qsTr("Total File Size")
+                    color:         "#209fdf"
+                    width:         2
+                    pointsVisible: false
+                    axisX: axisX
+                    axisY: axisY
+                }
+
+                LineSeries {
+                    id: series2Line
+                    name:          qsTr("Storage") + " / " + qsTr("Used Space")
+                    color:         "#f6a625"
+                    width:         2
+                    pointsVisible: false
+                    axisX: axisX
+                    axisY: axisY
+                }
+
+                LineSeries {
+                    id: series3Line
+                    name:          qsTr("Storage") + " / " + qsTr("Total Space")
+                    color:         "#99ca53"
+                    width:         2
+                    pointsVisible: false
+                    axisX: axisX
+                    axisY: axisY
+                }
+
+                // Rubber-band zoom: drag a rectangle to zoom in (K2 RectangleRubberBand).
+                // Right-click or double-click resets the zoom.
+                Rectangle {
+                    id: zoomSelection
+                    visible: false
+                    color:        Qt.rgba(KTheme.accent.r, KTheme.accent.g, KTheme.accent.b, 0.2)
+                    border.color: KTheme.accent
+                    border.width: 1
+                }
+
+                MouseArea {
+                    id: zoomArea
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    // The page scrolls: the drag belongs to the zoom, not the scroll
+                    preventStealing: true
+                    property real startX: 0
+                    property real startY: 0
+
+                    onPressed: (mouse) => {
+                        if (mouse.button === Qt.LeftButton) {
+                            startX = mouse.x
+                            startY = mouse.y
+                            zoomSelection.x = mouse.x
+                            zoomSelection.y = mouse.y
+                            zoomSelection.width = 0
+                            zoomSelection.height = 0
+                            zoomSelection.visible = true
+                        }
+                    }
+                    onPositionChanged: (mouse) => {
+                        if (zoomSelection.visible) {
+                            zoomSelection.x = Math.min(startX, mouse.x)
+                            zoomSelection.y = Math.min(startY, mouse.y)
+                            zoomSelection.width  = Math.abs(mouse.x - startX)
+                            zoomSelection.height = Math.abs(mouse.y - startY)
+                        }
+                    }
+                    onReleased: (mouse) => {
+                        if (mouse.button === Qt.RightButton) {
+                            chart.zoomReset()
+                            return
+                        }
+                        zoomSelection.visible = false
+                        if (zoomSelection.width > 5 && zoomSelection.height > 5)
+                            chart.zoomIn(Qt.rect(zoomSelection.x, zoomSelection.y,
+                                                 zoomSelection.width, zoomSelection.height))
+                    }
+                    onDoubleClicked: chart.zoomReset()
+                }
+            }
         }
     }
 }

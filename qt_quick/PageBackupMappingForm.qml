@@ -3,9 +3,13 @@ import QtQuick.Layouts
 import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 
+// Add / edit a safety-copy link (fork, D34 phase R8): the source, the target
+// and the options in cards, Save as the one primary button. Fields, validation
+// messages and save are unchanged (SpecBackup.md).
 ScrollablePageFitted {
     id: root
     property Kirigami.Action escapeAction: escapeCloseAction  // Esc (KBS-F1)
+    background: Rectangle { color: KTheme.ground }   // design system ground (D34)
 
     // -1 = creating a new link; >= 0 = editing the link with this mapping id.
     property int editMappingId: -1
@@ -88,9 +92,24 @@ ScrollablePageFitted {
     ]
 
     ColumnLayout {
-        spacing: Kirigami.Units.largeSpacing
+        id: formColumn
+        spacing: KTheme.gap * 2
         width: parent.width
 
+        readonly property bool narrow: width < Kirigami.Units.gridUnit * 30
+        // The label column of the three cards, so their fields line up
+        readonly property real labelWidth: Math.max(sourceCatalogLabel.implicitWidth,
+                                                    targetCatalogLabel.implicitWidth,
+                                                    optionLabels.maxWidth)
+
+        // ── Intro ─────────────────────────────────────────────────────────────
+        KSectionHeader {
+            level: 1
+            title: root.title
+            description: qsTr("A link copies or moves the files of a source catalog to a target catalog.")
+        }
+
+        // Blocking validation from save, at the top of the form
         Kirigami.InlineMessage {
             id: errorMessage
             Layout.fillWidth: true
@@ -99,123 +118,212 @@ ScrollablePageFitted {
             showCloseButton: true
         }
 
-        GridLayout {
+        // ── Source ────────────────────────────────────────────────────────────
+        KCard {
             Layout.fillWidth: true
-            columns: 2
-            columnSpacing: Kirigami.Units.largeSpacing
-            rowSpacing: Kirigami.Units.smallSpacing
-
-            // Source
-            RowLayout {
-                Layout.columnSpan: 2
+            KSectionHeader {
+                level: 3
+                title: qsTr("Source")
+                description: qsTr("The catalog whose files are copied or moved.")
+            }
+            GridLayout {
                 Layout.fillWidth: true
-                Layout.topMargin: Kirigami.Units.smallSpacing
-                spacing: Kirigami.Units.largeSpacing
-                Controls.Label { text: qsTr("Source"); color: applicationWindow().titleColor }
-                Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
+                columns: formColumn.narrow ? 1 : 2
+                columnSpacing: KTheme.gap
+                rowSpacing: 4
+                Controls.Label {
+                    id: sourceCatalogLabel
+                    Layout.preferredWidth: formColumn.narrow ? implicitWidth : formColumn.labelWidth
+                    text: qsTr("Source catalog")
+                    color: KTheme.text2
+                    font.weight: Font.Medium
+                }
+                DeviceTreeComboBox {
+                    id: sourceCombo
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 24
+                    Layout.maximumWidth: Kirigami.Units.gridUnit * 24  // set width, shrinks only to fit (CBX-C7)
+                    Layout.preferredHeight: 40
+                    catalogOnly: true
+                }
             }
+        }
 
-            Controls.Label { text: qsTr("Source catalog"); opacity: 0.7 }
-            DeviceTreeComboBox {
-                id: sourceCombo
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 24
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24  // set width, shrinks only to fit (CBX-C7)
-                catalogOnly: true
+        // ── Target ────────────────────────────────────────────────────────────
+        KCard {
+            Layout.fillWidth: true
+            KSectionHeader {
+                level: 3
+                title: qsTr("Target")
+                description: qsTr("The catalog that receives the files.")
             }
-
-            // Target
-            RowLayout {
-                Layout.columnSpan: 2
+            GridLayout {
                 Layout.fillWidth: true
-                Layout.topMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
-                spacing: Kirigami.Units.largeSpacing
-                Controls.Label { text: qsTr("Target"); color: applicationWindow().titleColor }
-                Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
+                columns: formColumn.narrow ? 1 : 2
+                columnSpacing: KTheme.gap
+                rowSpacing: 4
+                Controls.Label {
+                    id: targetCatalogLabel
+                    Layout.preferredWidth: formColumn.narrow ? implicitWidth : formColumn.labelWidth
+                    text: qsTr("Target catalog")
+                    color: KTheme.text2
+                    font.weight: Font.Medium
+                }
+                DeviceTreeComboBox {
+                    id: targetCombo
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 24
+                    Layout.maximumWidth: Kirigami.Units.gridUnit * 24  // set width, shrinks only to fit (CBX-C7)
+                    Layout.preferredHeight: 40
+                    catalogOnly: true
+                }
             }
+        }
 
-            Controls.Label { text: qsTr("Target catalog"); opacity: 0.7 }
-            DeviceTreeComboBox {
-                id: targetCombo
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 24
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24  // set width, shrinks only to fit (CBX-C7)
-                catalogOnly: true
+        // ── Options ───────────────────────────────────────────────────────────
+        KCard {
+            Layout.fillWidth: true
+            KSectionHeader {
+                level: 3
+                title: qsTr("Options")
+                description: qsTr("The name of the link, what it does with the files, and what happens on a conflict.")
             }
-
-            // Options
-            RowLayout {
-                Layout.columnSpan: 2
+            GridLayout {
+                id: optionLabels
                 Layout.fillWidth: true
-                Layout.topMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
-                spacing: Kirigami.Units.largeSpacing
-                Controls.Label { text: qsTr("Options"); color: applicationWindow().titleColor }
-                Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-            }
+                columns: formColumn.narrow ? 1 : 2
+                columnSpacing: KTheme.gap
+                rowSpacing: formColumn.narrow ? 4 : 10
 
-            // Name + auto-generate
-            Controls.Label { text: qsTr("Name"); opacity: 0.7 }
-            RowLayout {
-                // Field + button end level with the combo boxes above (gridUnit*24)
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 24
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                Controls.TextField {
-                    id: nameField
-                    placeholderText: qsTr("e.g. Docs -> NAS_Docs")
+                // Widest label of this card, shared with the other cards
+                readonly property real maxWidth: Math.max(nameLabel.implicitWidth, typeLabel.implicitWidth,
+                                                          dirsLabel.implicitWidth, strictLabel.implicitWidth,
+                                                          conflictLabel.implicitWidth, sourceModeLabel.implicitWidth)
+
+                // Name + auto-generate
+                Controls.Label {
+                    id: nameLabel
+                    Layout.preferredWidth: formColumn.narrow ? implicitWidth : formColumn.labelWidth
+                    text: qsTr("Name"); color: KTheme.text2; font.weight: Font.Medium
+                }
+                RowLayout {
+                    // Field + button end level with the combo boxes above (gridUnit*24)
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 24
+                    Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+                    spacing: 6
+                    Controls.TextField {
+                        id: nameField
+                        placeholderText: qsTr("e.g. Docs -> NAS_Docs")
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 40
+                        onTextEdited: errorMessage.visible = false
+                    }
+                    IconButton {
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+                        icon.name: "system-run"
+                        Controls.ToolTip.text: qsTr("Auto-generate name")
+                        Controls.ToolTip.visible: hovered
+                        onClicked: root.generateName()
+                    }
+                }
+
+                // Type
+                Controls.Label {
+                    id: typeLabel
+                    Layout.preferredWidth: formColumn.narrow ? implicitWidth : formColumn.labelWidth
+                    Layout.topMargin: formColumn.narrow ? 6 : 0
+                    text: qsTr("Type"); color: KTheme.text2; font.weight: Font.Medium
+                }
+                ComboBoxFitted {
+                    id: typeCombo
+                    Layout.preferredHeight: 40
+                    textRole:  "text"
+                    valueRole: "value"
+                    model: [
+                        { value: "Backup",  text: qsTr("Backup")  },
+                        { value: "Archive", text: qsTr("Archive") }
+                    ]
+                    onCurrentValueChanged: {
+                        // Archive mode disables strict copy
+                        strictCopyCheck.enabled = (currentValue !== "Archive")
+                        if (currentValue === "Archive") strictCopyCheck.checked = false
+                    }
+                }
+
+                Controls.Label {
+                    id: dirsLabel
+                    Layout.preferredWidth: formColumn.narrow ? implicitWidth : formColumn.labelWidth
+                    Layout.topMargin: formColumn.narrow ? 6 : 0
+                    text: qsTr("Directories"); color: KTheme.text2; font.weight: Font.Medium
+                }
+                Controls.CheckBox {
+                    id: includeEmptyDirsCheck
                     Layout.fillWidth: true
+                    text: qsTr("Include empty")
+                    checked: true
                 }
-                IconButton {
-                    icon.name: "system-run"
-                    Controls.ToolTip.text: qsTr("Auto-generate name")
-                    Controls.ToolTip.visible: hovered
-                    onClicked: root.generateName()
+
+                Controls.Label {
+                    id: strictLabel
+                    Layout.preferredWidth: formColumn.narrow ? implicitWidth : formColumn.labelWidth
+                    Layout.topMargin: formColumn.narrow ? 6 : 0
+                    text: qsTr("Strict copy"); color: KTheme.text2; font.weight: Font.Medium
+                }
+                Controls.CheckBox {
+                    id: strictCopyCheck
+                    Layout.fillWidth: true
+                    text: qsTr("Mirror folder structure exactly (default)")
+                    checked: true
+                    Component.onCompleted: contentItem.wrapMode = Text.WordWrap
+                }
+
+                Controls.Label {
+                    id: conflictLabel
+                    Layout.preferredWidth: formColumn.narrow ? implicitWidth : formColumn.labelWidth
+                    Layout.topMargin: formColumn.narrow ? 6 : 0
+                    text: qsTr("On conflict"); color: KTheme.text2; font.weight: Font.Medium
+                }
+                ComboBoxFitted {
+                    id: conflictModeCombo
+                    Layout.preferredHeight: 40
+                    textRole:  "text"
+                    valueRole: "value"
+                    model: [
+                        { value: "RenameOldest", text: qsTr("Rename oldest - rename target, copy source") },
+                        { value: "Skip",         text: qsTr("Skip - leave target untouched") }
+                    ]
+                }
+
+                Controls.Label {
+                    id: sourceModeLabel
+                    Layout.preferredWidth: formColumn.narrow ? implicitWidth : formColumn.labelWidth
+                    Layout.topMargin: formColumn.narrow ? 6 : 0
+                    text: qsTr("Source mode"); color: KTheme.text2; font.weight: Font.Medium
+                }
+                Controls.CheckBox {
+                    id: sourceDriveCheck
+                    Layout.fillWidth: true
+                    text: qsTr("Scan source drive directly (requires connected source)")
+                    Component.onCompleted: contentItem.wrapMode = Text.WordWrap
                 }
             }
+        }
 
-            // Type
-            Controls.Label { text: qsTr("Type"); opacity: 0.7 }
-            ComboBoxFitted {
-                id: typeCombo
-                textRole:  "text"
-                valueRole: "value"
-                model: [
-                    { value: "Backup",  text: qsTr("Backup")  },
-                    { value: "Archive", text: qsTr("Archive") }
-                ]
-                onCurrentValueChanged: {
-                    // Archive mode disables strict copy
-                    strictCopyCheck.enabled = (currentValue !== "Archive")
-                    if (currentValue === "Archive") strictCopyCheck.checked = false
-                }
+        // ── Save / Cancel, as in the page actions ─────────────────────────────
+        Flow {
+            Layout.fillWidth: true
+            Layout.bottomMargin: KTheme.gap
+            spacing: 8
+            KButton {
+                variant: "primary"
+                icon.name: "document-save"
+                text: qsTr("Save")
+                onClicked: root.save()
             }
-
-            Controls.Label { text: qsTr("Directories"); opacity: 0.7 }
-            Controls.CheckBox {
-                id: includeEmptyDirsCheck
-                text: qsTr("Include empty")
-                checked: true
-            }
-
-            Controls.Label { text: qsTr("Strict copy"); opacity: 0.7 }
-            Controls.CheckBox {
-                id: strictCopyCheck
-                text: qsTr("Mirror folder structure exactly (default)")
-                checked: true
-            }
-
-            Controls.Label { text: qsTr("On conflict"); opacity: 0.7 }
-            ComboBoxFitted {
-                id: conflictModeCombo
-                textRole:  "text"
-                valueRole: "value"
-                model: [
-                    { value: "RenameOldest", text: qsTr("Rename oldest - rename target, copy source") },
-                    { value: "Skip",         text: qsTr("Skip - leave target untouched") }
-                ]
-            }
-
-            Controls.Label { text: qsTr("Source mode"); opacity: 0.7 }
-            Controls.CheckBox {
-                id: sourceDriveCheck
-                text: qsTr("Scan source drive directly (requires connected source)")
+            KButton {
+                variant: "secondary"
+                icon.name: "dialog-cancel"
+                text: qsTr("Cancel")
+                onClicked: root.closeLayer()
             }
         }
     }

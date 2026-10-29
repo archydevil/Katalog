@@ -4,6 +4,12 @@ import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import Qt.labs.platform
 
+// A drive card of "My drives" (fork, D34, phase R7), in the Home drive-card
+// language: the icon tile, the name, then info tags for the kind of device,
+// whether it is connected and what it holds. The selected card takes the
+// accent fill and border and shows a check mark, so the selection is never
+// told by colour alone. Selection, tree and menu behaviour are unchanged
+// (SpecSelection.md).
 Kirigami.AbstractCard {
     id: card
 
@@ -12,14 +18,11 @@ Kirigami.AbstractCard {
     anchors.leftMargin: model.level * Kirigami.Units.gridUnit
     anchors.right: parent ? parent.right : undefined
 
-    // Tightened to fit more devices on screen. The vertical padding is what
-    // stacks up over a long list, so it is trimmed hardest; the horizontal
-    // padding is left alone, because narrowing the text against the card edge
-    // would look cramped without buying any rows.
-    topPadding:    Kirigami.Units.mediumSpacing
-    bottomPadding: Kirigami.Units.mediumSpacing
-    leftPadding:   Kirigami.Units.largeSpacing
-    rightPadding:  Kirigami.Units.largeSpacing
+    topPadding:    10
+    bottomPadding: 10
+    leftPadding:   12
+    rightPadding:  6
+    hoverEnabled:  true
 
     property bool isSelected: appManager1.selectedDeviceId === model.deviceId
 
@@ -30,6 +33,22 @@ Kirigami.AbstractCard {
     readonly property real deviceIconSize: appManager1.biggerIconSize
                                            ? Kirigami.Units.iconSizes.medium
                                            : Kirigami.Units.iconSizes.smallMedium
+
+    // The counts line of the model ("1,234 files · 12 GB · 500 GB"), one tag
+    // per part.
+    readonly property var infoParts: (model.description || "").split(/\s*[·\n]\s*/)
+                                         .filter(function(s) { return s.length > 0 })
+
+    Accessible.name: model.name
+    Accessible.selected: card.isSelected
+
+    background: Rectangle {
+        radius: KTheme.radiusCard
+        color: card.isSelected ? KTheme.accentSoft
+             : card.hovered    ? KTheme.hover : KTheme.surface
+        border.color: card.isSelected ? KTheme.accent : KTheme.line
+        border.width: card.isSelected ? 2 : 1
+    }
 
     TapHandler {
         onTapped: {
@@ -125,54 +144,76 @@ Kirigami.AbstractCard {
         implicitWidth: deviceDelegateLayout.implicitWidth
         implicitHeight: deviceDelegateLayout.implicitHeight
 
-        GridLayout {
+        RowLayout {
             id: deviceDelegateLayout
             anchors {
                 left: parent.left
                 top: parent.top
                 right: parent.right
             }
-            rowSpacing: Kirigami.Units.smallSpacing
-            columnSpacing: Kirigami.Units.smallSpacing
-            columns: root.wideScreen ? 4 : 2
+            spacing: 6
 
             ColumnLayout {
                 Layout.fillWidth: true
+                spacing: 6
 
-                // Icon and name come from the shared component, so this card and
-                // the selected-device reminder above the list cannot drift apart
-                // (SpecSelection.md SEL-C1).
-                DeviceIdentity {
+                RowLayout {
                     Layout.fillWidth: true
-                    deviceType:     model.type
-                    deviceName:     model.name
-                    deviceIsActive: model.isActive
-                    iconSize:       card.deviceIconSize
-                    // The selected card is filled with the highlight colour, so
-                    // the name needs the colour meant to sit on it.
-                    nameColor:      card.isSelected ? Kirigami.Theme.highlightedTextColor
-                                                    : Kirigami.Theme.textColor
-                }
-                Kirigami.Separator {
-                    Layout.fillWidth: true
-                    visible: appManager1.showDeviceInfo && model.description.length > 0
+                    spacing: 8
+
+                    // Icon and name come from the shared component, so this card and
+                    // the selected-device reminder above the list cannot drift apart
+                    // (SpecSelection.md SEL-C1).
+                    DeviceIdentity {
+                        id: cardIdentity
+                        Layout.fillWidth: true
+                        deviceType:     model.type
+                        deviceName:     model.name
+                        deviceIsActive: model.isActive
+                        iconSize:       card.deviceIconSize
+                        iconTile:       true
+                        // A card never hides text, it wraps it (CDT-C1, MDI-C38)
+                        nameWraps:      true
+                        nameColor:      KTheme.text
+                    }
+
+                    // The selection is shown by a mark as well as by the accent
+                    Kirigami.Icon {
+                        visible: card.isSelected
+                        source: "checkmark"
+                        isMask: true
+                        color: KTheme.accentText
+                        Layout.preferredWidth: 18
+                        Layout.preferredHeight: 18
+                        Layout.alignment: Qt.AlignVCenter
+                    }
                 }
 
-                Controls.Label {
+                // Kind, state and contents, lined up with the name rather than
+                // with the icon tile (SEL-C8).
+                Flow {
                     Layout.fillWidth: true
-                    // Lined up with the device name above, not with its icon:
-                    // the icon's width plus the gap after it.
-                    // Follows the themed icon size, not a fixed one: with a
-                    // hard-coded size the description stops lining up with the
-                    // name as soon as the icons grow (SEL-C8).
-                    Layout.leftMargin: card.deviceIconSize
-                                       + Kirigami.Units.smallSpacing
-                    wrapMode: Text.WordWrap
-                    text: model.description
-                    visible: appManager1.showDeviceInfo && model.description.length > 0
-                    font.pointSize: appManager1.textPointSize * 0.80
-                    color: card.isSelected ? Kirigami.Theme.highlightedTextColor
-                                           : Kirigami.Theme.textColor
+                    Layout.leftMargin: cardIdentity.tileSize + cardIdentity.spacing
+                    spacing: 6
+
+                    KInfoTag {
+                        text: model.type === "Virtual" ? qsTr("Virtual")
+                            : model.type === "Storage" ? qsTr("Storage")
+                            : qsTr("Catalog")
+                        tone: model.type === "Catalog" ? "info" : "neutral"
+                    }
+                    KInfoTag {
+                        visible: model.type === "Storage" || model.type === "Catalog"
+                        text: model.isActive ? qsTr("Connected") : qsTr("Not connected")
+                        tone: model.isActive ? "ok" : "warn"
+                    }
+                    Repeater {
+                        model: appManager1.showDeviceInfo ? card.infoParts : []
+                        delegate: KInfoTag {
+                            required property string modelData
+                            text: modelData
+                        }
+                    }
                 }
             }
 
@@ -180,18 +221,21 @@ Kirigami.AbstractCard {
             // go. A Catalog can never hold children, so its slot was simply
             // absent and its card came out shorter than a Storage or Virtual
             // one; reserving the space — as the Explore folder tree does —
-            // makes every card the same height. No tooltip: the hidden button
+            // makes every card the same width. No tooltip: the hidden button
             // still reports hover, so it showed on Catalogs too.
             Controls.ToolButton {
-                Layout.columnSpan: 1
+                Layout.alignment: Qt.AlignTop
                 icon.name: model.isCollapsed ? "go-down" : "go-up"
                 icon.width:  Kirigami.Units.iconSizes.small
                 icon.height: Kirigami.Units.iconSizes.small
-                implicitWidth:  root.selectionButton
-                implicitHeight: root.selectionButton
+                implicitWidth:  40
+                implicitHeight: 40
                 padding: 0
                 opacity: model.hasChildren ? 1.0 : 0.0
                 enabled: model.hasChildren
+                // The text stays for accessibility (ICB-C3), shown as an icon
+                text: model.isCollapsed ? qsTr("Expand") : qsTr("Collapse")
+                display: Controls.AbstractButton.IconOnly
                 onClicked: {
                     if (model.isCollapsed)
                         appManager1.expandDevice(model.deviceId)
@@ -199,28 +243,6 @@ Kirigami.AbstractCard {
                         appManager1.collapseDevice(model.deviceId)
                 }
             }
-        }
-        Rectangle {
-            anchors.fill: parent
-            // The frame has to reach the card's own edges, and the card is not
-            // padded evenly — tight top and bottom, wider left and right. Each
-            // side therefore cancels the padding on that side; a single uniform
-            // margin left the frame short on the left and right.
-            anchors.topMargin:    -card.topPadding
-            anchors.bottomMargin: -card.bottomPadding
-            anchors.leftMargin:   -card.leftPadding
-            anchors.rightMargin:  -card.rightPadding
-            // Filled with the border's own blue rather than a 12% wash: at that
-            // strength it was indistinguishable from the tinted page behind it.
-            color: applicationWindow().selectionHighlightColor
-            border.color: applicationWindow().selectionHighlightColor
-            border.width: 2
-            radius: Kirigami.Units.cornerRadius
-            visible: card.isSelected
-            // Behind the content, not over it. As an overlay at z: 999 a solid
-            // fill would simply hide the card; only the old 12% alpha let the
-            // name show through.
-            z: -1
         }
     }
 }

@@ -107,9 +107,23 @@ Controls.Button {
     // Natural width from the widest device name (or prompt), with the icon and
     // arrow either side; it may shrink to fit and elide (SpecComboBoxes.md,
     // CBX-C5 / F1 / F2). A call site that stretches the button sets its own
-    // Layout width.
-    leftPadding:  Kirigami.Units.smallSpacing * 2
-    rightPadding: Kirigami.Units.smallSpacing * 2
+    // Layout width. Drawn with the design system (fork, D34): a 40 px control
+    // on the surface, its border taking the accent while the list is open or
+    // the button has the focus.
+    leftPadding:  12
+    rightPadding: 10
+    topPadding:   0
+    bottomPadding: 0
+    hoverEnabled: true
+    implicitHeight: 40
+
+    background: Rectangle {
+        radius: KTheme.radiusItem
+        color: control.hovered ? KTheme.hover : KTheme.surface
+        border.width: popup.visible || control.visualFocus ? 2 : 1
+        border.color: popup.visible || control.visualFocus ? KTheme.accent : KTheme.line
+        opacity: control.enabled ? 1 : 0.5
+    }
 
     // Bumped when the device list changes, so the widths below are measured again.
     property int _listRevision: 0
@@ -162,13 +176,17 @@ Controls.Button {
             horizontalAlignment: Text.AlignLeft
             verticalAlignment:   Text.AlignVCenter
             Layout.fillWidth:   true
+            font.pixelSize:     KTheme.body
+            // The prompt is quieter than a chosen device
+            color: control.selectedDeviceName.length > 0 ? KTheme.text : KTheme.text3
         }
 
         Kirigami.Icon {
             source: "go-down"
             implicitWidth:  Kirigami.Units.iconSizes.small
             implicitHeight: Kirigami.Units.iconSizes.small
-            opacity: 0.6
+            isMask: true
+            color: KTheme.text3
             Layout.alignment: Qt.AlignVCenter
         }
     }
@@ -215,9 +233,9 @@ Controls.Button {
         property bool downward: true
         property real room: 300
 
-        y:      downward ? control.height + 2 : -height - 2
+        y:      downward ? control.height + 4 : -height - 4
         width:  control.width
-        padding: 2
+        padding: 4
         // Qt then shifts the popup back inside the window instead of letting a
         // wide list run off its side.
         leftMargin:  0
@@ -229,10 +247,10 @@ Controls.Button {
         closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
 
         background: Rectangle {
-            color:        popup.palette.base
-            border.color: Kirigami.Theme.separatorColor ?? "transparent"
+            color:        KTheme.surface
+            border.color: KTheme.line
             border.width: 1
-            radius:       4
+            radius:       KTheme.radiusItem
         }
 
         contentItem: Controls.ScrollView {
@@ -261,11 +279,14 @@ Controls.Button {
                     enabled:     (!control.storageOnly  || type === "Storage")
                                  && (!control.catalogOnly || type === "Catalog")
 
+                    // The chosen row takes the accent fill and a check mark,
+                    // so it is not told by colour alone. Rows that only give
+                    // context (ancestors that cannot be chosen) are quieter.
                     background: Rectangle {
                         color: control.selectedDeviceId === deviceId
-                               ? applicationWindow().selectionHighlightColor
-                               : hovered ? Kirigami.Theme.alternateBackgroundColor : "transparent"
-                        radius: 3
+                               ? KTheme.accentSoft
+                               : hovered && enabled ? KTheme.hover : "transparent"
+                        radius: KTheme.radiusItem - 2
                     }
 
                     contentItem: RowLayout {
@@ -276,17 +297,23 @@ Controls.Button {
                                   :                       "media-optical"
                             implicitWidth:  Kirigami.Units.iconSizes.small
                             implicitHeight: Kirigami.Units.iconSizes.small
-                            color: control.selectedDeviceId === deviceId
-                                   ? Kirigami.Theme.highlightedTextColor
-                                   : Kirigami.Theme.textColor
                         }
                         Controls.Label {
                             text:  name
-                            color: control.selectedDeviceId === deviceId
-                                   ? Kirigami.Theme.highlightedTextColor
-                                   : Kirigami.Theme.textColor
+                            color: control.selectedDeviceId === deviceId ? KTheme.accentText
+                                 : enabled ? KTheme.text : KTheme.text3
+                            font.pixelSize: KTheme.body
+                            font.weight: control.selectedDeviceId === deviceId ? Font.DemiBold : Font.Normal
                             elide: Text.ElideRight
                             Layout.fillWidth: true
+                        }
+                        Kirigami.Icon {
+                            visible: control.selectedDeviceId === deviceId
+                            source: "checkmark"
+                            isMask: true
+                            color: KTheme.accentText
+                            implicitWidth:  Kirigami.Units.iconSizes.small
+                            implicitHeight: Kirigami.Units.iconSizes.small
                         }
                     }
 

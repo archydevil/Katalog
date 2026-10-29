@@ -10,6 +10,9 @@ import org.kde.kirigami as Kirigami
 //
 // Root is a ToolBar so the window footer gives it the full window width; a bare
 // layout would size to its contents and sit against the left edge.
+//
+// Redesign phase R5 (D34): the panel keeps its compact height and takes the
+// design system's colours, an info tag for the analysis state and its buttons.
 Controls.ToolBar {
     id: root
 
@@ -91,9 +94,29 @@ Controls.ToolBar {
     // is needed here.
     leftPadding:  Kirigami.Units.smallSpacing
     rightPadding: Kirigami.Units.smallSpacing
+    topPadding: 4
+    bottomPadding: 4
+
+    // An opaque surface with a hairline on top: the panel lies over the page
+    background: Rectangle {
+        color: KTheme.surface
+        Rectangle {
+            width: parent.width
+            height: 1
+            color: KTheme.line
+        }
+    }
+
+    // Buttons of the panel: the design system's, kept low
+    component PanelButton: KButton {
+        variant: "link"
+        implicitHeight: 32
+        leftPadding: 10
+        rightPadding: 10
+    }
 
     contentItem: ColumnLayout {
-        spacing: Kirigami.Units.smallSpacing
+        spacing: 2
 
         // ── Running job ──────────────────────────────────────────────────
         RowLayout {
@@ -124,11 +147,11 @@ Controls.ToolBar {
                 text: root.statusText.replace(/^(&nbsp;)+/, "")
                 textFormat: Text.StyledText
                 elide: Text.ElideRight
+                color: KTheme.text
             }
-            Controls.Button {
+            PanelButton {
                 text: qsTr("Stop")
                 icon.name: "process-stop"
-                flat: true
                 visible: root.busy
                 onClicked: {
                     if (appManager1.exploreLoadIsRunning)
@@ -157,37 +180,44 @@ Controls.ToolBar {
                 implicitWidth:  Kirigami.Units.gridUnit * 1.2
                 implicitHeight: Kirigami.Units.gridUnit * 1.2
             }
+            // The analysis state in words (the status line says it too)
+            KInfoTag {
+                visible: appManager1.mdiIsRunning
+                text: appManager1.mdiIsPaused ? qsTr("Paused")
+                      : appManager1.mdiJobInfo.waitingForSource ? qsTr("Waiting for the drive") : qsTr("In Progress")
+                tone: appManager1.mdiIsPaused || appManager1.mdiJobInfo.waitingForSource ? "warn" : "info"
+            }
             Controls.Label {
                 Layout.fillWidth: true
                 text: appManager1.mdiStatusText.replace(/^(&nbsp;)+/, "")
                 textFormat: Text.StyledText
                 elide: Text.ElideRight
+                color: KTheme.text
             }
-            Controls.Button {
+            PanelButton {
                 // The compact summary opens the full Activity page (MDI-F61)
                 text: qsTr("Work in progress")
                 icon.name: "utilities-system-monitor"
-                flat: true
                 onClicked: applicationWindow().showActivityPage()
             }
-            Controls.Button {
+            PanelButton {
                 visible: appManager1.mdiIsRunning
                 text: appManager1.mdiIsPaused ? qsTr("Resume") : qsTr("Pause")
                 icon.name: appManager1.mdiIsPaused ? "media-playback-start" : "media-playback-pause"
-                flat: true
                 onClicked: appManager1.setEnrichmentPaused(!appManager1.mdiIsPaused)
             }
-            Controls.Button {
+            PanelButton {
                 visible: appManager1.mdiIsRunning
                 text: qsTr("Stop")
                 icon.name: "process-stop"
-                flat: true
                 onClicked: appManager1.stopEnrichment()
             }
         }
 
-        Kirigami.Separator {
+        Rectangle {
             Layout.fillWidth: true
+            implicitHeight: 1
+            color: KTheme.line
             visible: appManager1.operationQueueWaitingCount > 0
         }
 
@@ -197,19 +227,18 @@ Controls.ToolBar {
             visible: appManager1.operationQueueWaitingCount > 0
 
             Controls.Label {
+                Layout.leftMargin: Kirigami.Units.largeSpacing
                 text: qsTr("Queue")
-                font.bold: true
-                opacity: 0.8
+                font.weight: Font.DemiBold
+                color: KTheme.text2
             }
-            Controls.Label {
+            KInfoTag {
                 text: qsTr("%1 waiting").arg(appManager1.operationQueueWaitingCount)
-                opacity: 0.7
             }
             Item { Layout.fillWidth: true }
-            Controls.Button {
+            PanelButton {
                 text: qsTr("Clear")
                 icon.name: "edit-clear"
-                flat: true
                 onClicked: appManager1.clearOperationQueue()
             }
         }
@@ -233,14 +262,15 @@ Controls.ToolBar {
                     source: entryRow.modelData.isCreate ? "list-add" : "view-refresh"
                     implicitWidth:  Kirigami.Units.iconSizes.small
                     implicitHeight: Kirigami.Units.iconSizes.small
-                    opacity: 0.7
+                    isMask: true
+                    color: KTheme.text3
                 }
                 Controls.Label {
                     text: (entryRow.modelData.isCreate ? qsTr("Create") : qsTr("Update"))
                           + " · " + entryRow.modelData.deviceName
                     elide: Text.ElideRight
                     Layout.fillWidth: true
-                    opacity: 0.8
+                    color: KTheme.text2
                 }
                 IconButton {
                     icon.name: "list-remove"

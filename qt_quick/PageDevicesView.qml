@@ -7,12 +7,12 @@ Item {
     id: root
 
     // The row icon follows the icon size the user chose, shared with K2
-    // (THM-F7). The row grows with it: smallMedium + largeSpacing is the
-    // table's 30px, so with the option off nothing moves.
+    // (THM-F7). The row grows with it, from the design system's 40 px row,
+    // which is also a comfortable touch target (D34).
     readonly property real rowIconSize: appManager1.biggerIconSize
                                         ? Kirigami.Units.iconSizes.medium
                                         : Kirigami.Units.iconSizes.smallMedium
-    readonly property real rowHeight: rowIconSize + Kirigami.Units.largeSpacing
+    readonly property real rowHeight: Math.max(40, rowIconSize + Kirigami.Units.largeSpacing)
     // rowHeightProvider is not a binding: the table must be told to ask again.
     onRowHeightChanged: deviceTable.forceLayout()
 
@@ -500,27 +500,43 @@ Item {
     }
 
     // ── Layout ──────────────────────────────────────────────────────────────
+    // "Manage drives" in the design system (fork, D34, phase R7): a line saying
+    // what the page is for, the view and display choices on a rounded bar, the
+    // totals as key numbers, then the cards or the table.
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 0
+        anchors.leftMargin:   KTheme.gap
+        anchors.rightMargin:  KTheme.gap
+        anchors.topMargin:    KTheme.gap
+        spacing: KTheme.gap
 
-// Filter bar. An ActionToolBar rather than a plain row: narrowing the
+        Controls.Label {
+            Layout.fillWidth: true
+            wrapMode: Text.WordWrap
+            color: KTheme.text2
+            text: qsTr("Arrange drives and catalogs in groups, edit their details and keep their contents up to date.")
+        }
+
+        // Filter bar. An ActionToolBar rather than a plain row: narrowing the
         // window used to clip controls out of sight, and this is the same
         // mechanism the page toolbar uses - what no longer fits moves into the
         // overflow menu instead of disappearing (DVP-F27).
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: filterBar.implicitHeight + Kirigami.Units.smallSpacing * 2
-            color: Kirigami.Theme.alternateBackgroundColor
+            implicitHeight: filterBar.implicitHeight + 12
+            radius: KTheme.radiusControl
+            color: KTheme.surface
+            border.color: KTheme.line
+            border.width: 1
 
             Kirigami.ActionToolBar {
                 id: filterBar
                 anchors {
                     left: parent.left; right: parent.right
                     verticalCenter: parent.verticalCenter
-                    leftMargin: Kirigami.Units.largeSpacing
-                    rightMargin: Kirigami.Units.largeSpacing
+                    leftMargin: 8
+                    rightMargin: 8
                 }
                 // The bar's own background would sit on top of the band.
                 background: null
@@ -644,87 +660,73 @@ Item {
             }
         }
 
-        
-        Kirigami.Separator { Layout.fillWidth: true }
-
-        // Summary bar - shown for Catalogs and Storage list views (matches K2 CatalogStats/StorageStats)
-        Rectangle {
+        // Totals - shown for the Catalogs and Storage list views, as key
+        // numbers (matches K2 CatalogStats/StorageStats).
+        GridLayout {
+            id: summaryRow
             Layout.fillWidth: true
-            implicitHeight: summaryRow.implicitHeight + Kirigami.Units.smallSpacing * 2
-            color: Kirigami.Theme.alternateBackgroundColor
             visible: root.viewFilter !== "All"
+            columns: Math.max(1, Math.min(4, Math.floor(width / 200)))
+            columnSpacing: KTheme.gap
+            rowSpacing: KTheme.gap
 
-            RowLayout {
-                id: summaryRow
-                anchors {
-                    left: parent.left; right: parent.right
-                    verticalCenter: parent.verticalCenter
-                    leftMargin: Kirigami.Units.largeSpacing
-                    rightMargin: Kirigami.Units.largeSpacing
-                }
-                spacing: Kirigami.Units.largeSpacing
+            // Catalogs summary
+            KMetricCard {
+                Layout.fillWidth: true
+                visible: root.viewFilter === "Catalogs"
+                label: qsTr("Catalogs")
+                value: Number(root.devices.length).toLocaleString(Qt.locale(), "f", 0)
+            }
+            KMetricCard {
+                Layout.fillWidth: true
+                visible: root.viewFilter === "Catalogs"
+                label: qsTr("Total File Size")
+                value: appManager1.formatDataSize(
+                    root.devices.reduce(function(s, d) { return s + (d.totalFileSize || 0) }, 0))
+            }
+            KMetricCard {
+                Layout.fillWidth: true
+                visible: root.viewFilter === "Catalogs"
+                label: qsTr("Total Number of Files")
+                value: Number(root.devices.reduce(
+                    function(s, d) { return s + (d.fileCount || 0) }, 0)).toLocaleString(Qt.locale(), "f", 0)
+            }
 
-                // Catalogs summary
-                Controls.Label {
-                    visible: root.viewFilter === "Catalogs"
-                    text: qsTr("Catalogs") + ":  <b>" + root.devices.length + "</b>"
-                    textFormat: Text.RichText
-                }
-                Controls.ToolSeparator { visible: root.viewFilter === "Catalogs" }
-                Controls.Label {
-                    visible: root.viewFilter === "Catalogs"
-                    text: qsTr("Total File Size") + ":  <b>" + appManager1.formatDataSize(
-                        root.devices.reduce(function(s, d) { return s + (d.totalFileSize || 0) }, 0)) + "</b>"
-                    textFormat: Text.RichText
-                }
-                Controls.ToolSeparator { visible: root.viewFilter === "Catalogs" }
-                Controls.Label {
-                    visible: root.viewFilter === "Catalogs"
-                    text: qsTr("Total Number of Files") + ":  <b>" + Number(root.devices.reduce(
-                        function(s, d) { return s + (d.fileCount || 0) }, 0)).toLocaleString(Qt.locale(), "f", 0) + "</b>"
-                    textFormat: Text.RichText
-                }
-
-                // Storage summary
-                Controls.Label {
-                    visible: root.viewFilter === "Storage"
-                    text: qsTr("Devices") + ":  <b>" + root.devices.length + "</b>"
-                    textFormat: Text.RichText
-                }
-                Controls.ToolSeparator { visible: root.viewFilter === "Storage" }
-                Controls.Label {
-                    visible: root.viewFilter === "Storage"
-                    text: qsTr("Total Space") + ":  <b>" + appManager1.formatDataSize(
-                        root.devices.reduce(function(s, d) { return s + (d.totalSpace || 0) }, 0)) + "</b>"
-                    textFormat: Text.RichText
-                }
-                Controls.ToolSeparator { visible: root.viewFilter === "Storage" }
-                Controls.Label {
-                    id: storageUsedLabel
-                    visible: root.viewFilter === "Storage"
-                    text: {
-                        var used = root.devices.reduce(function(s, d) { return s + ((d.totalSpace || 0) - (d.freeSpace || 0)) }, 0)
-                        return qsTr("Used") + ":  <b>" + appManager1.formatDataSize(used) + "</b>"
-                    }
-                    textFormat: Text.RichText
-                }
-                Controls.ToolSeparator { visible: root.viewFilter === "Storage" }
-                Controls.Label {
-                    id: storageFreeLabel
-                    visible: root.viewFilter === "Storage"
-                    text: {
-                        var free  = root.devices.reduce(function(s, d) { return s + (d.freeSpace  || 0) }, 0)
-                        var total = root.devices.reduce(function(s, d) { return s + (d.totalSpace || 0) }, 0)
-                        var pct   = total > 0 ? Math.round(free / total * 100) : 0
-                        return qsTr("Free") + ":  <b>" + appManager1.formatDataSize(free) + "  (" + pct + "%)</b>"
-                    }
-                    textFormat: Text.RichText
-                }
-
-                Item { Layout.fillWidth: true }
+            // Storage summary
+            KMetricCard {
+                Layout.fillWidth: true
+                visible: root.viewFilter === "Storage"
+                label: qsTr("Devices")
+                value: Number(root.devices.length).toLocaleString(Qt.locale(), "f", 0)
+            }
+            KMetricCard {
+                Layout.fillWidth: true
+                visible: root.viewFilter === "Storage"
+                label: qsTr("Total Space")
+                value: appManager1.formatDataSize(
+                    root.devices.reduce(function(s, d) { return s + (d.totalSpace || 0) }, 0))
+            }
+            KMetricCard {
+                id: storageUsedLabel
+                Layout.fillWidth: true
+                visible: root.viewFilter === "Storage"
+                label: qsTr("Used")
+                value: appManager1.formatDataSize(
+                    root.devices.reduce(function(s, d) { return s + ((d.totalSpace || 0) - (d.freeSpace || 0)) }, 0))
+            }
+            KMetricCard {
+                id: storageFreeLabel
+                Layout.fillWidth: true
+                visible: root.viewFilter === "Storage"
+                readonly property real freeBytes:  root.devices.reduce(function(s, d) { return s + (d.freeSpace  || 0) }, 0)
+                readonly property real totalBytes: root.devices.reduce(function(s, d) { return s + (d.totalSpace || 0) }, 0)
+                readonly property int  percent:    totalBytes > 0 ? Math.round(freeBytes / totalBytes * 100) : 0
+                label: qsTr("Free")
+                value: appManager1.formatDataSize(freeBytes)
+                tagText: percent + "%"
+                tagTone: totalBytes > 0 && percent < 10 ? "warn" : "neutral"
             }
         }
-        Kirigami.Separator { Layout.fillWidth: true; visible: root.viewFilter !== "All" }
 
         // Device list
         Kirigami.CardsListView {
@@ -734,8 +736,14 @@ Item {
             visible: !root.tableMode
             clip: true
             model: root.visibleCards
-            topMargin: Kirigami.Units.smallSpacing
-            // The Selection list's own two values, copied rather than guessed:
+            topMargin: 0
+            bottomMargin: KTheme.gap
+            // The page already keeps the cards off its edges; room on the right
+            // for the scroll bar.
+            leftMargin: 0
+            rightMargin: 12
+            Controls.ScrollBar.vertical: Controls.ScrollBar { policy: Controls.ScrollBar.AsNeeded }
+            // The Selection list's own spacing, copied rather than guessed:
             // that list is the one in Main.qml (the CardsListView holding
             // PageSelectionDelegate), not the unused PageSelectionView.qml.
             // Leaving spacing unset is not the same thing - Kirigami's own
@@ -822,25 +830,43 @@ Item {
         }
 
         // ── Table display (DVP-F1) ─────────────────────────────────────────
-        // Header and rows follow the idiom already used on the Explore page.
+        // Header and rows follow the idiom already used on the Explore page,
+        // inside a card of the design system (D34). The inset keeps the square
+        // header and rows inside the card's rounded corners.
         Item {
+            id: deviceTableCard
+            readonly property int inset: 6
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.bottomMargin: KTheme.gap
             visible: root.tableMode
             clip: true
 
+            Rectangle {
+                anchors.fill: parent
+                radius: KTheme.radiusCard
+                color: KTheme.surface
+                border.color: KTheme.line
+                border.width: 1
+            }
+
             Controls.HorizontalHeaderView {
                 id: deviceTableHeader
-                anchors { top: parent.top; left: parent.left; right: parent.right }
+                anchors {
+                    top: parent.top; left: parent.left; right: parent.right
+                    topMargin: deviceTableCard.inset
+                    leftMargin: deviceTableCard.inset
+                    rightMargin: deviceTableCard.inset
+                }
                 syncView: deviceTable
                 clip: true
-                implicitHeight: 34
+                implicitHeight: 36
                 resizableColumns: true
 
                 delegate: Rectangle {
                     required property int    column
                     required property string display
-                    color: Kirigami.Theme.backgroundColor
+                    color: KTheme.surface2
                     implicitHeight: deviceTableHeader.implicitHeight
                     // Full, unelided width (6 + label + 2 + room for the sort
                     // mark + 4), read by the double-click fit (CDT-F4).
@@ -855,20 +881,23 @@ Item {
                         }
                         text: display
                         elide: Text.ElideRight
-                        color: Kirigami.Theme.textColor
+                        color: KTheme.text2
+                        font.pixelSize: KTheme.note
+                        font.weight: Font.DemiBold
                     }
 
                     Controls.Label {
                         id: sortMark
                         anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 4 }
                         text: root.tableSortColumn === column ? (root.tableSortAscending ? "▲" : "▼") : ""
-                        color: Kirigami.Theme.textColor
+                        color: KTheme.text2
+                        font.pixelSize: KTheme.note
                     }
 
                     Rectangle { // Vertical separator
                         anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
                         width: 1
-                        color: Kirigami.Theme.separatorColor ?? "transparent"
+                        color: KTheme.line
                     }
 
                     TapHandler {
@@ -891,9 +920,15 @@ Item {
                 }
             }
 
-            Kirigami.Separator {
+            Rectangle {
                 id: deviceTableHeaderSep
-                anchors { top: deviceTableHeader.bottom; left: parent.left; right: parent.right }
+                anchors {
+                    top: deviceTableHeader.bottom; left: parent.left; right: parent.right
+                    leftMargin: deviceTableCard.inset
+                    rightMargin: deviceTableCard.inset
+                }
+                height: 1
+                color: KTheme.line
             }
 
             Kirigami.PlaceholderMessage {
@@ -905,7 +940,12 @@ Item {
 
             TableView {
                 id: deviceTable
-                anchors { top: deviceTableHeaderSep.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
+                anchors {
+                    top: deviceTableHeaderSep.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
+                    leftMargin: deviceTableCard.inset
+                    rightMargin: deviceTableCard.inset
+                    bottomMargin: deviceTableCard.inset
+                }
                 columnSpacing: 0
                 rowSpacing: 0
                 clip: true
@@ -1000,18 +1040,25 @@ Item {
                     implicitWidth: isBoolean ? 12 + Kirigami.Units.iconSizes.small
                                              : cellLabel.x + cellLabel.implicitWidth + 6
 
+                    // The selected row takes the accent fill, and its first
+                    // cell an accent edge, so the selection is not told by a
+                    // shade alone.
                     color: deviceTable.selectedRow === row
-                           ? applicationWindow().selectionHighlightColor
-                           : (row % 2 === 0
-                              ? applicationWindow().rowBaseColor
-                              : applicationWindow().rowStripeColor)
+                           ? KTheme.accentSoft
+                           : (row % 2 === 0 ? KTheme.surface : KTheme.surface2)
+
+                    Rectangle { // Selection edge
+                        visible: deviceTable.selectedRow === row && column === 0
+                        anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
+                        width: 3
+                        color: KTheme.accent
+                    }
 
                     Rectangle { // Column separator
                         visible: column > 0
                         anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
                         width: 1
-                        color: Kirigami.Theme.separatorColor ?? Kirigami.Theme.textColor
-                        opacity: applicationWindow().columnSeparatorOpacity
+                        color: KTheme.line
                     }
 
                     // Expand/collapse, on tree rows that have children. Icon
@@ -1077,6 +1124,7 @@ Item {
                         source: "dialog-ok-apply"
                         implicitWidth:  Kirigami.Units.iconSizes.small
                         implicitHeight: Kirigami.Units.iconSizes.small
+                        Accessible.name: qsTr("Yes")
                     }
 
                     Controls.Label {
@@ -1093,12 +1141,10 @@ Item {
                         horizontalAlignment: alignment === "right" ? Text.AlignRight : Text.AlignLeft
                         elide: Text.ElideRight
                         clip: true
+                        font.pixelSize: KTheme.body
                         font.bold:   bold
                         font.italic: italic
-                        color: deviceTable.selectedRow === row
-                               ? Kirigami.Theme.highlightedTextColor
-                               : (dimmed ? Kirigami.Theme.disabledTextColor
-                                         : Kirigami.Theme.textColor)
+                        color: dimmed ? KTheme.text3 : KTheme.text
                     }
 
                     // The row menu is the card's menu, unchanged (DVP-F6):

@@ -62,13 +62,28 @@ Kirigami.AbstractCard {
     anchors.leftMargin: showsHierarchy ? devLevel * deviceIconSize : 0
     anchors.right:      parent ? parent.right : undefined
 
-    // Matched to the Selection card, which trims the vertical padding hardest
-    // because that is what stacks up over a long list, and leaves the
-    // horizontal padding alone (DVP-F19).
-    topPadding:    Kirigami.Units.mediumSpacing
-    bottomPadding: Kirigami.Units.mediumSpacing
-    leftPadding:   Kirigami.Units.largeSpacing
-    rightPadding:  Kirigami.Units.largeSpacing
+    // Matched to the "My drives" card (DVP-F19), in the Home drive-card
+    // language of the redesign (fork, D34, phase R7).
+    topPadding:    12
+    bottomPadding: 12
+    leftPadding:   14
+    rightPadding:  6
+
+    // A catalog of saved search results has no drive behind it (path "EXPORT")
+    readonly property bool isSavedResults: devType === "Catalog" && devPath === "EXPORT"
+
+    background: Rectangle {
+        radius: KTheme.radiusCard
+        color: KTheme.surface
+        border.color: KTheme.line
+        border.width: 1
+    }
+
+    function typeLabel(type) {
+        return type === "Virtual" ? qsTr("Virtual")
+             : type === "Storage" ? qsTr("Storage")
+             : qsTr("Catalog")
+    }
 
     // Lets the Devices page open this same menu for a table row, so the table
     // and the cards can never offer different actions (SpecDevicesPage DVP-F6).
@@ -226,31 +241,29 @@ Kirigami.AbstractCard {
                 top:   parent.top
                 right: parent.right
             }
-            spacing: Kirigami.Units.largeSpacing
+            spacing: 6
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: Kirigami.Units.smallSpacing
+                spacing: 8
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
+                    spacing: 12
 
                     // The Selection page's own name rules - per-type weight,
                     // italic and opacity - taken from the shared component
                     // rather than copied, so the two pages cannot drift
-                    // (DVP-F17 / DVP-C14). The icon is suppressed: this card
-                    // already draws a larger one in the column to the left.
+                    // (DVP-F17 / DVP-C14).
                     DeviceIdentity {
+                        id: cardIdentity
                         Layout.fillWidth: true
                         // Icon as well as name, from the one component: a second
                         // icon rule in this file is what DVP-C20 removes.
                         showIcon:       true
+                        iconTile:       true
                         iconSize:       card.deviceIconSize
-                        // Cards wrap rather than hide (CDT-F1). Only this
-                        // caller opts in: the Selection cards and the reminder
-                        // above that list keep their current behaviour until
-                        // the user asks otherwise (DVP-C16).
+                        // Cards wrap rather than hide (CDT-F1).
                         nameWraps:      true
                         deviceType:     card.devType
                         deviceName:     card.devName
@@ -263,6 +276,7 @@ Kirigami.AbstractCard {
                     // with it (SpecDeviceComment.md).
                     Controls.Label {
                         Layout.maximumWidth: parent.width * 0.5
+                        Layout.alignment: Qt.AlignVCenter
                         visible: text.length > 0
                         text: card.modelData.comment !== undefined
                               ? card.modelData.comment : ""
@@ -270,76 +284,105 @@ Kirigami.AbstractCard {
                         // from crowding the name - and the text wraps inside it
                         // instead of being cut off (CDT-F1 / DVP-C17).
                         wrapMode: Text.Wrap
-                        opacity: 0.7
-                        font.pointSize: appManager1.textPointSize
+                        color: KTheme.text2
+                        font.pixelSize: KTheme.note
                     }
                 }
 
-                // Drawn only when there is a line below it to separate, as on
-                // the Selection card (DVP-F23).
-                Kirigami.Separator {
+                // Everything below lines up with the name, past the icon tile
+                // (DVP-F26).
+                ColumnLayout {
                     Layout.fillWidth: true
-                    visible: deviceDetailLine.text.length > 0
-                }
+                    Layout.leftMargin: cardIdentity.tileSize + cardIdentity.spacing
+                    spacing: 8
 
-                Controls.Label {
-                    id: deviceDetailLine
-                    Layout.fillWidth: true
-                    // Lined up with the name above, past the icon, exactly as
-                    // the Selection card's second line is (DVP-F26). The
-                    // separator above stays full width (DVP-C22).
-                    Layout.leftMargin: card.deviceIconSize
-                                       + Kirigami.Units.smallSpacing
-                    // Wraps onto as many lines as it needs, so the date at the
-                    // end stays readable on a narrow card (CDT-F1 / DVP-F18).
-                    wrapMode: Text.Wrap
-                    font.pointSize: appManager1.textPointSize
-                    text: {
-                        var d = card.modelData
-                        var parts = []
-                        if (d.type !== "Virtual") parts.push(d.type)
-                        // A catalog states its figures even when both are zero:
-                        // an empty catalog is a fact worth reading, and hiding
-                        // them made it look like one whose contents are unknown
-                        // (DVP-F10). formatDataSizeDelta(), because the other
-                        // formatter returns an empty string at zero and would
-                        // blank the size here (DVP-C9); above zero the two are
-                        // the same call. Catalogs only - Storage and Virtual
-                        // cards keep their current behaviour.
-                        if (d.type === "Catalog" || d.fileCount > 0)
-                            parts.push(Number(d.fileCount).toLocaleString(Qt.locale(), "f", 0) + " " + qsTr("files")
-                                       + "  " + appManager1.formatDataSizeDelta(d.totalFileSize))
-                        // A device that reports space states all three, in the
-                        // order the user reads them (DVP-F16). Shown only when
-                        // there is space to report: three zeros would claim a
-                        // measurement that was never taken, which is why this is
-                        // not the empty-catalog rule of DVP-F10. Each value goes
-                        // through the zero-rendering formatter, so a full disk's
-                        // free space reads as zero rather than as a blank after
-                        // its label (DVP-C13).
-                        if ((d.type === "Storage" || d.type === "Virtual") && d.totalSpace > 0) {
-                            parts.push(qsTr("used")  + ": " + appManager1.formatDataSizeDelta(d.usedSpace))
-                            parts.push(qsTr("free")  + ": " + appManager1.formatDataSizeDelta(d.freeSpace))
-                            parts.push(qsTr("total") + ": " + appManager1.formatDataSizeDelta(d.totalSpace))
+                    // Where the device is, in the Home card's path style. Wraps
+                    // anywhere rather than eliding (CDT-C1).
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        visible: card.devPath.length > 0 && !card.isSavedResults
+                        text: card.devPath
+                        wrapMode: Text.WrapAnywhere
+                        font.family: KTheme.mono
+                        font.pixelSize: KTheme.note
+                        color: KTheme.text3
+                    }
+
+                    // Kind, state, contents and space as info tags. A catalog
+                    // states its figures even when both are zero: an empty
+                    // catalog is a fact worth reading (DVP-F10), hence
+                    // formatDataSizeDelta(), which renders zero (DVP-C9). A
+                    // device that reports space states used, free and total, in
+                    // that order (DVP-F16), only when there is space to report
+                    // (DVP-C13).
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        KInfoTag {
+                            text: card.typeLabel(card.devType)
+                            tone: card.devType === "Catalog" ? "info" : "neutral"
                         }
-                        if (d.dateUpdated && d.dateUpdated.length > 0)
-                            parts.push(d.dateUpdated)
-                        return parts.join("  ·  ")
+                        KInfoTag {
+                            visible: (card.devType === "Storage" || card.devType === "Catalog")
+                                     && !card.isSavedResults
+                            text: card.devActive ? qsTr("Connected") : qsTr("Not connected")
+                            tone: card.devActive ? "ok" : "warn"
+                        }
+                        KInfoTag {
+                            visible: card.isSavedResults
+                            text: qsTr("Saved search results")
+                            tone: "info"
+                        }
+                        // File system names are technical notation
+                        KInfoTag {
+                            visible: card.devType === "Storage" && text.length > 0
+                            text: card.modelData.storageFileSystem || ""
+                        }
+                        KInfoTag {
+                            visible: card.devType === "Catalog" || card.modelData.fileCount > 0
+                            text: Number(card.modelData.fileCount || 0).toLocaleString(Qt.locale(), "f", 0)
+                                  + " " + qsTr("files")
+                        }
+                        KInfoTag {
+                            visible: card.devType === "Catalog" || card.modelData.fileCount > 0
+                            text: appManager1.formatDataSizeDelta(card.modelData.totalFileSize || 0)
+                        }
+                        KInfoTag {
+                            visible: (card.devType === "Storage" || card.devType === "Virtual")
+                                     && card.modelData.totalSpace > 0
+                            text: qsTr("used") + ": " + appManager1.formatDataSizeDelta(card.modelData.usedSpace || 0)
+                        }
+                        KInfoTag {
+                            visible: (card.devType === "Storage" || card.devType === "Virtual")
+                                     && card.modelData.totalSpace > 0
+                            text: qsTr("free") + ": " + appManager1.formatDataSizeDelta(card.modelData.freeSpace || 0)
+                        }
+                        KInfoTag {
+                            visible: (card.devType === "Storage" || card.devType === "Virtual")
+                                     && card.modelData.totalSpace > 0
+                            text: qsTr("total") + ": " + appManager1.formatDataSizeDelta(card.modelData.totalSpace || 0)
+                        }
+                        KInfoTag {
+                            visible: text.length > 0
+                            text: card.modelData.dateUpdated || ""
+                        }
                     }
-                    visible: text.length > 0
                 }
             }
 
-            // The Selection card's own expand/collapse control, same icons and
-            // same tooltips (DVP-F24). It keeps its place in the layout when the
-            // device has no children, so every card in the view is the same
-            // height - the reason the Selection card does it that way. Only the
-            // Device tree shows a hierarchy, so only it carries the control.
+            // The Selection card's own expand/collapse control, same icons
+            // (DVP-F24). It keeps its place in the layout when the device has no
+            // children, so every card in the view lines up. Only the Device tree
+            // shows a hierarchy, so only it carries the control.
             Controls.ToolButton {
+                Layout.alignment: Qt.AlignTop
                 visible: card.showsHierarchy
                 icon.name: card.cardIsCollapsed ? "go-down" : "go-up"
                 icon.width:  Kirigami.Units.iconSizes.small
                 icon.height: Kirigami.Units.iconSizes.small
+                implicitWidth:  40
+                implicitHeight: 40
                 padding: 0
                 opacity: card.cardHasChildren ? 1.0 : 0.0
                 enabled: card.cardHasChildren
@@ -350,7 +393,11 @@ Kirigami.AbstractCard {
                 display: Controls.AbstractButton.IconOnly
             }
 
-            IconButton { flat: true;
+            IconButton {
+                Layout.alignment: Qt.AlignTop
+                flat: true
+                implicitWidth:  40
+                implicitHeight: 40
                 icon.name: "application-menu"
                 onClicked: contextMenu.popup()
                 Controls.ToolTip.text: qsTr("Actions")

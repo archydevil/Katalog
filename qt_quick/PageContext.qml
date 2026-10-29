@@ -9,9 +9,14 @@ import org.kde.kirigami as Kirigami
 // categories, known names, notes per catalog and reference documents. Saving
 // re-runs nothing: new files use the context, the others are re-interpreted
 // on request (MDI-F99, MDI-F103).
+//
+// Redesign phase R4 (D34), "Archive knowledge": the page intro, a segmented
+// choice of three parts made of cards, and beside them (below them when the
+// window is narrow) the two actions, re-interpret and draft. Every editing
+// behaviour is the one of Context 1; only the presentation changed.
 ColumnLayout {
     id: pageContext
-    spacing: Kirigami.Units.largeSpacing
+    spacing: 20
 
     property bool dirty: false
     property var catalogs: []
@@ -21,6 +26,19 @@ ColumnLayout {
                                            ? catalogs[catalogBox.currentIndex].deviceId : -1
     readonly property bool hasSavedContext: savedContextEmpty === false
     property var savedContextEmpty: true
+
+    // The part shown: 0 archive and categories, 1 glossary and known names,
+    // 2 reference documents. Every part stays built, so load() and collect()
+    // always reach every field.
+    property int part: 0
+    // The two action cards sit beside the parts when there is room
+    readonly property bool wide: width >= 960
+    readonly property int passageCount: {
+        var n = 0
+        for (var d of documents)
+            n += d.passages || 0
+        return n
+    }
 
     // Called by Main.qml when the page is shown
     function setShown(shown) {
@@ -163,300 +181,731 @@ ColumnLayout {
     ListModel { id: categoryModel }
     ListModel { id: entityModel }
 
-    // ── The archive ─────────────────────────────────────────────────────────
-    Kirigami.Heading { text: qsTr("Archive"); level: 3 }
-    Kirigami.FormLayout {
-        Layout.fillWidth: true
-        Controls.TextField {
-            id: organisationField
-            Kirigami.FormData.label: qsTr("Organisation")
-            Layout.fillWidth: true
-            onTextEdited: pageContext.dirty = true
-        }
-        Controls.TextField {
-            id: periodField
-            Kirigami.FormData.label: qsTr("Period")
-            Layout.fillWidth: true
-            onTextEdited: pageContext.dirty = true
-        }
-        Controls.TextArea {
-            id: domainField
-            Kirigami.FormData.label: qsTr("Domain")
-            Layout.fillWidth: true
-            wrapMode: TextEdit.Wrap
-            onTextChanged: if (activeFocus) pageContext.dirty = true
-        }
-        Controls.TextField {
-            id: languageField
-            Kirigami.FormData.label: qsTr("Language")
-            Layout.fillWidth: true
-            onTextEdited: pageContext.dirty = true
-        }
-        Controls.TextArea {
-            id: styleField
-            Kirigami.FormData.label: qsTr("Narrative style and terminology")
-            Layout.fillWidth: true
-            wrapMode: TextEdit.Wrap
-            onTextChanged: if (activeFocus) pageContext.dirty = true
-        }
-        Controls.TextArea {
-            id: notesField
-            Kirigami.FormData.label: qsTr("Notes")
-            Layout.fillWidth: true
-            wrapMode: TextEdit.Wrap
-            onTextChanged: if (activeFocus) pageContext.dirty = true
-        }
-        Controls.CheckBox {
-            id: transcriptHintBox
-            Kirigami.FormData.label: ""
-            text: qsTr("Suggest the glossary terms to the transcription")
-            onToggled: pageContext.dirty = true
-        }
+    // ── Building blocks of this page ───────────────────────────────────────
+    // The name of a field, above it or on its left
+    component FieldLabel: Controls.Label {
+        color: KTheme.text3
+        font.pixelSize: KTheme.note
+        font.weight: Font.DemiBold
+        wrapMode: Text.WordWrap
     }
-
-    // ── Glossary ───────────────────────────────────────────────────────────
-    Kirigami.Heading { text: qsTr("Glossary"); level: 3 }
-    Repeater {
-        model: glossaryModel
-        delegate: RowLayout {
-            required property int index
-            required property string term
-            required property string preferred
-            required property string aliases
-            required property string definition
-            Layout.fillWidth: true
-            Controls.TextField {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 8
-                placeholderText: qsTr("Term")
-                text: term
-                onTextEdited: { glossaryModel.setProperty(index, "term", text); pageContext.dirty = true }
-            }
-            Controls.TextField {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 9
-                placeholderText: qsTr("Preferred form")
-                text: preferred
-                onTextEdited: { glossaryModel.setProperty(index, "preferred", text); pageContext.dirty = true }
-            }
-            Controls.TextField {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-                placeholderText: qsTr("Also written as")
-                text: aliases
-                onTextEdited: { glossaryModel.setProperty(index, "aliases", text); pageContext.dirty = true }
-            }
-            Controls.TextField {
-                Layout.fillWidth: true
-                placeholderText: qsTr("Definition")
-                text: definition
-                onTextEdited: { glossaryModel.setProperty(index, "definition", text); pageContext.dirty = true }
-            }
-            Controls.ToolButton {
-                icon.name: "list-remove"
-                Controls.ToolTip.text: qsTr("Remove")
-                Controls.ToolTip.visible: hovered
-                onClicked: { glossaryModel.remove(index); pageContext.dirty = true }
-            }
-        }
-    }
-    Controls.Button {
-        icon.name: "list-add"
-        text: qsTr("Add")
-        onClicked: { glossaryModel.append({ term: "", preferred: "", aliases: "", definition: "" }); pageContext.dirty = true }
-    }
-
-    // ── Categories ─────────────────────────────────────────────────────────
-    Kirigami.Heading { text: qsTr("Categories"); level: 3 }
-    Repeater {
-        model: categoryModel
-        delegate: RowLayout {
-            required property int index
-            required property string name
-            required property string description
-            required property string values
-            required property bool closed
-            required property bool multiple
-            Layout.fillWidth: true
-            Controls.TextField {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 8
-                placeholderText: qsTr("Name")
-                text: name
-                onTextEdited: { categoryModel.setProperty(index, "name", text); pageContext.dirty = true }
-            }
-            Controls.TextField {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-                placeholderText: qsTr("Definition")
-                text: description
-                onTextEdited: { categoryModel.setProperty(index, "description", text); pageContext.dirty = true }
-            }
-            Controls.TextField {
-                Layout.fillWidth: true
-                placeholderText: qsTr("Values")
-                text: values
-                onTextEdited: { categoryModel.setProperty(index, "values", text); pageContext.dirty = true }
-            }
-            Controls.CheckBox {
-                text: qsTr("Only these values")
-                checked: closed
-                onToggled: { categoryModel.setProperty(index, "closed", checked); pageContext.dirty = true }
-            }
-            Controls.CheckBox {
-                text: qsTr("More than one value")
-                checked: multiple
-                onToggled: { categoryModel.setProperty(index, "multiple", checked); pageContext.dirty = true }
-            }
-            Controls.ToolButton {
-                icon.name: "list-remove"
-                Controls.ToolTip.text: qsTr("Remove")
-                Controls.ToolTip.visible: hovered
-                onClicked: { categoryModel.remove(index); pageContext.dirty = true }
-            }
-        }
-    }
-    Controls.Button {
-        icon.name: "list-add"
-        text: qsTr("Add")
-        onClicked: {
-            categoryModel.append({ name: "", description: "", values: "", closed: false, multiple: true })
-            pageContext.dirty = true
-        }
-    }
-
-    // ── Known names: people, places, events, bodies ────────────────────────
-    Kirigami.Heading { text: qsTr("Known names"); level: 3 }
-    Repeater {
-        model: entityModel
-        delegate: RowLayout {
-            required property int index
-            required property string name
-            required property string kind
-            required property string aliases
-            required property string notes
-            Layout.fillWidth: true
-            Controls.TextField {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-                placeholderText: qsTr("Name")
-                text: name
-                onTextEdited: { entityModel.setProperty(index, "name", text); pageContext.dirty = true }
-            }
-            Controls.ComboBox {
-                readonly property var kinds: ["person", "place", "event", "organisation", "other"]
-                model: [qsTr("Person"), qsTr("Place"), qsTr("Event"), qsTr("Organisation"), qsTr("Other")]
-                currentIndex: Math.max(0, kinds.indexOf(kind))
-                onActivated: { entityModel.setProperty(index, "kind", kinds[currentIndex]); pageContext.dirty = true }
-            }
-            Controls.TextField {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-                placeholderText: qsTr("Also written as")
-                text: aliases
-                onTextEdited: { entityModel.setProperty(index, "aliases", text); pageContext.dirty = true }
-            }
-            Controls.TextField {
-                Layout.fillWidth: true
-                placeholderText: qsTr("Notes")
-                text: notes
-                onTextEdited: { entityModel.setProperty(index, "notes", text); pageContext.dirty = true }
-            }
-            Controls.ToolButton {
-                icon.name: "list-remove"
-                Controls.ToolTip.text: qsTr("Remove")
-                Controls.ToolTip.visible: hovered
-                onClicked: { entityModel.remove(index); pageContext.dirty = true }
-            }
-        }
-    }
-    Controls.Button {
-        icon.name: "list-add"
-        text: qsTr("Add")
-        onClicked: { entityModel.append({ name: "", kind: "person", aliases: "", notes: "" }); pageContext.dirty = true }
-    }
-
-    // ── One catalog: its notes, its draft ──────────────────────────────────
-    Kirigami.Heading { text: qsTr("Catalog"); level: 3 }
-    RowLayout {
-        Layout.fillWidth: true
-        Controls.ComboBox {
-            id: catalogBox
-            Layout.fillWidth: true
-            model: pageContext.catalogs.map(function (c) { return c.name })
-            onCurrentIndexChanged: pageContext.loadCatalogNotes()
-        }
-        Controls.Button {
-            icon.name: "tools-wizard"
-            text: qsTr("Draft from the catalog")
-            enabled: pageContext.catalogDeviceId >= 0 && !pageContext.drafting
-            onClicked: pageContext.draft()
-        }
-        Controls.BusyIndicator {
-            visible: pageContext.drafting
-            running: visible
-            implicitWidth: Kirigami.Units.gridUnit * 1.5
-            implicitHeight: implicitWidth
-        }
-    }
-    Controls.TextArea {
-        id: catalogNotesField
-        property bool edited: false
-        Layout.fillWidth: true
-        placeholderText: qsTr("Notes for this catalog")
-        wrapMode: TextEdit.Wrap
-        enabled: pageContext.catalogDeviceId >= 0
-        onTextChanged: if (activeFocus) { edited = true; pageContext.dirty = true }
-    }
-
-    // ── Reference documents (local knowledge base) ─────────────────────────
-    Kirigami.Heading { text: qsTr("Reference documents"); level: 3 }
-    Controls.Label {
-        visible: appManager1.knowledgeIsRunning || appManager1.knowledgeStatusText !== ""
+    // A line of explanation inside a card
+    component Explanation: Controls.Label {
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
-        textFormat: Text.StyledText
-        opacity: 0.8
-        text: appManager1.knowledgeStatusText.replace(/^(&nbsp;)+/, "")
+        color: KTheme.text2
     }
-    Repeater {
-        model: pageContext.documents
-        delegate: RowLayout {
-            id: documentRow
-            required property var modelData
+    // One row of a list being edited (a term, a category, a name)
+    component EntryBox: Rectangle {
+        default property alias content: entryColumn.data
+        Layout.fillWidth: true
+        implicitHeight: entryColumn.implicitHeight + 20
+        radius: KTheme.radiusItem
+        color: KTheme.surface2
+        border.color: KTheme.line
+        border.width: 1
+        ColumnLayout {
+            id: entryColumn
+            x: 10
+            y: 10
+            width: parent.width - 20
+            spacing: 8
+        }
+    }
+    // Removes one row; an icon-only button, so its text is the tooltip
+    component RemoveButton: IconButton {
+        icon.name: "list-remove"
+        text: qsTr("Remove")
+        flat: true
+        implicitWidth: 40
+        implicitHeight: 40
+        Layout.alignment: Qt.AlignTop
+    }
+
+    // ── Page intro ─────────────────────────────────────────────────────────
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 10
+        KSectionHeader {
+            level: 1
+            title: qsTr("Archive knowledge")
+            description: qsTr("What the AI needs to know to describe and classify the files in the archive's own language. Nothing is redone until you ask for it.")
+        }
+        Flow {
             Layout.fillWidth: true
-            Kirigami.Icon {
-                source: documentRow.modelData.status === "indexed" ? "dialog-ok-apply"
-                        : documentRow.modelData.status === "failed" ? "dialog-error" : "view-refresh"
-                implicitWidth: Kirigami.Units.iconSizes.small
-                implicitHeight: implicitWidth
+            spacing: 6
+            KInfoTag {
+                text: pageContext.hasSavedContext ? qsTr("Context active") : qsTr("No context yet")
+                tone: pageContext.hasSavedContext ? "ok" : "neutral"
             }
-            Controls.Label {
+            KInfoTag {
+                visible: pageContext.dirty
+                text: qsTr("Changes not saved")
+                tone: "warn"
+            }
+        }
+    }
+
+    GridLayout {
+        Layout.fillWidth: true
+        columns: pageContext.wide ? 2 : 1
+        columnSpacing: 20
+        rowSpacing: 20
+
+        // ── The three parts ────────────────────────────────────────────────
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            spacing: KTheme.gap
+
+            // Segmented choice of the part shown
+            Rectangle {
+                id: partBar
+                // One row when the three fit, else one under the other
+                readonly property real oneRowWidth: {
+                    var w = 8 + 4 * (partRepeater.count - 1)
+                    for (var i = 0; i < partBar.partsBuilt; ++i) {
+                        var b = partRepeater.itemAt(i)
+                        if (b)
+                            w += b.implicitWidth
+                    }
+                    return w
+                }
+                property int partsBuilt: 0
+                Layout.fillWidth: partGrid.columns === 1
+                implicitWidth: partGrid.implicitWidth + 8
+                implicitHeight: partGrid.implicitHeight + 8
+                radius: KTheme.radiusControl
+                color: KTheme.surface
+                border.color: KTheme.line
+                border.width: 1
+
+                GridLayout {
+                    id: partGrid
+                    x: 4
+                    y: 4
+                    width: parent.width - 8
+                    columns: partBar.parent.width >= partBar.oneRowWidth ? 3 : 1
+                    columnSpacing: 4
+                    rowSpacing: 4
+
+                    Repeater {
+                        id: partRepeater
+                        model: [qsTr("Archive and categories"), qsTr("Glossary and known names"), qsTr("Reference documents")]
+                        onItemAdded: partBar.partsBuilt++
+                        delegate: Controls.AbstractButton {
+                            id: partButton
+                            required property int index
+                            required property string modelData
+                            readonly property bool selected: pageContext.part === index
+                            Layout.fillWidth: true
+                            implicitHeight: 40
+                            leftPadding: 14
+                            rightPadding: 14
+                            hoverEnabled: true
+                            text: modelData
+                            Accessible.role: Accessible.PageTab
+                            Accessible.selectable: true
+                            Accessible.selected: partButton.selected
+                            onClicked: pageContext.part = index
+                            background: Rectangle {
+                                radius: KTheme.radiusItem
+                                color: partButton.selected ? KTheme.accentSoft
+                                     : partButton.hovered ? KTheme.hover : "transparent"
+                                border.width: partButton.visualFocus ? 2 : 0
+                                border.color: KTheme.accent
+                            }
+                            contentItem: Controls.Label {
+                                text: partButton.text
+                                color: partButton.selected ? KTheme.accentText : KTheme.text2
+                                font.weight: Font.DemiBold
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Part 1: archive and categories ─────────────────────────────
+            ColumnLayout {
                 Layout.fillWidth: true
-                elide: Text.ElideMiddle
-                text: documentRow.modelData.title
-                Controls.ToolTip.text: documentRow.modelData.path + (documentRow.modelData.reason ? "\n" + documentRow.modelData.reason : "")
-                Controls.ToolTip.visible: hoverArea.containsMouse
-                MouseArea { id: hoverArea; anchors.fill: parent; hoverEnabled: true }
+                visible: pageContext.part === 0
+                spacing: KTheme.gap
+
+                KCard {
+                    Layout.fillWidth: true
+                    KSectionHeader {
+                        level: 3
+                        title: qsTr("Archive")
+                        description: qsTr("Who produced the archive, when, about what, and how it is written.")
+                    }
+                    GridLayout {
+                        id: archiveGrid
+                        readonly property bool twoColumns: width >= 520
+                        Layout.fillWidth: true
+                        columns: twoColumns ? 2 : 1
+                        columnSpacing: 16
+                        rowSpacing: twoColumns ? 10 : 4
+
+                        FieldLabel {
+                            text: qsTr("Organisation")
+                            Layout.preferredWidth: archiveGrid.twoColumns ? 170 : -1
+                            Layout.fillWidth: !archiveGrid.twoColumns
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                        Controls.TextField {
+                            id: organisationField
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Organisation")
+                            onTextEdited: pageContext.dirty = true
+                        }
+                        FieldLabel {
+                            text: qsTr("Period")
+                            Layout.preferredWidth: archiveGrid.twoColumns ? 170 : -1
+                            Layout.fillWidth: !archiveGrid.twoColumns
+                            Layout.topMargin: archiveGrid.twoColumns ? 0 : 6
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                        Controls.TextField {
+                            id: periodField
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Period")
+                            onTextEdited: pageContext.dirty = true
+                        }
+                        FieldLabel {
+                            text: qsTr("Domain")
+                            Layout.preferredWidth: archiveGrid.twoColumns ? 170 : -1
+                            Layout.fillWidth: !archiveGrid.twoColumns
+                            Layout.topMargin: 6
+                            Layout.alignment: Qt.AlignTop
+                        }
+                        Controls.TextArea {
+                            id: domainField
+                            Layout.fillWidth: true
+                            wrapMode: TextEdit.Wrap
+                            Accessible.name: qsTr("Domain")
+                            onTextChanged: if (activeFocus) pageContext.dirty = true
+                        }
+                        FieldLabel {
+                            text: qsTr("Language")
+                            Layout.preferredWidth: archiveGrid.twoColumns ? 170 : -1
+                            Layout.fillWidth: !archiveGrid.twoColumns
+                            Layout.topMargin: archiveGrid.twoColumns ? 0 : 6
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                        Controls.TextField {
+                            id: languageField
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Language")
+                            onTextEdited: pageContext.dirty = true
+                        }
+                        FieldLabel {
+                            text: qsTr("Narrative style and terminology")
+                            Layout.preferredWidth: archiveGrid.twoColumns ? 170 : -1
+                            Layout.fillWidth: !archiveGrid.twoColumns
+                            Layout.topMargin: 6
+                            Layout.alignment: Qt.AlignTop
+                        }
+                        Controls.TextArea {
+                            id: styleField
+                            Layout.fillWidth: true
+                            wrapMode: TextEdit.Wrap
+                            Accessible.name: qsTr("Narrative style and terminology")
+                            onTextChanged: if (activeFocus) pageContext.dirty = true
+                        }
+                        FieldLabel {
+                            text: qsTr("Notes")
+                            Layout.preferredWidth: archiveGrid.twoColumns ? 170 : -1
+                            Layout.fillWidth: !archiveGrid.twoColumns
+                            Layout.topMargin: 6
+                            Layout.alignment: Qt.AlignTop
+                        }
+                        Controls.TextArea {
+                            id: notesField
+                            Layout.fillWidth: true
+                            wrapMode: TextEdit.Wrap
+                            Accessible.name: qsTr("Notes")
+                            onTextChanged: if (activeFocus) pageContext.dirty = true
+                        }
+                    }
+                }
+
+                KCard {
+                    Layout.fillWidth: true
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        KSectionHeader {
+                            level: 3
+                            title: qsTr("Categories")
+                            description: qsTr("The AI chooses among these values; where only these values are allowed, it adds no others.")
+                        }
+                        KInfoTag {
+                            Layout.alignment: Qt.AlignTop
+                            text: qsTr("%1 categories").arg(categoryModel.count)
+                        }
+                    }
+                    Repeater {
+                        model: categoryModel
+                        delegate: EntryBox {
+                            id: categoryEntry
+                            required property int index
+                            required property string name
+                            required property string description
+                            required property string values
+                            required property bool closed
+                            required property bool multiple
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                GridLayout {
+                                    Layout.fillWidth: true
+                                    columns: width >= 560 ? 3 : 1
+                                    columnSpacing: 8
+                                    rowSpacing: 8
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Name")
+                                        Accessible.name: qsTr("Name")
+                                        text: categoryEntry.name
+                                        onTextEdited: { categoryModel.setProperty(categoryEntry.index, "name", text); pageContext.dirty = true }
+                                    }
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Definition")
+                                        Accessible.name: qsTr("Definition")
+                                        text: categoryEntry.description
+                                        onTextEdited: { categoryModel.setProperty(categoryEntry.index, "description", text); pageContext.dirty = true }
+                                    }
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Values")
+                                        Accessible.name: qsTr("Values")
+                                        text: categoryEntry.values
+                                        onTextEdited: { categoryModel.setProperty(categoryEntry.index, "values", text); pageContext.dirty = true }
+                                    }
+                                }
+                                RemoveButton {
+                                    onClicked: { categoryModel.remove(categoryEntry.index); pageContext.dirty = true }
+                                }
+                            }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 12
+                                Controls.CheckBox {
+                                    text: qsTr("Only these values")
+                                    checked: categoryEntry.closed
+                                    onToggled: { categoryModel.setProperty(categoryEntry.index, "closed", checked); pageContext.dirty = true }
+                                }
+                                Controls.CheckBox {
+                                    text: qsTr("More than one value")
+                                    checked: categoryEntry.multiple
+                                    onToggled: { categoryModel.setProperty(categoryEntry.index, "multiple", checked); pageContext.dirty = true }
+                                }
+                            }
+                        }
+                    }
+                    KButton {
+                        variant: "tonal"
+                        icon.name: "list-add"
+                        text: qsTr("Add")
+                        onClicked: {
+                            categoryModel.append({ name: "", description: "", values: "", closed: false, multiple: true })
+                            pageContext.dirty = true
+                        }
+                    }
+                }
             }
-            Controls.Label {
-                opacity: 0.7
-                text: documentRow.modelData.status === "indexed" ? qsTr("%1 passages").arg(documentRow.modelData.passages)
-                      : documentRow.modelData.status === "failed" ? qsTr("Error") : qsTr("To be indexed")
+
+            // ── Part 2: glossary and known names ───────────────────────────
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: pageContext.part === 1
+                spacing: KTheme.gap
+
+                KCard {
+                    Layout.fillWidth: true
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        KSectionHeader {
+                            level: 3
+                            title: qsTr("Glossary")
+                            description: qsTr("How the archive writes its terms: the AI uses the preferred form and recognises the other spellings.")
+                        }
+                        KInfoTag {
+                            Layout.alignment: Qt.AlignTop
+                            text: qsTr("%1 terms").arg(glossaryModel.count)
+                        }
+                    }
+                    Repeater {
+                        model: glossaryModel
+                        delegate: EntryBox {
+                            id: glossaryEntry
+                            required property int index
+                            required property string term
+                            required property string preferred
+                            required property string aliases
+                            required property string definition
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                GridLayout {
+                                    Layout.fillWidth: true
+                                    columns: width >= 720 ? 4 : width >= 380 ? 2 : 1
+                                    columnSpacing: 8
+                                    rowSpacing: 8
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Term")
+                                        Accessible.name: qsTr("Term")
+                                        text: glossaryEntry.term
+                                        onTextEdited: { glossaryModel.setProperty(glossaryEntry.index, "term", text); pageContext.dirty = true }
+                                    }
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Preferred form")
+                                        Accessible.name: qsTr("Preferred form")
+                                        text: glossaryEntry.preferred
+                                        onTextEdited: { glossaryModel.setProperty(glossaryEntry.index, "preferred", text); pageContext.dirty = true }
+                                    }
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Also written as")
+                                        Accessible.name: qsTr("Also written as")
+                                        text: glossaryEntry.aliases
+                                        onTextEdited: { glossaryModel.setProperty(glossaryEntry.index, "aliases", text); pageContext.dirty = true }
+                                    }
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Definition")
+                                        Accessible.name: qsTr("Definition")
+                                        text: glossaryEntry.definition
+                                        onTextEdited: { glossaryModel.setProperty(glossaryEntry.index, "definition", text); pageContext.dirty = true }
+                                    }
+                                }
+                                RemoveButton {
+                                    onClicked: { glossaryModel.remove(glossaryEntry.index); pageContext.dirty = true }
+                                }
+                            }
+                        }
+                    }
+                    KButton {
+                        variant: "tonal"
+                        icon.name: "list-add"
+                        text: qsTr("Add")
+                        onClicked: { glossaryModel.append({ term: "", preferred: "", aliases: "", definition: "" }); pageContext.dirty = true }
+                    }
+                    Controls.CheckBox {
+                        id: transcriptHintBox
+                        Layout.fillWidth: true
+                        text: qsTr("Suggest the glossary terms to the transcription")
+                        onToggled: pageContext.dirty = true
+                    }
+                }
+
+                // Known names: people, places, events, bodies
+                KCard {
+                    Layout.fillWidth: true
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        KSectionHeader {
+                            level: 3
+                            title: qsTr("Known names")
+                            description: qsTr("People, places, events and organisations: the AI recognises them and always writes them the same way.")
+                        }
+                        KInfoTag {
+                            Layout.alignment: Qt.AlignTop
+                            text: qsTr("%1 known names").arg(entityModel.count)
+                        }
+                    }
+                    Repeater {
+                        model: entityModel
+                        delegate: EntryBox {
+                            id: entityEntry
+                            required property int index
+                            required property string name
+                            required property string kind
+                            required property string aliases
+                            required property string notes
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                GridLayout {
+                                    Layout.fillWidth: true
+                                    columns: width >= 720 ? 4 : width >= 380 ? 2 : 1
+                                    columnSpacing: 8
+                                    rowSpacing: 8
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Name")
+                                        Accessible.name: qsTr("Name")
+                                        text: entityEntry.name
+                                        onTextEdited: { entityModel.setProperty(entityEntry.index, "name", text); pageContext.dirty = true }
+                                    }
+                                    ComboBoxFitted {
+                                        readonly property var kinds: ["person", "place", "event", "organisation", "other"]
+                                        model: [qsTr("Person"), qsTr("Place"), qsTr("Event"), qsTr("Organisation"), qsTr("Other")]
+                                        currentIndex: Math.max(0, kinds.indexOf(entityEntry.kind))
+                                        onActivated: { entityModel.setProperty(entityEntry.index, "kind", kinds[currentIndex]); pageContext.dirty = true }
+                                    }
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Also written as")
+                                        Accessible.name: qsTr("Also written as")
+                                        text: entityEntry.aliases
+                                        onTextEdited: { entityModel.setProperty(entityEntry.index, "aliases", text); pageContext.dirty = true }
+                                    }
+                                    Controls.TextField {
+                                        Layout.fillWidth: true
+                                        placeholderText: qsTr("Notes")
+                                        Accessible.name: qsTr("Notes")
+                                        text: entityEntry.notes
+                                        onTextEdited: { entityModel.setProperty(entityEntry.index, "notes", text); pageContext.dirty = true }
+                                    }
+                                }
+                                RemoveButton {
+                                    onClicked: { entityModel.remove(entityEntry.index); pageContext.dirty = true }
+                                }
+                            }
+                        }
+                    }
+                    KButton {
+                        variant: "tonal"
+                        icon.name: "list-add"
+                        text: qsTr("Add")
+                        onClicked: { entityModel.append({ name: "", kind: "person", aliases: "", notes: "" }); pageContext.dirty = true }
+                    }
+                }
             }
-            Controls.ToolButton {
-                icon.name: "list-remove"
-                Controls.ToolTip.text: qsTr("Remove")
-                Controls.ToolTip.visible: hovered
-                onClicked: appManager1.removeKnowledgeDocument(documentRow.modelData.id)
+
+            // ── Part 3: reference documents (local knowledge base) ─────────
+            KCard {
+                Layout.fillWidth: true
+                visible: pageContext.part === 2
+
+                KSectionHeader {
+                    level: 3
+                    title: qsTr("Reference documents")
+                    description: qsTr("Documents are only read, never changed. For each file it classifies, the AI uses the passages closest to it.")
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+                    KInfoTag { text: qsTr("%1 documents").arg(pageContext.documents.length) }
+                    KInfoTag { text: qsTr("%1 passages").arg(pageContext.passageCount) }
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    KButton {
+                        variant: "tonal"
+                        icon.name: "document-open"
+                        text: qsTr("Add files")
+                        onClicked: documentsDialog.open()
+                    }
+                    KButton {
+                        variant: "secondary"
+                        icon.name: "folder-open"
+                        text: qsTr("Add folder")
+                        onClicked: documentsFolderDialog.open()
+                    }
+                }
+                Controls.Label {
+                    visible: appManager1.knowledgeIsRunning || appManager1.knowledgeStatusText !== ""
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    textFormat: Text.StyledText
+                    color: KTheme.text2
+                    text: appManager1.knowledgeStatusText.replace(/^(&nbsp;)+/, "")
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+                    Repeater {
+                        model: pageContext.documents
+                        delegate: ColumnLayout {
+                            id: documentRow
+                            required property var modelData
+                            required property int index
+                            readonly property string status: modelData.status
+                            Layout.fillWidth: true
+                            spacing: 0
+
+                            Rectangle {
+                                // A hairline between documents
+                                visible: documentRow.index > 0
+                                Layout.fillWidth: true
+                                implicitHeight: 1
+                                color: KTheme.line
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.topMargin: 8
+                                Layout.bottomMargin: 8
+                                spacing: 10
+                                Kirigami.Icon {
+                                    Layout.alignment: Qt.AlignTop
+                                    Layout.topMargin: 2
+                                    source: documentRow.status === "indexed" ? "dialog-ok-apply"
+                                            : documentRow.status === "failed" ? "dialog-error" : "view-refresh"
+                                    isMask: true
+                                    color: documentRow.status === "indexed" ? KTheme.ok
+                                           : documentRow.status === "failed" ? KTheme.bad : KTheme.text3
+                                    implicitWidth: 16
+                                    implicitHeight: 16
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Controls.Label {
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                        font.weight: Font.DemiBold
+                                        color: KTheme.text
+                                        text: documentRow.modelData.title
+                                    }
+                                    Controls.Label {
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WrapAnywhere
+                                        font.family: KTheme.mono
+                                        font.pixelSize: KTheme.note
+                                        color: KTheme.text3
+                                        text: documentRow.modelData.path
+                                    }
+                                    Controls.Label {
+                                        visible: !!documentRow.modelData.reason
+                                        Layout.fillWidth: true
+                                        wrapMode: Text.WordWrap
+                                        color: KTheme.text2
+                                        text: documentRow.modelData.reason || ""
+                                    }
+                                    Flow {
+                                        Layout.fillWidth: true
+                                        Layout.topMargin: 4
+                                        spacing: 6
+                                        KInfoTag {
+                                            text: documentRow.status === "indexed" ? qsTr("Indexed")
+                                                  : documentRow.status === "failed" ? qsTr("Error") : qsTr("To be indexed")
+                                            tone: documentRow.status === "indexed" ? "ok"
+                                                  : documentRow.status === "failed" ? "bad" : "neutral"
+                                        }
+                                        KInfoTag {
+                                            visible: documentRow.status === "indexed"
+                                            text: qsTr("%1 passages").arg(documentRow.modelData.passages)
+                                        }
+                                    }
+                                }
+                                RemoveButton {
+                                    onClicked: appManager1.removeKnowledgeDocument(documentRow.modelData.id)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Actions: re-interpret and draft ────────────────────────────────
+        ColumnLayout {
+            Layout.fillWidth: !pageContext.wide
+            Layout.preferredWidth: pageContext.wide ? 340 : -1
+            Layout.maximumWidth: pageContext.wide ? 360 : -1
+            Layout.alignment: Qt.AlignTop
+            spacing: KTheme.gap
+
+            KCard {
+                Layout.fillWidth: true
+                KSectionHeader {
+                    level: 3
+                    title: qsTr("Re-interpret with the context")
+                    description: qsTr("Redoes only the classification of the files already analysed, from their descriptions and transcripts. Files already classified with this context are skipped.")
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    visible: pageContext.catalogDeviceId >= 0
+                    spacing: 2
+                    FieldLabel { text: qsTr("Catalog") }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        font.weight: Font.DemiBold
+                        color: KTheme.text
+                        text: catalogBox.currentText
+                    }
+                }
+                // Why the action is not available yet, in words
+                Explanation {
+                    visible: !reinterpretButton.enabled
+                    color: KTheme.text3
+                    text: !pageContext.hasSavedContext ? qsTr("A saved context is needed first.")
+                          : pageContext.dirty ? qsTr("The changes need to be saved first.")
+                          : qsTr("A catalog is needed first.")
+                }
+                KButton {
+                    id: reinterpretButton
+                    variant: "primary"
+                    icon.name: "view-refresh"
+                    text: qsTr("Re-interpret")
+                    // Same condition as the page action in Main.qml
+                    enabled: pageContext.hasSavedContext && !pageContext.dirty && pageContext.catalogDeviceId >= 0
+                    onClicked: pageContext.openReinterpret()
+                }
+            }
+
+            KCard {
+                Layout.fillWidth: true
+                KSectionHeader {
+                    level: 3
+                    title: qsTr("Propose a draft")
+                    description: qsTr("The AI reads the catalog's folder names and a sample of its descriptions, and proposes terms, categories and names. It fills the empty fields, adds what is missing and saves nothing by itself.")
+                }
+                FieldLabel { text: qsTr("Catalog") }
+                ComboBoxFitted {
+                    id: catalogBox
+                    Accessible.name: qsTr("Catalog")
+                    model: pageContext.catalogs.map(function (c) { return c.name })
+                    onCurrentIndexChanged: pageContext.loadCatalogNotes()
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    KButton {
+                        variant: "secondary"
+                        icon.name: "tools-wizard"
+                        text: qsTr("Draft from the catalog")
+                        enabled: pageContext.catalogDeviceId >= 0 && !pageContext.drafting
+                        onClicked: pageContext.draft()
+                    }
+                    Controls.BusyIndicator {
+                        visible: pageContext.drafting
+                        running: visible
+                        implicitWidth: 32
+                        implicitHeight: 32
+                    }
+                }
+                FieldLabel {
+                    Layout.topMargin: 6
+                    text: qsTr("Notes for this catalog")
+                }
+                Controls.TextArea {
+                    id: catalogNotesField
+                    property bool edited: false
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Notes for this catalog")
+                    wrapMode: TextEdit.Wrap
+                    enabled: pageContext.catalogDeviceId >= 0
+                    onTextChanged: if (activeFocus) { edited = true; pageContext.dirty = true }
+                }
             }
         }
     }
-    RowLayout {
-        Controls.Button {
-            icon.name: "document-open"
-            text: qsTr("Add files")
-            onClicked: documentsDialog.open()
-        }
-        Controls.Button {
-            icon.name: "folder-open"
-            text: qsTr("Add folder")
-            onClicked: documentsFolderDialog.open()
-        }
-    }
+
+    Item { Layout.preferredHeight: KTheme.gap }
+
     Dialogs.FileDialog {
         id: documentsDialog
         fileMode: Dialogs.FileDialog.OpenFiles

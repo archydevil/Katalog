@@ -5,8 +5,19 @@ import QtQuick.Controls   // required for ScrollBar attached property (namespace
 import org.kde.kirigami as Kirigami
 
 // Right panel of the Explore page: file and folder list for the selected folder.
+// Redesign (D34, phase R2, "Browse the archive"): the list is a card on the
+// design system's ground, headed by the folder's name and info tags.
 Item {
     id: root
+
+    // Height of the header's second row: the tags here, the depth controls in
+    // the folder tree, so both lists start at the same height (touch size).
+    readonly property real headerSecondRowHeight: 40
+    function folderName(path) {
+        const p = String(path).replace(/[\/\\]+$/, "")
+        const name = p.substring(Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\")) + 1)
+        return name !== "" ? name : path
+    }
 
     // The row icon follows the icon size the user chose, shared with K2
     // (THM-F7). The row grows with it: smallMedium + largeSpacing is the
@@ -114,476 +125,486 @@ Item {
         appManager1.openFolder(path)
     }
 
-    ColumnLayout {
+    // The list's card, on the page's ground
+    Rectangle {
+        id: filesCard
         anchors.fill: parent
-        spacing: 0
+        anchors.margins: 10
+        color: KTheme.surface
+        border.color: KTheme.line
+        border.width: 1
+        radius: KTheme.radiusCard
 
-        // Header: current folder path + options. Fixed height, matching the
-        // Selection page and the Explore directory tree.
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin:  Kirigami.Units.smallSpacing
-            Layout.rightMargin: Kirigami.Units.smallSpacing
-            Layout.preferredHeight: applicationWindow().headerRowHeight
-            spacing: Kirigami.Units.smallSpacing
+        ColumnLayout {
+            anchors.fill: parent
+            // Inside the rounded corners: the rows never cover the card's border
+            anchors.margins: 6
+            spacing: 0
 
-            Kirigami.Icon {
-                source: "folder"
-                implicitWidth:  Kirigami.Units.iconSizes.small
-                implicitHeight: Kirigami.Units.iconSizes.small
-            }
-            // Path and options share the row: each starts from its natural
-            // width and both give way as the window narrows.
-            Controls.Label {
-                text: root.currentFolderPath !== "" ? root.currentFolderPath : qsTr("No folder selected")
-                elide: Text.ElideLeft
+            // Header: the folder's name + options. Fixed height, matching the
+            // Explore directory tree's card beside it.
+            RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredWidth: implicitWidth
-                font.italic: true
-                color: Kirigami.Theme.disabledTextColor
-            }
+                Layout.leftMargin:  8
+                Layout.rightMargin: 4
+                Layout.preferredHeight: applicationWindow().headerRowHeight
+                spacing: 8
 
-            // An ActionToolBar rather than a plain row, as on Devices: what no
-            // longer fits moves into the overflow menu instead of being clipped
-            // (EXP-F24). Folding runs from the end, so "Order folders first"
-            // goes first and "Display folders" last. The two options keep their
-            // tick boxes in the row; in the menu they are checkable entries.
-            Kirigami.ActionToolBar {
-                Layout.fillWidth: true
-                Layout.preferredWidth: maximumContentWidth
-                alignment: Qt.AlignRight
-                background: null
-
-                actions: [
-                    Kirigami.Action {
-                        id: showFoldersAction
-                        text: qsTr("Display folders")
-                        checkable: true
-                        checked: root.showFolders
-                        displayComponent: Controls.CheckBox {
-                            text: showFoldersAction.text
-                            checked: showFoldersAction.checked
-                            onToggled: showFoldersAction.trigger()
-                        }
-                        onTriggered: {
-                            root.showFolders = checked
-                            if (!checked)
-                                root.showSubFolders = false
-                            root.loadEntries()
-                            checked = Qt.binding(() => root.showFolders)
-                        }
-                    },
-                    Kirigami.Action {
-                        id: showSubFoldersAction
-                        text: qsTr("and all sub-folders")
-                        checkable: true
-                        checked: root.showSubFolders
-                        enabled: root.showFolders
-                        displayComponent: Controls.CheckBox {
-                            text: showSubFoldersAction.text
-                            checked: showSubFoldersAction.checked
-                            enabled: showSubFoldersAction.enabled
-                            onToggled: showSubFoldersAction.trigger()
-                        }
-                        onTriggered: {
-                            root.showSubFolders = checked
-                            root.loadEntries()
-                            checked = Qt.binding(() => root.showSubFolders)
-                        }
-                    },
-                    Kirigami.Action {
-                        text: qsTr("Order folders first")
-                        icon.name: "view-sort"
-                        enabled: root.showFolders
-                        onTriggered: {
-                            root.sortColumn    = -1
-                            root.sortAscending = true
-                            appManager1.sortExplore(6, 0)   // folders-first key, K2's index (EXP-F18)
-                        }
-                    }
-                ]
-            }
-        }
-
-        Kirigami.Separator { Layout.fillWidth: true }
-
-        // Files count and total size row. A Flow of two label/value groups:
-        // when both do not fit, the total size moves to a second line rather
-        // than being clipped. On one line it keeps the header row height, so
-        // it still lines up with the directory tree's second row.
-        Flow {
-            Layout.fillWidth: true
-            Layout.leftMargin:   Kirigami.Units.smallSpacing
-            Layout.rightMargin:  Kirigami.Units.smallSpacing
-
-            // The gap between the groups is the first group's right padding, not
-            // the Flow spacing, which would also open a gap between wrapped lines.
-            Row {
-                height: applicationWindow().headerRowHeight
-                spacing: Kirigami.Units.smallSpacing
-                rightPadding: Kirigami.Units.gridUnit
-                Controls.Label { text: qsTr("Number of Files"); anchors.verticalCenter: parent.verticalCenter }
-                Controls.Label {
-                    text: root.folderFileCount.toLocaleString(Qt.locale(), "f", 0)
-                    font.bold: true
-                    anchors.verticalCenter: parent.verticalCenter
+                Kirigami.Icon {
+                    source: "folder"
+                    implicitWidth:  22
+                    implicitHeight: 22
                 }
-            }
-            Row {
-                height: applicationWindow().headerRowHeight
-                spacing: Kirigami.Units.smallSpacing
-                Controls.Label { text: qsTr("Total Size"); anchors.verticalCenter: parent.verticalCenter }
+                // Name and options share the row: each starts from its natural
+                // width and both give way as the window narrows.
                 Controls.Label {
-                    text: appManager1.formatDataSize(root.folderTotalSize) || "0"
-                    font.bold: true
-                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.currentFolderPath !== "" ? root.folderName(root.currentFolderPath) : qsTr("No folder selected")
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: implicitWidth
+                    color: root.currentFolderPath !== "" ? KTheme.text : KTheme.text3
+                    font.weight: Font.Bold
+                    font.pixelSize: KTheme.titleCard + 1
+                    Accessible.role: Accessible.Heading
                 }
-            }
-        }
 
-        Kirigami.Separator { Layout.fillWidth: true }
+                // An ActionToolBar rather than a plain row, as on Devices: what no
+                // longer fits moves into the overflow menu instead of being clipped
+                // (EXP-F24). Folding runs from the end, so "Order folders first"
+                // goes first and "Display folders" last. The two options keep their
+                // tick boxes in the row; in the menu they are checkable entries.
+                Kirigami.ActionToolBar {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: maximumContentWidth
+                    alignment: Qt.AlignRight
+                    background: null
 
-        // ── Column headers + Table ────────────────────────────────────────
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-
-            Controls.HorizontalHeaderView {
-                id: exploreHeaderView
-                anchors { top: parent.top; left: parent.left; right: parent.right }
-                syncView: exploreTableView
-                clip: true
-                implicitHeight: 34
-                resizableColumns: true
-
-                delegate: Rectangle {
-                    required property int    column
-                    required property string display
-                    color: Kirigami.Theme.backgroundColor
-                    implicitHeight: exploreHeaderView.implicitHeight
-                    // Full, unelided width (6 + label + 2 + room for the sort
-                    // mark + 4), read by the double-click fit (CDT-F4).
-                    implicitWidth: 12 + headerLabel.implicitWidth + Kirigami.Units.gridUnit
-
-                    RowLayout {
-                        anchors {
-                            left: parent.left; right: sortIndicator.left
-                            verticalCenter: parent.verticalCenter
-                            leftMargin: 6; rightMargin: 2
-                        }
-                        Controls.Label {
-                            id: headerLabel
-                            Layout.fillWidth: true
-                            text: display
-                            elide: Text.ElideRight
-                            color: Kirigami.Theme.textColor
-                        }
-                    }
-
-                    Controls.Label {
-                        id: sortIndicator
-                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 4 }
-                        text: root.sortColumn === column ? (root.sortAscending ? "▲" : "▼") : ""
-                        color: Kirigami.Theme.textColor
-                    }
-
-                    Rectangle { // Vertical separator
-                        anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
-                        width: 1
-                        color: Kirigami.Theme.separatorColor ?? "transparent"
-                    }
-
-                    TapHandler {
-                        onTapped: function(eventPoint) {
-                            // A divider tap fits a column and never sorts (CDT-C6).
-                            if (applicationWindow().headerTapped(exploreTableView, exploreHeaderView, column,
-                                                                 parent.width, eventPoint.position.x))
-                                return
-                            exploreTableView.selectedRow = -1
-                            if (root.sortColumn === column) {
-                                root.sortAscending = !root.sortAscending
-                            } else {
-                                root.sortColumn    = column
+                    actions: [
+                        Kirigami.Action {
+                            id: showFoldersAction
+                            text: qsTr("Display folders")
+                            checkable: true
+                            checked: root.showFolders
+                            displayComponent: Controls.CheckBox {
+                                text: showFoldersAction.text
+                                checked: showFoldersAction.checked
+                                onToggled: showFoldersAction.trigger()
+                            }
+                            onTriggered: {
+                                root.showFolders = checked
+                                if (!checked)
+                                    root.showSubFolders = false
+                                root.loadEntries()
+                                checked = Qt.binding(() => root.showFolders)
+                            }
+                        },
+                        Kirigami.Action {
+                            id: showSubFoldersAction
+                            text: qsTr("and all sub-folders")
+                            checkable: true
+                            checked: root.showSubFolders
+                            enabled: root.showFolders
+                            displayComponent: Controls.CheckBox {
+                                text: showSubFoldersAction.text
+                                checked: showSubFoldersAction.checked
+                                enabled: showSubFoldersAction.enabled
+                                onToggled: showSubFoldersAction.trigger()
+                            }
+                            onTriggered: {
+                                root.showSubFolders = checked
+                                root.loadEntries()
+                                checked = Qt.binding(() => root.showSubFolders)
+                            }
+                        },
+                        Kirigami.Action {
+                            text: qsTr("Order folders first")
+                            icon.name: "view-sort"
+                            enabled: root.showFolders
+                            onTriggered: {
+                                root.sortColumn    = -1
                                 root.sortAscending = true
+                                appManager1.sortExplore(6, 0)   // folders-first key, K2's index (EXP-F18)
                             }
-                            appManager1.sortExplore(root.sortColumn, root.sortAscending ? 0 : 1)
                         }
-                    }
+                    ]
                 }
             }
 
-            Kirigami.Separator {
-                id: exploreHeaderSep
-                anchors { top: exploreHeaderView.bottom; left: parent.left; right: parent.right }
+            // Files count and total size as info tags, then the folder's path.
+            // The tags keep their text whole; the path gives way, from its start,
+            // as the pane narrows. One row of fixed height, so it lines up with
+            // the directory tree's second row.
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin:  8
+                Layout.rightMargin: 8
+                Layout.preferredHeight: root.headerSecondRowHeight
+                spacing: 6
+                clip: true
+
+                KInfoTag {
+                    text: qsTr("%1 files").arg(root.folderFileCount.toLocaleString(Qt.locale(), "f", 0))
+                }
+                KInfoTag {
+                    text: appManager1.formatDataSize(root.folderTotalSize) || "0"
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 4
+                    text: root.currentFolderPath
+                    elide: Text.ElideLeft
+                    color: KTheme.text3
+                    font.family: KTheme.mono
+                    font.pixelSize: KTheme.note
+                }
             }
 
-            Rectangle { // List background (empty area)
-                anchors.fill: exploreTableView
-                color: applicationWindow().listBackgroundColor
-            }
+            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: KTheme.line }
 
-            TableView {
-                id: exploreTableView
-                anchors { top: exploreHeaderSep.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
-                columnSpacing: 0
-                rowSpacing: 0
-                model: appManager1.exploreSortModel
+            // ── Column headers + Table ────────────────────────────────────────
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
 
-                property int selectedRow: -1
-                onSelectedRowChanged: {
-                    const info = selectedRow >= 0 ? appManager1.exploreRowInfo(selectedRow) : ({})
-                    root.selectedFullPath = info.entryType === "file" ? info.fullPath : ""
-                }
+                Controls.HorizontalHeaderView {
+                    id: exploreHeaderView
+                    anchors { top: parent.top; left: parent.left; right: parent.right }
+                    syncView: exploreTableView
+                    clip: true
+                    implicitHeight: 34
+                    resizableColumns: true
 
-                ScrollBar.vertical:   ScrollBar { policy: ScrollBar.AsNeeded }
-                ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+                    delegate: Rectangle {
+                        required property int    column
+                        required property string display
+                        color: KTheme.surface2
+                        implicitHeight: exploreHeaderView.implicitHeight
+                        // Full, unelided width (6 + label + 2 + room for the sort
+                        // mark + 4), read by the double-click fit (CDT-F4).
+                        implicitWidth: 12 + headerLabel.implicitWidth + Kirigami.Units.gridUnit
 
-                rowHeightProvider: function(row) { return root.rowHeight }
-
-                // Keyboard navigation (CDT-F5–F11), shared in Main.qml. Enter and
-                // the Menu key go through the selected row's own cell.
-                activeFocusOnTab: true
-                Keys.onPressed: function(event) {
-                    // Space shows/hides the Inspector, unless it continues a type-ahead name
-                    if (event.key === Qt.Key_Space && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
-                            && applicationWindow().typeAheadIdle(exploreTableView)) {
-                        root.inspectorToggleRequested()
-                        event.accepted = true
-                        return
-                    }
-                    applicationWindow().tableKeyPressed(exploreTableView, event, {
-                        activate: function(r) {
-                            let cell = exploreTableView.itemAtCell(exploreTableView.leftColumn, r)
-                            if (cell) cell.activate()
-                        },
-                        openMenu: function(r) {
-                            let cell = exploreTableView.itemAtCell(exploreTableView.leftColumn, r)
-                            if (cell) cell.openExploreContextMenu(cell)
-                        },
-                        nameAt: function(r) {
-                            let m = appManager1.exploreSortModel
-                            return m.data(m.index(r, 0), Qt.DisplayRole)
-                        }
-                    })
-                }
-
-                // TableView estimates its contentWidth from the columns loaded so
-                // far, scaled to the full column count - hidden zero-width ones
-                // included - which left a large empty band at the right end of
-                // the scroll range (measured: 2745 for 2170 of real columns).
-                // The real sum is set instead, after every layout pass, so it
-                // follows drags, the double-click fit and shown/hidden columns.
-                function columnsTotalWidth() {
-                    let total = 0
-                    for (let c = 0; c < columns; c++)
-                        total += Math.max(0, exploreTableView.columnWidthProvider(c))
-                    return total
-                }
-                onLayoutChanged: {
-                    contentWidth = columnsTotalWidth()
-                    columnWidthSaveTimer.restart()
-                }
-
-                // Persisted column widths (CDT-F12): saved once a resize settles,
-                // not on every step of a drag.
-                Timer {
-                    id: columnWidthSaveTimer
-                    interval: 500
-                    onTriggered: root.savedColumnWidths =
-                        applicationWindow().savePersistedColumnWidths(exploreTableView, root.persistedColumnKeys,
-                                                                      root.savedColumnWidths)
-                }
-                onColumnsChanged: contentWidth = columnsTotalWidth()
-
-                // A hidden column (default width 0) stays hidden whatever width
-                // Qt's drag-resize gives it: grabbing just right of a divider that
-                // hidden columns share resizes a hidden one (measured), which made
-                // it appear. Other columns: the user's width, else the default.
-                columnWidthProvider: function(column) {
-                    const d = defaultColumnWidth(column)
-                    if (d === 0) return 0
-                    const w = exploreTableView.explicitColumnWidth(column)
-                    return w >= 0 ? w : d
-                }
-
-                function defaultColumnWidth(column) {
-                    // Same index layout as Search results (EXP-C13); the shown
-                    // set mirrors K2's Explore file list (EXP-F16/F17).
-                    let meta = root.showMetadataColumns
-                    switch (column) {
-                        case  0: return root.savedColumnWidths[0] ?? 260  // Name (CDT-F12)
-                        case  1: return 90   // Size
-                        case  2: return 150  // Date
-                        case  3: return 0    // Directory (hidden — every row is in the open folder, as K2)
-                        case  4: return 0    // Catalog Name (not used in Explore)
-                        case  5: return 0    // Catalog ID (not used in Explore)
-                        case  6: return 0    // folders-first sort key (hidden)
-                        case  7: return 0    // Path (hidden)
-                        case  8: return 80   // File Type
-                        case  9: return 140  // MIME Type
-                        case 10: return meta ? 60  : 0  // Width (merged image + video)
-                        case 11: return meta ? 60  : 0  // Height (merged image + video)
-                        case 12: return meta ? 80  : 0  // Duration (merged video + audio)
-                        case 13: return 0    // Video Width  (merged into Width)
-                        case 14: return 0    // Video Height (merged into Height)
-                        case 15: return 0    // Audio Duration (merged into Duration)
-                        case 16: return meta ? 140 : 0  // Artist
-                        case 17: return meta ? 140 : 0  // Album
-                        case 18: return meta ? 140 : 0  // Title
-                        case 19: return 260  // Checksum (SHA256)
-                        case 20: return 130  // Checksum Date
-                    }
-                    return 0
-                }
-
-                delegate: Rectangle {
-                    required property int    row
-                    required property int    column
-                    required property var    display
-                    required property string entryType
-                    required property string fileType
-                    required property string fullPath
-                    required property string folderPath
-                    required property string name
-                    required property string checksumSha256
-                    implicitHeight: root.rowHeight
-                    // Full, unelided content width, read by the double-click fit (CDT-F4).
-                    implicitWidth: cellLabel.x + cellLabel.implicitWidth + 4
-
-                    readonly property string checksum: checksumSha256
-
-                    // Selected row and the alternating pair both follow the
-                    // desktop — see applicationWindow() for the definitions.
-                    // Even rows sit on the desktop's View surface, odd ones on
-                    // the Window background beside it (SpecTheme THM-F1/F2/F3).
-                    color: exploreTableView.selectedRow === row
-                           ? applicationWindow().selectionHighlightColor
-                           : (row % 2 === 0
-                              ? applicationWindow().rowBaseColor
-                              : applicationWindow().rowStripeColor)
-
-                    // Column separator
-                    Rectangle {
-                        visible: column > 0
-                        anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
-                        width: 1
-                        color: Kirigami.Theme.separatorColor ?? Kirigami.Theme.textColor
-                        opacity: applicationWindow().columnSeparatorOpacity
-                    }
-
-                    // File type icon (column 0 only)
-                    Kirigami.Icon {
-                        id: fileTypeIcon
-                        visible: column === 0
-                        anchors {
-                            left: parent.left
-                            verticalCenter: parent.verticalCenter
-                            leftMargin: 6
-                        }
-                        // A preview made by the enrichment runner replaces
-                        // the type icon (fork, MDI-F44); it is read from the
-                        // destination drive, so it shows with the source offline
-                        readonly property string previewUrl:
-                            column === 0 && entryType === "file"
-                            ? appManager1.mdiPreviewUrl(root.catalogId, fullPath, appManager1.mdiRevision) : ""
-                        source: {
-                            if (previewUrl !== "") return previewUrl
-                            if (entryType === "folder") return "folder"
-                            switch (fileType) {
-                                case "audio":  return "audio-x-mpeg"
-                                case "image":  return "image-jpeg"
-                                case "video":  return "video-mp4"
-                                case "text":   return "view-list-text"
-                                case "other":  return "document-open"
-                                default:       return "application-x-zerosize"
+                        RowLayout {
+                            anchors {
+                                left: parent.left; right: sortIndicator.left
+                                verticalCenter: parent.verticalCenter
+                                leftMargin: 6; rightMargin: 2
+                            }
+                            Controls.Label {
+                                id: headerLabel
+                                Layout.fillWidth: true
+                                text: display
+                                elide: Text.ElideRight
+                                color: KTheme.text3
+                                font.pixelSize: KTheme.note
+                                font.weight: Font.DemiBold
                             }
                         }
-                        implicitWidth:  root.rowIconSize
-                        implicitHeight: root.rowIconSize
-                    }
 
-                    Controls.Label {
-                        id: cellLabel
-                        anchors {
-                            left: column === 0 ? fileTypeIcon.right : parent.left
-                            right: parent.right
-                            verticalCenter: parent.verticalCenter
-                            leftMargin:  column === 0 ? 4 : 6
-                            rightMargin: 4
+                        Controls.Label {
+                            id: sortIndicator
+                            anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 4 }
+                            text: root.sortColumn === column ? (root.sortAscending ? "▲" : "▼") : ""
+                            color: KTheme.accentText
+                            font.pixelSize: KTheme.note
                         }
-                        text: {
-                            // Merged metadata columns, as in Search results: the
-                            // primary value is `display`, the secondary is read
-                            // from its sibling column.
-                            let m = appManager1.exploreSortModel
-                            if (column === 10) {   // Width  — image (10) ∥ video (13)
-                                let w = Number(display) || Number(m.data(m.index(row, 13), Qt.DisplayRole))
-                                return w > 0 ? String(w) : ""
-                            }
-                            if (column === 11) {   // Height — image (11) ∥ video (14)
-                                let h = Number(display) || Number(m.data(m.index(row, 14), Qt.DisplayRole))
-                                return h > 0 ? String(h) : ""
-                            }
-                            if (column === 12) {   // Duration — video (12) ∥ audio (15)
-                                let d = Number(display) || Number(m.data(m.index(row, 15), Qt.DisplayRole))
-                                return root.formatDuration(d)
-                            }
-                            if (display === undefined || display === null) return ""
-                            // Folder rows carry their recursive total, so the
-                            // cell is no longer suppressed by entry type
-                            // (EXP-C11); and a folder holding nothing at any
-                            // depth must read as a zero rather than as a blank
-                            // that looks like missing data (EXP-F10). The same
-                            // now applies to an empty file.
-                            if (column === 1) return appManager1.formatDataSizeDelta(Number(display))
-                            return String(display)
+
+                        Rectangle { // Vertical separator
+                            anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
+                            width: 1
+                            color: KTheme.line
                         }
-                        horizontalAlignment: (column === 1 || column === 12) ? Text.AlignRight : Text.AlignLeft
-                        color: exploreTableView.selectedRow === row
-                               ? Kirigami.Theme.highlightedTextColor
-                               : (column === 0 ? Kirigami.Theme.textColor : Kirigami.Theme.disabledTextColor)
-                        elide: column === 3 ? Text.ElideLeft : Text.ElideRight
-                        clip: true
+
+                        TapHandler {
+                            onTapped: function(eventPoint) {
+                                // A divider tap fits a column and never sorts (CDT-C6).
+                                if (applicationWindow().headerTapped(exploreTableView, exploreHeaderView, column,
+                                                                     parent.width, eventPoint.position.x))
+                                    return
+                                exploreTableView.selectedRow = -1
+                                if (root.sortColumn === column) {
+                                    root.sortAscending = !root.sortAscending
+                                } else {
+                                    root.sortColumn    = column
+                                    root.sortAscending = true
+                                }
+                                appManager1.sortExplore(root.sortColumn, root.sortAscending ? 0 : 1)
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: exploreHeaderSep
+                    anchors { top: exploreHeaderView.bottom; left: parent.left; right: parent.right }
+                    height: 1
+                    color: KTheme.line
+                }
+
+                Rectangle { // List background (empty area)
+                    anchors.fill: exploreTableView
+                    color: KTheme.surface
+                }
+
+                TableView {
+                    id: exploreTableView
+                    anchors { top: exploreHeaderSep.bottom; left: parent.left; right: parent.right; bottom: parent.bottom }
+                    columnSpacing: 0
+                    rowSpacing: 0
+                    model: appManager1.exploreSortModel
+
+                    property int selectedRow: -1
+                    onSelectedRowChanged: {
+                        const info = selectedRow >= 0 ? appManager1.exploreRowInfo(selectedRow) : ({})
+                        root.selectedFullPath = info.entryType === "file" ? info.fullPath : ""
                     }
 
-                    // The row's left-click action and context menu, on the cell
-                    // so the mouse and the keyboard share them (CDT-F7/F8, CDT-C8).
-                    function activate() {
-                        if (entryType === "folder")
-                            root.folderNavigated(fullPath)
-                        if (entryType === "file")
-                            root.openEntryFile(fullPath)
+                    ScrollBar.vertical:   ScrollBar { policy: ScrollBar.AsNeeded }
+                    ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                    rowHeightProvider: function(row) { return root.rowHeight }
+
+                    // Keyboard navigation (CDT-F5–F11), shared in Main.qml. Enter and
+                    // the Menu key go through the selected row's own cell.
+                    activeFocusOnTab: true
+                    Keys.onPressed: function(event) {
+                        // Space shows/hides the Inspector, unless it continues a type-ahead name
+                        if (event.key === Qt.Key_Space && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))
+                                && applicationWindow().typeAheadIdle(exploreTableView)) {
+                            root.inspectorToggleRequested()
+                            event.accepted = true
+                            return
+                        }
+                        applicationWindow().tableKeyPressed(exploreTableView, event, {
+                            activate: function(r) {
+                                let cell = exploreTableView.itemAtCell(exploreTableView.leftColumn, r)
+                                if (cell) cell.activate()
+                            },
+                            openMenu: function(r) {
+                                let cell = exploreTableView.itemAtCell(exploreTableView.leftColumn, r)
+                                if (cell) cell.openExploreContextMenu(cell)
+                            },
+                            nameAt: function(r) {
+                                let m = appManager1.exploreSortModel
+                                return m.data(m.index(r, 0), Qt.DisplayRole)
+                            }
+                        })
                     }
 
-                    // anchorItem null: opens at the pointer; otherwise under that cell.
-                    function openExploreContextMenu(anchorItem) {
-                        root._activeFilePath   = fullPath
-                        root._activeFileName   = name
-                        root._activeFolderPath = folderPath
-                        root._activeChecksum   = checksum
-                        root._activeEntryType  = entryType
-                        if (anchorItem)
-                            exploreContextMenu.popup(anchorItem, 0, anchorItem.height)
-                        else
-                            exploreContextMenu.popup()
+                    // TableView estimates its contentWidth from the columns loaded so
+                    // far, scaled to the full column count - hidden zero-width ones
+                    // included - which left a large empty band at the right end of
+                    // the scroll range (measured: 2745 for 2170 of real columns).
+                    // The real sum is set instead, after every layout pass, so it
+                    // follows drags, the double-click fit and shown/hidden columns.
+                    function columnsTotalWidth() {
+                        let total = 0
+                        for (let c = 0; c < columns; c++)
+                            total += Math.max(0, exploreTableView.columnWidthProvider(c))
+                        return total
+                    }
+                    onLayoutChanged: {
+                        contentWidth = columnsTotalWidth()
+                        columnWidthSaveTimer.restart()
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onClicked: function(mouse) {
-                            exploreTableView.selectedRow = row
-                            exploreTableView.forceActiveFocus()   // keyboard follows the click (CDT-F5)
-                            if (mouse.button === Qt.LeftButton)
-                                parent.activate()
-                            if (mouse.button === Qt.RightButton)
+                    // Persisted column widths (CDT-F12): saved once a resize settles,
+                    // not on every step of a drag.
+                    Timer {
+                        id: columnWidthSaveTimer
+                        interval: 500
+                        onTriggered: root.savedColumnWidths =
+                            applicationWindow().savePersistedColumnWidths(exploreTableView, root.persistedColumnKeys,
+                                                                          root.savedColumnWidths)
+                    }
+                    onColumnsChanged: contentWidth = columnsTotalWidth()
+
+                    // A hidden column (default width 0) stays hidden whatever width
+                    // Qt's drag-resize gives it: grabbing just right of a divider that
+                    // hidden columns share resizes a hidden one (measured), which made
+                    // it appear. Other columns: the user's width, else the default.
+                    columnWidthProvider: function(column) {
+                        const d = defaultColumnWidth(column)
+                        if (d === 0) return 0
+                        const w = exploreTableView.explicitColumnWidth(column)
+                        return w >= 0 ? w : d
+                    }
+
+                    function defaultColumnWidth(column) {
+                        // Same index layout as Search results (EXP-C13); the shown
+                        // set mirrors K2's Explore file list (EXP-F16/F17).
+                        let meta = root.showMetadataColumns
+                        switch (column) {
+                            case  0: return root.savedColumnWidths[0] ?? 260  // Name (CDT-F12)
+                            case  1: return 90   // Size
+                            case  2: return 150  // Date
+                            case  3: return 0    // Directory (hidden — every row is in the open folder, as K2)
+                            case  4: return 0    // Catalog Name (not used in Explore)
+                            case  5: return 0    // Catalog ID (not used in Explore)
+                            case  6: return 0    // folders-first sort key (hidden)
+                            case  7: return 0    // Path (hidden)
+                            case  8: return 80   // File Type
+                            case  9: return 140  // MIME Type
+                            case 10: return meta ? 60  : 0  // Width (merged image + video)
+                            case 11: return meta ? 60  : 0  // Height (merged image + video)
+                            case 12: return meta ? 80  : 0  // Duration (merged video + audio)
+                            case 13: return 0    // Video Width  (merged into Width)
+                            case 14: return 0    // Video Height (merged into Height)
+                            case 15: return 0    // Audio Duration (merged into Duration)
+                            case 16: return meta ? 140 : 0  // Artist
+                            case 17: return meta ? 140 : 0  // Album
+                            case 18: return meta ? 140 : 0  // Title
+                            case 19: return 260  // Checksum (SHA256)
+                            case 20: return 130  // Checksum Date
+                        }
+                        return 0
+                    }
+
+                    delegate: Rectangle {
+                        required property int    row
+                        required property int    column
+                        required property var    display
+                        required property string entryType
+                        required property string fileType
+                        required property string fullPath
+                        required property string folderPath
+                        required property string name
+                        required property string checksumSha256
+                        implicitHeight: root.rowHeight
+                        // Full, unelided content width, read by the double-click fit (CDT-F4).
+                        implicitWidth: cellLabel.x + cellLabel.implicitWidth + 4
+
+                        readonly property string checksum: checksumSha256
+
+                        // Design system colours (D34, MDI-F115): the selected row
+                        // in the accent's soft tone, the others alternating the
+                        // card's two surfaces.
+                        readonly property bool selected: exploreTableView.selectedRow === row
+                        color: selected ? KTheme.accentSoft
+                                        : (row % 2 === 0 ? KTheme.surface : KTheme.surface2)
+
+                        // Column separator, faint: it guides the eye along a row
+                        Rectangle {
+                            visible: column > 0
+                            anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
+                            width: 1
+                            color: KTheme.line
+                            opacity: 0.6
+                        }
+
+                        // File type icon (column 0 only)
+                        Kirigami.Icon {
+                            id: fileTypeIcon
+                            visible: column === 0
+                            anchors {
+                                left: parent.left
+                                verticalCenter: parent.verticalCenter
+                                leftMargin: 6
+                            }
+                            // A preview made by the enrichment runner replaces
+                            // the type icon (fork, MDI-F44); it is read from the
+                            // destination drive, so it shows with the source offline
+                            readonly property string previewUrl:
+                                column === 0 && entryType === "file"
+                                ? appManager1.mdiPreviewUrl(root.catalogId, fullPath, appManager1.mdiRevision) : ""
+                            source: {
+                                if (previewUrl !== "") return previewUrl
+                                if (entryType === "folder") return "folder"
+                                switch (fileType) {
+                                    case "audio":  return "audio-x-mpeg"
+                                    case "image":  return "image-jpeg"
+                                    case "video":  return "video-mp4"
+                                    case "text":   return "view-list-text"
+                                    case "other":  return "document-open"
+                                    default:       return "application-x-zerosize"
+                                }
+                            }
+                            implicitWidth:  root.rowIconSize
+                            implicitHeight: root.rowIconSize
+                        }
+
+                        Controls.Label {
+                            id: cellLabel
+                            anchors {
+                                left: column === 0 ? fileTypeIcon.right : parent.left
+                                right: parent.right
+                                verticalCenter: parent.verticalCenter
+                                leftMargin:  column === 0 ? 4 : 6
+                                rightMargin: 4
+                            }
+                            text: {
+                                // Merged metadata columns, as in Search results: the
+                                // primary value is `display`, the secondary is read
+                                // from its sibling column.
+                                let m = appManager1.exploreSortModel
+                                if (column === 10) {   // Width  — image (10) ∥ video (13)
+                                    let w = Number(display) || Number(m.data(m.index(row, 13), Qt.DisplayRole))
+                                    return w > 0 ? String(w) : ""
+                                }
+                                if (column === 11) {   // Height — image (11) ∥ video (14)
+                                    let h = Number(display) || Number(m.data(m.index(row, 14), Qt.DisplayRole))
+                                    return h > 0 ? String(h) : ""
+                                }
+                                if (column === 12) {   // Duration — video (12) ∥ audio (15)
+                                    let d = Number(display) || Number(m.data(m.index(row, 15), Qt.DisplayRole))
+                                    return root.formatDuration(d)
+                                }
+                                if (display === undefined || display === null) return ""
+                                // Folder rows carry their recursive total, so the
+                                // cell is no longer suppressed by entry type
+                                // (EXP-C11); and a folder holding nothing at any
+                                // depth must read as a zero rather than as a blank
+                                // that looks like missing data (EXP-F10). The same
+                                // now applies to an empty file.
+                                if (column === 1) return appManager1.formatDataSizeDelta(Number(display))
+                                return String(display)
+                            }
+                            horizontalAlignment: (column === 1 || column === 12) ? Text.AlignRight : Text.AlignLeft
+                            color: parent.selected ? KTheme.accentText
+                                                   : (column === 0 ? KTheme.text : KTheme.text2)
+                            font.pixelSize: KTheme.body
+                            elide: column === 3 ? Text.ElideLeft : Text.ElideRight
+                            clip: true
+                        }
+
+                        // The row's left-click action and context menu, on the cell
+                        // so the mouse and the keyboard share them (CDT-F7/F8, CDT-C8).
+                        function activate() {
+                            if (entryType === "folder")
+                                root.folderNavigated(fullPath)
+                            if (entryType === "file")
+                                root.openEntryFile(fullPath)
+                        }
+
+                        // anchorItem null: opens at the pointer; otherwise under that cell.
+                        function openExploreContextMenu(anchorItem) {
+                            root._activeFilePath   = fullPath
+                            root._activeFileName   = name
+                            root._activeFolderPath = folderPath
+                            root._activeChecksum   = checksum
+                            root._activeEntryType  = entryType
+                            if (anchorItem)
+                                exploreContextMenu.popup(anchorItem, 0, anchorItem.height)
+                            else
+                                exploreContextMenu.popup()
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: function(mouse) {
+                                exploreTableView.selectedRow = row
+                                exploreTableView.forceActiveFocus()   // keyboard follows the click (CDT-F5)
+                                if (mouse.button === Qt.LeftButton)
+                                    parent.activate()
+                                if (mouse.button === Qt.RightButton)
+                                    parent.openExploreContextMenu(null)
+                            }
+                            onPressAndHold: {
+                                exploreTableView.selectedRow = row
+                                exploreTableView.forceActiveFocus()
                                 parent.openExploreContextMenu(null)
-                        }
-                        onPressAndHold: {
-                            exploreTableView.selectedRow = row
-                            exploreTableView.forceActiveFocus()
-                            parent.openExploreContextMenu(null)
+                            }
                         }
                     }
                 }
@@ -873,7 +894,7 @@ Item {
                 text: exploreChecksumResultDialog.algorithm + ": " + exploreChecksumResultDialog.checksumText
                 wrapMode: Text.WrapAnywhere
                 Layout.fillWidth: true
-                font.family: "monospace"
+                font.family: KTheme.mono
             }
             Controls.Label {
                 text: exploreChecksumResultDialog.wasSaved
@@ -882,7 +903,8 @@ Item {
                 opacity: 0.7
                 visible: exploreChecksumResultDialog.algorithm !== "MD5"
             }
-            Controls.Button {
+            KButton {
+                variant: "secondary"
                 text: qsTr("Copy to Clipboard")
                 icon.name: "edit-copy"
                 onClicked: {
@@ -939,14 +961,14 @@ Item {
                 text: exploreChecksumMismatchDialog.expectedChecksum
                 wrapMode: Text.WrapAnywhere
                 Layout.fillWidth: true
-                font.family: "monospace"
+                font.family: KTheme.mono
             }
             Controls.Label { text: qsTr("Actual:"); opacity: 0.7 }
             Controls.Label {
                 text: exploreChecksumMismatchDialog.actualChecksum
                 wrapMode: Text.WrapAnywhere
                 Layout.fillWidth: true
-                font.family: "monospace"
+                font.family: KTheme.mono
             }
         }
     }

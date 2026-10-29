@@ -9,6 +9,8 @@ import org.kde.kirigami as Kirigami
 // next column; selecting a file shows it in the Inspector. Keyboard: Up/Down
 // move, Right enters a folder, Left goes back a column, Space toggles the
 // Inspector, Enter opens the file when its disk is online.
+// Redesign (D34, phase R2): the columns sit in a card on the design system's
+// ground; rows are marked like the sidebar's entries, with larger previews.
 Item {
     id: browser
 
@@ -20,6 +22,8 @@ Item {
     signal inspectorToggleRequested()
 
     readonly property real columnWidth: Kirigami.Units.gridUnit * 15
+    readonly property real rowHeight: 40      // touch size, room for the preview
+    readonly property real thumbSize: 28
 
     onRootPathChanged: reset()
     function reset() {
@@ -47,14 +51,29 @@ Item {
         return list
     }
 
+    // The columns' card, on the page's ground
     Rectangle {
+        id: columnsCard
         anchors.fill: parent
-        color: applicationWindow().listBackgroundColor
+        anchors.margins: 10
+        color: KTheme.surface
+        border.color: KTheme.line
+        border.width: 1
+        radius: KTheme.radiusCard
+    }
+
+    Controls.Label {
+        anchors.centerIn: columnsCard
+        visible: browser.paths.length === 0
+        text: qsTr("No folder selected")
+        color: KTheme.text3
+        font.pixelSize: KTheme.body
     }
 
     ListView {
         id: columnsView
-        anchors.fill: parent
+        // Inside the card's rounded corners
+        anchors { fill: columnsCard; margins: 6 }
         orientation: ListView.Horizontal
         clip: true
         model: browser.paths
@@ -72,8 +91,11 @@ Item {
 
             ListView {
                 id: list
-                anchors { fill: parent; rightMargin: 1 }
+                anchors { fill: parent; leftMargin: 4; rightMargin: 5 }
                 clip: true
+                spacing: 2
+                topMargin: 4
+                bottomMargin: 4
                 model: column.entries
                 currentIndex: column.current
                 focus: browser.focusedColumn === column.index
@@ -125,17 +147,32 @@ Item {
                     required property int index
                     required property var modelData
                     width: ListView.view.width
+                    implicitHeight: browser.rowHeight
+                    topPadding: 0
+                    bottomPadding: 0
+                    leftPadding: 8
+                    rightPadding: 8
+                    hoverEnabled: true
                     highlighted: column.current === index
+                    // The column holding the keyboard marks its row in the
+                    // accent's tone, the others in a neutral one
+                    readonly property bool active: highlighted && browser.focusedColumn === column.index
+                    background: Rectangle {
+                        radius: KTheme.radiusItem
+                        color: row.active ? KTheme.accentSoft
+                             : row.highlighted ? KTheme.neutralSoft
+                             : row.hovered ? KTheme.hover : "transparent"
+                    }
                     onClicked: {
                         browser.focusedColumn = column.index
                         list.forceActiveFocus()
                         list.choose(index)
                     }
                     contentItem: RowLayout {
-                        spacing: Kirigami.Units.smallSpacing
+                        spacing: 10
                         // The saved thumbnail when there is one, else the type icon
                         Item {
-                            implicitWidth: Kirigami.Units.iconSizes.smallMedium
+                            implicitWidth: browser.thumbSize
                             implicitHeight: implicitWidth
                             readonly property string thumb: row.modelData.entryType === "file"
                                 ? appManager1.mdiPreviewUrl(browser.catalogId, row.modelData.fullPath, appManager1.mdiRevision) : ""
@@ -148,6 +185,7 @@ Item {
                             }
                             Kirigami.Icon {
                                 anchors.fill: parent
+                                anchors.margins: 3
                                 visible: parent.thumb === ""
                                 source: {
                                     if (row.modelData.entryType === "folder") return "folder"
@@ -165,19 +203,25 @@ Item {
                             Layout.fillWidth: true
                             text: row.modelData.name
                             elide: Text.ElideMiddle
+                            color: row.active ? KTheme.accentText : KTheme.text
+                            font.pixelSize: KTheme.body
+                            font.weight: row.highlighted ? Font.DemiBold : Font.Normal
                         }
                         Kirigami.Icon {
                             visible: row.modelData.entryType === "folder"
                             source: "go-next-symbolic"
+                            isMask: true
+                            color: row.active ? KTheme.accentText : KTheme.text3
                             implicitWidth: Kirigami.Units.iconSizes.small
                             implicitHeight: implicitWidth
-                            opacity: 0.6
                         }
                     }
                 }
             }
-            Kirigami.Separator {
+            Rectangle {
                 anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
+                width: 1
+                color: KTheme.line
             }
         }
     }

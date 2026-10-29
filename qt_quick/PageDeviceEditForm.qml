@@ -4,9 +4,32 @@ import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import QtQuick.Dialogs
 
+// The device editor (fork, D34, phase R7): the device's settings in cards of
+// the design system, each with a title and a line saying what it holds. The
+// validation messages stay at the top of the form (SpecValidationRules).
 ColumnLayout {
     id: root
-    spacing: 0
+    spacing: KTheme.gap
+
+    // Labels sit above their fields when the page is narrow
+    readonly property bool narrow: width < 560
+
+    function typeLabel(type) {
+        return type === "Virtual" ? qsTr("Virtual")
+             : type === "Storage" ? qsTr("Storage")
+             : type === "Catalog" ? qsTr("Catalog")
+             : type
+    }
+
+    component FieldLabel: Controls.Label {
+        Layout.preferredWidth: root.narrow ? -1 : 180
+        Layout.fillWidth: root.narrow
+        Layout.alignment: Qt.AlignVCenter
+        wrapMode: Text.WordWrap
+        color: KTheme.text2
+        font.pixelSize: KTheme.body
+        font.weight: Font.Medium
+    }
 
     property int    deviceId:   0
     property string deviceType: ""
@@ -236,7 +259,6 @@ ColumnLayout {
     Kirigami.InlineMessage {
         id: saveErrorMessage
         Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.gridUnit
         type: Kirigami.MessageType.Warning
         showCloseButton: true
         visible: false
@@ -245,7 +267,6 @@ ColumnLayout {
     Kirigami.InlineMessage {
         id: storageUserIdWarning
         Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.gridUnit
         type: Kirigami.MessageType.Warning
         showCloseButton: true
         visible: false
@@ -258,389 +279,438 @@ ColumnLayout {
     }
 
     // ═══ Main Form ═════════════════════════════════════════════════════════════
-    GridLayout {
+
+    // ── Card: Device ──────────────────────────────────────────────────────────
+    KCard {
         Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.gridUnit
-        columns: 2
-        columnSpacing: Kirigami.Units.largeSpacing
-        rowSpacing: Kirigami.Units.smallSpacing
 
-        // ── Section: Identity ─────────────────────────────────────────────────
-        RowLayout {
-            Layout.columnSpan: 2
-            Layout.fillWidth: true
-            Layout.topMargin: Kirigami.Units.smallSpacing
-            spacing: Kirigami.Units.largeSpacing
-            Controls.Label { text: qsTr("Device"); color: applicationWindow().titleColor }
-            Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-        }
-
-        Controls.Label { text: qsTr("Type"); opacity: 0.7 }
-        Controls.Label { text: root.deviceType; font.bold: true }
-
-        Controls.Label { text: qsTr("Name"); opacity: 0.7 }
-        Controls.TextField {
-            id: edit_lineEdit_Name
-            Layout.fillWidth: true
-            onTextEdited: saveErrorMessage.visible = false
-        }
-
-        Controls.Label { text: qsTr("Parent device"); opacity: root.deviceId === 1 ? 0.35 : 0.7 }
-        DeviceTreeComboBox {
-            id: edit_storageComboBox
-            // Only a Physical-group catalog must be under a Storage. A Virtual-group
-            // catalog is parented to a Virtual device, so storageOnly must stay off
-            // there or the Virtual parent gets rejected and cleared to root on save.
-            storageOnly: root.deviceType === "Catalog" && root._groupId === 0
-            hideCatalogs: true
-            hideStorages: root.deviceType === "Storage"
-            // The editor's parent must reflect only the loaded device + explicit
-            // dropdown picks — never silently follow the Selection page.
-            followAppSelection: false
-            // Device id 1 is the reserved " Physical Group" root — it is the
-            // structural top of the Physical hierarchy and must never be re-parented.
-            enabled: root.deviceId !== 1
-            Layout.fillWidth: true
-        }
-
-        // A free-text note available on every device type. Storage keeps its own
-        // Comment 1/2/3 in addition to this one (SpecDeviceComment.md DCM-F5).
-        Controls.Label { text: qsTr("Comment"); opacity: 0.7 }
-        Controls.TextField {
-            id: edit_lineEdit_Comment
-            Layout.fillWidth: true
-        }
-
-        // ── Section: Path (Storage + Catalog) ─────────────────────────────────
-        RowLayout {
-            Layout.columnSpan: 2
-            Layout.fillWidth: true
-            Layout.topMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
-            visible: root.deviceType !== "Virtual"
-            spacing: Kirigami.Units.largeSpacing
-            Controls.Label { text: qsTr("Location"); color: applicationWindow().titleColor }
-            Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-        }
-
-        Controls.Label { text: qsTr("Source path"); opacity: 0.7; visible: root.deviceType !== "Virtual" }
         RowLayout {
             Layout.fillWidth: true
-            visible: root.deviceType !== "Virtual"
+            spacing: 12
+            KSectionHeader {
+                level: 3
+                title: qsTr("Device")
+                description: qsTr("Its name, its place in the tree and a note of your own.")
+            }
+            KInfoTag {
+                Layout.alignment: Qt.AlignTop
+                visible: root.deviceType !== ""
+                text: root.typeLabel(root.deviceType)
+                tone: root.deviceType === "Catalog" ? "info" : "neutral"
+            }
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: root.narrow ? 1 : 2
+            columnSpacing: KTheme.gap
+            rowSpacing: 10
+
+            FieldLabel { text: qsTr("Name") }
             Controls.TextField {
-                id: edit_lineEdit_Path
+                id: edit_lineEdit_Name
                 Layout.fillWidth: true
                 onTextEdited: saveErrorMessage.visible = false
-                onEditingFinished: text = appManager1.normalizeSourcePath(text)
             }
-            IconButton {
-                icon.name: "folder-open"
-                text: qsTr("Select the path")
-                onClicked: {
-                    var p = edit_lineEdit_Path.text.trim()
-                    applicationWindow().openFreshDialog(editPathDialogComponent, p)
-                }
-            }
-        }
 
-        // ── Section: Catalog options ───────────────────────────────────────────
-        RowLayout {
-            Layout.columnSpan: 2
-            Layout.fillWidth: true
-            Layout.topMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
-            visible: root.deviceType === "Catalog"
-            spacing: Kirigami.Units.largeSpacing
-            Controls.Label { text: qsTr("Content options"); color: applicationWindow().titleColor }
-            Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-        }
-
-        Controls.Label { text: qsTr("File type"); opacity: 0.7; visible: root.deviceType === "Catalog" }
-        ComboBoxFitted {
-            id: edit_comboBox_FileType
-            Layout.fillWidth: true
-            Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
-            rowLeadingWidth: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing * 2  // row icon
-            visible: root.deviceType === "Catalog"
-            textRole: "text"
-            valueRole: "value"
-            displayText: ""
-            model: [
-                { text: qsTr("All"),   value: "All",   iconName: "folder"                 },
-                { text: qsTr("Audio"), value: "Audio", iconName: "audio-x-mpeg"            },
-                { text: qsTr("Image"), value: "Image", iconName: "image-jpeg"              },
-                { text: qsTr("Text"),  value: "Text",  iconName: "view-list-text"          },
-                { text: qsTr("Video"), value: "Video", iconName: "video-mp4"               },
-                { text: qsTr("Other"), value: "Other", iconName: "document-open"           },
-                { text: qsTr("None"),  value: "None",  iconName: "application-x-zerosize" }
-            ]
-            currentIndex: 0
-            delegate: Controls.ItemDelegate {
-                width: ListView.view ? ListView.view.width : edit_comboBox_FileType.width  // fills the list, which may be wider than the box
-                text: modelData.text
-                icon.name: modelData.iconName
-                highlighted: edit_comboBox_FileType.highlightedIndex === index
-            }
-            contentItem: RowLayout {
-                function positionToRectangle(pos) { return Qt.rect(0, 0, 0, 0) }
-                property int selectionStart: 0
-                spacing: Kirigami.Units.smallSpacing
-                Item { width: Kirigami.Units.smallSpacing }
-                Kirigami.Icon {
-                    source: edit_comboBox_FileType.currentIndex >= 0
-                            ? edit_comboBox_FileType.model[edit_comboBox_FileType.currentIndex].iconName : ""
-                    implicitWidth:  Kirigami.Units.iconSizes.small
-                    implicitHeight: Kirigami.Units.iconSizes.small
-                }
-                Controls.Label {
-                    text: edit_comboBox_FileType.currentIndex >= 0
-                          ? edit_comboBox_FileType.model[edit_comboBox_FileType.currentIndex].text : ""
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
-        }
-
-        Controls.Label { text: qsTr("Include subdirectories"); opacity: 0.7; visible: root.deviceType === "Catalog" }
-        Controls.CheckBox {
-            id: edit_checkBox_IncludeSubDir
-            checked: true
-            visible: root.deviceType === "Catalog"
-        }
-
-        Controls.Label { text: qsTr("Include hidden files"); opacity: 0.7; visible: root.deviceType === "Catalog" }
-        ComboBoxFitted {
-            id: edit_comboBox_IncludeHidden
-            Layout.fillWidth: true
-            Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
-            visible: root.deviceType === "Catalog"
-            model: [ qsTr("None"), qsTr("All") ]
-            currentIndex: 0
-        }
-
-        Controls.Label { text: qsTr("Include metadata"); opacity: 0.7; visible: root.deviceType === "Catalog" }
-        ComboBoxFitted {
-            id: edit_comboBox_Metadata
-            Layout.fillWidth: true
-            Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
-            visible: root.deviceType === "Catalog"
-            textRole: "text"
-            valueRole: "value"
-            model: [
-                { text: qsTr("None"),           value: "None"          },
-                { text: qsTr("Media Basic"),     value: "MediaBasic"    },
-                { text: qsTr("Media Extended"),  value: "MediaExtended" },
-                { text: qsTr("Full Extended"),   value: "FullExtended"  }
-            ]
-            currentIndex: 0
-        }
-
-        Controls.Label { text: qsTr("Include checksum"); opacity: 0.7; visible: root.deviceType === "Catalog" }
-        ComboBoxFitted {
-            id: edit_comboBox_Checksum
-            Layout.fillWidth: true
-            Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
-            visible: root.deviceType === "Catalog"
-            textRole: "text"
-            valueRole: "value"
-            model: [
-                { text: qsTr("None"),  value: "None"   },
-                { text: "SHA-256",     value: "SHA256" }
-            ]
-            currentIndex: 0
-        }
-
-        // ── Exclude folders or files (Catalog) — sub-title within Content options ─
-        Controls.Label {
-            text: qsTr("Exclude folders or files")
-            Layout.columnSpan: 2
-            Layout.topMargin: Kirigami.Units.smallSpacing
-            visible: root.deviceType === "Catalog"
-        }
-
-        Controls.Label { text: qsTr("Path or name to exclude"); opacity: 0.7; visible: root.deviceType === "Catalog" }
-        RowLayout {
-            Layout.fillWidth: true
-            visible: root.deviceType === "Catalog"
-            Controls.TextField {
-                id: edit_lineEdit_NewExcludeFolder
+            FieldLabel { text: qsTr("Parent device"); opacity: root.deviceId === 1 ? 0.5 : 1.0 }
+            DeviceTreeComboBox {
+                id: edit_storageComboBox
+                // Only a Physical-group catalog must be under a Storage. A Virtual-group
+                // catalog is parented to a Virtual device, so storageOnly must stay off
+                // there or the Virtual parent gets rejected and cleared to root on save.
+                storageOnly: root.deviceType === "Catalog" && root._groupId === 0
+                hideCatalogs: true
+                hideStorages: root.deviceType === "Storage"
+                // The editor's parent must reflect only the loaded device + explicit
+                // dropdown picks — never silently follow the Selection page.
+                followAppSelection: false
+                // Device id 1 is the reserved " Physical Group" root — it is the
+                // structural top of the Physical hierarchy and must never be re-parented.
+                enabled: root.deviceId !== 1
                 Layout.fillWidth: true
-                placeholderText: qsTr("Path or name to exclude")
-                onEditingFinished: text = appManager1.normalizeSourcePath(text)
+                Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
             }
-            IconButton {
-                icon.name: "folder-open"
-                text: qsTr("Select the path")
-                onClicked: {
-                    var p = edit_lineEdit_Path.text.trim()
-                    applicationWindow().openFreshDialog(editExcludeDialogComponent, p)
+
+            // A free-text note available on every device type. Storage keeps its own
+            // Comment 1/2/3 in addition to this one (SpecDeviceComment.md DCM-F5).
+            FieldLabel { text: qsTr("Comment") }
+            Controls.TextField {
+                id: edit_lineEdit_Comment
+                Layout.fillWidth: true
+            }
+        }
+    }
+
+    // ── Card: Location (Storage + Catalog) ────────────────────────────────────
+    KCard {
+        Layout.fillWidth: true
+        visible: root.deviceType !== "Virtual"
+
+        KSectionHeader {
+            level: 3
+            title: qsTr("Location")
+            description: qsTr("Where the files are read from when the device is updated.")
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: root.narrow ? 1 : 2
+            columnSpacing: KTheme.gap
+            rowSpacing: 10
+
+            FieldLabel { text: qsTr("Source path") }
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.TextField {
+                    id: edit_lineEdit_Path
+                    Layout.fillWidth: true
+                    font.family: KTheme.mono
+                    onTextEdited: saveErrorMessage.visible = false
+                    onEditingFinished: text = appManager1.normalizeSourcePath(text)
                 }
-            }
-            Controls.Button {
-                icon.name: "list-add"
-                text: qsTr("Add")
-                onClicked: {
-                    var p = appManager1.normalizeSourcePath(edit_lineEdit_NewExcludeFolder.text)
-                    if (p === "") return
-                    if (appManager1.addDeviceExcludeFolder(deviceId, p)) {
-                        for (var i = 0; i < excludeFoldersModel.count; i++)
-                            if (excludeFoldersModel.get(i).folderPath === p) return
-                        excludeFoldersModel.append({ folderPath: p })
-                        root._excludesChanged = true
-                        edit_lineEdit_NewExcludeFolder.text = ""
+                IconButton {
+                    icon.name: "folder-open"
+                    text: qsTr("Select the path")
+                    onClicked: {
+                        var p = edit_lineEdit_Path.text.trim()
+                        applicationWindow().openFreshDialog(editPathDialogComponent, p)
                     }
                 }
             }
         }
+    }
 
-        Item { Layout.preferredWidth: 1; visible: root.deviceType === "Catalog" }
-        ColumnLayout {
+    // ── Card: Content options (Catalog) ───────────────────────────────────────
+    KCard {
+        Layout.fillWidth: true
+        visible: root.deviceType === "Catalog"
+
+        KSectionHeader {
+            level: 3
+            title: qsTr("Content options")
+            description: qsTr("Which files the catalog lists and what it reads from each one. A change is applied by updating the catalog.")
+        }
+
+        GridLayout {
             Layout.fillWidth: true
-            visible: root.deviceType === "Catalog"
-            spacing: 2
-            Repeater {
-                model: excludeFoldersModel
-                delegate: RowLayout {
+            columns: root.narrow ? 1 : 2
+            columnSpacing: KTheme.gap
+            rowSpacing: 10
+
+            FieldLabel { text: qsTr("File type") }
+            ComboBoxFitted {
+                id: edit_comboBox_FileType
+                Layout.fillWidth: true
+                Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
+                rowLeadingWidth: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing * 2  // row icon
+                textRole: "text"
+                valueRole: "value"
+                displayText: ""
+                model: [
+                    { text: qsTr("All"),   value: "All",   iconName: "folder"                 },
+                    { text: qsTr("Audio"), value: "Audio", iconName: "audio-x-mpeg"            },
+                    { text: qsTr("Image"), value: "Image", iconName: "image-jpeg"              },
+                    { text: qsTr("Text"),  value: "Text",  iconName: "view-list-text"          },
+                    { text: qsTr("Video"), value: "Video", iconName: "video-mp4"               },
+                    { text: qsTr("Other"), value: "Other", iconName: "document-open"           },
+                    { text: qsTr("None"),  value: "None",  iconName: "application-x-zerosize" }
+                ]
+                currentIndex: 0
+                delegate: Controls.ItemDelegate {
+                    width: ListView.view ? ListView.view.width : edit_comboBox_FileType.width  // fills the list, which may be wider than the box
+                    text: modelData.text
+                    icon.name: modelData.iconName
+                    highlighted: edit_comboBox_FileType.highlightedIndex === index
+                }
+                contentItem: RowLayout {
+                    function positionToRectangle(pos) { return Qt.rect(0, 0, 0, 0) }
+                    property int selectionStart: 0
+                    spacing: Kirigami.Units.smallSpacing
+                    Item { width: Kirigami.Units.smallSpacing }
+                    Kirigami.Icon {
+                        source: edit_comboBox_FileType.currentIndex >= 0
+                                ? edit_comboBox_FileType.model[edit_comboBox_FileType.currentIndex].iconName : ""
+                        implicitWidth:  Kirigami.Units.iconSizes.small
+                        implicitHeight: Kirigami.Units.iconSizes.small
+                    }
+                    Controls.Label {
+                        text: edit_comboBox_FileType.currentIndex >= 0
+                              ? edit_comboBox_FileType.model[edit_comboBox_FileType.currentIndex].text : ""
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+            }
+
+            FieldLabel { text: qsTr("Include subdirectories") }
+            Controls.CheckBox {
+                id: edit_checkBox_IncludeSubDir
+                checked: true
+            }
+
+            FieldLabel { text: qsTr("Include hidden files") }
+            ComboBoxFitted {
+                id: edit_comboBox_IncludeHidden
+                Layout.fillWidth: true
+                Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
+                model: [ qsTr("None"), qsTr("All") ]
+                currentIndex: 0
+            }
+
+            FieldLabel { text: qsTr("Include metadata") }
+            ComboBoxFitted {
+                id: edit_comboBox_Metadata
+                Layout.fillWidth: true
+                Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
+                textRole: "text"
+                valueRole: "value"
+                model: [
+                    { text: qsTr("None"),           value: "None"          },
+                    { text: qsTr("Media Basic"),     value: "MediaBasic"    },
+                    { text: qsTr("Media Extended"),  value: "MediaExtended" },
+                    { text: qsTr("Full Extended"),   value: "FullExtended"  }
+                ]
+                currentIndex: 0
+            }
+
+            FieldLabel { text: qsTr("Include checksum") }
+            ComboBoxFitted {
+                id: edit_comboBox_Checksum
+                Layout.fillWidth: true
+                Layout.maximumWidth: Number.POSITIVE_INFINITY  // stretches with the form (CBX-C7)
+                textRole: "text"
+                valueRole: "value"
+                model: [
+                    { text: qsTr("None"),  value: "None"   },
+                    { text: "SHA-256",     value: "SHA256" }
+                ]
+                currentIndex: 0
+            }
+        }
+
+        // ── Exclude folders or files — sub-title within Content options ──────
+        Controls.Label {
+            Layout.fillWidth: true
+            Layout.topMargin: 6
+            text: qsTr("Exclude folders or files")
+            color: KTheme.text
+            font.pixelSize: KTheme.body
+            font.weight: Font.DemiBold
+            wrapMode: Text.WordWrap
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: root.narrow ? 1 : 2
+            columnSpacing: KTheme.gap
+            rowSpacing: 10
+
+            FieldLabel { text: qsTr("Path or name to exclude") }
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.TextField {
+                    id: edit_lineEdit_NewExcludeFolder
                     Layout.fillWidth: true
-                    Controls.Label { text: folderPath; elide: Text.ElideMiddle; Layout.fillWidth: true }
-                    IconButton {
-                        icon.name: "edit-delete"; flat: true
-                        text: qsTr("Remove")
-                        onClicked: {
-                            // Set before removing: remove() destroys this very
-                            // delegate, and anything after it in the handler is
-                            // abandoned with it — which is why removing an
-                            // exclusion offered no re-scan.
+                    placeholderText: qsTr("Path or name to exclude")
+                    onEditingFinished: text = appManager1.normalizeSourcePath(text)
+                }
+                IconButton {
+                    icon.name: "folder-open"
+                    text: qsTr("Select the path")
+                    onClicked: {
+                        var p = edit_lineEdit_Path.text.trim()
+                        applicationWindow().openFreshDialog(editExcludeDialogComponent, p)
+                    }
+                }
+                KButton {
+                    variant: "secondary"
+                    icon.name: "list-add"
+                    text: qsTr("Add")
+                    onClicked: {
+                        var p = appManager1.normalizeSourcePath(edit_lineEdit_NewExcludeFolder.text)
+                        if (p === "") return
+                        if (appManager1.addDeviceExcludeFolder(deviceId, p)) {
+                            for (var i = 0; i < excludeFoldersModel.count; i++)
+                                if (excludeFoldersModel.get(i).folderPath === p) return
+                            excludeFoldersModel.append({ folderPath: p })
                             root._excludesChanged = true
-                            appManager1.removeDeviceExcludeFolder(deviceId, folderPath)
-                            excludeFoldersModel.remove(index)
+                            edit_lineEdit_NewExcludeFolder.text = ""
                         }
                     }
                 }
             }
         }
 
-        // ── Section: Storage details ───────────────────────────────────────────
-        RowLayout {
-            Layout.columnSpan: 2
+        ColumnLayout {
             Layout.fillWidth: true
-            Layout.topMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
-            visible: root.deviceType === "Storage"
-            spacing: Kirigami.Units.largeSpacing
-            Controls.Label { text: qsTr("Storage details"); color: applicationWindow().titleColor }
-            Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-        }
-
-        Controls.Label { text: qsTr("Storage ID"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField {
-            id: edit_lineEdit_StorageExtId
-            Layout.fillWidth: true
-            visible: root.deviceType === "Storage"
-            // The warning goes away as soon as the number it complained about is edited.
-            onTextEdited: storageUserIdWarning.visible = false
-        }
-
-        Controls.Label { text: qsTr("Type"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_StorageType; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
-
-        Controls.Label { text: qsTr("Label"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_StorageLabel; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
-
-        Controls.Label { text: qsTr("File system"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_StorageFS; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
-
-        Controls.Label { text: qsTr("Total space (bytes)"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        RowLayout {
-            Layout.fillWidth: true
-            visible: root.deviceType === "Storage"
-            Controls.Label {
-                text: appManager1.formatDataSize(parseInt(edit_lineEdit_TotalSpace.text) || 0)
-                opacity: 0.7
-                visible: text.length > 0
-                Layout.preferredWidth: 75
-                horizontalAlignment: Text.AlignRight
-
-            }
-            Controls.TextField {
-                id: edit_lineEdit_TotalSpace
-                Layout.fillWidth: true
-                inputMethodHints: Qt.ImhDigitsOnly
-                horizontalAlignment: Text.AlignLeft
+            visible: excludeFoldersModel.count > 0
+            spacing: 4
+            Repeater {
+                model: excludeFoldersModel
+                delegate: Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: excludeRow.implicitHeight + 4
+                    radius: KTheme.radiusItem
+                    color: KTheme.surface2
+                    RowLayout {
+                        id: excludeRow
+                        anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 12; rightMargin: 2 }
+                        Controls.Label {
+                            text: folderPath
+                            wrapMode: Text.WrapAnywhere
+                            font.family: KTheme.mono
+                            font.pixelSize: KTheme.note
+                            color: KTheme.text
+                            Layout.fillWidth: true
+                        }
+                        IconButton {
+                            icon.name: "edit-delete"; flat: true
+                            implicitWidth: 40
+                            implicitHeight: 40
+                            text: qsTr("Remove")
+                            onClicked: {
+                                // Set before removing: remove() destroys this very
+                                // delegate, and anything after it in the handler is
+                                // abandoned with it — which is why removing an
+                                // exclusion offered no re-scan.
+                                root._excludesChanged = true
+                                appManager1.removeDeviceExcludeFolder(deviceId, folderPath)
+                                excludeFoldersModel.remove(index)
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
 
-        Controls.Label { text: qsTr("Free space (bytes)"); opacity: 0.7; visible: root.deviceType === "Storage" }
+    // ── Card: Storage details ─────────────────────────────────────────────────
+    KCard {
+        Layout.fillWidth: true
+        visible: root.deviceType === "Storage"
+
         RowLayout {
             Layout.fillWidth: true
-            visible: root.deviceType === "Storage"
-            Controls.Label {
-                text: appManager1.formatDataSize(parseInt(edit_lineEdit_FreeSpace.text) || 0)
-                opacity: 0.7
-                visible: text.length > 0
-                Layout.preferredWidth: 75
-                horizontalAlignment: Text.AlignRight
+            spacing: 12
+            KSectionHeader {
+                level: 3
+                title: qsTr("Storage details")
+                description: qsTr("What is known about the physical drive: its space, its make and your notes.")
             }
-            Controls.TextField {
-                id: edit_lineEdit_FreeSpace
-                Layout.fillWidth: true
-                inputMethodHints: Qt.ImhDigitsOnly
-            }
-       }
-
-        Item { visible: root.deviceType === "Storage"; Layout.preferredWidth: 1 }
-        Controls.Button {
-            visible: root.deviceType === "Storage"
-            text: qsTr("Refresh from disk")
-            icon.name: "view-refresh"
-            // Reads the device from the database, so a path only typed into the
-            // form is invisible to it. Disabled until the path has been saved,
-            // rather than being clickable and appearing to do nothing.
-            enabled: root.originalPath !== ""
-            onClicked: {
-                var updated = appManager1.refreshStorageFromDisk(root.deviceId)
-                if (updated.error === "") {
-                    edit_lineEdit_TotalSpace.text   = String(updated.totalSpace)
-                    edit_lineEdit_FreeSpace.text    = String(updated.freeSpace)
-                    edit_lineEdit_StorageType.text  = updated.storageType
-                    edit_lineEdit_StorageLabel.text = updated.storageLabel
-                    edit_lineEdit_StorageFS.text    = updated.fileSystem
-                } else {
-                    showPassiveNotification(updated.error)
+            KButton {
+                Layout.alignment: Qt.AlignTop
+                variant: "secondary"
+                text: qsTr("Refresh from disk")
+                icon.name: "view-refresh"
+                // Reads the device from the database, so a path only typed into the
+                // form is invisible to it. Disabled until the path has been saved,
+                // rather than being clickable and appearing to do nothing.
+                enabled: root.originalPath !== ""
+                onClicked: {
+                    var updated = appManager1.refreshStorageFromDisk(root.deviceId)
+                    if (updated.error === "") {
+                        edit_lineEdit_TotalSpace.text   = String(updated.totalSpace)
+                        edit_lineEdit_FreeSpace.text    = String(updated.freeSpace)
+                        edit_lineEdit_StorageType.text  = updated.storageType
+                        edit_lineEdit_StorageLabel.text = updated.storageLabel
+                        edit_lineEdit_StorageFS.text    = updated.fileSystem
+                    } else {
+                        applicationWindow().showPassiveNotification(updated.error)
+                    }
                 }
             }
         }
 
-        Controls.Label { text: qsTr("Brand"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_Brand; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
+        GridLayout {
+            Layout.fillWidth: true
+            columns: root.narrow ? 1 : 2
+            columnSpacing: KTheme.gap
+            rowSpacing: 10
 
-        Controls.Label { text: qsTr("Model"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_Model; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
+            FieldLabel { text: qsTr("Storage ID") }
+            Controls.TextField {
+                id: edit_lineEdit_StorageExtId
+                Layout.fillWidth: true
+                // The warning goes away as soon as the number it complained about is edited.
+                onTextEdited: storageUserIdWarning.visible = false
+            }
 
-        Controls.Label { text: qsTr("Serial number"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_SerialNumber; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
+            FieldLabel { text: qsTr("Type") }
+            Controls.TextField { id: edit_lineEdit_StorageType; Layout.fillWidth: true }
 
-        Controls.Label { text: qsTr("Build date"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_BuildDate; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
+            FieldLabel { text: qsTr("Label") }
+            Controls.TextField { id: edit_lineEdit_StorageLabel; Layout.fillWidth: true }
 
-        Controls.Label { text: qsTr("Comment 1"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_Comment1; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
+            FieldLabel { text: qsTr("File system") }
+            Controls.TextField { id: edit_lineEdit_StorageFS; Layout.fillWidth: true }
 
-        Controls.Label { text: qsTr("Comment 2"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_Comment2; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
+            FieldLabel { text: qsTr("Total space (bytes)") }
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.TextField {
+                    id: edit_lineEdit_TotalSpace
+                    Layout.fillWidth: true
+                    inputMethodHints: Qt.ImhDigitsOnly
+                    horizontalAlignment: Text.AlignLeft
+                }
+                KInfoTag {
+                    visible: text.length > 0
+                    text: appManager1.formatDataSize(parseInt(edit_lineEdit_TotalSpace.text) || 0)
+                }
+            }
 
-        Controls.Label { text: qsTr("Comment 3"); opacity: 0.7; visible: root.deviceType === "Storage" }
-        Controls.TextField { id: edit_lineEdit_Comment3; Layout.fillWidth: true; visible: root.deviceType === "Storage" }
+            FieldLabel { text: qsTr("Free space (bytes)") }
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.TextField {
+                    id: edit_lineEdit_FreeSpace
+                    Layout.fillWidth: true
+                    inputMethodHints: Qt.ImhDigitsOnly
+                }
+                KInfoTag {
+                    visible: text.length > 0
+                    text: appManager1.formatDataSize(parseInt(edit_lineEdit_FreeSpace.text) || 0)
+                }
+            }
 
-        // ── Storage picture ────────────────────────────────────────────────────
-        Kirigami.Separator {
-            Layout.fillWidth: true; Layout.columnSpan: 2
-            Layout.topMargin: Kirigami.Units.largeSpacing
-            visible: root.deviceType === "Storage"
+            FieldLabel { text: qsTr("Brand") }
+            Controls.TextField { id: edit_lineEdit_Brand; Layout.fillWidth: true }
+
+            FieldLabel { text: qsTr("Model") }
+            Controls.TextField { id: edit_lineEdit_Model; Layout.fillWidth: true }
+
+            FieldLabel { text: qsTr("Serial number") }
+            Controls.TextField { id: edit_lineEdit_SerialNumber; Layout.fillWidth: true }
+
+            FieldLabel { text: qsTr("Build date") }
+            Controls.TextField { id: edit_lineEdit_BuildDate; Layout.fillWidth: true }
+
+            FieldLabel { text: qsTr("Comment 1") }
+            Controls.TextField { id: edit_lineEdit_Comment1; Layout.fillWidth: true }
+
+            FieldLabel { text: qsTr("Comment 2") }
+            Controls.TextField { id: edit_lineEdit_Comment2; Layout.fillWidth: true }
+
+            FieldLabel { text: qsTr("Comment 3") }
+            Controls.TextField { id: edit_lineEdit_Comment3; Layout.fillWidth: true }
+        }
+    }
+
+    // ── Card: Storage picture ─────────────────────────────────────────────────
+    KCard {
+        Layout.fillWidth: true
+        visible: root.deviceType === "Storage"
+
+        KSectionHeader {
+            level: 3
+            title: qsTr("Picture")
+            description: qsTr("A photo of the drive, from the collection's picture folder.")
         }
 
-        Controls.Label { text: qsTr("Picture"); opacity: 0.7; visible: root.deviceType === "Storage" }
         RowLayout {
             Layout.fillWidth: true
-            visible: root.deviceType === "Storage"
             ComboBoxFitted {
                 id: edit_comboBox_StoragePicture
                 Layout.fillWidth: true
@@ -661,10 +731,8 @@ ColumnLayout {
             }
         }
 
-        Item { visible: root.deviceType === "Storage"; Layout.preferredWidth: 1 }
         Image {
-            visible: root.deviceType === "Storage"
-            Layout.preferredWidth:  300
+            Layout.preferredWidth:  Math.min(300, parent ? parent.width : 300)
             Layout.preferredHeight: 250
             fillMode: Image.PreserveAspectFit
             source: {
@@ -681,7 +749,7 @@ ColumnLayout {
                 return appManager1.pathToFileUrl(folder + "/" + storageId + ".jpg")
             }
         }
-
-        Item { Layout.columnSpan: 2; Layout.preferredHeight: Kirigami.Units.gridUnit }
     }
+
+    Item { Layout.preferredHeight: KTheme.gap }
 }

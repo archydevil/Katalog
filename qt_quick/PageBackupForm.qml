@@ -3,13 +3,25 @@ import QtQuick.Layouts
 import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 
+// Safety copies (fork, D34 phase R8; K2 "Backup"): the links of the selected
+// drive as cards, their totals as key numbers, the listed links run together.
+// Every action, confirmation and message is the one of SpecBackup.md; only the
+// layout and the look follow the design system.
 ColumnLayout {
     id: root
-    spacing: 0
+    spacing: KTheme.gap * 2
 
-    // Global card text scale from the drawer slider (1.0 = default). Mirrors the
-    // Selection/Devices pages so all card-based views resize together.
+    // Global card text scale from the text-size setting (1.0 = default), set by
+    // Main.qml. Kept for that binding; the redesigned cards use the fixed sizes
+    // of the design system (D34, MDI-F115).
     property real cardScale: 1.0
+
+    readonly property bool narrow: width < Kirigami.Units.gridUnit * 30
+    // No run, no update and no preview going on: a link may start
+    readonly property bool canStart: root.runningMappingId === -1
+                                     && !appManager1.catalogUpdateForBackupRunning
+                                     && !appManager1.backupPreviewRunning
+    function count(n) { return Number(n || 0).toLocaleString(Qt.locale(), "f", 0) }
 
     // Internal state
     property string filterType:        "None"   // "None"|"Source"|"Target"
@@ -189,81 +201,193 @@ ColumnLayout {
         }
     }
 
-    // ─── Filter bar ───────────────────────────────────────────────────────────
-    // A Flow, not a RowLayout: every control here has a fixed minimum width, so as a
-    // RowLayout the bar set a floor for the whole page. The cards fill that width, and
-    // the ScrollablePage clipped whatever ran past the window - which read as the right
-    // hand side of every card being hidden. Wrapping keeps the page shrinkable, the
-    // same reason the card's action buttons already use a Flow. Each cluster is a
-    // RowLayout so it wraps as a unit rather than splitting mid-group.
-    Flow {
-        Layout.fillWidth:   true
-        Layout.topMargin:   Kirigami.Units.largeSpacing
-        Layout.leftMargin:  Kirigami.Units.largeSpacing
-        Layout.rightMargin: Kirigami.Units.largeSpacing
-        spacing: Kirigami.Units.largeSpacing
-
-        RowLayout {
-            width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
-            spacing: Kirigami.Units.smallSpacing
-            Controls.Label { text: qsTr("Type"); opacity: 0.7 }
-            ComboBoxFitted {
-                id: typeFilterCombo
-                textRole:  "text"
-                valueRole: "value"
-                model: [
-                    { value: "All",     text: qsTr("All")     },
-                    { value: "Backup",  text: qsTr("Backup")  },
-                    { value: "Archive", text: qsTr("Archive") }
-                ]
-                onActivated: {
-                    root.mappingTypeFilter = currentValue
-                    appManager1.setBackupSetting("MappingTypeFilter", currentValue)
-                    root.refresh()
-                }
+    // One end of a link: its role, whether its drive is connected, its contents
+    component LinkEnd: ColumnLayout {
+        id: linkEnd
+        property string role
+        property string name
+        property bool   active
+        property string sizeStr
+        property var    fileCount
+        spacing: 4
+        Layout.fillWidth: true
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            Controls.Label {
+                text: linkEnd.role
+                height: endStateTag.height
+                verticalAlignment: Text.AlignVCenter
+                color: KTheme.text3
+                font.pixelSize: KTheme.note
+                font.weight: Font.Medium
+            }
+            KInfoTag {
+                id: endStateTag
+                text: linkEnd.active ? qsTr("Connected") : qsTr("Not connected")
+                tone: linkEnd.active ? "ok" : "warn"
             }
         }
+        // Card text is never elided (CDT-C1): names and figures wrap
+        Controls.Label {
+            Layout.fillWidth: true
+            text: linkEnd.name
+            wrapMode: Text.Wrap
+            color: KTheme.text
+            font.weight: Font.DemiBold
+        }
+        Controls.Label {
+            Layout.fillWidth: true
+            text: linkEnd.sizeStr + " · " + linkEnd.fileCount + " " + qsTr("files")
+            wrapMode: Text.Wrap
+            color: KTheme.text2
+            font.pixelSize: KTheme.note
+        }
+    }
 
-        RowLayout {
-            spacing: Kirigami.Units.smallSpacing
-            Controls.Label { text: qsTr("Filter"); opacity: 0.7 }
+    // ─── Intro ────────────────────────────────────────────────────────────────
+    GridLayout {
+        Layout.fillWidth: true
+        columns: root.narrow ? 1 : 2
+        columnSpacing: 12
+        rowSpacing: 12
+        KSectionHeader {
+            level: 1
+            title: qsTr("Safety copies")
+            description: qsTr("A link copies or moves the files of one catalog to another; the catalogs tell what is missing, so a drive can stay disconnected until the run.")
+        }
+        KButton {
+            Layout.alignment: root.narrow ? Qt.AlignLeft : (Qt.AlignRight | Qt.AlignTop)
+            variant: "secondary"
+            icon.name: "list-add"
+            text: qsTr("Add a link")
+            onClicked: root.requestAddMapping()
+        }
+    }
+
+    // ─── Coverage summary: the key numbers of the listed links ────────────────
+    // Only with something to say: without a device name there is no summary.
+    GridLayout {
+        id: summaryBar
+        Layout.fillWidth: true
+        visible: root.totals.totalMappings !== undefined && !!root.totals.deviceName
+        columns: Math.max(1, Math.min(4, Math.floor(width / 200)))
+        columnSpacing: KTheme.gap
+        rowSpacing: KTheme.gap
+        KMetricCard {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            label: qsTr("Links")
+            value: root.count(root.totals.totalMappings)
+            tagText: root.totals.deviceName || ""
+        }
+        KMetricCard {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            label: qsTr("Source")
+            value: root.totals.totalSourceSizeStr || "0"
+            tagText: root.count(root.totals.totalSourceFileCount) + " " + qsTr("files")
+        }
+        KMetricCard {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            label: qsTr("Target")
+            value: root.totals.totalTargetSizeStr || "0"
+            tagText: root.count(root.totals.totalTargetFileCount) + " " + qsTr("files")
+        }
+        // Coverage is a Backup concept (how much of the source is mirrored in the
+        // target); it has no meaning for Archive (files are moved out of the source).
+        KMetricCard {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            visible: root.mappingTypeFilter !== "Archive"
+            label: qsTr("Coverage")
+            value: (root.totals.coveragePct || "0") + "%"
+            tagText: root.totals.deviceSizeStr ? qsTr("Of %1").arg(root.totals.deviceSizeStr) : ""
+        }
+    }
+
+    // ─── Listed links: the filter is the selection (BKP-F18) ──────────────────
+    KCard {
+        Layout.fillWidth: true
+
+        KSectionHeader {
+            level: 3
+            title: qsTr("Listed links")
+            description: qsTr("The links of the drive selected in My drives. The filter decides which ones are listed, and Run listed links runs exactly those.")
+        }
+
+        // A Flow, not a RowLayout: every control here has a fixed minimum width, so
+        // as a RowLayout the bar set a floor for the whole page. Each cluster is a
+        // RowLayout so it wraps as a unit rather than splitting mid-group.
+        Flow {
+            Layout.fillWidth: true
+            spacing: KTheme.gap
+
             RowLayout {
-                spacing: 2
-                Repeater {
+                width: Math.min(implicitWidth, parent.width)  // lets its combo box shrink (CBX-F2)
+                spacing: 8
+                Controls.Label { text: qsTr("Type"); color: KTheme.text2; font.weight: Font.Medium }
+                ComboBoxFitted {
+                    id: typeFilterCombo
+                    Layout.preferredHeight: 40
+                    textRole:  "text"
+                    valueRole: "value"
                     model: [
-                        { value: "None",   label: qsTr("All")    },
-                        { value: "Source", label: qsTr("Source") },
-                        { value: "Target", label: qsTr("Target") }
+                        { value: "All",     text: qsTr("All")     },
+                        { value: "Backup",  text: qsTr("Backup")  },
+                        { value: "Archive", text: qsTr("Archive") }
                     ]
-                    delegate: Controls.Button {
-                        required property var modelData
-                        text:      modelData.label
-                        flat:      root.filterType !== modelData.value
-                        checked:   root.filterType === modelData.value
-                        checkable: true
-                        onClicked: {
-                            root.filterType = modelData.value
-                            appManager1.setBackupSetting("FilterType", modelData.value)
-                            root.refresh()
+                    onActivated: {
+                        root.mappingTypeFilter = currentValue
+                        appManager1.setBackupSetting("MappingTypeFilter", currentValue)
+                        root.refresh()
+                    }
+                }
+            }
+
+            RowLayout {
+                spacing: 8
+                Controls.Label { text: qsTr("Filter"); color: KTheme.text2; font.weight: Font.Medium }
+                RowLayout {
+                    spacing: 4
+                    Repeater {
+                        model: [
+                            { value: "None",   label: qsTr("All")    },
+                            { value: "Source", label: qsTr("Source") },
+                            { value: "Target", label: qsTr("Target") }
+                        ]
+                        delegate: KButton {
+                            required property var modelData
+                            text:      modelData.label
+                            variant:   root.filterType === modelData.value ? "tonal" : "secondary"
+                            checked:   root.filterType === modelData.value
+                            checkable: true
+                            onClicked: {
+                                root.filterType = modelData.value
+                                appManager1.setBackupSetting("FilterType", modelData.value)
+                                root.refresh()
+                            }
                         }
                     }
                 }
             }
         }
 
-        RowLayout {
-            spacing: Kirigami.Units.smallSpacing
-            Controls.Button {
+        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: KTheme.line }
+
+        Flow {
+            Layout.fillWidth: true
+            spacing: KTheme.gap
+            KButton {
+                variant:   "primary"
                 text:      qsTr("Run listed links")
                 icon.name: "media-playback-start"
-                enabled:   root.runningMappingId === -1
-                           && !appManager1.catalogUpdateForBackupRunning
-                           && !appManager1.backupPreviewRunning
-                           && root.runnableListedIds().length > 0
+                enabled:   root.canStart && root.runnableListedIds().length > 0
                 onClicked: runListedDialog.open()
             }
-
             Controls.CheckBox {
+                height: 40
                 text:    qsTr("Update catalogs")
                 checked: appManager1.updateBeforeBackup
                 onToggled: appManager1.updateBeforeBackup = checked
@@ -330,36 +454,9 @@ ColumnLayout {
         }
     }
 
-    // ─── Coverage summary ─────────────────────────────────────────────────────
-    Kirigami.InlineMessage {
-        id: summaryBar
-        Layout.fillWidth:    true
-        Layout.topMargin:    Kirigami.Units.smallSpacing
-        Layout.leftMargin:   Kirigami.Units.largeSpacing
-        Layout.rightMargin:  Kirigami.Units.largeSpacing
-        // Only with something to say: without a device name the text is empty
-        visible:             root.totals.totalMappings !== undefined && !!root.totals.deviceName
-        type:                Kirigami.MessageType.Information
-        showCloseButton:     false
-        text: {
-            if (!root.totals.deviceName) return ""
-            // Coverage % is a Backup concept (how much of the source is mirrored in the
-            // target); it has no meaning for Archive (files are moved out of the source).
-            var base = root.totals.deviceName
-                + " - " + (root.totals.totalMappings || 0) + " " + qsTr("link(s)")
-                + " · " + (root.totals.totalSourceSizeStr || "0") + " " + qsTr("source")
-            if (root.mappingTypeFilter === "Archive")
-                return base
-            return base + " · " + (root.totals.coveragePct || "0") + "% " + qsTr("covered")
-        }
-    }
-
     // ─── Report summary (backup finished / profile generated / error) ─────────
     Kirigami.InlineMessage {
         Layout.fillWidth:    true
-        Layout.topMargin:    Kirigami.Units.smallSpacing
-        Layout.leftMargin:   Kirigami.Units.largeSpacing
-        Layout.rightMargin:  Kirigami.Units.largeSpacing
         visible:             root.lastReportSummary !== ""
         type:                root.lastReportIsError ? Kirigami.MessageType.Error
                                                     : Kirigami.MessageType.Positive
@@ -378,289 +475,221 @@ ColumnLayout {
         ]
     }
 
-    // ─── No mappings placeholder ──────────────────────────────────────────────
-    Kirigami.PlaceholderMessage {
-        Layout.fillWidth:  true
-        Layout.fillHeight: true
-        Layout.margins:    Kirigami.Units.largeSpacing * 2
-        visible:           root.mappings.length === 0
-        text:              qsTr("No backup links")
-        explanation:       qsTr("Create a link to define a source and target for backup or archive operations.")
-        icon.name:         "backup"
+    // ─── No links yet ─────────────────────────────────────────────────────────
+    KCard {
+        Layout.fillWidth: true
+        visible: root.mappings.length === 0
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+            Rectangle {
+                Layout.preferredWidth: 40
+                Layout.preferredHeight: 40
+                Layout.alignment: Qt.AlignTop
+                radius: KTheme.radiusControl
+                color: KTheme.accentSoft
+                Kirigami.Icon { anchors.centerIn: parent; width: 22; height: 22; source: "backup" }
+            }
+            KSectionHeader {
+                level: 3
+                title: qsTr("No backup links")
+                description: qsTr("Create a link to define a source and target for backup or archive operations.")
+            }
+        }
+        KButton {
+            variant: "tonal"
+            icon.name: "list-add"
+            text: qsTr("Add a link")
+            onClicked: root.requestAddMapping()
+        }
     }
 
-    // ─── Mapping cards ────────────────────────────────────────────────────────
+    // ─── Link cards ───────────────────────────────────────────────────────────
     //
-    // Rectangle + anchored ColumnLayout instead of Kirigami.AbstractCard:
-    // AbstractCard is a QQC2 ItemDelegate whose internal layout chain goes stale
-    // after any page visibility cycle (layer push/pop, close/reopen).
-    // Rectangle.implicitHeight is a direct binding to the inner ColumnLayout's
-    // implicitHeight - no QQC2 internals, always correct by construction.
-    Repeater {
-        id: mappingRepeater
-        model: root.mappings
-        delegate: Rectangle {
-            id: mappingCard
-            required property var modelData
-            required property int index
+    // KCard (a Rectangle whose height binds to its inner ColumnLayout) instead of
+    // Kirigami.AbstractCard: AbstractCard is a QQC2 ItemDelegate whose internal
+    // layout chain goes stale after any page visibility cycle (layer push/pop,
+    // close/reopen). A direct binding is always correct by construction.
+    GridLayout {
+        id: linkGrid
+        Layout.fillWidth: true
+        Layout.bottomMargin: KTheme.gap
+        visible: root.mappings.length > 0
+        columns: Math.max(1, Math.floor(width / 460))
+        columnSpacing: KTheme.gap
+        rowSpacing: KTheme.gap
 
-            // Current text size, already scaled by the text-size setting (TYP-F7).
-            readonly property real cardFontSize: appManager1.textPointSize
+        Repeater {
+            id: mappingRepeater
+            model: root.mappings
+            delegate: KCard {
+                id: mappingCard
+                required property var modelData
+                required property int index
 
-            Layout.fillWidth:    true
-            Layout.topMargin:    Kirigami.Units.smallSpacing
-            Layout.leftMargin:   Kirigami.Units.largeSpacing
-            Layout.rightMargin:  Kirigami.Units.largeSpacing
-            Layout.bottomMargin: index === root.mappings.length - 1 ? Kirigami.Units.largeSpacing : 0
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                // The link running now is outlined in the accent colour
+                border.color: isRunning ? KTheme.accent : KTheme.line
+                border.width: isRunning ? 2 : 1
 
-            // Height is a direct binding - never stale after visibility cycles
-            implicitHeight: cardContent.implicitHeight + Kirigami.Units.largeSpacing * 2
+                property bool isRunning: root.runningMappingId === modelData.mappingId
+                readonly property bool isArchive: modelData.mappingType === "Archive"
 
-            Kirigami.Theme.inherit:   false
-            Kirigami.Theme.colorSet:  Kirigami.Theme.View
+                // Below this the two ends of the link stack instead of sitting side by side
+                readonly property bool narrow: width < Kirigami.Units.gridUnit * 24
 
-            color:        Kirigami.Theme.backgroundColor
-            border.width: 1
-            border.color: Kirigami.ColorUtils.linearInterpolation(
-                              Kirigami.Theme.backgroundColor,
-                              Kirigami.Theme.textColor,
-                              Kirigami.Theme.frameContrast)
-            radius:       Kirigami.Units.cornerRadius
-
-            // Drop shadow matching Kirigami DefaultCardBackground
-            Rectangle {
-                anchors { left: parent.left; right: parent.right; top: parent.top }
-                anchors.topMargin: Math.round(Kirigami.Units.smallSpacing / 4)
-                radius: parent.radius
-                height: parent.height
-                color:  Qt.darker(Qt.rgba(Kirigami.Theme.backgroundColor.r,
-                                          Kirigami.Theme.backgroundColor.g,
-                                          Kirigami.Theme.backgroundColor.b, 0.6), 1.1)
-                z: -1
-            }
-
-            property bool isRunning: root.runningMappingId === modelData.mappingId
-
-            // Below this the detail rows stack their two halves instead of eliding both
-            // to nothing. Scaled by cardScale because the slider grows the text but not
-            // the card, so a size that fits at 1.0 does not fit at 1.5.
-            readonly property bool narrow: width < Kirigami.Units.gridUnit * 28 * root.cardScale
-
-            ColumnLayout {
-                id: cardContent
-                anchors {
-                    top:   parent.top
-                    left:  parent.left
-                    right: parent.right
-                    margins: Kirigami.Units.largeSpacing
-                }
-                spacing: Kirigami.Units.smallSpacing
-
-                // ── Header: icon + name + type badge ──────────────────────────
+                // ── Header: icon, name, type and state ──────────────────────
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
+                    spacing: 12
+                    Rectangle {
+                        Layout.preferredWidth: 40
+                        Layout.preferredHeight: 40
+                        Layout.alignment: Qt.AlignTop
+                        radius: KTheme.radiusControl
+                        color: mappingCard.isArchive ? KTheme.warnSoft : KTheme.okSoft
+                        Kirigami.Icon {
+                            anchors.centerIn: parent
+                            width: 22; height: 22
+                            source: mappingCard.isArchive ? "archive-extract" : "backup"
+                        }
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: mappingCard.modelData.mappingName
+                            wrapMode: Text.Wrap
+                            color: KTheme.text
+                            font.weight: Font.Bold
+                            font.pixelSize: KTheme.titleCard
+                        }
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 6
+                            // Backup copies, Archive moves out of the source
+                            KInfoTag {
+                                text: mappingCard.isArchive ? qsTr("Archive") : qsTr("Backup")
+                                tone: mappingCard.isArchive ? "warn" : "ok"
+                            }
+                            KInfoTag {
+                                visible: mappingCard.isRunning
+                                text: root.isPaused ? qsTr("Paused") : qsTr("In Progress")
+                                tone: root.isPaused ? "warn" : "info"
+                            }
+                        }
+                    }
+                }
 
+                // ── Source → Target ─────────────────────────────────────────
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: mappingCard.narrow ? 1 : 3
+                    columnSpacing: 12
+                    rowSpacing: 8
+
+                    LinkEnd {
+                        Layout.alignment: Qt.AlignTop
+                        role:      qsTr("Source")
+                        name:      mappingCard.modelData.sourceName
+                        active:    mappingCard.modelData.sourceActive
+                        sizeStr:   mappingCard.modelData.sourceSizeStr
+                        fileCount: mappingCard.modelData.sourceFileCount
+                    }
                     Kirigami.Icon {
-                        source: modelData.mappingType === "Archive" ? "archive-extract" : "backup"
-                        implicitWidth:  Kirigami.Units.iconSizes.small
-                        implicitHeight: Kirigami.Units.iconSizes.small
+                        Layout.alignment: mappingCard.narrow ? Qt.AlignLeft : Qt.AlignVCenter
+                        Layout.preferredWidth: 20
+                        Layout.preferredHeight: 20
+                        source: mappingCard.narrow ? "go-down" : "go-next"
+                        isMask: true
+                        color: KTheme.text3
                     }
-                    Controls.Label {
-                        text: modelData.mappingName
-                        font.bold: true
-                        font.pointSize: mappingCard.cardFontSize
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-                    Controls.Label {
-                        text:  modelData.mappingType === "Archive" ? qsTr("Archive") : qsTr("Backup")
-                        color: modelData.mappingType === "Archive"
-                               ? Kirigami.Theme.neutralTextColor
-                               : Kirigami.Theme.positiveTextColor
-                        font.pointSize: mappingCard.cardFontSize
-                        padding: 3
-                        background: Rectangle {
-                            color:   parent.color
-                            opacity: 0.15
-                            radius:  3
-                        }
+                    LinkEnd {
+                        Layout.alignment: Qt.AlignTop
+                        role:      qsTr("Target")
+                        name:      mappingCard.modelData.targetName
+                        active:    mappingCard.modelData.targetActive
+                        sizeStr:   mappingCard.modelData.targetSizeStr
+                        fileCount: mappingCard.modelData.targetFileCount
                     }
                 }
 
-                Kirigami.Separator { Layout.fillWidth: true; opacity: 0.5 }
-
-                // ── Source ────────────────────────────────────────────────────
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
-                    Controls.Label {
-                        text:    qsTr("Source")
-                        opacity: 0.7
-                        font.pointSize: mappingCard.cardFontSize
-                        // A floor, not a fixed width: gridUnit * 4 is too narrow for a
-                        // longer translation, or for any label at a large card scale.
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 4
-                        Layout.minimumWidth: implicitWidth
-                    }
-                    Rectangle {
-                        implicitWidth:  Kirigami.Units.iconSizes.small * 0.55
-                        implicitHeight: implicitWidth
-                        radius: width / 2
-                        color: modelData.sourceActive ? Kirigami.Theme.positiveTextColor
-                                                      : Kirigami.Theme.disabledTextColor
-                    }
-                    // Two halves that stack when the card is narrow. Both are flexible
-                    // with a zero minimum: a trailing label that only sets `elide` is
-                    // not shrinkable in a RowLayout, so the row used to overflow the
-                    // card and the right-hand text was clipped away rather than elided.
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns:   mappingCard.narrow ? 1 : 2
-                        rowSpacing:    0
-                        columnSpacing: Kirigami.Units.smallSpacing
-
-                        Controls.Label {
-                            text:  modelData.sourceName
-                            font.pointSize: mappingCard.cardFontSize
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.preferredWidth: implicitWidth
-                        }
-                        Controls.Label {
-                            text:    modelData.sourceSizeStr + " · " + modelData.sourceFileCount + " " + qsTr("files")
-                            opacity: 0.7
-                            font.pointSize: mappingCard.cardFontSize
-                            elide:   Text.ElideRight
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.preferredWidth: implicitWidth
-                            horizontalAlignment: mappingCard.narrow ? Text.AlignLeft : Text.AlignRight
-                        }
-                    }
-                }
-
-                // ── Target ────────────────────────────────────────────────────
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
-                    Controls.Label {
-                        text:    qsTr("Target")
-                        opacity: 0.7
-                        font.pointSize: mappingCard.cardFontSize
-                        // A floor, not a fixed width: gridUnit * 4 is too narrow for a
-                        // longer translation, or for any label at a large card scale.
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 4
-                        Layout.minimumWidth: implicitWidth
-                    }
-                    Rectangle {
-                        implicitWidth:  Kirigami.Units.iconSizes.small * 0.55
-                        implicitHeight: implicitWidth
-                        radius: width / 2
-                        color: modelData.targetActive ? Kirigami.Theme.positiveTextColor
-                                                      : Kirigami.Theme.disabledTextColor
-                    }
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns:   mappingCard.narrow ? 1 : 2
-                        rowSpacing:    0
-                        columnSpacing: Kirigami.Units.smallSpacing
-
-                        Controls.Label {
-                            text:  modelData.targetName
-                            font.pointSize: mappingCard.cardFontSize
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.preferredWidth: implicitWidth
-                        }
-                        Controls.Label {
-                            text:    modelData.targetSizeStr + " · " + modelData.targetFileCount + " " + qsTr("files")
-                            opacity: 0.7
-                            font.pointSize: mappingCard.cardFontSize
-                            elide:   Text.ElideRight
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.preferredWidth: implicitWidth
-                            horizontalAlignment: mappingCard.narrow ? Text.AlignLeft : Text.AlignRight
-                        }
-                    }
-                }
-
-                // ── Diff (Backup) / To move (Archive) ─────────────────────────
+                // ── Diff (Backup) / To move (Archive), and the last run ──────
                 // Archive moves files out of the source, so a size/coverage "diff"
                 // against the target is meaningless — show the quantity to move instead.
-                RowLayout {
+                Rectangle {
                     Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
-                    Controls.Label {
-                        text:    modelData.mappingType === "Archive" ? qsTr("To move") : qsTr("Diff")
-                        opacity: 0.7
-                        font.pointSize: mappingCard.cardFontSize
-                        // A floor, not a fixed width: gridUnit * 4 is too narrow for a
-                        // longer translation, or for any label at a large card scale.
-                        Layout.preferredWidth: Kirigami.Units.gridUnit * 4
-                        Layout.minimumWidth: implicitWidth
-                    }
-                    // Same two-half treatment as the Source and Target rows: the
-                    // trailing label was not shrinkable, so it was clipped off the
-                    // card instead of eliding.
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns:   mappingCard.narrow ? 1 : 2
-                        rowSpacing:    0
-                        columnSpacing: Kirigami.Units.smallSpacing
+                    implicitHeight: diffColumn.implicitHeight + 20
+                    radius: KTheme.radiusItem
+                    color: KTheme.surface2
+                    border.color: KTheme.line
+                    border.width: 1
 
-                        Controls.Label {
+                    ColumnLayout {
+                        id: diffColumn
+                        x: 12
+                        y: 10
+                        width: parent.width - 24
+                        spacing: 4
+
+                        // Archive: something to do when there are files to move (source not empty).
+                        // Backup: something to do when the source is larger than the target.
+                        readonly property bool pending: mappingCard.isArchive
+                                                        ? mappingCard.modelData.sourceFileCount > 0
+                                                        : mappingCard.modelData.sizeDiff > 0
+
+                        Flow {
                             Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.preferredWidth: implicitWidth
-                            elide: Text.ElideRight
-                            font.pointSize: mappingCard.cardFontSize
-                            text: {
-                                if (modelData.mappingType === "Archive") {
-                                    if (modelData.sourceFileCount === 0)
-                                        return qsTr("Nothing to move")
-                                    return modelData.sourceFileCount + " " + qsTr("files")
-                                }
-                                var sizeSign  = modelData.sizeDiff       > 0 ? "+" : (modelData.sizeDiff       < 0 ? "−" : "")
-                                var filesSign = modelData.fileCountDiff   > 0 ? "+" : (modelData.fileCountDiff   < 0 ? "−" : "")
-                                if (modelData.sizeDiff === 0 && modelData.fileCountDiff === 0)
-                                    return qsTr("Up to date")
-                                return sizeSign + modelData.sizeDiffStr
-                                    + " · " + filesSign + Math.abs(modelData.fileCountDiff) + " " + qsTr("files")
-                                    + (modelData.sourceDateUpdated ? " · " + modelData.sourceDateUpdated : "")
+                            spacing: 8
+                            Controls.Label {
+                                text: mappingCard.isArchive ? qsTr("To move") : qsTr("Diff")
+                                height: diffValue.implicitHeight
+                                verticalAlignment: Text.AlignVCenter
+                                color: KTheme.text3
+                                font.pixelSize: KTheme.note
+                                font.weight: Font.Medium
                             }
-                            // Archive: highlight when there are files to move (source not empty).
-                            // Backup: highlight when the source is larger than the target.
-                            color: (modelData.mappingType === "Archive"
-                                        ? modelData.sourceFileCount > 0
-                                        : modelData.sizeDiff > 0)
-                                   ? Kirigami.Theme.neutralTextColor
-                                   : Kirigami.Theme.textColor
+                            Controls.Label {
+                                id: diffValue
+                                width: Math.min(implicitWidth, parent.width)
+                                wrapMode: Text.Wrap
+                                font.weight: Font.DemiBold
+                                color: diffColumn.pending ? KTheme.warn : KTheme.ok
+                                text: {
+                                    var m = mappingCard.modelData
+                                    if (mappingCard.isArchive) {
+                                        if (m.sourceFileCount === 0)
+                                            return qsTr("Nothing to move")
+                                        return m.sourceFileCount + " " + qsTr("files")
+                                    }
+                                    var sizeSign  = m.sizeDiff      > 0 ? "+" : (m.sizeDiff      < 0 ? "−" : "")
+                                    var filesSign = m.fileCountDiff > 0 ? "+" : (m.fileCountDiff < 0 ? "−" : "")
+                                    if (m.sizeDiff === 0 && m.fileCountDiff === 0)
+                                        return qsTr("Up to date")
+                                    return sizeSign + m.sizeDiffStr
+                                        + " · " + filesSign + Math.abs(m.fileCountDiff) + " " + qsTr("files")
+                                        + (m.sourceDateUpdated ? " · " + m.sourceDateUpdated : "")
+                                }
+                            }
                         }
-                        // Last run info, right-aligned under the file counts (saves a line).
-                        // "Last archive" for Archive links, "Last backup" otherwise.
+                        // "Last archive" for Archive links, "Last backup" otherwise
                         Controls.Label {
-                            elide:   Text.ElideRight
-                            opacity: 0.7
-                            font.pointSize: mappingCard.cardFontSize
                             Layout.fillWidth: true
-                            Layout.minimumWidth: 0
-                            Layout.preferredWidth: implicitWidth
-                            horizontalAlignment: mappingCard.narrow ? Text.AlignLeft : Text.AlignRight
-                            text: (modelData.mappingType === "Archive" ? qsTr("Last archive")
-                                                                       : qsTr("Last backup"))
+                            wrapMode: Text.Wrap
+                            color: KTheme.text2
+                            font.pixelSize: KTheme.note
+                            text: (mappingCard.isArchive ? qsTr("Last archive") : qsTr("Last backup"))
                                   + ": "
-                                  + (modelData.lastBackupDate
-                                     ? modelData.lastBackupDate + " · " + modelData.lastBackupSizeStr
+                                  + (mappingCard.modelData.lastBackupDate
+                                     ? mappingCard.modelData.lastBackupDate + " · " + mappingCard.modelData.lastBackupSizeStr
                                      : qsTr("never"))
                         }
                     }
                 }
 
-                // ── Progress (only while running) ─────────────────────────────
+                // ── Progress (only while running) ───────────────────────────
                 Loader {
                     id: progressLoader
                     Layout.fillWidth: true
@@ -669,11 +698,10 @@ ColumnLayout {
 
                     sourceComponent: ColumnLayout {
                         width: progressLoader.width
-                        spacing: Kirigami.Units.smallSpacing
+                        spacing: 6
 
-                        Controls.ProgressBar {
+                        KProgressBar {
                             Layout.fillWidth: true
-                            from: 0; to: 1
                             value: root.progressFraction
                         }
                         Controls.Label {
@@ -683,63 +711,64 @@ ColumnLayout {
                                 + (root.progressSpeedStr ? " · " + root.progressSpeedStr : "")
                                 + (root.progressEtaStr   ? " · " + qsTr("ETA %1").arg(root.progressEtaStr) : "")
                                 + (root.progressFile ? " · " + root.progressFile : "")
-                            elide: Text.ElideRight
-                            font.pointSize: mappingCard.cardFontSize
-                            opacity: 0.8
+                            wrapMode: Text.WrapAnywhere
+                            color: KTheme.text2
+                            font.pixelSize: KTheme.note
                         }
                     }
                 }
 
-                // ── Action buttons - Flow wraps on narrow windows ──────────────
+                // ── Actions - a Flow wraps on narrow windows ────────────────
                 Flow {
                     Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
+                    spacing: 8
 
-                    Controls.Button {
+                    KButton {
                         visible:   !mappingCard.isRunning
-                        text:      modelData.mappingType === "Archive" ? qsTr("Run Archive") : qsTr("Run Backup")
+                        variant:   "tonal"
+                        text:      mappingCard.isArchive ? qsTr("Run Archive") : qsTr("Run Backup")
                         icon.name: "media-playback-start"
-                        enabled:   modelData.sourceActive && modelData.targetActive
-                                   && root.runningMappingId === -1
-                                   && !appManager1.catalogUpdateForBackupRunning
-                                   && !appManager1.backupPreviewRunning
+                        enabled:   mappingCard.modelData.sourceActive && mappingCard.modelData.targetActive
+                                   && root.canStart
                         onClicked: {
                             // State is set by onRunningBackupMappingIdChanged, which
                             // covers both this click and the sequencer (BKP-C10).
-                            appManager1.runBackup(modelData.mappingId)
+                            appManager1.runBackup(mappingCard.modelData.mappingId)
                         }
                     }
-                    Controls.Button {
+                    KButton {
                         visible:   mappingCard.isRunning && !root.isPaused
                         text:      qsTr("Pause")
                         icon.name: "media-playback-pause"
                         onClicked: { root.isPaused = true; appManager1.pauseBackup() }
                     }
-                    Controls.Button {
+                    KButton {
                         visible:   mappingCard.isRunning && root.isPaused
                         text:      qsTr("Resume")
                         icon.name: "media-playback-start"
                         onClicked: { root.isPaused = false; appManager1.resumeBackup() }
                     }
-                    Controls.Button {
+                    KButton {
                         visible:   mappingCard.isRunning
                         text:      qsTr("Cancel")
                         icon.name: "process-stop"
                         onClicked: appManager1.stopBackup()
                     }
-                    Controls.Button {
+                    KButton {
                         visible:   !mappingCard.isRunning
-                        text:      modelData.mappingType === "Archive" ? qsTr("Preview Archive") : qsTr("Preview Backup")
+                        text:      mappingCard.isArchive ? qsTr("Preview Archive") : qsTr("Preview Backup")
                         icon.name: "view-preview"
-                        enabled:   root.runningMappingId === -1
-                                   && !appManager1.catalogUpdateForBackupRunning
-                                   && !appManager1.backupPreviewRunning
-                        onClicked: root.requestPreviewMapping(modelData.mappingId)
+                        enabled:   root.canStart
+                        onClicked: root.requestPreviewMapping(mappingCard.modelData.mappingId)
                     }
-                    Controls.Button {
+                    KButton {
                         visible:   !mappingCard.isRunning
+                        implicitWidth: 40
+                        leftPadding: 12
+                        rightPadding: 12
                         icon.name: "overflow-menu"
-                        display:   Controls.AbstractButton.IconOnly
+                        // Icon only: the tooltip and the accessible name say what it is (ICB-F1)
+                        Accessible.name:          qsTr("More actions")
                         Controls.ToolTip.text:    qsTr("More actions")
                         Controls.ToolTip.visible: hovered
                         onClicked: moreMenu.open()
@@ -749,7 +778,7 @@ ColumnLayout {
                             Controls.MenuItem {
                                 text: qsTr("Edit")
                                 icon.name: "document-edit"
-                                onTriggered: root.requestEditMapping(modelData)
+                                onTriggered: root.requestEditMapping(mappingCard.modelData)
                             }
                             Controls.MenuItem {
                                 text: qsTr("Duplicate")
@@ -758,7 +787,7 @@ ColumnLayout {
                                     // SpecBackup.md BKP-F22: creates the copy and
                                     // nothing else — no run, no preview, no change
                                     // to the original.
-                                    var err = appManager1.duplicateBackupMapping(modelData.mappingId)
+                                    var err = appManager1.duplicateBackupMapping(mappingCard.modelData.mappingId)
                                     if (err)
                                         root.lastReportSummary = err
                                     else
@@ -769,7 +798,7 @@ ColumnLayout {
                                 text: qsTr("Replicate directories")
                                 icon.name: "folder-sync"
                                 onTriggered: {
-                                    var r = appManager1.replicateDirectories(modelData.mappingId)
+                                    var r = appManager1.replicateDirectories(mappingCard.modelData.mappingId)
                                     root.lastReportSummary = r.error || (qsTr("Replicate") + " - "
                                         + qsTr("Created: %1").arg(r.created || 0)
                                         + " · " + qsTr("Already existing: %1").arg(r.skipped || 0)
@@ -780,7 +809,7 @@ ColumnLayout {
                                 text: qsTr("Invert (swap source and target)")
                                 icon.name: "object-flip-horizontal"
                                 onTriggered: {
-                                    if (appManager1.invertBackupMapping(modelData.mappingId))
+                                    if (appManager1.invertBackupMapping(mappingCard.modelData.mappingId))
                                         root.refresh()
                                 }
                             }
@@ -788,7 +817,7 @@ ColumnLayout {
                                 text: qsTr("Export to CSV")
                                 icon.name: "document-export"
                                 // This link's preview, computed then exported (BKP-F26)
-                                onTriggered: appManager1.exportBackupLinkToCsv(modelData.mappingId)
+                                onTriggered: appManager1.exportBackupLinkToCsv(mappingCard.modelData.mappingId)
                             }
                             Controls.MenuSeparator {}
                             Controls.MenuItem {
@@ -801,10 +830,10 @@ ColumnLayout {
                         Kirigami.PromptDialog {
                             id: deleteDialog
                             title: qsTr("Delete link")
-                            subtitle: qsTr("Delete link \"%1\"? This cannot be undone.").arg(modelData.mappingName)
+                            subtitle: qsTr("Delete link \"%1\"? This cannot be undone.").arg(mappingCard.modelData.mappingName)
                             standardButtons: Kirigami.Dialog.Yes | Kirigami.Dialog.No
                             onAccepted: {
-                                if (appManager1.deleteBackupMapping(modelData.mappingId))
+                                if (appManager1.deleteBackupMapping(mappingCard.modelData.mappingId))
                                     root.refresh()
                             }
                         }
@@ -813,7 +842,4 @@ ColumnLayout {
             }
         }
     }
-
-    // Bottom spacer
-    Item { implicitHeight: Kirigami.Units.largeSpacing }
 }
