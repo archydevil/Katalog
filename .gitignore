@@ -68,3 +68,6 @@ translations/scripts/__pycache__/
 
 # macOS Finder metadata
 .DS_Store
+
+# Editor index caches (clangd); local to each machine
+.cache/
