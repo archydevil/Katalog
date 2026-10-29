@@ -126,6 +126,56 @@ Kirigami.Dialog {
                 }
             }
 
+            // ── Classification in the collection's context (D33) ─────────
+            ColumnLayout {
+                id: classificationBox
+                readonly property var e: mdiDetailsDialog.entry("classification")
+                readonly property var v: e ? e.value : ({})
+                visible: e !== null && e.outcome === "completed"
+                Layout.fillWidth: true
+                spacing: Kirigami.Units.smallSpacing
+                Kirigami.Heading { level: 4; text: classificationBox.e ? classificationBox.e.label : "" }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    font.bold: true
+                    visible: text !== ""
+                    text: classificationBox.v.title || ""
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    visible: text !== ""
+                    text: classificationBox.v.description || ""
+                }
+                Repeater {
+                    model: Object.keys(classificationBox.v.categories || {})
+                    delegate: Controls.Label {
+                        required property string modelData
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        text: modelData + ": " + (classificationBox.v.categories[modelData] || []).join(", ")
+                    }
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.smallSpacing
+                    Repeater {
+                        model: classificationBox.v.tags || []
+                        delegate: Kirigami.Chip { required property var modelData; text: modelData; closable: false; checkable: false }
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    opacity: 0.7
+                    visible: (classificationBox.v.sources || []).length > 0
+                    text: qsTr("Reference documents") + ": "
+                          + [...new Set((classificationBox.v.sources || []).map(function (s) { return s.title }))].join(", ")
+                }
+                Controls.Label { text: classificationBox.e ? mdiDetailsDialog.provenance(classificationBox.e) : ""; opacity: 0.6; font: Kirigami.Theme.smallFont }
+            }
+
             // ── Caption and tags ──────────────────────────────────────────
             ColumnLayout {
                 id: captionBox

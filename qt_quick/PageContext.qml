@@ -415,32 +415,33 @@ ColumnLayout {
     Repeater {
         model: pageContext.documents
         delegate: RowLayout {
+            id: documentRow
             required property var modelData
             Layout.fillWidth: true
             Kirigami.Icon {
-                source: modelData.status === "indexed" ? "dialog-ok-apply"
-                        : modelData.status === "failed" ? "dialog-error" : "view-refresh"
+                source: documentRow.modelData.status === "indexed" ? "dialog-ok-apply"
+                        : documentRow.modelData.status === "failed" ? "dialog-error" : "view-refresh"
                 implicitWidth: Kirigami.Units.iconSizes.small
                 implicitHeight: implicitWidth
             }
             Controls.Label {
                 Layout.fillWidth: true
                 elide: Text.ElideMiddle
-                text: modelData.title
-                Controls.ToolTip.text: modelData.path + (modelData.reason ? "\n" + modelData.reason : "")
+                text: documentRow.modelData.title
+                Controls.ToolTip.text: documentRow.modelData.path + (documentRow.modelData.reason ? "\n" + documentRow.modelData.reason : "")
                 Controls.ToolTip.visible: hoverArea.containsMouse
                 MouseArea { id: hoverArea; anchors.fill: parent; hoverEnabled: true }
             }
             Controls.Label {
                 opacity: 0.7
-                text: modelData.status === "indexed" ? qsTr("%1 passages").arg(modelData.passages)
-                      : modelData.status === "failed" ? qsTr("Error") : qsTr("To be indexed")
+                text: documentRow.modelData.status === "indexed" ? qsTr("%1 passages").arg(documentRow.modelData.passages)
+                      : documentRow.modelData.status === "failed" ? qsTr("Error") : qsTr("To be indexed")
             }
             Controls.ToolButton {
                 icon.name: "list-remove"
                 Controls.ToolTip.text: qsTr("Remove")
                 Controls.ToolTip.visible: hovered
-                onClicked: appManager1.removeKnowledgeDocument(modelData.id)
+                onClicked: appManager1.removeKnowledgeDocument(documentRow.modelData.id)
             }
         }
     }
