@@ -1927,7 +1927,7 @@ Haluatko tallentaa sen silti (luettelo olisi tyhjä)?</translation>
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>Konteksti</translation>
     </message>
     <message>
         <location line="-1442"/>

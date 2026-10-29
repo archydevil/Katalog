@@ -1927,7 +1927,7 @@ Chcete ho aj tak uložiť (katalóg by bol prázdny)?</translation>
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontext</translation>
     </message>
     <message>
         <location line="-1442"/>

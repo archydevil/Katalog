@@ -166,6 +166,13 @@ Kirigami.Dialog {
                     }
                 }
                 Controls.Label {
+                    // People, places and events recognised in the file (MDI-F102)
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    visible: text !== ""
+                    text: (classificationBox.v.entities || []).join(", ")
+                }
+                Controls.Label {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                     opacity: 0.7

@@ -484,7 +484,7 @@ ColumnLayout {
         var e = appManager1.reinterpretEstimate(catalogDeviceId, reinterpretFolder.text,
                                                 reinterpretType.types[reinterpretType.currentIndex])
         reinterpretFiles = e.files || 0
-        reinterpretSeconds = e.seconds || 0
+        reinterpretSeconds = e.seconds === undefined ? -1 : e.seconds
     }
     Controls.Dialog {
         id: reinterpretDialog
@@ -526,8 +526,10 @@ ColumnLayout {
             }
             Controls.Label {
                 Kirigami.FormData.label: qsTr("Files")
-                text: qsTr("%1, about %2").arg(pageContext.reinterpretFiles)
-                                          .arg(pageContext.durationText(pageContext.reinterpretSeconds))
+                // The time only once a classification has been measured
+                text: pageContext.reinterpretSeconds < 0 ? String(pageContext.reinterpretFiles)
+                      : qsTr("%1, about %2").arg(pageContext.reinterpretFiles)
+                                            .arg(pageContext.durationText(pageContext.reinterpretSeconds))
             }
         }
     }

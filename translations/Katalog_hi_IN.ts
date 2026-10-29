@@ -1927,7 +1927,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रसंग</translation>
     </message>
     <message>
         <location line="-1442"/>

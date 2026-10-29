@@ -188,6 +188,7 @@ private:
     // Knowledge-base pass: text, passages and embeddings of pending documents
     void   indexKnowledge(int &completed, int &skipped, int &failed);
     MdiKnowledge::Index m_knowledge;    // loaded once per job for the classification
+    QString m_contextVersion;           // the collection's context and the catalog's notes (MDI-F96)
     // Parallel image-thumbnail pre-pass over files [from, to) (QThreadPool)
     void   precomputeThumbnails(int from, int to);
     QHash<QString, Result> m_precomputed;   // full path -> thumbnail done by the pre-pass

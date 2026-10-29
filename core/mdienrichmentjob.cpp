@@ -418,6 +418,9 @@ void MdiEnrichmentJob::run()
     // The knowledge base, read once for this job's classifications
     if (!MdiContext::isEmpty(m_config.context))
         m_knowledge.load(m_connectionName, m_config.embedModel);
+    QJsonObject versioned = m_config.context;
+    versioned.insert(QStringLiteral("catalogNotes"), m_config.catalogNotes);
+    m_contextVersion = MdiContext::version(versioned);
 
     const QString derivedRoot = QDir(m_config.destinationPath).filePath(QStringLiteral("katalog_mdi"));
     const int fileCount = m_files.size();
@@ -488,6 +491,18 @@ void MdiEnrichmentJob::run()
             if (analysis == QLatin1String("classification") && !newOrChanged) {
                 ++unchanged;
                 continue;
+            }
+            // A re-interpretation skips the files already interpreted with this
+            // very context, so a second run or a resume redoes nothing (MDI-F103)
+            if (analysis == QLatin1String("classification") && m_config.reinterpret) {
+                bool sameContext = false;
+                for (const MdiData::Datum &d : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath))
+                    sameContext = sameContext || (d.analysis == analysis && d.outcome == QLatin1String("completed")
+                                                  && d.value.value("contextVersion").toString() == m_contextVersion);
+                if (sameContext) {
+                    ++unchanged;
+                    continue;
+                }
             }
 
             const QJsonObject params = analysisParams(analysis);
@@ -2341,7 +2356,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeClassification(const FileItem &fi
     value["sources"] = sources;
     // Recorded with the result, not a parameter: a changed context does not
     // re-run the classification by itself (MDI-F99, MDI-C30)
-    value["contextVersion"] = MdiContext::version(m_config.context);
+    value["contextVersion"] = m_contextVersion;
     r.value = value;
     return r;
 }

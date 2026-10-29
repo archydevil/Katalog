@@ -1927,7 +1927,7 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>Contesto</translation>
     </message>
     <message>
         <location line="-1442"/>

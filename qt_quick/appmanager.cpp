@@ -3384,9 +3384,10 @@ QVariantMap AppManager::reinterpretEstimate(int deviceId, const QString &folder,
             ++count;
         }
     }
-    const double perFile = (count > 0 ? total / count : 6.0) + 0.5;   // + the embeddings refresh
+    // No classification measured yet: the time is unknown (MDI-F103)
+    const qint64 seconds = count > 0 ? qRound64(files * (total / count + 0.5)) : -1;   // + the embeddings refresh
     return QVariantMap{{QStringLiteral("files"), files},
-                       {QStringLiteral("seconds"), qRound64(files * perFile)}};
+                       {QStringLiteral("seconds"), seconds}};
 }
 //----------------------------------------------------------------------
 QVariantList AppManager::knowledgeDocuments()

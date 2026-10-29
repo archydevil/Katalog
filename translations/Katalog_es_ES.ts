@@ -1927,7 +1927,7 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>Contexto</translation>
     </message>
     <message>
         <location line="-1442"/>

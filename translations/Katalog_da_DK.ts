@@ -1927,7 +1927,7 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontekst</translation>
     </message>
     <message>
         <location line="-1442"/>

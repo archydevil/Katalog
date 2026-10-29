@@ -1927,7 +1927,7 @@ Mindenképpen menti (a katalógus üres lesz)?</translation>
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontextus</translation>
     </message>
     <message>
         <location line="-1442"/>

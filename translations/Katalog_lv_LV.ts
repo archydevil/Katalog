@@ -1927,7 +1927,7 @@ Vai tomēr vēlaties to saglabāt (katalogs būs tukšs)?</translation>
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>Konteksts</translation>
     </message>
     <message>
         <location line="-1442"/>

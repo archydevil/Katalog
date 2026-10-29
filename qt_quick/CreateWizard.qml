@@ -334,6 +334,7 @@ ColumnLayout {
     }
     Controls.Switch {
         // Uses the Context page; off while the collection has none (MDI-F100)
+        enabled: Object.keys(appManager1.getContext()).length > 0
         text: qsTr("Classification")
         checked: createWizard.aiClassification
         onToggled: { createWizard.aiClassification = checked; createWizard.choiceEdited() }

@@ -1927,7 +1927,7 @@ Doriți să îl salvați oricum (catalogul ar fi gol)?</translation>
         <location line="+25"/>
         <location line="+1610"/>
         <source>Context</source>
-        <translation type="unfinished"></translation>
+        <translation>Context</translation>
     </message>
     <message>
         <location line="-1442"/>
