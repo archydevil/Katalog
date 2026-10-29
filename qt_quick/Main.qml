@@ -29,6 +29,22 @@ Kirigami.ApplicationWindow {
     // The page header bar uses the window's colours (above), not the
     // platform's header set, so it sits on the same ground as the pages
     pageStack.globalToolBar.colorSet: Kirigami.Theme.Window
+    pageStack.globalToolBar.separatorVisible: false
+    // The Qt Quick style (Fusion on macOS) paints toolbars, buttons, fields
+    // and menus from the window palette: the same tokens
+    palette.window:          KTheme.ground
+    palette.windowText:      KTheme.text
+    palette.base:            KTheme.surface
+    palette.alternateBase:   KTheme.surface2
+    palette.text:            KTheme.text
+    palette.button:          KTheme.surface
+    palette.buttonText:      KTheme.text
+    palette.highlight:       KTheme.accent
+    palette.highlightedText: KTheme.onAccent
+    palette.placeholderText: KTheme.text3
+    palette.link:            KTheme.accentText
+    palette.toolTipBase:     KTheme.surface2
+    palette.toolTipText:     KTheme.text
 
     // Global activity panel: running job progress plus the queue behind it.
     // Anchored to pageStack rather than used as the window footer: the window
@@ -154,18 +170,19 @@ Kirigami.ApplicationWindow {
     // assignment, replacing Kirigami's own font binding); headings keep
     // Kirigami's level factors.
     Instantiator {
-        model: [pageSelection, pageSearch, pageSearchResults, pageDevices, pageExplore,
-                pageCreate, pageDeviceEdit, pageStatistics, pageTags, pageBackup]
+        model: [pageHome, pageSelection, pageSearch, pageSearchResults, pageDevices, pageExplore,
+                pageActivity, pageContext, pageCreate, pageDeviceEdit, pageStatistics, pageTags,
+                pageBackup]
         delegate: Connections {
             required property var modelData
             target: modelData
-            function onGlobalToolBarItemChanged() { root.pinHeaderFont(modelData.globalToolBarItem) }
+            function onGlobalToolBarItemChanged() { root.styleHeader(modelData.globalToolBarItem) }
         }
     }
     Connections {
         target: pageStack.layers.currentItem
         ignoreUnknownSignals: true
-        function onGlobalToolBarItemChanged() { root.pinHeaderFont(pageStack.layers.currentItem.globalToolBarItem) }
+        function onGlobalToolBarItemChanged() { root.styleHeader(pageStack.layers.currentItem.globalToolBarItem) }
     }
     // A layer's header is created during the push, before the connection above
     // retargets to it, so it is also pinned once the layer becomes current.
@@ -175,9 +192,19 @@ Kirigami.ApplicationWindow {
             Qt.callLater(function() {
                 let layer = pageStack.layers.currentItem
                 if (layer && pageStack.layers.depth > 1)
-                    root.pinHeaderFont(layer.globalToolBarItem)
+                    root.styleHeader(layer.globalToolBarItem)
             })
         }
+    }
+    // Kirigami draws the page header with the platform's own colours (it does
+    // not inherit the window's), so its background is set to the design
+    // system ground each time the header is created (D34).
+    function styleHeader(header) {
+        if (!header)
+            return
+        if (header.background)
+            header.background.color = Qt.binding(function() { return KTheme.ground })
+        pinHeaderFont(header)
     }
     function pinHeaderFont(item) {
         if (!item)
@@ -1204,7 +1231,7 @@ Kirigami.ApplicationWindow {
         root.showPage(pageHome)
         // Headers that already exist before the connections above could see them.
         for (let i = 0; i < pageStack.depth; ++i)
-            root.pinHeaderFont(pageStack.get(i).globalToolBarItem)
+            root.styleHeader(pageStack.get(i).globalToolBarItem)
     }
 
     onXChanged:      root.trackWindowedGeometry()
@@ -2692,6 +2719,7 @@ Kirigami.ApplicationWindow {
                 id: pageHomeEscapeAction
                 text: qsTr("Close")
                 icon.name: "view-close"
+                visible: false   // Home is the start of the sidebar, nothing to close (Esc still works)
                 onTriggered: root.closeFeaturePage(pageHome)
             }
         ]
