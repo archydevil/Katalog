@@ -77,6 +77,15 @@ QString composeText(const QHash<QString, QJsonObject> &byAnalysis)
         const QJsonObject c = byAnalysis.value(QStringLiteral("caption"));
         parts << c.value("caption").toString() << joinTags(c.value("tags"));
     }
+    if (byAnalysis.contains(QStringLiteral("classification"))) {
+        // The archive's own terms: searchable by category value (D33)
+        const QJsonObject c = byAnalysis.value(QStringLiteral("classification"));
+        parts << c.value("title").toString() << c.value("description").toString()
+              << joinTags(c.value("tags")) << joinTags(c.value("entities"));
+        const QJsonObject categories = c.value("categories").toObject();
+        for (auto it = categories.begin(); it != categories.end(); ++it)
+            parts << joinTags(it.value());
+    }
     if (byAnalysis.contains(QStringLiteral("archive"))) {
         // Names inside the archive: found offline by content search
         int n = 0;

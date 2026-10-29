@@ -589,6 +589,7 @@ void MdiEnrichmentJob::run()
             // Instant-search index: the file's derived text changed
             if (r.outcome == QLatin1String("completed")
                 && (analysis == QLatin1String("snippet") || analysis == QLatin1String("summary")
+                    || analysis == QLatin1String("classification")
                     || analysis == QLatin1String("caption") || analysis == QLatin1String("archive")))
                 MdiFts::updateDerivedText(m_connectionName, m_config.catalogId, file.fullPath);
             if (analysis == QLatin1String("segments") && r.outcome == QLatin1String("completed"))
@@ -2232,4 +2233,183 @@ QJsonObject MdiEnrichmentJob::askOllamaOnce(const QString &model, const QString 
     }
     reply->deleteLater();
     return result;
+}
+
+//----------------------------------------------------------------------
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeClassification(const FileItem &file)
+{
+    // Interpretation in the collection's context: from what is already known
+    // of the file, never from the file itself (D33, MDI-F101)
+    Result r;
+    r.model = m_config.textModel;
+    if (MdiContext::isEmpty(m_config.context)) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("no context");
+        return r;
+    }
+
+    // Its place in the archive, its date and metadata, and the other results
+    QString relative = file.fullPath;
+    if (!m_config.sourceRoot.isEmpty() && relative.startsWith(m_config.sourceRoot))
+        relative = relative.mid(m_config.sourceRoot.size());
+    QString facts = QStringLiteral("Path in the archive: %1\nType: %2 (.%3), modified %4\n")
+                        .arg(relative, file.fileType, file.extension, file.dateUpdated);
+    if (!file.metadata.isEmpty() && file.metadata != QLatin1String("{}"))
+        facts += QStringLiteral("Metadata: ") + file.metadata.left(1500) + '\n';
+    QString query = QFileInfo(relative).completeBaseName() + ' ' + QFileInfo(relative).path();
+
+    auto joined = [](const QJsonValue &list) {
+        QStringList out;
+        for (const QJsonValue &v : list.toArray())
+            out << v.toString();
+        return out.join(QStringLiteral(", "));
+    };
+    for (const MdiData::Datum &d : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath)) {
+        if (d.outcome != QLatin1String("completed"))
+            continue;
+        const QJsonObject &v = d.value;
+        if (d.analysis == QLatin1String("caption")) {
+            facts += QStringLiteral("Image description: ") + v.value("caption").toString()
+                   + QStringLiteral(" [") + joined(v.value("tags")) + QStringLiteral("]\n");
+            query += ' ' + v.value("caption").toString();
+        } else if (d.analysis == QLatin1String("summary")) {
+            facts += QStringLiteral("Summary: ") + v.value("summary").toString()
+                   + QStringLiteral(" [") + joined(v.value("tags")) + QStringLiteral("]\n");
+            query += ' ' + v.value("summary").toString();
+        } else if (d.analysis == QLatin1String("snippet")) {
+            facts += QStringLiteral("Beginning of the text: ") + v.value("text").toString() + '\n';
+            query += ' ' + v.value("text").toString().left(500);
+        } else if (d.analysis == QLatin1String("transcript")) {
+            QString spoken;
+            for (const QJsonValue &p : v.value("passages").toArray()) {
+                spoken += p.toObject().value("text").toString() + ' ';
+                if (spoken.size() > 2000)
+                    break;
+            }
+            facts += QStringLiteral("Transcript (beginning): ") + spoken.trimmed().left(2000) + '\n';
+            query += ' ' + spoken.left(500);
+        } else if (d.analysis == QLatin1String("segments")) {
+            QStringList titles;
+            for (const QJsonValue &seg : v.value("segments").toArray())
+                if (titles.size() < 12)
+                    titles << seg.toObject().value("title").toString();
+            facts += QStringLiteral("Topics: ") + titles.join(QStringLiteral("; ")) + '\n';
+        } else if (d.analysis == QLatin1String("mediainfo")) {
+            facts += QStringLiteral("Media: ") + QString::fromUtf8(QJsonDocument(v).toJson(QJsonDocument::Compact)).left(400) + '\n';
+        } else if (d.analysis == QLatin1String("archive")) {
+            QStringList names;
+            for (const QJsonValue &e : v.value("entries").toArray())
+                if (names.size() < 30)
+                    names << e.toObject().value("path").toString();
+            facts += QStringLiteral("Archive contents: ") + names.join(QStringLiteral(", ")) + '\n';
+        }
+    }
+
+    // The reference passages most related to the file (local RAG, MDI-F106)
+    QList<MdiKnowledge::Passage> found;
+    QStringList passages;
+    if (!m_knowledge.isEmpty()) {
+        QString err;
+        const QList<QVector<float>> vectors = embedTexts(m_config.ollamaUrl, m_config.embedModel,
+                                                         {query.simplified().left(2000)}, &err, m_config.httpTimeoutMs);
+        if (!vectors.isEmpty())
+            found = m_knowledge.search(vectors.first(), 5);
+        for (int i = 0; i < found.size(); ++i)
+            passages << QStringLiteral("[%1] %2: %3").arg(i + 1).arg(found.at(i).title, found.at(i).text);
+    }
+
+    const QString language = MdiContext::language(m_config.context, m_config.uiLanguageName);
+    const QString prompt = MdiContext::classificationPrompt(m_config.context, m_config.catalogNotes,
+                                                            facts, passages, language);
+    QString err;
+    const QJsonObject answer = askOllama(m_config.textModel, prompt, {}, &err);
+    QJsonObject value = MdiContext::normaliseClassification(answer, m_config.context);
+    if (value.value("description").toString().isEmpty() && value.value("title").toString().isEmpty()
+        && value.value("categories").toObject().isEmpty()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = err.isEmpty() ? QStringLiteral("no classification in the model answer") : err;
+        return r;
+    }
+    // The passages the answer relied on, by document (provenance)
+    QJsonArray sources;
+    for (const QJsonValue &n : value.value("sources").toArray()) {
+        const int k = n.toInt() - 1;
+        if (k >= 0 && k < found.size())
+            sources.append(QJsonObject{{"document", found.at(k).documentId}, {"title", found.at(k).title},
+                                       {"passage", found.at(k).index}, {"text", found.at(k).text.left(300)}});
+    }
+    value["sources"] = sources;
+    // Recorded with the result, not a parameter: a changed context does not
+    // re-run the classification by itself (MDI-F99, MDI-C30)
+    value["contextVersion"] = MdiContext::version(m_config.context);
+    r.value = value;
+    return r;
+}
+
+//----------------------------------------------------------------------
+void MdiEnrichmentJob::indexKnowledge(int &completed, int &skipped, int &failed)
+{
+    // Reference documents: text, passages and their embeddings (MDI-F105).
+    // A document that cannot be reached now stays pending for next time.
+    const QList<MdiKnowledge::Document> documents = MdiKnowledge::pendingDocuments(m_connectionName);
+    for (int i = 0; i < documents.size() && !m_stop.load(); ++i) {
+        if (!waitWhilePaused())
+            break;
+        const MdiKnowledge::Document &doc = documents.at(i);
+        emit progress(i + 1, int(documents.size()), QStringLiteral("knowledge"), doc.path);
+        QVariantMap step = stepInfo(QStringLiteral("knowledge"));
+        step[QStringLiteral("analysis")]  = QStringLiteral("knowledge");
+        step[QStringLiteral("filePath")]  = doc.path;
+        step[QStringLiteral("fileIndex")] = i + 1;
+        step[QStringLiteral("fileCount")] = int(documents.size());
+        QVariantMap started = step;
+        started[QStringLiteral("event")]     = QStringLiteral("start");
+        started[QStringLiteral("startedAt")] = QDateTime::currentDateTime().toString(Qt::ISODate);
+        emit activity(started);
+        QElapsedTimer clock;
+        clock.start();
+
+        QString outcome = QStringLiteral("completed");
+        QString reason;
+        if (!QFileInfo::exists(doc.path)) {
+            outcome = QStringLiteral("skipped");
+            reason  = QStringLiteral("not reachable");
+            ++skipped;
+        } else {
+            QString tool;
+            const QStringList texts = MdiKnowledge::passages(extractText(doc.path, &tool, &reason, true));
+            QList<QVector<float>> vectors;
+            for (int from = 0; from < texts.size() && !m_stop.load(); from += kEmbedBatch) {
+                QString err;
+                const QList<QVector<float>> batch = embedTexts(m_config.ollamaUrl, m_config.embedModel,
+                                                               texts.mid(from, kEmbedBatch), &err, m_config.httpTimeoutMs);
+                if (batch.isEmpty()) {
+                    reason = err;
+                    break;
+                }
+                vectors += batch;
+            }
+            if (m_stop.load()) {
+                outcome = QStringLiteral("stopped");   // stays pending
+            } else if (texts.isEmpty() || vectors.size() != texts.size()) {
+                outcome = QStringLiteral("failed");
+                if (texts.isEmpty() && reason.isEmpty())
+                    reason = QStringLiteral("no text");
+                MdiKnowledge::setFailed(m_connectionName, doc.id, reason);
+                ++failed;
+            } else if (MdiKnowledge::storePassages(m_connectionName, doc.id, texts, vectors, m_config.embedModel)) {
+                ++completed;
+            } else {
+                outcome = QStringLiteral("failed");
+                reason  = QStringLiteral("not saved");
+                ++failed;
+            }
+        }
+        QVariantMap ended = step;
+        ended[QStringLiteral("event")]      = QStringLiteral("end");
+        ended[QStringLiteral("outcome")]    = outcome;
+        ended[QStringLiteral("reason")]     = reason;
+        ended[QStringLiteral("durationMs")] = clock.elapsed();
+        emit activity(ended);
+    }
 }
