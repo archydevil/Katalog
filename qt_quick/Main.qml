@@ -914,7 +914,6 @@ Kirigami.ApplicationWindow {
         id: sidebar
         modal: false
         width: 264
-        bannerVisible: false
         actions: []
 
         background: Rectangle {
