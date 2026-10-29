@@ -404,6 +404,21 @@ void MdiEnrichmentJob::run()
             m_ffmpegVersion = QString::fromUtf8(out).section('\n', 0, 0).section(' ', 0, 2);
     }
 
+    // Knowledge-base pass: the pending reference documents (MDI-F105)
+    if (m_config.knowledgeOnly) {
+        indexKnowledge(completed, skipped, failed);
+        MdiData::close(m_connectionName);
+        summary[QStringLiteral("completed")] = completed;
+        summary[QStringLiteral("skipped")]   = skipped;
+        summary[QStringLiteral("failed")]    = failed;
+        summary[QStringLiteral("stopped")]   = m_stop.load();
+        emit finished(summary);
+        return;
+    }
+    // The knowledge base, read once for this job's classifications
+    if (!MdiContext::isEmpty(m_config.context))
+        m_knowledge.load(m_connectionName, m_config.embedModel);
+
     const QString derivedRoot = QDir(m_config.destinationPath).filePath(QStringLiteral("katalog_mdi"));
     const int fileCount = m_files.size();
 
@@ -436,7 +451,8 @@ void MdiEnrichmentJob::run()
         // overwritten, so it stays browsable offline (MDI-F44). A file gone
         // while its drive is there is skipped; a drive gone is waited for,
         // and the job goes on with this same file once it is back (MDI-F91).
-        if (!QFileInfo::exists(file.fullPath)) {
+        // A re-interpretation reads derived data only: no source needed
+        if (!m_config.reinterpret && !QFileInfo::exists(file.fullPath)) {
             if (!driveAway().isEmpty()) {
                 if (!waitForSource())
                     break;
@@ -451,15 +467,34 @@ void MdiEnrichmentJob::run()
         // Embeddings index the file's other data: redone whenever one of them
         // was produced in this run
         bool fileChanged = false;
+        // An analysis run classifies a new or changed file only; the files
+        // done before are re-interpreted on request (MDI-F100, MDI-F103)
+        bool newOrChanged = true;
+        if (!m_config.reinterpret && analyses.contains(QStringLiteral("classification"))) {
+            bool known = false;
+            bool changed = false;
+            for (const MdiData::Datum &d : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath)) {
+                if (d.analysis == QLatin1String("quickhash") || d.analysis == QLatin1String("classification"))
+                    continue;
+                known = true;
+                changed = changed || d.fileSize != file.size || d.fileDate != file.dateUpdated;
+            }
+            newOrChanged = !known || changed;
+        }
         for (int a = 0; a < analyses.size(); ++a) {
             const QString &analysis = analyses.at(a);
             if (!waitWhilePaused())
                 break;
+            if (analysis == QLatin1String("classification") && !newOrChanged) {
+                ++unchanged;
+                continue;
+            }
 
             const QJsonObject params = analysisParams(analysis);
             // Incremental (MDI-F13): same file state and parameters, and the
             // derived file still present, means nothing to do.
-            const bool forced = analysis == QLatin1String("embeddings") && fileChanged;
+            const bool forced = (analysis == QLatin1String("embeddings") && fileChanged)
+                             || (analysis == QLatin1String("classification") && m_config.reinterpret);
             if (!forced && MdiData::isCurrent(m_connectionName, m_config.catalogId, file.fullPath, analysis,
                                               file.size, file.dateUpdated, params)) {
                 bool filesPresent = true;
@@ -1371,10 +1406,11 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeCaption(const FileItem &file)
         return r;
     }
 
-    const QString prompt = QStringLiteral(
+    // The collection's context and its language, when it has one (MDI-F98)
+    const QString prompt = MdiContext::preamble(m_config.context, m_config.catalogNotes) + QStringLiteral(
         "You describe images for a personal media catalog. Answer in %1, as JSON only: "
         "{\"caption\": \"one or two sentences describing what is shown\", "
-        "\"tags\": [\"3 to 8 short lowercase keywords\"]}.").arg(m_config.uiLanguageName);
+        "\"tags\": [\"3 to 8 short lowercase keywords\"]}.").arg(MdiContext::language(m_config.context, m_config.uiLanguageName));
     QString err;
     const QJsonObject answer = askOllama(m_config.visionModel, prompt, {frame}, &err);
     const QString caption = answer.value("caption").toString().trimmed();
@@ -1404,7 +1440,7 @@ QString MdiEnrichmentJob::findTranscript(const FileItem &file) const
     return QString();
 }
 
-QString MdiEnrichmentJob::extractText(const QString &path, QString *tool, QString *reason)
+QString MdiEnrichmentJob::extractText(const QString &path, QString *tool, QString *reason, bool whole)
 {
     const QString suffix = QFileInfo(path).suffix().toLower();
 
@@ -1415,8 +1451,12 @@ QString MdiEnrichmentJob::extractText(const QString &path, QString *tool, QStrin
         }
         QByteArray out;
         QString err;
-        // First 30 pages are plenty for a summary
-        if (!runTool(m_config.pdftotextPath, {"-l", "30", "-enc", "UTF-8", path, "-"}, &out, &err)) {
+        // First 30 pages are plenty for a summary; a reference document is read whole
+        QStringList args;
+        if (!whole)
+            args << "-l" << "30";
+        args << "-enc" << "UTF-8" << path << "-";
+        if (!runTool(m_config.pdftotextPath, args, &out, &err)) {
             *reason = err;
             return QString();
         }
@@ -1433,7 +1473,7 @@ QString MdiEnrichmentJob::extractText(const QString &path, QString *tool, QStrin
             return QString();
         }
         // Bounded read; a NUL byte means a binary file named like a text one
-        const QByteArray bytes = f.read(kMaxTextChars * 4);
+        const QByteArray bytes = f.read(whole ? qint64(8) * 1024 * 1024 : kMaxTextChars * 4);
         if (bytes.left(4096).contains('\0')) {
             *reason = QStringLiteral("binary content");
             return QString();
@@ -1512,14 +1552,19 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSummary(const FileItem &file)
 
     // Output language = the source's language (D-Q4); the model follows the
     // prompt's language unless told twice.
-    const QString prompt = QStringLiteral(
+    // A context with its own language sets it for every generated text (MDI-F98)
+    const QString contextLanguage = MdiContext::language(m_config.context, QString());
+    const QString prompt = MdiContext::preamble(m_config.context, m_config.catalogNotes) + QStringLiteral(
         "You summarise %1 for a personal media catalog. Write the summary, the excerpts and the tags "
-        "in the SAME LANGUAGE AS THE TEXT (an Italian text gets an Italian summary). "
+        "%3. "
         "Answer as JSON only: {\"summary\": \"3 to 5 sentences\", "
         "\"excerpts\": [\"up to 4 key passages quoted verbatim, each under 30 words\"], "
         "\"tags\": [\"3 to 10 lowercase keywords\"], \"language\": \"ISO 639-1 code\"}.\n\nTEXT:\n%2"
-        "\n\nRemember: same language as the TEXT, JSON only.")
-        .arg(isTranscript ? QStringLiteral("the transcript of a recording") : QStringLiteral("a document"), text);
+        "\n\nRemember: %4, JSON only.")
+        .arg(isTranscript ? QStringLiteral("the transcript of a recording") : QStringLiteral("a document"), text,
+             contextLanguage.isEmpty() ? QStringLiteral("in the SAME LANGUAGE AS THE TEXT (an Italian text gets an Italian summary)")
+                                       : QStringLiteral("in ") + contextLanguage,
+             contextLanguage.isEmpty() ? QStringLiteral("same language as the TEXT") : QStringLiteral("write in ") + contextLanguage);
 
     QString err;
     const QJsonObject answer = askOllama(m_config.textModel, prompt, {}, &err);
@@ -1610,9 +1655,13 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
                                                                           .arg(qRound(duration / 60.0));
         emit activity(step);
     };
-    if (!runTool(m_config.whisperPath, {"-m", m_config.whisperModelPath, "-f", wav, "-l", "auto",
-                                        "-t", threads, "-oj", "-of", outBase, "-np", "-pp"},
-                 nullptr, &err, limit, onLine)) {
+    QStringList whisperArgs = {"-m", m_config.whisperModelPath, "-f", wav, "-l", "auto",
+                               "-t", threads, "-oj", "-of", outBase, "-np", "-pp"};
+    // The glossary's terms as a vocabulary hint, when the context enables it (MDI-F98)
+    const QString hint = MdiContext::whisperHint(m_config.context);
+    if (!hint.isEmpty())
+        whisperArgs << "--prompt" << hint;
+    if (!runTool(m_config.whisperPath, whisperArgs, nullptr, &err, limit, onLine)) {
         r.outcome = QStringLiteral("failed");
         r.reason  = err;
         return r;
@@ -1721,15 +1770,21 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSegments(const FileItem &file)
     for (const QString &chunk : chunks) {
         if (m_stop.load())
             break;
-        const QString prompt = QStringLiteral(
+        const QString contextLanguage = MdiContext::language(m_config.context, QString());
+        const QString prompt = MdiContext::preamble(m_config.context, m_config.catalogNotes) + QStringLiteral(
             "You split the timecoded transcript of a recording into topic segments for a personal media catalog. "
             "Each line starts with its timecode [h:mm:ss]. Make consecutive segments, each covering one topic, "
             "typically 1 to 10 minutes long, that together cover the whole transcript below. "
-            "Write titles, summaries and topics in the SAME LANGUAGE AS THE TRANSCRIPT. "
+            "Write titles, summaries and topics %2. "
             "Answer as JSON only: {\"segments\": [{\"start\": \"h:mm:ss\", \"end\": \"h:mm:ss\", "
             "\"title\": \"short title\", \"summary\": \"1 or 2 sentences\", "
             "\"topics\": [\"2 to 5 lowercase keywords\"]}]}.\n\nTRANSCRIPT:\n%1"
-            "\n\nRemember: same language as the TRANSCRIPT, JSON only.").arg(chunk);
+            "\n\nRemember: %3, JSON only.")
+            .arg(chunk,
+                 contextLanguage.isEmpty() ? QStringLiteral("in the SAME LANGUAGE AS THE TRANSCRIPT")
+                                           : QStringLiteral("in ") + contextLanguage,
+                 contextLanguage.isEmpty() ? QStringLiteral("same language as the TRANSCRIPT")
+                                           : QStringLiteral("write in ") + contextLanguage);
         QString err;
         const QJsonObject answer = askOllama(m_config.textModel, prompt, {}, &err);
         const QJsonArray found = answer.value("segments").toArray();
@@ -1805,13 +1860,16 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeClusters()
     }
     lines.truncate(kMaxTextChars);
 
-    const QString prompt = QStringLiteral(
+    const QString contextLanguage = MdiContext::language(m_config.context, QString());
+    const QString prompt = MdiContext::preamble(m_config.context, m_config.catalogNotes) + QStringLiteral(
         "Below are topic segments (id | file | title — summary [topics]) from recordings of one catalog. "
         "Group segments that deal with the same subject into detailed thematic clusters, across files. "
         "Each segment belongs to at most one cluster; a cluster has at least 2 segments. "
-        "Write labels and descriptions in the SAME LANGUAGE AS THE SEGMENTS. "
+        "Write labels and descriptions %2. "
         "Answer as JSON only: {\"clusters\": [{\"label\": \"short label\", "
-        "\"description\": \"1 or 2 sentences\", \"members\": [\"S1\", \"S7\"]}]}.\n\nSEGMENTS:\n%1").arg(lines);
+        "\"description\": \"1 or 2 sentences\", \"members\": [\"S1\", \"S7\"]}]}.\n\nSEGMENTS:\n%1")
+        .arg(lines, contextLanguage.isEmpty() ? QStringLiteral("in the SAME LANGUAGE AS THE SEGMENTS")
+                                              : QStringLiteral("in ") + contextLanguage);
     QString err;
     const QJsonObject answer = askOllama(m_config.textModel, prompt, {}, &err);
     const QJsonArray found = answer.value("clusters").toArray();
@@ -1945,6 +2003,16 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeEmbeddings(const FileItem &file)
             int k = 0;
             for (const QJsonValue &e : d.value.value("excerpts").toArray())
                 add(QStringLiteral("excerpt"), k++, -1, -1, e.toString());
+        } else if (d.analysis == QLatin1String("classification")) {
+            // The archive's own terms: title, description, categories, tags (D33)
+            QStringList values;
+            const QJsonObject categories = d.value.value("categories").toObject();
+            for (auto it = categories.begin(); it != categories.end(); ++it)
+                values << it.key() + QStringLiteral(": ") + joinTags(it.value());
+            add(QStringLiteral("classification"), 0, -1, -1,
+                d.value.value("title").toString() + QStringLiteral(". ") + d.value.value("description").toString()
+                + QStringLiteral(" ") + values.join(QStringLiteral("; "))
+                + QStringLiteral(" (") + joinTags(d.value.value("tags")) + QStringLiteral(")"));
         } else if (d.analysis == QLatin1String("caption")) {
             add(QStringLiteral("caption"), 0, -1, -1,
                 d.value.value("caption").toString() + QStringLiteral(" (") + joinTags(d.value.value("tags")) + QStringLiteral(")"));

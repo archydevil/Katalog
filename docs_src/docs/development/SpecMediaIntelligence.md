@@ -537,9 +537,9 @@ D33. Rows `MDI-F94`–`F108` are context phase 1 (local only); `MDI-F109` and
 | MDI-C27 | **Connected drives (D30).** `core/mdivolumes.*` lists drives with external programs (`diskutil` on macOS, `lsblk` and `udisksctl` on Linux), started as `MDI-C7` requires, and lists mounted volumes on Windows. Mounting is always read-only. Katalog MUST NOT open or read a raw device (that would need administrator rights); a drive the system cannot mount is out of scope. | [Implemented — increment 3] |
 | MDI-C28 | **Enrichment list store (D31).** The enrichment list — the running job and the waiting jobs — is kept in the table `mdi_job` of `mdi_data.db` (run order, device ID, paused flag), the *enrichment job* table of `MDI-C15`, created when absent by the `mdi_` migration. No core table, no settings key and no new Memory-mode file is added, so a beta settings file, K2 and upstream K3 3.0 are unaffected (`MDI-C1`, `MDI-C7`). It is read and written only through `MdiData::pendingJobs()` and `MdiData::savePendingJobs()`, on the main-thread connection of `MDI-C4`, each write one short transaction; a failed write is logged and changes nothing else. It is written when a job is added, starts, is paused or resumed, ends, is stopped or is removed; quitting Katalog and opening another collection do not clear it (`MDI-F12`, `MDI-F93`). No file position is stored: resuming relies on `MDI-F13`. The provider class that decides D6 is evaluated when a job is restored, from the current profile and provider settings (`MDI-F26`), never stored. Hosted mode: nothing beyond `Q11`. | [Implemented — D31] |
 | MDI-C29 | **Waiting state in the runner (D31).** Approved core changes, nothing else: in `MdiEnrichmentJob`, the catalog's source path in `Config`, the waiting state of `MDI-F91` in `run()`, its start and end reported through the existing `activity` signal, and the Pause check of `MDI-F11` in `precomputeThumbnails()`; in `MdiData`, the `mdi_job` table and `pendingJobs()` / `savePendingJobs()` (`MDI-C28`). The source path counts as reachable when it exists and lists at least one entry (a fixed Linux mount point stays as an empty folder when its drive is gone); the destination path, when it exists or can be created. The runner's check runs on the runner's thread only, at most every 2 s while waiting, and reads nothing else from the source; Pause and Stop are checked between checks. The choice among waiting catalogs (`MDI-F92`, and the order of restored jobs, `MDI-F12`) checks their source paths with the same rule on the UI thread, as `Device::loadDevice()`'s own active-state check does: when a job is queued, when the running job starts waiting, every 2 s while it waits, and when the next run is chosen. A source on an unresponsive network volume can then hold the window until the system answers; the fork owner accepted this on 2026-10-29. | [Implemented — D31] |
-| MDI-C30 | **Context and knowledge-base store (D33, D17, D5).** The context and the catalog notes (table `mdi_context`: scope — 0 for the collection, otherwise the catalog's device ID —, content as JSON, version, date), the knowledge-base documents (`mdi_kb_document`) and their passages with embeddings (`mdi_kb_chunk`: text, model, vector) are in `mdi_data.db`, created by the `mdi_` migration when absent; they join the table list of `MDI-C15`, and any change to an existing `mdi_` table goes through that migration. No core table or column, no settings key and no new Memory-mode file is added, so K2 and upstream K3 3.0 are unaffected (`MDI-C1`). The context version and the knowledge-base sources of a datum are stored outside the parameters `MdiData::isCurrent` compares (`MDI-F99`). Hosted mode: nothing beyond `Q11`. | [Planned] |
+| MDI-C30 | **Context and knowledge-base store (D33, D17, D5).** The context and the catalog notes (table `mdi_context`: scope — 0 for the collection, otherwise the catalog's device ID —, content as JSON, version, date), the knowledge-base documents (`mdi_kb_document`) and their passages with embeddings (`mdi_kb_passage`: document, index, text, model, vector) are in `mdi_data.db`, created by the `mdi_` migration when absent; they join the table list of `MDI-C15`, and any change to an existing `mdi_` table goes through that migration. No core table or column, no settings key and no new Memory-mode file is added, so K2 and upstream K3 3.0 are unaffected (`MDI-C1`). The context version and the knowledge-base sources of a datum are stored outside the parameters `MdiData::isCurrent` compares (`MDI-F99`). Hosted mode: nothing beyond `Q11`. | [Planned] |
 | MDI-C31 | **The context is user data (D33).** *Clear derived data* (`MDI-F59`), a re-run (`MDI-F53`, D13), a quick-hash pass (`MDI-F84`) and the deletion of a catalog MUST NOT delete or change the collection's context or its knowledge base; deleting a catalog removes only that catalog's notes, with its profile (`MDI-F57`). | [Planned] |
-| MDI-C32 | **Core boundary and files (D33, `MDI-C14`).** The context model, the prompt sections built from it, the knowledge base's text extraction, passage splitting, embedding and retrieval, the classification request and the checking of category values are in `core/`. New files for context phase 1: `core/mdicontext.{h,cpp}` and `core/mdiknowledge.{h,cpp}`. Existing core classes changed: `MdiEnrichmentJob` (classification; context sections in prompts; the initial prompt of `whisper.cpp`; retrieval; extended metadata in `listCatalogFiles`), `MdiData` (the tables of `MDI-C30`, the columns of `MDI-C36`, their reads and writes), `MdiFts` (classification text). New K3 file: `qt_quick/PageContext.qml` (`MDI-C18`, D33). Their class and method design is approved by the fork owner when the step starts (`MDI-C14`, *Phasing*); the design proposed on 2026-10-29 is listed under *Context phase 1 — proposed core design*. No other new file is approved. | [Planned] |
+| MDI-C32 | **Core boundary and files (D33, `MDI-C14`).** The context model, the prompt sections built from it, the knowledge base's text extraction, passage splitting, embedding and retrieval, the classification request and the checking of category values are in `core/`. New files for context phase 1: `core/mdicontext.{h,cpp}` and `core/mdiknowledge.{h,cpp}`. Existing core classes changed: `MdiEnrichmentJob` (classification; context sections in prompts; the initial prompt of `whisper.cpp`; retrieval; extended metadata in `listCatalogFiles`), `MdiData` (the tables of `MDI-C30`, the columns of `MDI-C36`, their reads and writes), `MdiFts` (classification text). New K3 file: `qt_quick/PageContext.qml` (`MDI-C18`, D33). Their class and method design was approved by the fork owner on 2026-10-29 (`MDI-C14`) and is listed under *Context phase 1 — core design*. No other new file is approved. | [Planned] |
 | MDI-C33 | **Knowledge-base indexing thread.** Indexing runs on its own `QThread` with its own connection to `mdi_data.db`, committing one document at a time; like the runner it is not an operation-queue entry (`MDI-C3`). The `MDI-C4` rule that the main thread does not fail or stall holds. It only reads documents, as `MDI-C10` requires for sources; tools are started as `MDI-C7` requires. Similarity is a cosine scan in `core/` (`MDI-C9`). No vector-index library and no new library or module (`MDI-C8`); the initial prompt of `MDI-F98` is an argument of `whisper.cpp`, an approved tool. | [Planned] |
 | MDI-C36 | **Re-interpretation in the enrichment list (D33, `Q24`).** `mdi_job` (`MDI-C28`) also records each job's kind (enrichment or re-interpretation) and a re-interpretation's scope (folder, file types). The columns are added when missing by the `mdi_` migration (`MDI-C15`); a row without them is an enrichment job, so a list written before D33 reads unchanged. The list is still read and written only through `MdiData::pendingJobs()` and `MdiData::savePendingJobs()`. No core table, no settings key and no new Memory-mode file is added. | [Planned] |
 | MDI-C34 | **Same inputs in every mode.** In Memory mode the classification receives the same inputs as in File mode: a file's extended metadata is read with the catalog's file list (`MdiEnrichmentJob::listCatalogFiles`), on the caller's thread, from the catalog's `.idx` file in Memory mode and from the `file` table otherwise (Memory Mode Caveat, `CLAUDE.md`). | [Planned] |
@@ -558,7 +558,7 @@ D33. Rows `MDI-F94`–`F108` are context phase 1 (local only); `MDI-F109` and
 | **E** | Other documents; applications and other files. | `MDI-F42`, `F43` (`[Backlog]`) |
 | **Activity** | Activity page, core resource monitor, per-step activity reporting from the runner (D19, D21). Not bound to the A–E order. | `MDI-F61`–`F75`, `MDI-C21` |
 | **Increment 3** | Instant search index, WebP thumbnails and contact sheets, technical data, text snippets, archive listings, quick hash and duplicates, Inspector, column view, side menu, connected drives (D22–D30). Not bound to the A–E order. | `MDI-F76`–`F90`, `MDI-C22`–`C27` |
-| **Context 1** | Domain context and catalog notes, draft from the catalog, context in new analyses, classification, re-interpretation on request, local knowledge base, the *Context* page in *Tools* (D33). Rows ratified 2026-10-29; starts with the fork owner's `MDI-C14` approval of the core design. Not bound to the A–E order. | `MDI-O8`, `MDI-F89` (*Context* entry), `MDI-F94`–`F108`, `MDI-C18` (exception), `MDI-C30`–`C34`, `MDI-C36` |
+| **Context 1** | Domain context and catalog notes, draft from the catalog, context in new analyses, classification, re-interpretation on request, local knowledge base, the *Context* page in *Tools* (D33). Rows ratified and core design approved (`MDI-C14`) on 2026-10-29. Not bound to the A–E order. | `MDI-O8`, `MDI-F89` (*Context* entry), `MDI-F94`–`F108`, `MDI-C18` (exception), `MDI-C30`–`C34`, `MDI-C36` |
 | **Context 2** | MCP servers, online and cloud sources (D33). `[Backlog]` until `Q29`–`Q31` are decided. | `MDI-F109`, `F110`, `MDI-C35` |
 
 A phase starts only when the previous one is implemented, and each phase starts
@@ -995,61 +995,79 @@ Checked by the specifications agent against the working-tree diff of
   `ffprobe`, or when `ffprobe` itself fails, the previous path runs. Outcome
   classification only.
 
-### Context phase 1 — proposed core design (D33) — 2026-10-29
+### Context phase 1 — core design (D33) — approved 2026-10-29
 
-Proposed by the main agent and recorded here so that the core changes of
-`MDI-C32` are listed. The main agent reported it as the approved phase 1
-design; the fork owner's own `MDI-C14` reply approving it was not relayed to the
-specifications agent, so the rows are ratified (D33) and this design is
-recorded as reported. Work started the same day: `core/mdicontext.*` and
-`core/mdiknowledge.*` are committed (`3c40288c`, `920aacbc`, `48d455ef`) and
-`core/mdidata.*` is changed in the working tree; the specifications agent has
-not checked them against the rows, beyond the notes below.
+The fork owner approved this core design on **2026-10-29** in the main session,
+answering an explicit question prompt; reported to the specifications agent by
+the main agent, which did not see the reply itself. This is the `MDI-C14`
+approval of the core changes of `MDI-C32`; nothing else is approved by it.
+Question: "Approvi queste aggiunte al core di Katalog per la fase 1 del
+Contesto? • MdiContext (nuovo): salva e legge il contesto; prepara i testi per
+l'AI (premessa di dominio, suggerimento per la trascrizione, prompt di
+classificazione); riporta le risposte alle tue categorie e ai termini
+preferiti; propone la bozza dal catalogo con l'AI locale. • MdiKnowledge
+(nuovo): aggiunge file e cartelle di riferimento, li elenca, li toglie solo
+dall'elenco (mai dal disco), divide il testo in passaggi e trova i 5 più
+pertinenti. • MdiData: tre tabelle nuove in mdi_data.db (contesto, documenti,
+passaggi) e tre colonne nella lista dei lavori (tipo di lavoro, cartella, tipo
+di file). • MdiEnrichmentJob: l'analisi "classificazione", il contesto nei
+prompt, l'opzione per la trascrizione, la rielaborazione su una cartella o un
+tipo di file, l'indicizzazione dei documenti su un thread a parte, la lettura
+dei metadati estesi. • MdiFts: la classificazione entra nella ricerca
+istantanea e nella ricerca per significato." → "Approvo (Consigliato)".
 
-| Class (file) | Proposed |
+Before asking, the main agent told the owner that `MdiContext` and
+`MdiKnowledge` had been started before this approval (commits `3c40288c`,
+`920aacbc`, `48d455ef`) and would be removed if it was not given. The owner
+approved what each class does; the method names below are the main agent's.
+
+| Class (file) | Approved design |
 | --- | --- |
-| `MdiContext` (`core/mdicontext.{h,cpp}`, new) | JSON-based static helpers: `load(conn, scope)`, `save(conn, scope, json)`, `remove(conn, scope)`, `version(json)`, `isEmpty(json)`, `preamble(context, catalogNotes)` (sections of the caption, summary, segments and clusters prompts), `whisperHint(context)`, `classificationPrompt(...)`, `draftPrompt(folders, samples, language)`, `parseDraft(answer)`, and a synchronous `askText(ollamaUrl, model, prompt, &error)` for the draft, called on a worker thread, never on the UI thread. |
-| `MdiKnowledge` (`core/mdiknowledge.{h,cpp}`, new) | `addPaths(conn, paths)` (folders expanded to the approved formats, archives left out), `documents(conn)`, `removeDocument(conn, id)`, `pendingDocuments(conn)`, `setDocumentResult(...)`, `storeChunks(...)`, `chunkText(text, 1000, overlap)`, and an in-memory `Index` whose vectors are loaded once per job, with `search(queryVector, k = 5)`: no reload per file. |
-| `MdiData` | `mdi_context`, `mdi_kb_document`, `mdi_kb_chunk` created in `open()`; `mdi_job` gains `job_kind` (`enrich` or `reinterpret`), `job_folder`, `job_file_type`, added with `ALTER TABLE … ADD COLUMN` when missing; `PendingJob` gains kind, folder and file type (`MDI-C36`). |
-| `MdiEnrichmentJob` | Worker for knowledge-base indexing (a `knowledgeOnly` mode, like `quickHashOnly`, reusing `extractText`, `runTool`, Stop, Pause and the `activity` signal; pending documents scheduled again when the collection opens, not stored in `mdi_job`) and for re-interpretation (a `reinterpret` mode with its folder and file-type scope, planning the classification and the embeddings refresh it implies). New analysis `classification`: parameters are the model and the prompt label `classification-v1` only; the context version and the knowledge-base sources are stored in the datum's value (`MDI-F99`, `MDI-C30`). `FileItem` gains the extended metadata, read by `listCatalogFiles` in both modes (`MDI-C34`). The context's language is used in the prompts while the parameters keep D12's language. |
+| `MdiContext` (`core/mdicontext.{h,cpp}`, new) | JSON-based static helpers: `load(conn, scope)`, `save(conn, scope, json)`, `remove(conn, scope)`, `version(json)`, `isEmpty(json)`, `language(json, fallback)`, `preamble(context, catalogNotes)` (sections of the caption, summary, segments and clusters prompts), `whisperHint(context)`, `classificationPrompt(...)`, `normaliseClassification(answer, context)` (category values and preferred forms, `MDI-F101`), `draftPrompt(folders, samples, language)`, `parseDraft(answer)`, and a synchronous `askText(ollamaUrl, model, prompt, &error)` for the draft, called on a worker thread, never on the UI thread. |
+| `MdiKnowledge` (`core/mdiknowledge.{h,cpp}`, new) | `supportedSuffixes()` (the formats of `MDI-F104`, archives excluded), `addPaths(conn, paths)` (folders expanded to those formats), `documents(conn)`, `removeDocument(conn, id)` (from the list only, never from the disk), `pendingDocuments(conn)`, `pendingCount(conn)`, `storePassages(...)`, `setFailed(...)`, `passages(text, 1000, 150)`, and an in-memory `Index` (`load(conn, model)` once per job, `search(queryVector, 5, minScore)`): no reload per file. |
+| `MdiData` | `mdi_context`, `mdi_kb_document`, `mdi_kb_passage` created in `open()`; `mdi_job` gains `job_kind` (`enrich` or `reinterpret`), `job_folder`, `job_file_type`, added with `ALTER TABLE … ADD COLUMN` when missing; `PendingJob` gains kind, folder and file type (`MDI-C36`). |
+| `MdiEnrichmentJob` | Knowledge-base indexing: a separate instance in knowledge mode on its own `QThread`, outside the enrichment list, reusing `extractText`, `runTool`, Stop and the `activity` signal (`MDI-F105`, `MDI-C33`). Re-interpretation: a mode with its folder and file-type scope, planning the classification and the embeddings refresh it implies (`MDI-F103`). New analysis `classification`: parameters are the model and the prompt label `classification-v1` only; the context version and the knowledge-base sources are stored in the datum's value (`MDI-F99`, `MDI-C30`). The context's language is used in the prompts while the parameters keep D12's language (`MDI-F98`). The transcription option (`MDI-F98`). `FileItem` gains the extended metadata, read by `listCatalogFiles` in both modes (`MDI-C34`). |
 | `MdiFts` | `derivedText` includes the classification text; embeddings gain the kind `classification` (`MDI-F102`). |
 
-Checked against the ratified rows by the specifications agent:
+Resolved by the main agent on 2026-10-29, checked by the specifications agent
+against the rows:
 
-- **Knowledge-base indexing in the enrichment list does not match the rows as
-  ratified.** `MDI-F105` says the enrichment runner keeps working while
-  documents are indexed, and `MDI-C33` gives indexing its own thread and
-  connection. A `knowledgeOnly` job of the runner waits behind every
-  enrichment job (and holds them while it runs). Either the fork owner amends
-  `MDI-F105` and `MDI-C33`, or indexing gets its own thread.
-- **Which files *Analyze* classifies.** Planning the classification for "files
-  that got another analysis in that run" is wider than `MDI-F100`: a newly
-  selected analysis, or a new prompt version of another analysis, would
-  classify every file already analysed. `MDI-F100`'s rule (new or changed files
-  only, the quick hash aside) is the requirement.
-- **Pending documents at collection open.** Indexing them again automatically
-  is subject to D6: automatic only while the embeddings provider is local.
-- **A re-interpretation for a catalog already listed.** `MDI-F16` ignores a job
-  for a catalog already in the list; with job kinds, whether a re-interpretation
-  is ignored or queued next to an enrichment job of the same catalog is not
-  stated by any row.
-- **`mdi_` schema version.** Adding the `mdi_job` columns without raising the
-  `mdi_` version follows the D31 precedent; an older fork build that rewrites
-  the list drops the kind and scope, so a re-interpretation comes back as an
-  enrichment job.
+- **Knowledge-base indexing** runs as a separate instance on its own thread,
+  outside the enrichment list, so enrichment keeps working: `MDI-F105` and
+  `MDI-C33` as written, no amendment.
+- **Which files *Analyze* classifies** follows `MDI-F100` exactly: new (no
+  datum of the profile's other analyses, the quick hash aside) or changed
+  (size or modified date differ), and no current classification.
+- **Pending documents at collection open** are indexed again automatically
+  only while the embeddings provider is local (D6).
+- **Retrieval threshold.** `Index::search` also drops passages below a minimum
+  similarity, so fewer than 5 can be given; `MDI-F106` ("at most 5") holds.
+  The threshold is an implementation default.
+- **Table name.** The passages table is `mdi_kb_passage` (document, index,
+  text, model, vector; key document + index), the owner's "passaggi";
+  `MDI-C30` and its test line now use that name.
+- **Formats.** `supportedSuffixes()` covers `MDI-F104` as ratified, including
+  the text formats of `MDI-F81` (checked).
+
+Still open for the fork owner:
+
+- **A re-interpretation for a catalog already listed** is queued as its own
+  item; a duplicate is the same catalog, kind and scope (main agent's choice).
+  No row states this, and `MDI-F16` read literally ("Adding a job for a catalog
+  already listed is ignored") would ignore it. Amend `MDI-F16` to judge
+  duplicates by catalog, kind and scope, or keep ignoring?
+- **`MDI-C1`.** `qt_quick/PageContext.qml` is added to `K3_QML_FILES` in
+  `qt_widgets/CMakeLists.txt`, like the other fork QML files: the same open
+  `MDI-C1` finding (*Findings for the fork owner*).
+
+Noted, no decision needed:
+
+- **`mdi_` schema version.** The `mdi_job` columns are added without raising
+  the `mdi_` version, following the D31 precedent (accepted by the main
+  agent). An older fork build that rewrites the list drops the kind and scope,
+  so a re-interpretation comes back as an enrichment job.
 - **Draft on the Activity page.** The draft's model call is not an enrichment
   step, so `MDI-F64` and `MDI-F74` do not report it. No row requires it.
-- **`MDI-C1`.** `qt_quick/PageContext.qml` will likely have to be added to the
-  `K3_QML_FILES` list in `qt_widgets/CMakeLists.txt`, the same open finding as
-  the other K3 QML files.
-- **Table name.** The working tree creates the passages table as
-  `mdi_kb_passage`; `MDI-C30` and its test line name it `mdi_kb_chunk`. One of
-  the two must change (a name only; no behaviour depends on it).
-- **Formats.** `MdiKnowledge::supportedSuffixes()` lists `pdf`, `doc`, `docx`,
-  `odt`, `rtf`, `txt`, `md`, `csv`, `tsv`, `xlsx`, `ods`. `MDI-F104` also
-  names "the other text formats of `MDI-F81`" (`pptx`, `odp`, `html`, `json`,
-  `xml`, `log`, `srt`, `vtt`). Add them, or the fork owner narrows `MDI-F104`
-  to the formats of answer (4) ("PDF, Word, Excel/CSV e testo").
 
 ### Known gaps
 
@@ -1303,7 +1321,7 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F106** — Change the embeddings model: the passages show as needing indexing again and are not used; empty knowledge base: classification runs with the context alone.
 - **MDI-F107** — Open *Tools* → *Context*: edit the context, a catalog's notes and the knowledge base; start a draft and a re-interpretation. The side menu's main entries are unchanged.
 - **MDI-F108** — With the default local provider, a network monitor shows connections to `localhost` only during classification and indexing.
-- **MDI-C30 / C34** — `mdi_context`, `mdi_kb_document`, `mdi_kb_chunk` are in `mdi_data.db` only; the collection database, the `.ini` files and the Memory-mode files are unchanged; K2 and upstream K3 open the collection normally. In Memory mode a file's classification receives its extended metadata as in File mode.
+- **MDI-C30 / C34** — `mdi_context`, `mdi_kb_document`, `mdi_kb_passage` are in `mdi_data.db` only; the collection database, the `.ini` files and the Memory-mode files are unchanged; K2 and upstream K3 open the collection normally. In Memory mode a file's classification receives its extended metadata as in File mode.
 - **MDI-C31** — *Clear derived data* and a catalog deletion: the collection's context and knowledge base remain; the deleted catalog's notes are gone.
 - **MDI-C33** — Index a large knowledge base while searching and opening *Show analysis*: no "database is locked" error, no stall; no new linked library.
 - **MDI-C36** — Queue a re-interpretation of one folder, quit, reopen: `mdi_job` holds its kind and scope and it resumes with them; open a collection whose `mdi_job` predates D33: its jobs come back as enrichment jobs.
