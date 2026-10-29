@@ -159,9 +159,11 @@ int main(int argc, char *argv[])
     // The strings use QCoreApplication::translate("Main", …) — Qt's tr()
     // mechanism (QTranslator/.qm), the same one the whole K3 UI uses. They are
     // K3-only (K2 has no KAboutData), so they live in the "Main" context.
+    // Shown as Teca (owner, 2026-10-30, D34): the visible name only; the
+    // component name stays Katalog, so settings and data paths do not move
     KAboutData aboutData(
         QStringLiteral("Katalog"),
-        "Katalog",
+        "Teca",
         QStringLiteral(KATALOG_VERSION_STRING),
         QCoreApplication::translate("Main", "Catalog your devices to search, analyze, and backup your files."),
         KAboutLicense::GPL_V3,
@@ -170,7 +172,8 @@ int main(int argc, char *argv[])
     aboutData.setDesktopFileName(QStringLiteral("io.github.stephanecouturier.Katalog")); //Temporary, to hide the KDE GetInvolved Donation links
     // Kirigami 6.30 AboutItem lacks a return after opening a custom bugAddress,
     // so bugs.kde.org also opens until that is fixed upstream.
-    aboutData.setBugAddress("https://github.com/StephaneCouturier/Katalog/issues");
+    aboutData.setBugAddress("https://github.com/archydevil/Katalog/issues");
+    aboutData.setOtherText(QCoreApplication::translate("Main", "Teca is based on Katalog by Stéphane Couturier, released under the GNU GPL."));
     aboutData.addAuthor(
         "Stéphane Couturier",
         QCoreApplication::translate("Main", "Founder & Main Developer"),
@@ -178,6 +181,7 @@ int main(int argc, char *argv[])
         QStringLiteral("https://stephanecouturier.github.io/Katalog/"));
 
     KAboutData::setApplicationData(aboutData);
+    app.setApplicationDisplayName(QStringLiteral("Teca"));
 
     SearchSync *newSearch = new SearchSync;
     PageSearch pageSearch;

@@ -783,7 +783,7 @@ ScrollablePageFitted {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: KTheme.text2
-                text: qsTr("How Katalog looks and behaves on this computer, and the AI tools it uses.")
+                text: qsTr("How Teca looks and behaves on this computer, and the AI tools it uses.")
             }
 
             // ── Language ───────────────────────────────────────────────────
@@ -1151,7 +1151,7 @@ ScrollablePageFitted {
                 KSectionHeader {
                     level: 3
                     title: qsTr("App information")
-                    description: qsTr("The version of Katalog and the file that keeps these settings.")
+                    description: qsTr("The version of Teca and the file that keeps these settings.")
                 }
 
                 Kirigami.FormLayout {

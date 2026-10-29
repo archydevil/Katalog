@@ -256,7 +256,7 @@ Controls.ScrollView {
                 Controls.Label {
                     visible: appManager1.selectedDeviceId <= 0
                     width: parent.width
-                    text: qsTr("Select a drive in My drives to see its numbers.")
+                    text: qsTr("The numbers appear once a drive is selected in My drives.")
                     wrapMode: Text.WordWrap
                     color: KTheme.text2
                 }
@@ -412,7 +412,7 @@ Controls.ScrollView {
                 KSectionHeader {
                     level: 3
                     title: qsTr("Over time")
-                    description: qsTr("Drag across the chart to zoom in; double-click or right-click to see it whole again.")
+                    description: qsTr("Dragging across the chart zooms in; a double-click or a right-click shows it whole again.")
                 }
                 KInfoTag {
                     Layout.alignment: Qt.AlignTop

@@ -112,7 +112,8 @@ set_target_properties(Katalog3 PROPERTIES
     # it at release (AppManager). Only the cmake target keeps the suffix, because
     # qt_widgets already declares a target named Katalog and two targets cannot share a
     # name if both variants are ever enabled in one tree.
-    OUTPUT_NAME "Katalog"
+    OUTPUT_NAME "Teca"   # the fork's visible name (D34); settings and data keep their Katalog paths
+    MACOSX_BUNDLE_BUNDLE_NAME "Teca"
 #    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.Katalog3
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}

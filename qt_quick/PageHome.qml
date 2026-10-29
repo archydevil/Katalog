@@ -266,7 +266,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         color: KTheme.text2
-                        text: qsTr("Katalog reads the drive, NTFS too, without changing it.")
+                        text: qsTr("Teca reads the drive, NTFS too, without changing it.")
                     }
                 }
             }

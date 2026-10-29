@@ -85,7 +85,7 @@ ColumnLayout {
     KSectionHeader {
         level: 1
         title: qsTr("Work in progress")
-        description: qsTr("What Katalog is doing, where it runs and with which resources. A job whose drive is disconnected waits for it and continues by itself.")
+        description: qsTr("What Teca is doing, where it runs and with which resources. A job whose drive is disconnected waits for it and continues by itself.")
     }
 
     // ── The running job ────────────────────────────────────────────────────

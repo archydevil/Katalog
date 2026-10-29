@@ -13,6 +13,9 @@ import org.kde.kirigami as Kirigami
 // Set showInlineClear: true to draw the per-row clear icon inside each field;
 // clearing a row leaves the caret in it. Both search lists use it.
 // The accepted() signal fires when the user presses Enter in any row.
+//
+// Look (fork, D34 phase R3): the add action is the design system's link button,
+// with its words visible; rows, keys and paste are unchanged (MDI-C40).
 ColumnLayout {
     id: root
     spacing: Kirigami.Units.smallSpacing
@@ -316,10 +319,13 @@ ColumnLayout {
         }
     }
 
-    IconButton {
+    // Says in words that more terms are possible (SpecSearchList.md SRL-O2),
+    // with the design system's link button (D34)
+    KButton {
+        variant: "link"
         icon.name: "list-add"
         text: qsTr("Add a term")
-        flat: true
+        leftPadding: Kirigami.Units.smallSpacing
         Layout.alignment: Qt.AlignLeft
         onClicked: root._addRowAfter(termsModel.count - 1)
     }

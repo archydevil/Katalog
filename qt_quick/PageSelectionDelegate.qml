@@ -233,9 +233,9 @@ Kirigami.AbstractCard {
                 padding: 0
                 opacity: model.hasChildren ? 1.0 : 0.0
                 enabled: model.hasChildren
-                // The text stays for accessibility (ICB-C3), shown as an icon
-                text: model.isCollapsed ? qsTr("Expand") : qsTr("Collapse")
-                display: Controls.AbstractButton.IconOnly
+                // Named for accessibility only: a text would bring a tooltip
+                // with some styles (ICB-C3)
+                Accessible.name: model.isCollapsed ? qsTr("Expand") : qsTr("Collapse")
                 onClicked: {
                     if (model.isCollapsed)
                         appManager1.expandDevice(model.deviceId)

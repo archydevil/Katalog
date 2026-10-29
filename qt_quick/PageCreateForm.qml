@@ -340,7 +340,7 @@ ColumnLayout {
         StepHeader {
             number: 1
             title: qsTr("What to catalogue")
-            description: qsTr("Katalog reads the drive, NTFS too, without changing it.")
+            description: qsTr("Teca reads the drive, NTFS too, without changing it.")
         }
 
         GridLayout {

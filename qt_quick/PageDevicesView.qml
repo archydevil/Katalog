@@ -515,7 +515,7 @@ Item {
             Layout.fillWidth: true
             wrapMode: Text.WordWrap
             color: KTheme.text2
-            text: qsTr("Arrange drives and catalogs in groups, edit their details and keep their contents up to date.")
+            text: qsTr("Where drives and catalogs are grouped, edited and kept up to date.")
         }
 
         // Filter bar. An ActionToolBar rather than a plain row: narrowing the

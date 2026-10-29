@@ -14,6 +14,22 @@ Kirigami.ApplicationWindow {
     // Unique identifier to reference this object
     id: root
 
+    // Kirigami's own surfaces (page header bar, menus, dialogs, fields) take
+    // the design system's palette, so what is not rebuilt still matches (D34)
+    Kirigami.Theme.backgroundColor: KTheme.ground
+    Kirigami.Theme.alternateBackgroundColor: KTheme.surface2
+    Kirigami.Theme.textColor: KTheme.text
+    Kirigami.Theme.disabledTextColor: KTheme.text3
+    Kirigami.Theme.highlightColor: KTheme.accent
+    Kirigami.Theme.highlightedTextColor: KTheme.onAccent
+    Kirigami.Theme.linkColor: KTheme.accentText
+    Kirigami.Theme.positiveTextColor: KTheme.ok
+    Kirigami.Theme.neutralTextColor: KTheme.warn
+    Kirigami.Theme.negativeTextColor: KTheme.bad
+    // The page header bar uses the window's colours (above), not the
+    // platform's header set, so it sits on the same ground as the pages
+    pageStack.globalToolBar.colorSet: Kirigami.Theme.Window
+
     // Global activity panel: running job progress plus the queue behind it.
     // Anchored to pageStack rather than used as the window footer: the window
     // footer spans the whole window, so a pinned (non-modal) global drawer sits
@@ -940,12 +956,13 @@ Kirigami.ApplicationWindow {
                     Layout.preferredHeight: 32
                     radius: 9
                     color: KTheme.accent
-                    Controls.Label { anchors.centerIn: parent; text: "K"; color: KTheme.onAccent; font.weight: Font.Bold }
+                    Controls.Label { anchors.centerIn: parent; text: "T"; color: KTheme.onAccent; font.weight: Font.Bold }
                 }
                 ColumnLayout {
                     spacing: 0
                     Layout.fillWidth: true
-                    Controls.Label { text: "Katalog"; font.weight: Font.Bold; color: KTheme.text }
+                    // The app's name (D34, owner 2026-10-30): Teca, based on Katalog
+                    Controls.Label { text: "Teca"; font.weight: Font.Bold; color: KTheme.text }
                     Controls.Label {
                         Layout.fillWidth: true
                         text: appManager1.currentCollectionDisplayName
@@ -1206,7 +1223,7 @@ Kirigami.ApplicationWindow {
 
     Controls.Dialog {
         id: alphaWarningDialog
-        title: "Katalog 3.1"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(520, parent.width - Kirigami.Units.largeSpacing * 4)
@@ -1221,7 +1238,7 @@ Kirigami.ApplicationWindow {
             Controls.Label {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                text: qsTr("Welcome to Katalog 3. News, questions and feedback are shared on the project discussions:")
+                text: qsTr("Welcome to Teca. Teca is based on Katalog: news, questions and feedback are shared on the Katalog project discussions:")
             }
 
             // Where to find news and support. The visible text is a
@@ -1266,7 +1283,7 @@ Kirigami.ApplicationWindow {
     // A newer release is published (SpecVersionCheck.md VCK-F2). K2's message, verbatim.
     Controls.Dialog {
         id: newVersionDialog
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(520, parent.width - Kirigami.Units.largeSpacing * 4)
@@ -1308,7 +1325,7 @@ Kirigami.ApplicationWindow {
     // First-run welcome dialog
     Controls.Dialog {
         id: firstRunWelcomeDialog
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(520, parent.width - Kirigami.Units.largeSpacing * 4)
@@ -1317,7 +1334,7 @@ Kirigami.ApplicationWindow {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 textFormat: Text.RichText
-                text: qsTr("<br/><b>Welcome to Katalog!</b><br/><br/>It seems this is the first run.<br/><br/>The following Settings have been applied:<br/> - Language: <b>%1</b><br/> - Theme: <b>%2</b><br/><br/>You can change these on the %3 page.")
+                text: qsTr("<br/><b>Welcome to Teca!</b><br/><br/>It seems this is the first run.<br/><br/>The following Settings have been applied:<br/> - Language: <b>%1</b><br/> - Theme: <b>%2</b><br/><br/>You can change these on the %3 page.")
                           .arg(Qt.locale().name)
                           // The theme actually applied, by its Settings name
                           .arg(appManager1.themeId === 1 ? qsTr("Katalog Colors")
@@ -1351,7 +1368,7 @@ Kirigami.ApplicationWindow {
     // First-run ready dialog (shown after the collection is created)
     Controls.Dialog {
         id: firstRunReadyDialog
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(520, parent.width - Kirigami.Units.largeSpacing * 4)
@@ -1383,7 +1400,7 @@ Kirigami.ApplicationWindow {
         property string deviceName: ""
         property string deviceType: ""
         property int    deviceId:   0
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)
@@ -1426,7 +1443,7 @@ Kirigami.ApplicationWindow {
     Controls.Dialog {
         id: editValidationDialog
         property alias message: editValidationLabel.text
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)
@@ -1450,7 +1467,7 @@ Kirigami.ApplicationWindow {
         id: editCatalogConfirmDialog
         property bool rescanNeeded: false
         property bool pathChanged:  false
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(520, root.width - Kirigami.Units.largeSpacing * 4)
@@ -1481,7 +1498,7 @@ Kirigami.ApplicationWindow {
 
     Controls.Dialog {
         id: editCatalogUpdateDialog
-        title: "Katalog"
+        title: "Teca"
 
         // Set when the user accepts; consumed once the dialog is off screen.
         property int pendingRescanDeviceId: 0
@@ -1528,7 +1545,7 @@ Kirigami.ApplicationWindow {
         id: editStoragePathDialog
         property string previousPath: ""
         property string newPath: ""
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(520, root.width - Kirigami.Units.largeSpacing * 4)
@@ -1584,7 +1601,7 @@ Kirigami.ApplicationWindow {
     Controls.Dialog {
         id: devSnapshotDialog
         property var data: null
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(500, root.width - Kirigami.Units.largeSpacing * 4)
@@ -1630,7 +1647,7 @@ Kirigami.ApplicationWindow {
     Controls.Dialog {
         id: privateHostDialog
         property var entry: null
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(440, root.width - Kirigami.Units.largeSpacing * 4)
@@ -1694,7 +1711,7 @@ Kirigami.ApplicationWindow {
     // Update All Active — pre-confirmation dialog
     Controls.Dialog {
         id: devUpdateAllDialog
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(440, root.width - Kirigami.Units.largeSpacing * 4)
@@ -1728,7 +1745,7 @@ Kirigami.ApplicationWindow {
     Controls.Dialog {
         id: devUpdateReportDialog
         property var report: ({})
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)
@@ -1928,7 +1945,7 @@ Kirigami.ApplicationWindow {
     // Create empty-source confirmation (Yes/No decision → modal)
     Controls.Dialog {
         id: createEmptyDirDialog
-        title: "Katalog"
+        title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)

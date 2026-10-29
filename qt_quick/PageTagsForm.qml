@@ -56,7 +56,7 @@ ColumnLayout {
         KSectionHeader {
             level: 3
             title: qsTr("Label a folder")
-            description: qsTr("Choose the folder, then pick a label already in use or type a new one.")
+            description: qsTr("The folder gets a label already in use, or a new one typed here.")
         }
 
         // Blocking validation at the top of the form (SpecValidationRules)

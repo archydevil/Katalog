@@ -4,8 +4,50 @@ import QtQuick.Controls as Controls
 import QtQuick.Controls   // required for ScrollBar attached property (namespace alias prevents it)
 import org.kde.kirigami as Kirigami
 
+// Search results (fork, D34 phase R3, SpecMediaIntelligence.md MDI-F117): a
+// header that says how many, where and how the search was done, with the
+// actions on all results; the results by meaning as cards; the table in a card,
+// unchanged inside; the footer filters. Presentation only (MDI-C40).
 ColumnLayout {
     id: pageSearchResults_column
+
+    // The criteria and totals of the last table search. Read once here: the
+    // adapter builds the whole map on every read.
+    readonly property var searchProps: newSearch1.properties
+
+    // The results header's title: the existing wording per kind of result
+    readonly property string resultsCountText: {
+        if (appManager1.semanticOnly)
+            return qsTr("%1 file(s) found").arg(Number(appManager1.semanticResults.length).toLocaleString(Qt.locale(), "f", 0))
+        let n = Number(searchProps.filesFoundNumber ?? 0).toLocaleString(Qt.locale(), "f", 0)
+        if (searchProps.searchOnDuplicates)
+            return qsTr("%1 duplicate(s) found").arg(n)
+        if (searchProps.searchOnDifferences)
+            return qsTr("%1 difference(s) found").arg(n)
+        if (foldersOnly)   // SRS-F4
+            return qsTr("%1 folder(s) found").arg(n)
+        return qsTr("%1 file(s) found").arg(n)
+    }
+
+    // The Search form's own wording for its text options, shown as tags
+    function textCriteriaLabel(value) {
+        switch (value) {
+            case "AllWords":    return qsTr("All Words")
+            case "ExactPhrase": return qsTr("Exact Phrase")
+            case "BeginsWith":  return qsTr("Begins With")
+            case "AnyWord":     return qsTr("Any Word")
+            case "Regex":       return qsTr("Regex")
+        }
+        return ""
+    }
+    function searchInLabel(value) {
+        switch (value) {
+            case "FileNamesOnly":   return qsTr("File names only")
+            case "FilesAndFolders": return qsTr("File names or Folder paths")
+            case "FolderPathOnly":  return qsTr("Folder path only")
+        }
+        return ""
+    }
 
     // The row icon follows the icon size the user chose, shared with K2
     // (THM-F7). The row grows with it: smallMedium + largeSpacing is the
@@ -183,221 +225,46 @@ ColumnLayout {
         id: exportMessage
         property string filePath: ""
         Layout.fillWidth: true
-        Layout.margins: Kirigami.Units.smallSpacing
+        Layout.leftMargin: 20
+        Layout.rightMargin: 20
+        Layout.topMargin: 12
         type: Kirigami.MessageType.Positive
         showCloseButton: true
         visible: false
         onLinkActivated: appManager1.openFile(filePath)
     }
 
-    // ── Device path ──────────────────────────────────────────────────────
-    Rectangle {
-        Layout.fillWidth: true
-        implicitHeight: devicePathLabel.implicitHeight + Kirigami.Units.largeSpacing * 2
-        color: Kirigami.Theme.backgroundColor
-
-        RowLayout {
-            anchors {
-                left: parent.left; right: parent.right
-                verticalCenter: parent.verticalCenter
-                leftMargin:  Kirigami.Units.largeSpacing
-                rightMargin: Kirigami.Units.largeSpacing
-                topMargin: Kirigami.Units.largeSpacing
-                bottomMargin: Kirigami.Units.largeSpacing
-            }
-            spacing: Kirigami.Units.smallSpacing
-            Kirigami.Icon {
-                source: "drive-harddisk"
-                implicitWidth:  Kirigami.Units.iconSizes.smallMedium
-                implicitHeight: Kirigami.Units.iconSizes.smallMedium
-                opacity: 0.7
-            }
-            Controls.Label {
-                id: devicePathLabel
-                text: newSearch1.properties.devicePath ?? ""
-                elide: Text.ElideLeft
-                Layout.fillWidth: true
-                opacity: 0.8
-            }
-        }
-    }
-
-    // ── By meaning (fork, SpecMediaIntelligence.md MDI-F47..F49) ─────────
-    // Its own list: the table's columns hold no matched sentence. Alone on the
-    // page when no other criterion was set, above the table otherwise.
+    // ── Results header (D34, MDI-F117) ───────────────────────────────────
+    // How many, where and how the search was done, and the actions on all the
+    // results. Every tag is drawn from the search's own criteria and totals:
+    // nothing here reads a drive or runs a query.
     ColumnLayout {
-        id: semanticPanel
-        visible: appManager1.semanticActive
+        id: resultsHeader
         Layout.fillWidth: true
-        Layout.fillHeight: appManager1.semanticOnly
-        Layout.preferredHeight: appManager1.semanticOnly ? -1 : Math.min(implicitHeight, pageSearchResults_column.height * 0.45)
-        spacing: 0
+        Layout.leftMargin: 20
+        Layout.rightMargin: 20
+        Layout.topMargin: 16
+        Layout.bottomMargin: 12
+        spacing: 10
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.margins: Kirigami.Units.smallSpacing
-            spacing: Kirigami.Units.largeSpacing
-            Controls.Label {
-                text: qsTr("By meaning") + "  ·  " + appManager1.semanticResults.length
-                color: applicationWindow().titleColor
-                leftPadding: Kirigami.Units.largeSpacing
+            spacing: 12
+
+            KSectionHeader {
+                level: 2
+                title: pageSearchResults_column.resultsCountText
             }
-            Kirigami.Separator { Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter }
-        }
-
-        Kirigami.PlaceholderMessage {
-            visible: appManager1.semanticResults.length === 0
-            Layout.fillWidth: true
-            Layout.margins: Kirigami.Units.largeSpacing
-            text: qsTr("No file matches this description.")
-        }
-
-        ListView {
-            id: semanticList
-            visible: appManager1.semanticResults.length > 0
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            implicitHeight: contentHeight
-            clip: true
-            model: appManager1.semanticResults
-            Controls.ScrollBar.vertical: Controls.ScrollBar {}
-
-            function hitKind(kind) {
-                switch (kind) {
-                    case "caption":  return qsTr("Caption and tags")
-                    case "segment":  return qsTr("Topic segments")
-                    case "passage":  return qsTr("Transcript")
-                    default:         return qsTr("Summary and excerpts")
-                }
+            KInfoTag {
+                visible: appManager1.searchIsRunning
+                Layout.alignment: Qt.AlignVCenter
+                text: appManager1.searchIsPaused ? qsTr("Paused") : qsTr("In Progress")
+                tone: appManager1.searchIsPaused ? "warn" : "info"
             }
-
-            delegate: Controls.ItemDelegate {
-                required property var modelData
-                required property int index
-                width: semanticList.width
-                highlighted: semanticList.currentIndex === index
-                onClicked: semanticList.currentIndex = index
-                onDoubleClicked: Qt.openUrlExternally(appManager1.localFileUrl(modelData.fullPath))
-
-                contentItem: RowLayout {
-                    spacing: Kirigami.Units.largeSpacing
-                    Kirigami.Icon {
-                        Layout.alignment: Qt.AlignTop
-                        source: modelData.preview !== "" ? modelData.preview : "document-open"
-                        implicitWidth:  Kirigami.Units.iconSizes.huge
-                        implicitHeight: Kirigami.Units.iconSizes.huge
-                    }
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Controls.Label { text: modelData.fileName; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
-                            Controls.Label { text: Math.round(modelData.score * 100) + "%"; opacity: 0.7 }
-                        }
-                        Controls.Label { text: modelData.folderPath; opacity: 0.6; elide: Text.ElideMiddle; Layout.fillWidth: true; font: Kirigami.Theme.smallFont }
-                        Repeater {
-                            model: modelData.hits
-                            delegate: Controls.Label {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                wrapMode: Text.WordWrap
-                                maximumLineCount: 3
-                                elide: Text.ElideRight
-                                textFormat: Text.StyledText
-                                text: "<span style='opacity:0.6'>" + semanticList.hitKind(modelData.kind)
-                                      + (modelData.start >= 0 ? " · " + mdiDetailsDialog.timecode(modelData.start) : "")
-                                      + "</span>  " + modelData.text
-                            }
-                        }
-                    }
-                    ColumnLayout {
-                        Layout.alignment: Qt.AlignTop
-                        IconButton {
-                            icon.name: "document-open"
-                            text: qsTr("Open file")
-                            onClicked: Qt.openUrlExternally(appManager1.localFileUrl(modelData.fullPath))
-                        }
-                        IconButton {
-                            icon.name: "view-preview"
-                            text: qsTr("Show analysis")
-                            onClicked: mdiDetailsDialog.showFor(modelData.catalogId, modelData.fullPath, modelData.fileName)
-                        }
-                    }
-                }
-            }
-        }
-
-        Kirigami.Separator { Layout.fillWidth: true; visible: !appManager1.semanticOnly }
-    }
-
-    // ── Summary bar ──────────────────────────────────────────────────────
-    Rectangle {
-        visible: !appManager1.semanticOnly
-        Layout.fillWidth: true
-        implicitHeight: summaryRow.implicitHeight + Kirigami.Units.largeSpacing * 2
-        color: Kirigami.Theme.backgroundColor
-
-        RowLayout {
-            id: summaryRow
-            anchors {
-                left: parent.left;  right: parent.right
-                verticalCenter: parent.verticalCenter
-                leftMargin:  Kirigami.Units.largeSpacing
-                rightMargin: Kirigami.Units.largeSpacing
-            }
-            spacing: Kirigami.Units.smallSpacing
-
-            Kirigami.Icon {
-                source: "edit-find"
-                implicitWidth:  Kirigami.Units.iconSizes.small
-                implicitHeight: Kirigami.Units.iconSizes.small
-            }
-
-            Controls.Label {
-                font.bold: true
-                text: {
-                    let n = Number(newSearch1.properties.filesFoundNumber ?? 0).toLocaleString(Qt.locale(), "f", 0)
-                    if (newSearch1.properties.searchOnDuplicates)
-                        return qsTr("%1 duplicate(s) found").arg(n)
-                    if (newSearch1.properties.searchOnDifferences)
-                        return qsTr("%1 difference(s) found").arg(n)
-                    if (pageSearchResults_column.foldersOnly)   // SRS-F4
-                        return qsTr("%1 folder(s) found").arg(n)
-                    return qsTr("%1 file(s) found").arg(n)
-                }
-            }
-
-            Controls.Label { text: "·"; opacity: 0.4; visible: (newSearch1.properties.filesFoundTotalSize ?? 0) > 0 }
-            Controls.Label {
-                visible: (newSearch1.properties.filesFoundTotalSize ?? 0) > 0
-                text: qsTr("Total: %1").arg(formatFileSize(newSearch1.properties.filesFoundTotalSize))
-            }
-
-            Controls.Label { text: "·"; opacity: 0.4; visible: (newSearch1.properties.filesFoundMinSize ?? 0) > 0 }
-            Controls.Label {
-                visible: (newSearch1.properties.filesFoundMinSize ?? 0) > 0
-                text: qsTr("Min: %1   Max: %2")
-                      .arg(formatFileSize(newSearch1.properties.filesFoundMinSize))
-                      .arg(formatFileSize(newSearch1.properties.filesFoundMaxSize))
-                opacity: 0.8
-            }
-            Controls.Label {
-                text: {
-                    let d1 = formatDate(newSearch1.properties.filesFoundMinDate)
-                    let d2 = formatDate(newSearch1.properties.filesFoundMaxDate)
-                    if (d1 && d1 === d2) return "  " + d1
-                    if (d1 && d2)        return "  " + d1 + " – " + d2
-                    return ""
-                }
-                opacity: 0.7
-            }
-
-            Item { Layout.fillWidth: true }
-
 
             ComboBoxFitted {
                 id: batchActionCombo
+                visible: !appManager1.semanticOnly
                 rowLeadingWidth: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing * 2  // row icon
                 textRole: "text"
                 valueRole: "value"
@@ -457,9 +324,10 @@ ColumnLayout {
             }
 
             IconButton {
+                visible: !appManager1.semanticOnly
                 icon.name: "document-export"
                 text: qsTr("Run process on all results")
-                enabled: (newSearch1.properties.filesFoundNumber ?? 0) > 0
+                enabled: (pageSearchResults_column.searchProps.filesFoundNumber ?? 0) > 0
                 onClicked: {
                     let action = batchActionCombo.currentValue
                     if (action === "---") return
@@ -482,19 +350,279 @@ ColumnLayout {
                 }
             }
         }
+
+        // Where the search ran
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            visible: devicePathLabel.text !== ""
+            Kirigami.Icon {
+                Layout.alignment: Qt.AlignTop
+                source: "drive-harddisk"
+                implicitWidth:  16
+                implicitHeight: 16
+                opacity: 0.7
+            }
+            Controls.Label {
+                id: devicePathLabel
+                text: pageSearchResults_column.searchProps.devicePath ?? ""
+                Layout.fillWidth: true
+                wrapMode: Text.WrapAnywhere
+                font.family: KTheme.mono
+                font.pixelSize: KTheme.note
+                color: KTheme.text3
+            }
+        }
+
+        // How the search was done
+        Flow {
+            Layout.fillWidth: true
+            spacing: 6
+            readonly property var props: pageSearchResults_column.searchProps
+            readonly property bool table: !appManager1.semanticOnly
+            readonly property bool byName: table && !!props.searchOnFileName
+
+            KInfoTag { visible: parent.byName; text: qsTr("By name"); tone: "info" }
+            KInfoTag {
+                visible: parent.byName && text !== ""
+                text: pageSearchResults_column.textCriteriaLabel(parent.props.selectedTextCriteria)
+            }
+            KInfoTag {
+                visible: parent.byName && text !== ""
+                text: pageSearchResults_column.searchInLabel(parent.props.selectedSearchIn)
+            }
+            KInfoTag { visible: parent.byName && !!parent.props.caseSensitive; text: qsTr("case sensitive") }
+            KInfoTag { visible: appManager1.semanticActive; text: qsTr("By meaning"); tone: "ai" }
+            KInfoTag { visible: parent.table && !!parent.props.searchOnFileCriteria; text: qsTr("Type, size and date") }
+            KInfoTag { visible: parent.table && !!parent.props.searchOnFileMetadata; text: qsTr("Information in the files") }
+            KInfoTag { visible: parent.table && !!parent.props.searchOnFolderCriteria; text: qsTr("Folders and tags") }
+            KInfoTag { visible: parent.table && !!parent.props.searchOnDuplicates; text: qsTr("Duplicates") }
+            KInfoTag { visible: parent.table && !!parent.props.searchOnDifferences; text: qsTr("Differences") }
+        }
+
+        // What the table results add up to
+        Flow {
+            visible: !appManager1.semanticOnly
+            Layout.fillWidth: true
+            spacing: 6
+            readonly property var props: pageSearchResults_column.searchProps
+
+            KInfoTag {
+                visible: (parent.props.filesFoundTotalSize ?? 0) > 0
+                text: qsTr("Total: %1").arg(pageSearchResults_column.formatFileSize(parent.props.filesFoundTotalSize))
+            }
+            KInfoTag {
+                visible: (parent.props.filesFoundMinSize ?? 0) > 0
+                text: qsTr("Min: %1   Max: %2")
+                      .arg(pageSearchResults_column.formatFileSize(parent.props.filesFoundMinSize))
+                      .arg(pageSearchResults_column.formatFileSize(parent.props.filesFoundMaxSize))
+            }
+            KInfoTag {
+                readonly property string range: {
+                    let d1 = pageSearchResults_column.formatDate(parent.props.filesFoundMinDate)
+                    let d2 = pageSearchResults_column.formatDate(parent.props.filesFoundMaxDate)
+                    if (d1 && d1 === d2) return d1
+                    if (d1 && d2)        return d1 + " – " + d2
+                    return ""
+                }
+                visible: range !== ""
+                text: qsTr("Dates: %1").arg(range)
+            }
+        }
     }
 
-    Kirigami.Separator {
+    // ── By meaning (fork, SpecMediaIntelligence.md MDI-F47..F49) ─────────
+    // Its own list: the table's columns hold no matched sentence. Alone on the
+    // page when no other criterion was set, above the table otherwise. Each
+    // file is a card (CDT-C1: nothing elided, no line cap).
+    ColumnLayout {
+        id: semanticPanel
+        visible: appManager1.semanticActive
         Layout.fillWidth: true
-        //color: Kirigami.Theme.separatorColor
-        color: Kirigami.Theme.alternateBackgroundColor
+        Layout.leftMargin: 20
+        Layout.rightMargin: 20
+        Layout.bottomMargin: 12
+        Layout.fillHeight: appManager1.semanticOnly
+        Layout.preferredHeight: appManager1.semanticOnly ? -1 : Math.min(implicitHeight, pageSearchResults_column.height * 0.45)
+        spacing: 10
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            KSectionHeader {
+                level: 3
+                title: qsTr("By meaning")
+                description: qsTr("Files ranked by how close their descriptions, summaries and transcripts come to the text searched.")
+            }
+            KInfoTag {
+                visible: !appManager1.semanticOnly
+                Layout.alignment: Qt.AlignTop
+                text: qsTr("%1 file(s) found").arg(appManager1.semanticResults.length)
+                tone: "ai"
+            }
+        }
+
+        Kirigami.PlaceholderMessage {
+            visible: appManager1.semanticResults.length === 0
+            Layout.fillWidth: true
+            Layout.margins: Kirigami.Units.largeSpacing
+            text: qsTr("No file matches this description.")
+        }
+
+        ListView {
+            id: semanticList
+            visible: appManager1.semanticResults.length > 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            implicitHeight: contentHeight
+            clip: true
+            spacing: 10
+            model: appManager1.semanticResults
+            Controls.ScrollBar.vertical: Controls.ScrollBar {}
+
+            function hitKind(kind) {
+                switch (kind) {
+                    case "caption":  return qsTr("Caption and tags")
+                    case "segment":  return qsTr("Topic segments")
+                    case "passage":  return qsTr("Transcript")
+                    default:         return qsTr("Summary and excerpts")
+                }
+            }
+
+            delegate: Rectangle {
+                id: hitCard
+                required property var modelData
+                required property int index
+                readonly property bool current: semanticList.currentIndex === index
+
+                // A gutter for the list's scroll bar, so it never covers a card
+                width: semanticList.width - 12
+                implicitHeight: hitRow.implicitHeight + 28
+                radius: KTheme.radiusCard - 2
+                color: KTheme.surface
+                border.width: current ? 2 : 1
+                border.color: current ? KTheme.accent : KTheme.line
+
+                // Under the content, so the buttons keep their own clicks
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: semanticList.currentIndex = hitCard.index
+                    onDoubleClicked: Qt.openUrlExternally(appManager1.localFileUrl(hitCard.modelData.fullPath))
+                }
+
+                RowLayout {
+                    id: hitRow
+                    x: 14
+                    y: 14
+                    width: parent.width - 28
+                    spacing: 14
+
+                    Rectangle {
+                        Layout.alignment: Qt.AlignTop
+                        Layout.preferredWidth: 96
+                        Layout.preferredHeight: 64
+                        radius: KTheme.radiusItem
+                        color: KTheme.neutralSoft
+                        clip: true
+                        Kirigami.Icon {
+                            anchors.fill: parent
+                            anchors.margins: hitCard.modelData.preview !== "" ? 0 : 16
+                            source: hitCard.modelData.preview !== "" ? hitCard.modelData.preview : "document-open"
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignTop
+                        spacing: 4
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: hitCard.modelData.fileName
+                            wrapMode: Text.WrapAnywhere
+                            font.weight: Font.Bold
+                            font.pixelSize: KTheme.titleCard
+                            color: KTheme.text
+                        }
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: hitCard.modelData.folderPath
+                            wrapMode: Text.WrapAnywhere
+                            font.family: KTheme.mono
+                            font.pixelSize: KTheme.note
+                            color: KTheme.text3
+                        }
+                        Repeater {
+                            model: hitCard.modelData.hits
+                            delegate: ColumnLayout {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                Layout.topMargin: 4
+                                spacing: 4
+                                KInfoTag {
+                                    text: semanticList.hitKind(modelData.kind)
+                                          + (modelData.start >= 0 ? " · " + mdiDetailsDialog.timecode(modelData.start) : "")
+                                    tone: "ai"
+                                }
+                                Controls.Label {
+                                    Layout.fillWidth: true
+                                    text: modelData.text
+                                    textFormat: Text.PlainText
+                                    wrapMode: Text.WordWrap
+                                    color: KTheme.text2
+                                }
+                            }
+                        }
+                        Flow {
+                            Layout.fillWidth: true
+                            Layout.topMargin: 6
+                            spacing: 8
+                            KInfoTag {
+                                text: qsTr("Match: %1%").arg(Math.round(hitCard.modelData.score * 100))
+                            }
+                        }
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: 8
+                            KButton {
+                                variant: "tonal"
+                                icon.name: "document-open"
+                                text: qsTr("Open file")
+                                onClicked: Qt.openUrlExternally(appManager1.localFileUrl(hitCard.modelData.fullPath))
+                            }
+                            KButton {
+                                variant: "secondary"
+                                icon.name: "view-preview"
+                                text: qsTr("Show analysis")
+                                onClicked: mdiDetailsDialog.showFor(hitCard.modelData.catalogId, hitCard.modelData.fullPath, hitCard.modelData.fileName)
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // ── Column headers + Table ───────────────────────────────────────────
-    Item {
+    // In a card of the design system (D34). The table keeps its columns, sort,
+    // stored widths and keys (MDI-C40, CDT-F12), and its rows keep the list
+    // colours defined once in Main.qml (THM-C1, THM-C11). Cells may elide
+    // (CDT-F2). The inset keeps the rows inside the card's rounded corners.
+    Rectangle {
+        id: tableCard
         visible: !appManager1.semanticOnly
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.leftMargin: 20
+        Layout.rightMargin: 20
+        color: KTheme.surface
+        border.width: 1
+        border.color: KTheme.line
+        radius: KTheme.radiusCard
+
+    Item {
+        anchors.fill: parent
+        anchors.margins: 6
         clip: true
 
         Controls.HorizontalHeaderView {
@@ -509,7 +637,8 @@ ColumnLayout {
                 delegate: Rectangle {
                     required property int    column
                     required property string display
-                    color: Kirigami.Theme.backgroundColor
+                    // Header row of the design system (D34)
+                    color: KTheme.surface2
                     implicitHeight: headerView.implicitHeight
                     // Full, unelided width (6 + label + 2 + room for the sort
                     // mark + 4), read by the double-click fit (CDT-F4).
@@ -526,7 +655,8 @@ ColumnLayout {
                             Layout.fillWidth: true
                             text: display
                             elide: Text.ElideRight
-                            color: Kirigami.Theme.textColor
+                            color: KTheme.text2
+                            font.weight: Font.DemiBold
                         }
                     }
 
@@ -535,13 +665,13 @@ ColumnLayout {
                         anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 4 }
                         text: pageSearchResults_column.sortColumn === column
                               ? (pageSearchResults_column.sortAscending ? "▲" : "▼") : ""
-                        color: Kirigami.Theme.textColor
+                        color: KTheme.text2
                     }
 
                     Rectangle {//Vertical separator
                         anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
                         width: 1
-                        color: Kirigami.Theme.separatorColor ?? "transparent"
+                        color: KTheme.line
                     }
 
                     TapHandler {
@@ -568,6 +698,7 @@ ColumnLayout {
             id: headerSep
             anchors { top: headerView.bottom; left: parent.left; right: parent.right
                       rightMargin: searchInspector.visible ? searchInspector.width : 0 }
+            color: KTheme.line
         }
 
         // Offline Inspector (fork), on the right of the results table
@@ -843,6 +974,7 @@ ColumnLayout {
                     tableView.contentX = position * tableView.contentWidth
             }
         }
+    }
     }
 
     // ── Context menu ─────────────────────────────────────────────────────
@@ -1222,15 +1354,14 @@ ColumnLayout {
         }
     }
 
-    // ── Batch action bar ─────────────────────────────────────────────────
-    Kirigami.Separator { Layout.fillWidth: true }
-
+    // ── Footer filters bar ───────────────────────────────────────────────
+    // Always visible (SRF-F8), on the page's ground below the results card.
     RowLayout {
         Layout.fillWidth: true
-        Layout.leftMargin:  Kirigami.Units.largeSpacing
-        Layout.rightMargin: Kirigami.Units.largeSpacing
-        Layout.topMargin:    Kirigami.Units.smallSpacing
-        Layout.bottomMargin: Kirigami.Units.smallSpacing
+        Layout.leftMargin:  20
+        Layout.rightMargin: 20
+        Layout.topMargin:    10
+        Layout.bottomMargin: 10
         spacing: Kirigami.Units.smallSpacing
 
         // Footer filters (SpecSearchResultsFilters.md). Both narrow the rows
