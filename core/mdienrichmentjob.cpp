@@ -27,6 +27,7 @@
 /////////////////////////////////////////////////////////////////////////////
 */
 #include "core/mdienrichmentjob.h"
+#include "core/mdicontext.h"
 #include "core/mdidata.h"
 #include "core/mdifts.h"
 #include "core/filechecksum.h"
@@ -89,6 +90,9 @@ const QString kCaptionPrompt = QStringLiteral("caption-v1");
 const QString kSummaryPrompt = QStringLiteral("summary-v3");
 const QString kSegmentsPrompt = QStringLiteral("segments-v1");
 const QString kClustersPrompt = QStringLiteral("clusters-v1");
+// The domain context is added to the prompts but is not a parameter: a
+// changed context never re-runs an analysis by itself (MDI-F99, D33)
+const QString kClassificationPrompt = QStringLiteral("classification-v1");
 const QString kEmbedVersion   = QStringLiteral("embed-v1");
 
 // Transcript windows indexed for search: about this long, in seconds or words
@@ -213,6 +217,15 @@ MdiEnrichmentJob::MdiEnrichmentJob(const Config &config, const QList<FileItem> &
     , m_files(files)
 {
     m_connectionName = QStringLiteral("mdi_job_%1").arg(reinterpret_cast<quintptr>(this));
+    // A re-interpretation covers its folder and file type only (MDI-F103)
+    if (m_config.reinterpret) {
+        const QString folder = m_config.scopeFolder.endsWith('/') || m_config.scopeFolder.isEmpty()
+                               ? m_config.scopeFolder : m_config.scopeFolder + '/';
+        m_files.removeIf([&](const FileItem &f) {
+            return (!folder.isEmpty() && !f.fullPath.startsWith(folder))
+                || (!m_config.scopeFileType.isEmpty() && f.fileType != m_config.scopeFileType);
+        });
+    }
 }
 
 //----------------------------------------------------------------------
@@ -242,6 +255,8 @@ QList<MdiEnrichmentJob::FileItem> MdiEnrichmentJob::listCatalogFiles(const QStri
             item.dateUpdated = f[2];
             item.extension   = f[3].toLower();
             item.fileType    = f[4].toLower();
+            if (f.size() > 26)
+                item.metadata = f[26];   // metadata_extended (Catalog::saveFileListToFile)
             files.append(item);
         }
         return files;
@@ -249,7 +264,7 @@ QList<MdiEnrichmentJob::FileItem> MdiEnrichmentJob::listCatalogFiles(const QStri
 
     QSqlQuery q(QSqlDatabase::database(connectionName));
     q.prepare(QLatin1String(R"(
-        SELECT file_full_path, file_size, file_date_updated, file_extension, file_type
+        SELECT file_full_path, file_size, file_date_updated, file_extension, file_type, metadata_extended
         FROM file
         WHERE file_catalog_id = :catalog_id
         ORDER BY file_full_path
@@ -264,6 +279,7 @@ QList<MdiEnrichmentJob::FileItem> MdiEnrichmentJob::listCatalogFiles(const QStri
         item.dateUpdated = q.value(2).toString();
         item.extension   = q.value(3).toString().toLower();
         item.fileType    = q.value(4).toString().toLower();
+        item.metadata    = q.value(5).toString();
         files.append(item);
     }
     return files;
@@ -330,6 +346,8 @@ bool MdiEnrichmentJob::waitWhilePaused()
 
 QString MdiEnrichmentJob::driveAway() const
 {
+    if (m_config.reinterpret || m_config.knowledgeOnly)
+        return QString();   // derived data and the knowledge base only: no drive needed
     // The source drive; a quick-hash pass never waits, it is scheduled again
     // (MDI-F84). A fixed mount point stays as an empty folder when its drive
     // is gone.
@@ -625,11 +643,11 @@ QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
         info[QStringLiteral("model")] = m_config.visionModel;
         info[QStringLiteral("where")] = ollamaWhere;
     } else if (analysis == QLatin1String("summary") || analysis == QLatin1String("segments")
-               || analysis == QLatin1String("clusters")) {
+               || analysis == QLatin1String("clusters") || analysis == QLatin1String("classification")) {
         info[QStringLiteral("tool")]  = QStringLiteral("ollama");
         info[QStringLiteral("model")] = m_config.textModel;
         info[QStringLiteral("where")] = ollamaWhere;
-    } else if (analysis == QLatin1String("embeddings")) {
+    } else if (analysis == QLatin1String("embeddings") || analysis == QLatin1String("knowledge")) {
         info[QStringLiteral("tool")]  = QStringLiteral("ollama");
         info[QStringLiteral("model")] = m_config.embedModel;
         info[QStringLiteral("where")] = ollamaWhere;
@@ -660,6 +678,14 @@ QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
 QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
 {
     const QJsonObject s = m_config.settings;
+
+    // Re-interpretation: the classification, and the embeddings that index it
+    if (m_config.reinterpret) {
+        QStringList list{QStringLiteral("classification")};
+        if (s.value("ai").toObject().value("embeddings").toBool(true))
+            list << QStringLiteral("embeddings");
+        return list;
+    }
 
     // Quick hash: every file, whatever its type (duplicates across disks)
     QStringList hashes;
@@ -719,6 +745,10 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
     } else if (file.fileType == QLatin1String("text")) {
         if (summary) list << QStringLiteral("summary");
     }
+    // Interpretation in the collection's context: text only, after the
+    // analyses whose results it reads (D33, MDI-F100)
+    if (ai.value("classification").toBool(true) && !MdiContext::isEmpty(m_config.context))
+        list << QStringLiteral("classification");
     // Last: indexes what the analyses above produced (MDI-F47)
     if (embeddings && !list.isEmpty())
         list << QStringLiteral("embeddings");
@@ -762,6 +792,9 @@ QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
     } else if (analysis == QLatin1String("summary")) {
         p["model"]  = m_config.textModel;
         p["prompt"] = kSummaryPrompt;
+    } else if (analysis == QLatin1String("classification")) {
+        p["model"]  = m_config.textModel;
+        p["prompt"] = kClassificationPrompt;
     } else if (analysis == QLatin1String("transcript")) {
         p["model"]    = QFileInfo(m_config.whisperModelPath).fileName();
         p["language"] = QStringLiteral("auto");
@@ -785,7 +818,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
                         && analysis != QLatin1String("segments") && analysis != QLatin1String("embeddings")
                         && analysis != QLatin1String("snippet") && analysis != QLatin1String("quickhash")
                         && analysis != QLatin1String("mediainfo") && analysis != QLatin1String("thumbnail")
-                        && analysis != QLatin1String("archive");
+                        && analysis != QLatin1String("archive") && analysis != QLatin1String("classification");
     if (isPreview && m_config.ffmpegPath.isEmpty()) {
         Result r;
         r.outcome = QStringLiteral("skipped");
@@ -803,6 +836,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     if (analysis == QLatin1String("transcript")) return makeTranscript(file);
     if (analysis == QLatin1String("segments"))   return makeSegments(file);
     if (analysis == QLatin1String("embeddings")) return makeEmbeddings(file);
+    if (analysis == QLatin1String("classification")) return makeClassification(file);
     if (analysis == QLatin1String("snippet"))    return makeSnippet(file);
     if (analysis == QLatin1String("quickhash"))  return makeQuickHash(file);
     if (analysis == QLatin1String("mediainfo"))  return makeMediaInfo(file);
