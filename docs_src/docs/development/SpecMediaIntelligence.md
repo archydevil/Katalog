@@ -633,7 +633,7 @@ recorded English form yet either; they are drafted the same way.
 | **Increment 3** | Instant search index, WebP thumbnails and contact sheets, technical data, text snippets, archive listings, quick hash and duplicates, Inspector, column view, side menu, connected drives (D22–D30). Not bound to the A–E order. | `MDI-F76`–`F90`, `MDI-C22`–`C27` |
 | **Context 1** | Domain context and catalog notes, draft from the catalog, context in new analyses, classification, re-interpretation on request, local knowledge base, the *Context* page in *Tools* (D33). Rows ratified and core design approved (`MDI-C14`) on 2026-10-29. Not bound to the A–E order. | `MDI-O8`, `MDI-F89` (*Context* entry), `MDI-F94`–`F108`, `MDI-C18` (exception), `MDI-C30`–`C34`, `MDI-C36` |
 | **Context 2** | MCP servers, online and cloud sources (D33). `[Backlog]` until `Q29`–`Q31` are decided. | `MDI-F109`, `F110`, `MDI-C35` |
-| **R1** | Redesign (D34): the design system (tokens and components), the sidebar in place of the side menu, the *Home* page, the new names on sidebar entries and page titles, new strings in English and Italian. Not bound to the A–E order. Rows drafted, awaiting ratification; `Q32` and `Q34`–`Q37` answered before the parts they concern are built. | `MDI-O9`, `MDI-F111`–`F115`, `MDI-C18` (exception), `MDI-C37`–`C39`; supersedes `MDI-F89`; amends `MDI-F107` |
+| **R1** | Redesign (D34): the design system (tokens and components), the sidebar in place of the side menu, the *Home* page, the new names on sidebar entries and page titles, new strings in English and Italian. Not bound to the A–E order. Rows drafted, awaiting ratification; `Q32` and `Q34`–`Q37` answered before the parts they concern are built. Code committed before ratification: see *Phase R1 (D34) — code committed before the rows were ratified*. | `MDI-O9`, `MDI-F111`–`F115`, `MDI-C18` (exception), `MDI-C37`–`C39`; supersedes `MDI-F89`; amends `MDI-F107` |
 | **R2** | *Sfoglia l'archivio*: Explore with the Inspector as *Dettagli del file*, filter pills, a view switch (D34; main agent's plan). | No rows yet. `SpecExplore.md`, `MDI-F87`, `MDI-F88`; `Q18` (Explore tiles) |
 | **R3** | *Cerca nei dischi*: the Search form and results (D34). | No rows yet. `SpecSearchList.md`, `SpecSearchResults.md`, `SpecSearchResultsFilters.md` |
 | **R4** | *Conoscenza dell'archivio*: the Context page (D34). | No rows yet. `MDI-F107` |
@@ -1266,6 +1266,25 @@ relayed by the main agent):
   dati tecnici (durata, formato) e i nomi dei file dentro un archivio zip. La
   specifica non li elenca. Li tengo?" → "Sì, tienili (Consigliato)". Added to
   `MDI-F100`'s inputs.
+
+### Phase R1 (D34) — code committed before the rows were ratified, reviewed 2026-10-29
+
+Commits from `c1f037c8` onward (2026-10-29, from 23:44; reviewed up to
+`980650fc`) built phase R1 while its rows were being drafted; `28ca0c0f`,
+`c994d57d` and `8c892e90` also carried this spec's D34 edits. Read against the drafted rows, not as a
+source of requirements. Each point is for the fork owner: change the code, or
+ratify a row that covers it.
+
+| Row | Finding |
+| --- | --- |
+| `MDI-C37` | `qt_quick/KButton.qml` is a new file that the row does not list. `KMetricCard.qml` sets a 26 px text size of its own, `KSectionHeader.qml` derives `titleCard + 1`, and the sidebar's group titles in `Main.qml` set 11 px and their own letter spacing: values outside `KTheme.qml`. |
+| `MDI-C38` (`TYP-C1`, `TYP-C3`, `TYP-F2`, `TYP-F3`, `TYP-F4`, `TYP-F7`; `Q34`) | `KTheme.qml` defines a pixel text scale (28, 18, 15, 14, 12 px) used by the components, Home and the sidebar: absolute sizes, outside the base size and the *Text size* setting. `TYP-C1`, `TYP-C3` and `TYP-F3` are `[Implemented]` in `SpecTypography.md`, so this is a conflict with implemented rows, pending `Q34`. The `"Menlo"` font exists on macOS only. |
+| `MDI-C38` (`THM-C1`, `THM-C2`, `THM-C21`, `THM-C22`; `Q35`) | `KTheme.qml` has a fixed hex palette (option b of `Q35`), chosen in code, not by the owner; it ignores the *Theme* setting. `KProgressBar.qml` paints its own colours (`THM-C21` keeps progress bars on the desktop's). Light/dark reads `Qt.styleHints.colorScheme` only; an *Unknown* scheme (some Linux desktops) falls to light, where `THM-F11` falls back to the palette's lightness. |
+| `MDI-C38` (Memory Mode Caveat) | `AppManager::homeOverview()` counts each catalog's files by type with `MdiEnrichmentJob::listCatalogFiles`, which reads the catalog's whole file list (`.idx` in Memory mode), on the UI thread, for every catalog, cached per catalog date; it also checks each catalog's source path on the UI thread (`MDI-C29` accepted that risk for queued catalogs only). The drafted clause forbids loading file lists for Home. No raw SQL and no core change: core boundary holds. |
+| `MDI-F111` (`Q36`) | The sidebar answers `Q36` without an owner decision: *Add a drive* in the *Archive* group; *Manage drives* (the Devices page — a name not in the nomenclature) and *About* in the *Other* group; *Open*, *New* and recent collections in a menu on the collection's name; the drawer-pinned toggle removed, the Selection toggle kept. The drawer is `modal: false` at a fixed 264 px width: whether every place stays reachable at phone width (`PGL-O3`) is untested. |
+| `MDI-F112` (`Q37`) | Home is shown after each connection, while `pageStack.initialPage` stays the Selection page and the last page is still restored (`SET-F4`). Its content (drive cards for Catalog devices only, file-type counts, AI file counts, egress line, context and knowledge counts, *Pause*/*Resume*, *Re-interpret with the context*) answers `Q37` in code. Home is on `ScrollablePageFitted.qml` (`PGL-C5` holds). |
+| `MDI-F113` | The bottom activity panel's title changed from "Activity" to "Work in progress" (`OperationQueueView.qml`): a label outside R1's sidebar entries and page titles. |
+| `MDI-C39` | Several dozen new English strings (sidebar, Home, components), some reusing existing ones; none is approved yet (D16), and no `.ts` file is updated yet. Removed from `Main.qml` with no replacement: "Tools", "Drawer pinned", "Drawer floating". |
 
 ### Known gaps
 

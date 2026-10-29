@@ -7,12 +7,12 @@
         <location filename="../qt_quick/appmanager.cpp" line="+170"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+6298"/>
+        <location line="+6368"/>
         <source>Search</source>
         <translation>Cerca</translation>
     </message>
     <message>
-        <location line="-6422"/>
+        <location line="-6492"/>
         <source>Stopped</source>
         <translation>Interrotto</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+4731"/>
+        <location line="+4801"/>
         <source>Evaluated</source>
         <translation>Valutato</translation>
     </message>
     <message>
-        <location line="-4853"/>
+        <location line="-4923"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -48,7 +48,7 @@
         <location line="+2329"/>
         <location line="+380"/>
         <location line="+152"/>
-        <location line="+301"/>
+        <location line="+371"/>
         <location line="+1128"/>
         <location line="+26"/>
         <location line="+20"/>
@@ -70,10 +70,10 @@
         <translation>In corso</translation>
     </message>
     <message>
-        <location line="-6299"/>
+        <location line="-6369"/>
         <location line="+2719"/>
         <location line="+1"/>
-        <location line="+432"/>
+        <location line="+502"/>
         <location line="+1"/>
         <location line="+2238"/>
         <location line="+342"/>
@@ -85,7 +85,7 @@
         <translation>Completato</translation>
     </message>
     <message>
-        <location line="-5886"/>
+        <location line="-5956"/>
         <source>Empty database path provided</source>
         <translation>Percorso del database vuoto fornito</translation>
     </message>
@@ -171,12 +171,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+4280"/>
+        <location line="+4350"/>
         <source>Size</source>
         <translation>Dimensione</translation>
     </message>
     <message>
-        <location line="-4279"/>
+        <location line="-4349"/>
         <source>Date</source>
         <translation>Data</translation>
     </message>
@@ -270,14 +270,14 @@ Scegliere un nome diverso e riprovare.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+2466"/>
+        <location line="+2536"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>Un&apos;operazione del dispositivo è già in esecuzione.</translation>
     </message>
     <message>
-        <location line="-2987"/>
-        <location line="+1986"/>
+        <location line="-3057"/>
+        <location line="+2056"/>
         <source>Create</source>
         <translation>Crea</translation>
     </message>
@@ -469,9 +469,9 @@ Scegliere un nome diverso.</translation>
         <translation type="vanished">Esiste già un archivio con questo ID. Scegliere un ID diverso.</translation>
     </message>
     <message>
-        <location line="-2538"/>
+        <location line="-2608"/>
         <location line="+61"/>
-        <location line="+2676"/>
+        <location line="+2746"/>
         <source>Selected device is not a catalog</source>
         <translation>Il dispositivo selezionato non è un catalogo</translation>
     </message>
@@ -528,8 +528,8 @@ Scegliere un nome diverso.</translation>
         <translation>Esporta</translation>
     </message>
     <message>
-        <location line="-3161"/>
-        <location line="+433"/>
+        <location line="-3231"/>
+        <location line="+503"/>
         <location line="+2236"/>
         <location line="+411"/>
         <location line="+26"/>
@@ -541,7 +541,7 @@ Scegliere un nome diverso.</translation>
         <translation>Annullato</translation>
     </message>
     <message>
-        <location line="-4150"/>
+        <location line="-4220"/>
         <source>Thumbnail</source>
         <translation>Miniatura</translation>
     </message>
@@ -659,7 +659,7 @@ Scegliere un nome diverso.</translation>
         <translation>In attesa dell&apos;unità</translation>
     </message>
     <message>
-        <location line="+2485"/>
+        <location line="+2555"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>Esplora</translation>
@@ -673,7 +673,7 @@ Scegliere un nome diverso.</translation>
         <translation>Caricato</translation>
     </message>
     <message>
-        <location line="-3284"/>
+        <location line="-3354"/>
         <source>Classification</source>
         <translation>Classificazione</translation>
     </message>
@@ -683,7 +683,7 @@ Scegliere un nome diverso.</translation>
         <translation>Documenti di riferimento</translation>
     </message>
     <message>
-        <location line="+3328"/>
+        <location line="+3398"/>
         <source>The export folder must be empty.</source>
         <translation>La cartella di esportazione deve essere vuota.</translation>
     </message>
@@ -1105,7 +1105,7 @@ Scegliere un nome diverso.</translation>
         <translation>Trascrizione</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Classification</source>
         <translation>Classificazione</translation>
     </message>
@@ -1415,7 +1415,7 @@ Scegliere un nome diverso.</translation>
         <translation>Offline – per aprire il file è necessario %1</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+89"/>
         <source>Reference documents</source>
         <translation>Documenti di riferimento</translation>
     </message>
@@ -1443,7 +1443,7 @@ Scegliere un nome diverso.</translation>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1467"/>
+        <location filename="../qt_quick/Main.qml" line="+1407"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>Vuoi &lt;b&gt;eliminare&lt;/b&gt; questo dispositivo %1?&lt;br/&gt;&lt;br/&gt;Nome: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1461,13 +1461,13 @@ Scegliere un nome diverso.</translation>
         <location line="-538"/>
         <location line="+64"/>
         <location line="+250"/>
-        <location line="+1101"/>
+        <location line="+1128"/>
         <location line="+125"/>
         <source>Cancel</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location line="-1691"/>
+        <location line="-1718"/>
         <location line="+114"/>
         <location line="+73"/>
         <location line="+179"/>
@@ -1485,90 +1485,76 @@ Scegliere un nome diverso.</translation>
         <translation type="vanished">Sistema</translation>
     </message>
     <message>
-        <location line="-253"/>
-        <location line="+259"/>
+        <location line="-237"/>
+        <location line="+243"/>
         <source>Settings</source>
         <translation>Impostazioni</translation>
     </message>
     <message>
-        <location line="-430"/>
+        <location line="-378"/>
         <source>Open...</source>
         <translation>Apri...</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+2"/>
         <source>Collection Folder...</source>
         <translation>Cartella della raccolta...</translation>
     </message>
     <message>
-        <location line="-7"/>
-        <location line="+92"/>
+        <location line="-1"/>
+        <location line="+8"/>
         <source>SQLite Database...</source>
         <translation>Database SQLite...</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-6"/>
         <source>Hosted Database...</source>
         <translation>Database ospitato...</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+15"/>
         <source>Recent collections</source>
         <translation>Raccolte recenti</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="-12"/>
         <source>New...</source>
         <translation>Nuovo...</translation>
     </message>
     <message>
-        <location line="+18"/>
-        <location line="+991"/>
         <source>Selection</source>
-        <translation>Selezione</translation>
+        <translation type="vanished">Selezione</translation>
     </message>
     <message>
-        <location line="-962"/>
-        <location line="+1322"/>
         <source>Devices</source>
-        <translation>Dispositivi</translation>
+        <translation type="vanished">Dispositivi</translation>
     </message>
     <message>
-        <location line="-1341"/>
-        <location line="+1438"/>
         <source>Explore</source>
-        <translation>Esplora</translation>
+        <translation type="vanished">Esplora</translation>
     </message>
     <message>
-        <location line="-1404"/>
-        <location line="+1837"/>
         <source>Backup</source>
-        <translation>Backup</translation>
+        <translation type="vanished">Backup</translation>
     </message>
     <message>
-        <location line="-1842"/>
-        <location line="+1799"/>
         <source>Statistics</source>
-        <translation>Statistiche</translation>
+        <translation type="vanished">Statistiche</translation>
     </message>
     <message>
-        <location line="-1804"/>
-        <location line="+1826"/>
         <source>Tags</source>
-        <translation>Tag</translation>
+        <translation type="vanished">Tag</translation>
     </message>
     <message>
-        <location line="-1839"/>
-        <location line="+1618"/>
         <source>Activity</source>
-        <translation>Attività</translation>
+        <translation type="vanished">Attività</translation>
     </message>
     <message>
         <source>Documentation</source>
         <translation type="vanished">Documentazione</translation>
     </message>
     <message>
-        <location line="-1585"/>
+        <location line="+87"/>
         <source>About</source>
         <translation>Informazioni</translation>
     </message>
@@ -1577,17 +1563,15 @@ Scegliere un nome diverso.</translation>
         <translation type="vanished">Esci</translation>
     </message>
     <message>
-        <location line="+22"/>
         <source>Drawer pinned</source>
-        <translation>Pannello fissato</translation>
+        <translation type="vanished">Pannello fissato</translation>
     </message>
     <message>
-        <location line="+0"/>
         <source>Drawer floating</source>
-        <translation>Pannello fluttuante</translation>
+        <translation type="vanished">Pannello fluttuante</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+52"/>
         <source>Selection shown</source>
         <translation>Selezione mostrata</translation>
     </message>
@@ -1609,7 +1593,7 @@ Scegliere un nome diverso.</translation>
 </translation>
     </message>
     <message>
-        <location line="+157"/>
+        <location line="+158"/>
         <source>Do not show again</source>
         <translation>Non mostrare più</translation>
     </message>
@@ -1912,25 +1896,20 @@ Ciò potrebbe significare che l&apos;origine è vuota o che il dispositivo non �
 Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
     </message>
     <message>
-        <location line="-928"/>
-        <location line="+1165"/>
-        <location line="+51"/>
+        <location line="+288"/>
         <source>Search</source>
         <translation>Cerca</translation>
     </message>
     <message>
-        <location line="-1196"/>
         <source>Tools</source>
-        <translation>Strumenti</translation>
+        <translation type="vanished">Strumenti</translation>
     </message>
     <message>
-        <location line="+25"/>
-        <location line="+1610"/>
         <source>Context</source>
-        <translation>Contesto</translation>
+        <translation type="vanished">Contesto</translation>
     </message>
     <message>
-        <location line="-1442"/>
+        <location line="-1003"/>
         <source>Welcome to Katalog 3. News, questions and feedback are shared on the project discussions:</source>
         <translation>Benvenuto in Katalog 3. Notizie, domande e commenti sono condivisi nelle discussioni del progetto:</translation>
     </message>
@@ -1952,12 +1931,12 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
     <message>
         <location line="+7"/>
         <location line="+124"/>
-        <location line="+371"/>
+        <location line="+398"/>
         <source>Stop</source>
         <translation>Ferma</translation>
     </message>
     <message>
-        <location line="-488"/>
+        <location line="-515"/>
         <source>Reset</source>
         <translation>Reimposta</translation>
     </message>
@@ -1973,7 +1952,8 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
         <location line="+108"/>
         <location line="+73"/>
         <location line="+157"/>
-        <location line="+34"/>
+        <location line="+21"/>
+        <location line="+40"/>
         <location line="+61"/>
         <location line="+104"/>
         <location line="+20"/>
@@ -1990,7 +1970,7 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
 </translation>
     </message>
     <message>
-        <location line="-944"/>
+        <location line="-971"/>
         <source>Copy version and system information</source>
         <translation>Copia informazioni su versione e sistema</translation>
     </message>
@@ -2074,29 +2054,164 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
         <translation type="vanished">Catalogo creato correttamente.</translation>
     </message>
     <message>
-        <location line="+317"/>
+        <location line="+344"/>
         <source>Catalog creation failed: </source>
         <translation>Creazione del catalogo non riuscita: </translation>
     </message>
     <message>
-        <location line="-1695"/>
-        <location line="+1679"/>
-        <location line="+32"/>
+        <location line="+16"/>
         <source>Create</source>
         <translation>Crea</translation>
     </message>
     <message>
-        <location line="-272"/>
+        <location line="-299"/>
         <source>Columns</source>
         <translation>Colonne</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="-1473"/>
+        <location line="+1679"/>
+        <source>Home</source>
+        <translation>Home</translation>
+    </message>
+    <message>
+        <location line="-1678"/>
+        <source>Archive overview</source>
+        <translation>Panoramica dell'archivio</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Archive</source>
+        <translation>Archivio</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+1002"/>
+        <source>My drives</source>
+        <translation>I miei dischi</translation>
+    </message>
+    <message>
+        <location line="-1001"/>
+        <source>Catalogued drives and folders</source>
+        <translation>Dischi e cartelle catalogati</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1452"/>
+        <source>Browse the archive</source>
+        <translation>Sfoglia l'archivio</translation>
+    </message>
+    <message>
+        <location line="-1451"/>
+        <source>Folders, previews, details</source>
+        <translation>Cartelle, anteprime, dettagli</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1167"/>
+        <source>Search the drives</source>
+        <translation>Cerca nei dischi</translation>
+    </message>
+    <message>
+        <location line="-1166"/>
+        <source>By name, content or meaning</source>
+        <translation>Per nome, contenuto o significato</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1711"/>
+        <source>Add a drive</source>
+        <translation>Aggiungi un disco</translation>
+    </message>
+    <message>
+        <location line="-1710"/>
+        <source>Catalogue a drive or a folder</source>
+        <translation>Cataloga un disco o una cartella</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Intelligence</source>
+        <translation>Intelligenza</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+1669"/>
+        <source>Archive knowledge</source>
+        <translation>Conoscenza dell'archivio</translation>
+    </message>
+    <message>
+        <location line="-1668"/>
+        <source>Context, glossary, documents</source>
+        <translation>Contesto, glossario, documenti</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+25"/>
+        <location line="+1589"/>
+        <source>Work in progress</source>
+        <translation>Lavori in corso</translation>
+    </message>
+    <message>
+        <location line="-1613"/>
+        <source>Analysis, resources, history</source>
+        <translation>Analisi, risorse, cronologia</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Other</source>
+        <translation>Altro</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1834"/>
+        <source>Archive in numbers</source>
+        <translation>Numeri dell'archivio</translation>
+    </message>
+    <message>
+        <location line="-1833"/>
+        <location line="+1855"/>
+        <source>Labels</source>
+        <translation>Etichette</translation>
+    </message>
+    <message>
+        <location line="-1854"/>
+        <location line="+1875"/>
+        <source>Safety copies</source>
+        <translation>Copie di sicurezza</translation>
+    </message>
+    <message>
+        <location line="-1874"/>
+        <location line="+1317"/>
+        <source>Manage drives</source>
+        <translation>Gestisci i dischi</translation>
+    </message>
+    <message>
+        <location line="-1295"/>
+        <source>AI analysis</source>
+        <translation>Analisi IA</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Paused</source>
+        <translation>In pausa</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for the drive</source>
+        <translation>In attesa dell'unità</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In Progress</source>
+        <translation>In corso</translation>
+    </message>
+    <message>
+        <location line="+1419"/>
         <source>Topic clusters</source>
         <translation>Gruppi tematici</translation>
     </message>
     <message>
-        <location line="+194"/>
+        <location line="+221"/>
         <source>Re-interpret with the context</source>
         <translation>Reinterpreta con il contesto</translation>
     </message>
@@ -6662,7 +6777,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
         <translation>Durata</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+58"/>
         <source>Reference documents</source>
         <translation>Documenti di riferimento</translation>
     </message>
@@ -6729,9 +6844,13 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
         <translation>Ferma</translation>
     </message>
     <message>
-        <location line="-14"/>
         <source>Activity</source>
-        <translation>Attività</translation>
+        <translation type="vanished">Attività</translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <source>Work in progress</source>
+        <translation>Lavori in corso</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7811,7 +7930,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
         <translation>File</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>%1, about %2</source>
         <translation>%1, circa %2</translation>
     </message>
@@ -9011,6 +9130,251 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     </message>
 </context>
 <context>
+    <name>PageHome</name>
+    <message>
+        <location filename="../qt_quick/PageHome.qml" line="+35"/>
+        <source>Your archive</source>
+        <translation>Il tuo archivio</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Search all the drives</source>
+        <translation>Cerca in tutti i dischi</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Add a drive</source>
+        <translation>Aggiungi un disco</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Catalogued files</source>
+        <translation>File catalogati</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Drives: %1</source>
+        <translation>Dischi: %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Files with AI results</source>
+        <translation>File con risultati dell'AI</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Previews, descriptions, transcripts</source>
+        <translation>Anteprime, descrizioni, trascrizioni</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Reference documents</source>
+        <translation>Documenti di riferimento</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 passages</source>
+        <translation>%1 brani</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Data sent</source>
+        <translation>Dati inviati</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing sent</source>
+        <translation>Nulla inviato</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On this computer</source>
+        <translation>Su questo computer</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>My drives</source>
+        <translation>I miei dischi</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Each drive is a card: whether it is connected, what it holds and what the AI has understood.</source>
+        <translation>Ogni disco è una card: se è collegato, cosa contiene e cosa ha già capito l'AI.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>All the drives</source>
+        <translation>Tutti i dischi</translation>
+    </message>
+    <message>
+        <location line="+64"/>
+        <source>Connected</source>
+        <translation>Connesso</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not connected</source>
+        <translation>Non connesso</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Saved search results</source>
+        <translation>Risultati di ricerca salvati</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 files</source>
+        <translation>%1 file</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>AI: %1 files</source>
+        <translation>AI: %1 file</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Image</source>
+        <translation>Immagine</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text</source>
+        <translation>Testo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Previews and descriptions stay visible; the drive is needed to open the files.</source>
+        <translation>Anteprime e descrizioni restano visibili; per aprire i file serve il disco.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Browse</source>
+        <translation>Sfoglia</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+136"/>
+        <source>Re-interpret with the context</source>
+        <translation>Reinterpreta con il contesto</translation>
+    </message>
+    <message>
+        <location line="-121"/>
+        <location line="+17"/>
+        <source>Add a drive or a folder</source>
+        <translation>Aggiungi un disco o una cartella</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Katalog reads the drive, NTFS too, without changing it.</source>
+        <translation>Katalog legge il disco, anche NTFS, senza modificarlo.</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Work in progress</source>
+        <translation>Lavori in corso</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Paused</source>
+        <translation>In pausa</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for the drive</source>
+        <translation>In attesa dell'unità</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In Progress</source>
+        <translation>In corso</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Nothing running</source>
+        <translation>Niente in corso</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Resume</source>
+        <translation>Riprendi</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Pause</source>
+        <translation>Pausa</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Details and resources</source>
+        <translation>Dettagli e risorse</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Archive knowledge</source>
+        <translation>Conoscenza dell'archivio</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Context active</source>
+        <translation>Contesto attivo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>No context yet</source>
+        <translation>Nessun contesto per ora</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>New files are classified with the archive&apos;s own language. Files already analysed are re-interpreted when you choose, one folder at a time too.</source>
+        <translation>I file nuovi vengono classificati con il linguaggio dell'archivio. Quelli già analizzati si rielaborano quando vuoi, anche una cartella alla volta.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Describing the archive lets the AI classify the files with its own terms, categories and names.</source>
+        <translation>Descrivere l'archivio permette all'AI di classificare i file con i suoi termini, categorie e nomi.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 terms</source>
+        <translation>%1 termini</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 categories</source>
+        <translation>%1 categorie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 known names</source>
+        <translation>%1 nomi noti</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 documents</source>
+        <translation>%1 documenti</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Edit the context</source>
+        <translation>Modifica il contesto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Describe the archive</source>
+        <translation>Descrivi l'archivio</translation>
+    </message>
+</context>
+<context>
     <name>PageSearchForm</name>
     <message>
         <location filename="../qt_quick/PageSearchForm.qml" line="+387"/>
@@ -9151,7 +9515,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-5226"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-5296"/>
         <source>Exact Phrase</source>
         <translation>Frase esatta</translation>
     </message>

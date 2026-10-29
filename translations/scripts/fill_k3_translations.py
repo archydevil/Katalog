@@ -152,11 +152,16 @@ def _apply_to_text(content, contexts, src_to_tr):
             src_m = re.search(r"<source>(.*?)</source>", msg, re.S)
             if not src_m:
                 return msg
-            # Unescape the source to look it up in the (plain) JSON keys
+            # Unescape the source to look it up in the (plain) JSON keys.
+            # lupdate writes ' and " as &apos; / &quot; (same set as
+            # sync_k3_translations.py); without them, any source with an
+            # apostrophe was silently left unfinished.
             src_plain = (src_m.group(1)
                          .replace("&amp;", "&")
                          .replace("&lt;", "<")
-                         .replace("&gt;", ">"))
+                         .replace("&gt;", ">")
+                         .replace("&apos;", "'")
+                         .replace("&quot;", '"'))
             tr = src_to_tr.get(src_plain)
             if not tr:
                 return msg

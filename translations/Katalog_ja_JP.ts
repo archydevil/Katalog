@@ -7,12 +7,12 @@
         <location filename="../qt_quick/appmanager.cpp" line="+170"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+6298"/>
+        <location line="+6368"/>
         <source>Search</source>
         <translation>検索</translation>
     </message>
     <message>
-        <location line="-6422"/>
+        <location line="-6492"/>
         <source>Stopped</source>
         <translation>停止</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+4731"/>
+        <location line="+4801"/>
         <source>Evaluated</source>
         <translation>評価済み</translation>
     </message>
     <message>
-        <location line="-4853"/>
+        <location line="-4923"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -48,7 +48,7 @@
         <location line="+2329"/>
         <location line="+380"/>
         <location line="+152"/>
-        <location line="+301"/>
+        <location line="+371"/>
         <location line="+1128"/>
         <location line="+26"/>
         <location line="+20"/>
@@ -70,10 +70,10 @@
         <translation>進行中</translation>
     </message>
     <message>
-        <location line="-6299"/>
+        <location line="-6369"/>
         <location line="+2719"/>
         <location line="+1"/>
-        <location line="+432"/>
+        <location line="+502"/>
         <location line="+1"/>
         <location line="+2238"/>
         <location line="+342"/>
@@ -85,7 +85,7 @@
         <translation>完了</translation>
     </message>
     <message>
-        <location line="-5886"/>
+        <location line="-5956"/>
         <source>Empty database path provided</source>
         <translation>空のデータベースパスが指定されました</translation>
     </message>
@@ -171,12 +171,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+4280"/>
+        <location line="+4350"/>
         <source>Size</source>
         <translation>サイズ</translation>
     </message>
     <message>
-        <location line="-4279"/>
+        <location line="-4349"/>
         <source>Date</source>
         <translation>日付</translation>
     </message>
@@ -270,14 +270,14 @@ Choose a different name and try again.</source>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+2466"/>
+        <location line="+2536"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>デバイス操作が既に実行中です。</translation>
     </message>
     <message>
-        <location line="-2987"/>
-        <location line="+1986"/>
+        <location line="-3057"/>
+        <location line="+2056"/>
         <source>Create</source>
         <translation>作成</translation>
     </message>
@@ -469,9 +469,9 @@ Choose a different name.</source>
         <translation type="vanished">このIDのストレージはすでに存在します。別のIDを選んでください。</translation>
     </message>
     <message>
-        <location line="-2538"/>
+        <location line="-2608"/>
         <location line="+61"/>
-        <location line="+2676"/>
+        <location line="+2746"/>
         <source>Selected device is not a catalog</source>
         <translation>選択したデバイスはカタログではありません</translation>
     </message>
@@ -528,8 +528,8 @@ Choose a different name.</source>
         <translation>エクスポート</translation>
     </message>
     <message>
-        <location line="-3161"/>
-        <location line="+433"/>
+        <location line="-3231"/>
+        <location line="+503"/>
         <location line="+2236"/>
         <location line="+411"/>
         <location line="+26"/>
@@ -541,7 +541,7 @@ Choose a different name.</source>
         <translation>キャンセル済み</translation>
     </message>
     <message>
-        <location line="-4150"/>
+        <location line="-4220"/>
         <source>Thumbnail</source>
         <translation>サムネイル</translation>
     </message>
@@ -659,7 +659,7 @@ Choose a different name.</source>
         <translation>ドライブを待機中</translation>
     </message>
     <message>
-        <location line="+2485"/>
+        <location line="+2555"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>エクスプローラ</translation>
@@ -673,7 +673,7 @@ Choose a different name.</source>
         <translation>読み込み済み</translation>
     </message>
     <message>
-        <location line="-3284"/>
+        <location line="-3354"/>
         <source>Classification</source>
         <translation>分類</translation>
     </message>
@@ -683,7 +683,7 @@ Choose a different name.</source>
         <translation>参考資料</translation>
     </message>
     <message>
-        <location line="+3328"/>
+        <location line="+3398"/>
         <source>The export folder must be empty.</source>
         <translation>エクスポート先のフォルダは空である必要があります。</translation>
     </message>
@@ -1105,7 +1105,7 @@ Choose a different name.</source>
         <translation>文字起こし</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Classification</source>
         <translation>分類</translation>
     </message>
@@ -1415,7 +1415,7 @@ Choose a different name.</source>
         <translation>オフライン – ファイルを開くには %1 が必要です</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+89"/>
         <source>Reference documents</source>
         <translation>参考資料</translation>
     </message>
@@ -1443,7 +1443,7 @@ Choose a different name.</source>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1467"/>
+        <location filename="../qt_quick/Main.qml" line="+1407"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>この%1デバイスを&lt;b&gt;削除&lt;/b&gt;しますか？&lt;br/&gt;&lt;br/&gt;名前: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1461,13 +1461,13 @@ Choose a different name.</source>
         <location line="-538"/>
         <location line="+64"/>
         <location line="+250"/>
-        <location line="+1101"/>
+        <location line="+1128"/>
         <location line="+125"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location line="-1691"/>
+        <location line="-1718"/>
         <location line="+114"/>
         <location line="+73"/>
         <location line="+179"/>
@@ -1485,90 +1485,76 @@ Choose a different name.</source>
         <translation type="vanished">システム</translation>
     </message>
     <message>
-        <location line="-253"/>
-        <location line="+259"/>
+        <location line="-237"/>
+        <location line="+243"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location line="-430"/>
+        <location line="-378"/>
         <source>Open...</source>
         <translation>開く...</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+2"/>
         <source>Collection Folder...</source>
         <translation>コレクションフォルダー...</translation>
     </message>
     <message>
-        <location line="-7"/>
-        <location line="+92"/>
+        <location line="-1"/>
+        <location line="+8"/>
         <source>SQLite Database...</source>
         <translation>SQLiteデータベース...</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-6"/>
         <source>Hosted Database...</source>
         <translation>ホスト型データベース...</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+15"/>
         <source>Recent collections</source>
         <translation>最近使ったコレクション</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="-12"/>
         <source>New...</source>
         <translation>新規...</translation>
     </message>
     <message>
-        <location line="+18"/>
-        <location line="+991"/>
         <source>Selection</source>
-        <translation>選択</translation>
+        <translation type="vanished">選択</translation>
     </message>
     <message>
-        <location line="-962"/>
-        <location line="+1322"/>
         <source>Devices</source>
-        <translation>デバイス</translation>
+        <translation type="vanished">デバイス</translation>
     </message>
     <message>
-        <location line="-1341"/>
-        <location line="+1438"/>
         <source>Explore</source>
-        <translation>エクスプローラ</translation>
+        <translation type="vanished">エクスプローラ</translation>
     </message>
     <message>
-        <location line="-1404"/>
-        <location line="+1837"/>
         <source>Backup</source>
-        <translation>バックアップ</translation>
+        <translation type="vanished">バックアップ</translation>
     </message>
     <message>
-        <location line="-1842"/>
-        <location line="+1799"/>
         <source>Statistics</source>
-        <translation>統計</translation>
+        <translation type="vanished">統計</translation>
     </message>
     <message>
-        <location line="-1804"/>
-        <location line="+1826"/>
         <source>Tags</source>
-        <translation>タグ</translation>
+        <translation type="vanished">タグ</translation>
     </message>
     <message>
-        <location line="-1839"/>
-        <location line="+1618"/>
         <source>Activity</source>
-        <translation>アクティビティ</translation>
+        <translation type="vanished">アクティビティ</translation>
     </message>
     <message>
         <source>Documentation</source>
         <translation type="vanished">ドキュメンテーション</translation>
     </message>
     <message>
-        <location line="-1585"/>
+        <location line="+87"/>
         <source>About</source>
         <translation>このアプリについて</translation>
     </message>
@@ -1577,17 +1563,15 @@ Choose a different name.</source>
         <translation type="vanished">終了</translation>
     </message>
     <message>
-        <location line="+22"/>
         <source>Drawer pinned</source>
-        <translation>ドロワー固定</translation>
+        <translation type="vanished">ドロワー固定</translation>
     </message>
     <message>
-        <location line="+0"/>
         <source>Drawer floating</source>
-        <translation>ドロワー浮動</translation>
+        <translation type="vanished">ドロワー浮動</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+52"/>
         <source>Selection shown</source>
         <translation>選択を表示</translation>
     </message>
@@ -1609,7 +1593,7 @@ Choose a different name.</source>
 </translation>
     </message>
     <message>
-        <location line="+157"/>
+        <location line="+158"/>
         <source>Do not show again</source>
         <translation>今後表示しない</translation>
     </message>
@@ -1912,25 +1896,20 @@ Do you want to save it anyway (the catalog would be empty)?</source>
 それでも保存しますか（カタログは空になります）？</translation>
     </message>
     <message>
-        <location line="-928"/>
-        <location line="+1165"/>
-        <location line="+51"/>
+        <location line="+288"/>
         <source>Search</source>
         <translation>検索</translation>
     </message>
     <message>
-        <location line="-1196"/>
         <source>Tools</source>
-        <translation>ツール</translation>
+        <translation type="vanished">ツール</translation>
     </message>
     <message>
-        <location line="+25"/>
-        <location line="+1610"/>
         <source>Context</source>
-        <translation>コンテキスト</translation>
+        <translation type="vanished">コンテキスト</translation>
     </message>
     <message>
-        <location line="-1442"/>
+        <location line="-1003"/>
         <source>Welcome to Katalog 3. News, questions and feedback are shared on the project discussions:</source>
         <translation>Katalog 3 へようこそ。ニュース、質問、フィードバックはプロジェクトのディスカッションで共有されています:</translation>
     </message>
@@ -1952,12 +1931,12 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     <message>
         <location line="+7"/>
         <location line="+124"/>
-        <location line="+371"/>
+        <location line="+398"/>
         <source>Stop</source>
         <translation>停止</translation>
     </message>
     <message>
-        <location line="-488"/>
+        <location line="-515"/>
         <source>Reset</source>
         <translation>リセット</translation>
     </message>
@@ -1973,7 +1952,8 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <location line="+108"/>
         <location line="+73"/>
         <location line="+157"/>
-        <location line="+34"/>
+        <location line="+21"/>
+        <location line="+40"/>
         <location line="+61"/>
         <location line="+104"/>
         <location line="+20"/>
@@ -1990,7 +1970,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
 </translation>
     </message>
     <message>
-        <location line="-944"/>
+        <location line="-971"/>
         <source>Copy version and system information</source>
         <translation>バージョンとシステム情報をコピー</translation>
     </message>
@@ -2074,29 +2054,164 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="vanished">カタログが正常に作成されました。</translation>
     </message>
     <message>
-        <location line="+317"/>
+        <location line="+344"/>
         <source>Catalog creation failed: </source>
         <translation>カタログの作成に失敗しました: </translation>
     </message>
     <message>
-        <location line="-1695"/>
-        <location line="+1679"/>
-        <location line="+32"/>
+        <location line="+16"/>
         <source>Create</source>
         <translation>作成</translation>
     </message>
     <message>
-        <location line="-272"/>
+        <location line="-299"/>
         <source>Columns</source>
         <translation>カラム表示</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="-1473"/>
+        <location line="+1679"/>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1678"/>
+        <source>Archive overview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Archive</source>
+        <translation>アーカイブ</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+1002"/>
+        <source>My drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1001"/>
+        <source>Catalogued drives and folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1452"/>
+        <source>Browse the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1451"/>
+        <source>Folders, previews, details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1167"/>
+        <source>Search the drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1166"/>
+        <source>By name, content or meaning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1711"/>
+        <source>Add a drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1710"/>
+        <source>Catalogue a drive or a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Intelligence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+1669"/>
+        <source>Archive knowledge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1668"/>
+        <source>Context, glossary, documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+25"/>
+        <location line="+1589"/>
+        <source>Work in progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1613"/>
+        <source>Analysis, resources, history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Other</source>
+        <translation>その他</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1834"/>
+        <source>Archive in numbers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1833"/>
+        <location line="+1855"/>
+        <source>Labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1854"/>
+        <location line="+1875"/>
+        <source>Safety copies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1874"/>
+        <location line="+1317"/>
+        <source>Manage drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1295"/>
+        <source>AI analysis</source>
+        <translation>AI 分析</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Paused</source>
+        <translation>一時停止</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for the drive</source>
+        <translation>ドライブを待機中</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In Progress</source>
+        <translation>進行中</translation>
+    </message>
+    <message>
+        <location line="+1419"/>
         <source>Topic clusters</source>
         <translation>トピッククラスター</translation>
     </message>
     <message>
-        <location line="+194"/>
+        <location line="+221"/>
         <source>Re-interpret with the context</source>
         <translation>コンテキストで再解釈</translation>
     </message>
@@ -6661,7 +6776,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>長さ</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+58"/>
         <source>Reference documents</source>
         <translation>参考資料</translation>
     </message>
@@ -6728,9 +6843,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>停止</translation>
     </message>
     <message>
-        <location line="-14"/>
         <source>Activity</source>
-        <translation>アクティビティ</translation>
+        <translation type="vanished">アクティビティ</translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <source>Work in progress</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7810,7 +7929,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>ファイル</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>%1, about %2</source>
         <translation>%1、約 %2</translation>
     </message>
@@ -9010,6 +9129,251 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
 </context>
 <context>
+    <name>PageHome</name>
+    <message>
+        <location filename="../qt_quick/PageHome.qml" line="+35"/>
+        <source>Your archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Search all the drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Add a drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Catalogued files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Drives: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Files with AI results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Previews, descriptions, transcripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Reference documents</source>
+        <translation>参考資料</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 passages</source>
+        <translation>%1 件のパッセージ</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Data sent</source>
+        <translation>送信データ</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing sent</source>
+        <translation>送信なし</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On this computer</source>
+        <translation>このコンピューター上</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>My drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Each drive is a card: whether it is connected, what it holds and what the AI has understood.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>All the drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+64"/>
+        <source>Connected</source>
+        <translation>接続済み</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not connected</source>
+        <translation>未接続</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Saved search results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>AI: %1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Image</source>
+        <translation>画像</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text</source>
+        <translation>テキスト</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Audio</source>
+        <translation>オーディオ</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Video</source>
+        <translation>ビデオ</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Previews and descriptions stay visible; the drive is needed to open the files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+136"/>
+        <source>Re-interpret with the context</source>
+        <translation>コンテキストで再解釈</translation>
+    </message>
+    <message>
+        <location line="-121"/>
+        <location line="+17"/>
+        <source>Add a drive or a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Katalog reads the drive, NTFS too, without changing it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Work in progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Paused</source>
+        <translation>一時停止</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for the drive</source>
+        <translation>ドライブを待機中</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In Progress</source>
+        <translation>進行中</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Nothing running</source>
+        <translation>実行中の処理はありません</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Resume</source>
+        <translation>再開</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Pause</source>
+        <translation>一時停止</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Details and resources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Archive knowledge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Context active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>No context yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>New files are classified with the archive&apos;s own language. Files already analysed are re-interpreted when you choose, one folder at a time too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Describing the archive lets the AI classify the files with its own terms, categories and names.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 terms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 known names</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Edit the context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Describe the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PageSearchForm</name>
     <message>
         <location filename="../qt_quick/PageSearchForm.qml" line="+387"/>
@@ -9150,7 +9514,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-5226"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-5296"/>
         <source>Exact Phrase</source>
         <translation>完全一致</translation>
     </message>

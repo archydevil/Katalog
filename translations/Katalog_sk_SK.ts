@@ -7,12 +7,12 @@
         <location filename="../qt_quick/appmanager.cpp" line="+170"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+6298"/>
+        <location line="+6368"/>
         <source>Search</source>
         <translation>Hľadať</translation>
     </message>
     <message>
-        <location line="-6422"/>
+        <location line="-6492"/>
         <source>Stopped</source>
         <translation>Zastavené</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+4731"/>
+        <location line="+4801"/>
         <source>Evaluated</source>
         <translation>Vyhodnotené</translation>
     </message>
     <message>
-        <location line="-4853"/>
+        <location line="-4923"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -48,7 +48,7 @@
         <location line="+2329"/>
         <location line="+380"/>
         <location line="+152"/>
-        <location line="+301"/>
+        <location line="+371"/>
         <location line="+1128"/>
         <location line="+26"/>
         <location line="+20"/>
@@ -70,10 +70,10 @@
         <translation>Prebieha</translation>
     </message>
     <message>
-        <location line="-6299"/>
+        <location line="-6369"/>
         <location line="+2719"/>
         <location line="+1"/>
-        <location line="+432"/>
+        <location line="+502"/>
         <location line="+1"/>
         <location line="+2238"/>
         <location line="+342"/>
@@ -85,7 +85,7 @@
         <translation>Dokončené</translation>
     </message>
     <message>
-        <location line="-5886"/>
+        <location line="-5956"/>
         <source>Empty database path provided</source>
         <translation>Zadaná prázdna cesta k databáze</translation>
     </message>
@@ -171,12 +171,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+4280"/>
+        <location line="+4350"/>
         <source>Size</source>
         <translation>Veľkosť</translation>
     </message>
     <message>
-        <location line="-4279"/>
+        <location line="-4349"/>
         <source>Date</source>
         <translation>Dátum</translation>
     </message>
@@ -270,14 +270,14 @@ Zvoľte iný názov a skúste to znova.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+2466"/>
+        <location line="+2536"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>Operácia zariadenia už beží.</translation>
     </message>
     <message>
-        <location line="-2987"/>
-        <location line="+1986"/>
+        <location line="-3057"/>
+        <location line="+2056"/>
         <source>Create</source>
         <translation>Vytvoriť</translation>
     </message>
@@ -469,9 +469,9 @@ Zvoľte iný názov.</translation>
         <translation type="vanished">Úložisko s týmto ID už existuje. Zvoľte iné ID.</translation>
     </message>
     <message>
-        <location line="-2538"/>
+        <location line="-2608"/>
         <location line="+61"/>
-        <location line="+2676"/>
+        <location line="+2746"/>
         <source>Selected device is not a catalog</source>
         <translation>Vybrané zariadenie nie je katalóg</translation>
     </message>
@@ -528,8 +528,8 @@ Zvoľte iný názov.</translation>
         <translation>Exportovať</translation>
     </message>
     <message>
-        <location line="-3161"/>
-        <location line="+433"/>
+        <location line="-3231"/>
+        <location line="+503"/>
         <location line="+2236"/>
         <location line="+411"/>
         <location line="+26"/>
@@ -541,7 +541,7 @@ Zvoľte iný názov.</translation>
         <translation>Zrušené</translation>
     </message>
     <message>
-        <location line="-4150"/>
+        <location line="-4220"/>
         <source>Thumbnail</source>
         <translation>Miniatúra</translation>
     </message>
@@ -659,7 +659,7 @@ Zvoľte iný názov.</translation>
         <translation>Čaká sa na disk</translation>
     </message>
     <message>
-        <location line="+2485"/>
+        <location line="+2555"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>Prehliadať</translation>
@@ -673,7 +673,7 @@ Zvoľte iný názov.</translation>
         <translation>Načítané</translation>
     </message>
     <message>
-        <location line="-3284"/>
+        <location line="-3354"/>
         <source>Classification</source>
         <translation>Klasifikácia</translation>
     </message>
@@ -683,7 +683,7 @@ Zvoľte iný názov.</translation>
         <translation>Referenčné dokumenty</translation>
     </message>
     <message>
-        <location line="+3328"/>
+        <location line="+3398"/>
         <source>The export folder must be empty.</source>
         <translation>Priečinok na export musí byť prázdny.</translation>
     </message>
@@ -1105,7 +1105,7 @@ Zvoľte iný názov.</translation>
         <translation>Prepis</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Classification</source>
         <translation>Klasifikácia</translation>
     </message>
@@ -1415,7 +1415,7 @@ Zvoľte iný názov.</translation>
         <translation>Offline – na otvorenie súboru je potrebný %1</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+89"/>
         <source>Reference documents</source>
         <translation>Referenčné dokumenty</translation>
     </message>
@@ -1443,7 +1443,7 @@ Zvoľte iný názov.</translation>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1467"/>
+        <location filename="../qt_quick/Main.qml" line="+1407"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>Chcete &lt;b&gt;odstrániť&lt;/b&gt; toto zariadenie %1?&lt;br/&gt;&lt;br/&gt;Názov: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1461,13 +1461,13 @@ Zvoľte iný názov.</translation>
         <location line="-538"/>
         <location line="+64"/>
         <location line="+250"/>
-        <location line="+1101"/>
+        <location line="+1128"/>
         <location line="+125"/>
         <source>Cancel</source>
         <translation>Zrušiť</translation>
     </message>
     <message>
-        <location line="-1691"/>
+        <location line="-1718"/>
         <location line="+114"/>
         <location line="+73"/>
         <location line="+179"/>
@@ -1485,90 +1485,76 @@ Zvoľte iný názov.</translation>
         <translation type="vanished">Systém</translation>
     </message>
     <message>
-        <location line="-253"/>
-        <location line="+259"/>
+        <location line="-237"/>
+        <location line="+243"/>
         <source>Settings</source>
         <translation>Nastavenia</translation>
     </message>
     <message>
-        <location line="-430"/>
+        <location line="-378"/>
         <source>Open...</source>
         <translation>Otvoriť...</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+2"/>
         <source>Collection Folder...</source>
         <translation>Priečinok zbierky...</translation>
     </message>
     <message>
-        <location line="-7"/>
-        <location line="+92"/>
+        <location line="-1"/>
+        <location line="+8"/>
         <source>SQLite Database...</source>
         <translation>Databáza SQLite...</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-6"/>
         <source>Hosted Database...</source>
         <translation>Hostovaná databáza...</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+15"/>
         <source>Recent collections</source>
         <translation>Nedávne zbierky</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="-12"/>
         <source>New...</source>
         <translation>Nový...</translation>
     </message>
     <message>
-        <location line="+18"/>
-        <location line="+991"/>
         <source>Selection</source>
-        <translation>Výber</translation>
+        <translation type="vanished">Výber</translation>
     </message>
     <message>
-        <location line="-962"/>
-        <location line="+1322"/>
         <source>Devices</source>
-        <translation>Zariadenia</translation>
+        <translation type="vanished">Zariadenia</translation>
     </message>
     <message>
-        <location line="-1341"/>
-        <location line="+1438"/>
         <source>Explore</source>
-        <translation>Prehliadať</translation>
+        <translation type="vanished">Prehliadať</translation>
     </message>
     <message>
-        <location line="-1404"/>
-        <location line="+1837"/>
         <source>Backup</source>
-        <translation>Záloha</translation>
+        <translation type="vanished">Záloha</translation>
     </message>
     <message>
-        <location line="-1842"/>
-        <location line="+1799"/>
         <source>Statistics</source>
-        <translation>Štatistiky</translation>
+        <translation type="vanished">Štatistiky</translation>
     </message>
     <message>
-        <location line="-1804"/>
-        <location line="+1826"/>
         <source>Tags</source>
-        <translation>Značky</translation>
+        <translation type="vanished">Značky</translation>
     </message>
     <message>
-        <location line="-1839"/>
-        <location line="+1618"/>
         <source>Activity</source>
-        <translation>Aktivita</translation>
+        <translation type="vanished">Aktivita</translation>
     </message>
     <message>
         <source>Documentation</source>
         <translation type="vanished">Dokumentácia</translation>
     </message>
     <message>
-        <location line="-1585"/>
+        <location line="+87"/>
         <source>About</source>
         <translation>O aplikácii</translation>
     </message>
@@ -1577,17 +1563,15 @@ Zvoľte iný názov.</translation>
         <translation type="vanished">Ukončiť</translation>
     </message>
     <message>
-        <location line="+22"/>
         <source>Drawer pinned</source>
-        <translation>Panel pripnutý</translation>
+        <translation type="vanished">Panel pripnutý</translation>
     </message>
     <message>
-        <location line="+0"/>
         <source>Drawer floating</source>
-        <translation>Panel plávajúci</translation>
+        <translation type="vanished">Panel plávajúci</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+52"/>
         <source>Selection shown</source>
         <translation>Výber zobrazený</translation>
     </message>
@@ -1609,7 +1593,7 @@ Zvoľte iný názov.</translation>
 </translation>
     </message>
     <message>
-        <location line="+157"/>
+        <location line="+158"/>
         <source>Do not show again</source>
         <translation>Nabudúce nezobrazovať</translation>
     </message>
@@ -1912,25 +1896,20 @@ Môže to znamenať, že zdroj je prázdny alebo zariadenie nie je pripojené k 
 Chcete ho aj tak uložiť (katalóg by bol prázdny)?</translation>
     </message>
     <message>
-        <location line="-928"/>
-        <location line="+1165"/>
-        <location line="+51"/>
+        <location line="+288"/>
         <source>Search</source>
         <translation>Hľadať</translation>
     </message>
     <message>
-        <location line="-1196"/>
         <source>Tools</source>
-        <translation>Nástroje</translation>
+        <translation type="vanished">Nástroje</translation>
     </message>
     <message>
-        <location line="+25"/>
-        <location line="+1610"/>
         <source>Context</source>
-        <translation>Kontext</translation>
+        <translation type="vanished">Kontext</translation>
     </message>
     <message>
-        <location line="-1442"/>
+        <location line="-1003"/>
         <source>Welcome to Katalog 3. News, questions and feedback are shared on the project discussions:</source>
         <translation>Vitajte v Katalog 3. Novinky, otázky a spätná väzba sa zdieľajú v diskusiách projektu:</translation>
     </message>
@@ -1952,12 +1931,12 @@ Chcete ho aj tak uložiť (katalóg by bol prázdny)?</translation>
     <message>
         <location line="+7"/>
         <location line="+124"/>
-        <location line="+371"/>
+        <location line="+398"/>
         <source>Stop</source>
         <translation>Zastaviť</translation>
     </message>
     <message>
-        <location line="-488"/>
+        <location line="-515"/>
         <source>Reset</source>
         <translation>Resetovať</translation>
     </message>
@@ -1973,7 +1952,8 @@ Chcete ho aj tak uložiť (katalóg by bol prázdny)?</translation>
         <location line="+108"/>
         <location line="+73"/>
         <location line="+157"/>
-        <location line="+34"/>
+        <location line="+21"/>
+        <location line="+40"/>
         <location line="+61"/>
         <location line="+104"/>
         <location line="+20"/>
@@ -1990,7 +1970,7 @@ Chcete ho aj tak uložiť (katalóg by bol prázdny)?</translation>
 </translation>
     </message>
     <message>
-        <location line="-944"/>
+        <location line="-971"/>
         <source>Copy version and system information</source>
         <translation>Kopírovať informácie o verzii a systéme</translation>
     </message>
@@ -2074,29 +2054,164 @@ Chcete ho aj tak uložiť (katalóg by bol prázdny)?</translation>
         <translation type="vanished">Katalóg bol úspešne vytvorený.</translation>
     </message>
     <message>
-        <location line="+317"/>
+        <location line="+344"/>
         <source>Catalog creation failed: </source>
         <translation>Vytvorenie katalógu zlyhalo: </translation>
     </message>
     <message>
-        <location line="-1695"/>
-        <location line="+1679"/>
-        <location line="+32"/>
+        <location line="+16"/>
         <source>Create</source>
         <translation>Vytvoriť</translation>
     </message>
     <message>
-        <location line="-272"/>
+        <location line="-299"/>
         <source>Columns</source>
         <translation>Stĺpce</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="-1473"/>
+        <location line="+1679"/>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1678"/>
+        <source>Archive overview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Archive</source>
+        <translation>Archív</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+1002"/>
+        <source>My drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1001"/>
+        <source>Catalogued drives and folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1452"/>
+        <source>Browse the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1451"/>
+        <source>Folders, previews, details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1167"/>
+        <source>Search the drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1166"/>
+        <source>By name, content or meaning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+1711"/>
+        <source>Add a drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1710"/>
+        <source>Catalogue a drive or a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Intelligence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+1669"/>
+        <source>Archive knowledge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1668"/>
+        <source>Context, glossary, documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+25"/>
+        <location line="+1589"/>
+        <source>Work in progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1613"/>
+        <source>Analysis, resources, history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Other</source>
+        <translation>Iné</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1834"/>
+        <source>Archive in numbers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1833"/>
+        <location line="+1855"/>
+        <source>Labels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1854"/>
+        <location line="+1875"/>
+        <source>Safety copies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1874"/>
+        <location line="+1317"/>
+        <source>Manage drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1295"/>
+        <source>AI analysis</source>
+        <translation>Analýza AI</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Paused</source>
+        <translation>Pozastavené</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for the drive</source>
+        <translation>Čaká sa na disk</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In Progress</source>
+        <translation>Prebieha</translation>
+    </message>
+    <message>
+        <location line="+1419"/>
         <source>Topic clusters</source>
         <translation>Tematické skupiny</translation>
     </message>
     <message>
-        <location line="+194"/>
+        <location line="+221"/>
         <source>Re-interpret with the context</source>
         <translation>Znova interpretovať s kontextom</translation>
     </message>
@@ -6662,7 +6777,7 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
         <translation>Trvanie</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+58"/>
         <source>Reference documents</source>
         <translation>Referenčné dokumenty</translation>
     </message>
@@ -6729,9 +6844,13 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
         <translation>Zastaviť</translation>
     </message>
     <message>
-        <location line="-14"/>
         <source>Activity</source>
-        <translation>Aktivita</translation>
+        <translation type="vanished">Aktivita</translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <source>Work in progress</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7811,7 +7930,7 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
         <translation>Súbory</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>%1, about %2</source>
         <translation>%1, približne %2</translation>
     </message>
@@ -9011,6 +9130,251 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     </message>
 </context>
 <context>
+    <name>PageHome</name>
+    <message>
+        <location filename="../qt_quick/PageHome.qml" line="+35"/>
+        <source>Your archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Search all the drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Add a drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Catalogued files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Drives: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Files with AI results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Previews, descriptions, transcripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Reference documents</source>
+        <translation>Referenčné dokumenty</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 passages</source>
+        <translation>Úryvky: %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Data sent</source>
+        <translation>Odoslané údaje</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing sent</source>
+        <translation>Nič sa neodoslalo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>On this computer</source>
+        <translation>Na tomto počítači</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>My drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Each drive is a card: whether it is connected, what it holds and what the AI has understood.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>All the drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+64"/>
+        <source>Connected</source>
+        <translation>Pripojené</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not connected</source>
+        <translation>Nepripojené</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Saved search results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>AI: %1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>Image</source>
+        <translation>Obrázok</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text</source>
+        <translation>Text</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Audio</source>
+        <translation>Audio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Video</source>
+        <translation>Video</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Previews and descriptions stay visible; the drive is needed to open the files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+136"/>
+        <source>Re-interpret with the context</source>
+        <translation>Znova interpretovať s kontextom</translation>
+    </message>
+    <message>
+        <location line="-121"/>
+        <location line="+17"/>
+        <source>Add a drive or a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Katalog reads the drive, NTFS too, without changing it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Work in progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Paused</source>
+        <translation>Pozastavené</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Waiting for the drive</source>
+        <translation>Čaká sa na disk</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>In Progress</source>
+        <translation>Prebieha</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Nothing running</source>
+        <translation>Nič neprebieha</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Resume</source>
+        <translation>Pokračovať</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Pause</source>
+        <translation>Pozastaviť</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Details and resources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Archive knowledge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Context active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>No context yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>New files are classified with the archive&apos;s own language. Files already analysed are re-interpreted when you choose, one folder at a time too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Describing the archive lets the AI classify the files with its own terms, categories and names.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 terms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 known names</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Edit the context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Describe the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PageSearchForm</name>
     <message>
         <location filename="../qt_quick/PageSearchForm.qml" line="+387"/>
@@ -9151,7 +9515,7 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-5226"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-5296"/>
         <source>Exact Phrase</source>
         <translation>Presná fráza</translation>
     </message>
