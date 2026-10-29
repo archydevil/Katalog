@@ -1003,14 +1003,14 @@ Kirigami.ApplicationWindow {
                 }
                 Controls.Label { text: qsTr("Archive").toUpperCase(); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 0.6; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
                 KSidebarItem {
-                    iconName: "drive-harddisk"
+                    iconName: "view-list-icons"
                     title: qsTr("My drives")
                     description: qsTr("Catalogued drives and folders")
                     active: root.openFeaturePage === null
                     onClicked: root.sidebarGo("Selection", pageSelection)
                 }
                 KSidebarItem {
-                    iconName: "folder-open"
+                    iconName: "view-list-tree"
                     title: qsTr("Browse the archive")
                     description: qsTr("Folders, previews, details")
                     active: root.openFeaturePage === pageExplore
@@ -1032,7 +1032,7 @@ Kirigami.ApplicationWindow {
                 }
                 Controls.Label { text: qsTr("Intelligence").toUpperCase(); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 0.6; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
                 KSidebarItem {
-                    iconName: "documentinfo"
+                    iconName: "document-properties"
                     title: qsTr("Archive knowledge")
                     description: qsTr("Context, glossary, documents")
                     active: root.openFeaturePage === pageContext
@@ -1049,7 +1049,7 @@ Kirigami.ApplicationWindow {
                 KSidebarItem { iconName: "view-statistics"; title: qsTr("Archive in numbers"); active: root.openFeaturePage === pageStatistics; onClicked: root.sidebarGo("Statistics", pageStatistics) }
                 KSidebarItem { iconName: "tag"; title: qsTr("Labels"); active: root.openFeaturePage === pageTags; onClicked: root.sidebarGo("Tags", pageTags) }
                 KSidebarItem { iconName: "backup"; title: qsTr("Safety copies"); active: root.openFeaturePage === pageBackup; onClicked: root.sidebarGo("Backup", pageBackup) }
-                KSidebarItem { iconName: "drive-multidisk"; title: qsTr("Manage drives"); active: root.openFeaturePage === pageDevices; onClicked: root.sidebarGo("Devices", pageDevices) }
+                KSidebarItem { iconName: "view-list-details"; title: qsTr("Manage drives"); active: root.openFeaturePage === pageDevices; onClicked: root.sidebarGo("Devices", pageDevices) }
                 KSidebarItem { iconName: "help-about"; title: qsTr("About"); onClicked: root.showLayer(aboutPage) }
             }
         ]

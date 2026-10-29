@@ -131,9 +131,9 @@ ColumnLayout {
                             Kirigami.Icon {
                                 anchors.centerIn: parent
                                 width: 22; height: 22
+                                // A coloured device icon: drawn as it is, faded when offline
                                 source: "drive-harddisk"
-                                isMask: true
-                                color: driveCard.modelData.connected ? KTheme.accentText : KTheme.text3
+                                opacity: driveCard.modelData.connected ? 1 : 0.5
                             }
                         }
                         ColumnLayout {
