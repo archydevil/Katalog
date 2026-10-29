@@ -903,270 +903,210 @@ Kirigami.ApplicationWindow {
         }
     }
 
-    // Global Drawer
+    // Sidebar (fork, D34): a fixed column with the collection menu on top, the
+    // sections grouped and described, the running job and Settings at the foot
+    function sidebarGo(name, page) {
+        appManager1.setLastPage(name)
+        root.showPage(page)
+    }
+
     globalDrawer: Kirigami.GlobalDrawer {
-        //isMenu: true
-        modal: !windowSettings.drawerPinned
-        width: 220
+        id: sidebar
+        modal: false
+        width: 264
+        bannerVisible: false
+        actions: []
 
-        header: ColumnLayout {
-            spacing: 0
+        background: Rectangle {
+            color: KTheme.sidebar
+            Rectangle { anchors.right: parent.right; width: 1; height: parent.height; color: KTheme.line }
+        }
 
-            // The collection is the first thing in the drawer. No application logo
-            // above it: the window already carries one, and the band's height was
-            // styled differently by each platform's controls. Its colour is kept
-            // here, so the drawer still opens on the brand surface.
-            Rectangle {
-                Layout.fillWidth: true
-                // Kirigami's own global-toolbar height, which is the number the
-                // page toolbar beside this drawer is actually laid out with —
-                // authoritative on every platform. The measured probe is only a
-                // fallback for the case where that property is unset.
-                Layout.preferredHeight: {
-                    var h = 0
-                    try { h = pageStack.globalToolBar.preferredHeight } catch (e) { h = 0 }
-                    return h > 0 ? h : root.toolBarHeight
+        // The collection: its name, and the menu to open, create or reopen one
+        header: Controls.AbstractButton {
+            id: collectionButton
+            implicitHeight: collectionRow.implicitHeight + 24
+            hoverEnabled: true
+            padding: 12
+            Accessible.name: appManager1.currentCollectionDisplayName
+            onClicked: collectionMenu.popup(collectionButton, 12, collectionButton.height)
+            background: Rectangle { color: collectionButton.hovered ? KTheme.hover : "transparent" }
+            contentItem: RowLayout {
+                id: collectionRow
+                spacing: 10
+                Rectangle {
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
+                    radius: 9
+                    color: KTheme.accent
+                    Controls.Label { anchors.centerIn: parent; text: "K"; color: KTheme.onAccent; font.weight: Font.Bold }
                 }
-                color: root.logoBandColor
-
-                RowLayout {
-                    anchors {
-                        left: parent.left; right: parent.right
-                        verticalCenter: parent.verticalCenter
-                        leftMargin: Kirigami.Units.largeSpacing
-                        rightMargin: Kirigami.Units.largeSpacing
-                    }
-                    // Both take the colour meant to sit on a filled surface: the
-                    // row is painted with the brand band colour, so the ordinary
-                    // text colour would be unreadable on it.
-                    Kirigami.Icon {
-                        source: appManager1.currentCollectionIconName
-                        color: Kirigami.Theme.highlightedTextColor
-                        isMask: true
-                        Layout.preferredWidth:  Kirigami.Units.iconSizes.smallMedium
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
-                        Layout.alignment: Qt.AlignVCenter
-                    }
+                ColumnLayout {
+                    spacing: 0
+                    Layout.fillWidth: true
+                    Controls.Label { text: "Katalog"; font.weight: Font.Bold; color: KTheme.text }
                     Controls.Label {
-                        text: appManager1.currentCollectionDisplayName
-                        font.bold: true
-                        font.pointSize: appManager1.systemTextPointSize   // top line keeps the system size
-                        elide: Text.ElideRight
-                        color: Kirigami.Theme.highlightedTextColor
                         Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
+                        text: appManager1.currentCollectionDisplayName
+                        elide: Text.ElideRight
+                        font.pixelSize: KTheme.note
+                        color: KTheme.text3
                     }
+                }
+                Kirigami.Icon { source: "arrow-down"; isMask: true; color: KTheme.text3; Layout.preferredWidth: 14; Layout.preferredHeight: 14 }
+            }
+            Controls.Menu {
+                id: collectionMenu
+                Controls.Menu {
+                    title: qsTr("Open...")
+                    Controls.MenuItem { icon.name: "network-server-database"; text: qsTr("SQLite Database..."); onTriggered: openFreshDialog(databaseFileDialogComponent, "") }
+                    Controls.MenuItem { icon.name: "folder"; text: qsTr("Collection Folder..."); onTriggered: openFreshDialog(memoryFolderDialogComponent, "") }
+                    Controls.MenuItem { icon.name: "network-workgroup"; text: qsTr("Hosted Database..."); onTriggered: root.showLayer(settingsPageComponent, { showHostedForm: true }) }
+                }
+                Controls.Menu {
+                    title: qsTr("New...")
+                    Controls.MenuItem {
+                        icon.name: "network-server-database"
+                        text: qsTr("SQLite Database...")
+                        onTriggered: {
+                            var p = appManager1.getNewCollectionDefaultPath()
+                            newDatabaseFileDialog.currentFile = appManager1.pathToFileUrl(p)
+                            newDatabaseFileDialog.open()
+                        }
+                    }
+                }
+                Controls.MenuSeparator { visible: appManager1.recentCollections.length > 0 }
+                Controls.MenuItem { text: qsTr("Recent collections"); enabled: false; visible: appManager1.recentCollections.length > 0 }
+                Instantiator {
+                    model: appManager1.recentCollections
+                    delegate: Controls.MenuItem {
+                        required property var modelData
+                        icon.name: modelData.iconName
+                        text: modelData.displayName
+                        onTriggered: root.openRecentCollection(modelData)
+                    }
+                    onObjectAdded: (index, object) => collectionMenu.insertItem(collectionMenu.count, object)
+                    onObjectRemoved: (index, object) => collectionMenu.removeItem(object)
                 }
             }
         }
 
-        actions: [
-            // Kirigami.Action {
-            //     separator: true
-            // },
-            Kirigami.Action {
-                text: qsTr("Open...")
-                icon.name: "document-open"
-                Kirigami.Action {
-                    icon.name: "network-server-database"
-                    text: qsTr("SQLite Database...")
-                    onTriggered: {
-                        openFreshDialog(databaseFileDialogComponent, "")
-                    }
+        topContent: [
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                KSidebarItem {
+                    iconName: "go-home"
+                    title: qsTr("Home")
+                    description: qsTr("Archive overview")
+                    active: root.openFeaturePage === pageHome
+                    onClicked: root.sidebarGo("Home", pageHome)
                 }
-                Kirigami.Action {
-                    icon.name: "folder"
-                    text: qsTr("Collection Folder...")
-                    onTriggered: {
-                        openFreshDialog(memoryFolderDialogComponent, "")
-                    }
+                Controls.Label { text: qsTr("Archive").toUpperCase(); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 0.6; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
+                KSidebarItem {
+                    iconName: "drive-harddisk"
+                    title: qsTr("My drives")
+                    description: qsTr("Catalogued drives and folders")
+                    active: root.openFeaturePage === null
+                    onClicked: root.sidebarGo("Selection", pageSelection)
                 }
-                Kirigami.Action {
-                    icon.name: "network-workgroup"
-                    text: qsTr("Hosted Database...")
-                    onTriggered: root.showLayer(settingsPageComponent, { showHostedForm: true })
+                KSidebarItem {
+                    iconName: "folder-open"
+                    title: qsTr("Browse the archive")
+                    description: qsTr("Folders, previews, details")
+                    active: root.openFeaturePage === pageExplore
+                    onClicked: root.sidebarGo("Explore", pageExplore)
                 }
-                Kirigami.Action {
-                    separator: true
-                    visible: appManager1.recentCollections.length > 0
+                KSidebarItem {
+                    iconName: "edit-find"
+                    title: qsTr("Search the drives")
+                    description: qsTr("By name, content or meaning")
+                    active: root.openFeaturePage === pageSearch || root.openFeaturePage === pageSearchResults
+                    onClicked: root.sidebarGo("Search", pageSearch)
                 }
-                Kirigami.Action {
-                    text: qsTr("Recent collections")
-                    enabled: false   // title only, not clickable
-                    visible: appManager1.recentCollections.length > 0
+                KSidebarItem {
+                    iconName: "list-add"
+                    title: qsTr("Add a drive")
+                    description: qsTr("Catalogue a drive or a folder")
+                    active: root.openFeaturePage === pageCreate
+                    onClicked: root.sidebarGo("Create", pageCreate)
                 }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 0
-                    icon.name: appManager1.recentCollections.length > 0 ? appManager1.recentCollections[0].iconName : ""
-                    text:      appManager1.recentCollections.length > 0 ? appManager1.recentCollections[0].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[0])
+                Controls.Label { text: qsTr("Intelligence").toUpperCase(); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 0.6; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
+                KSidebarItem {
+                    iconName: "documentinfo"
+                    title: qsTr("Archive knowledge")
+                    description: qsTr("Context, glossary, documents")
+                    active: root.openFeaturePage === pageContext
+                    onClicked: root.sidebarGo("Context", pageContext)
                 }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 1
-                    icon.name: appManager1.recentCollections.length > 1 ? appManager1.recentCollections[1].iconName : ""
-                    text:      appManager1.recentCollections.length > 1 ? appManager1.recentCollections[1].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[1])
+                KSidebarItem {
+                    iconName: "utilities-system-monitor"
+                    title: qsTr("Work in progress")
+                    description: qsTr("Analysis, resources, history")
+                    active: root.openFeaturePage === pageActivity
+                    onClicked: root.sidebarGo("Activity", pageActivity)
                 }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 2
-                    icon.name: appManager1.recentCollections.length > 2 ? appManager1.recentCollections[2].iconName : ""
-                    text:      appManager1.recentCollections.length > 2 ? appManager1.recentCollections[2].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[2])
-                }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 3
-                    icon.name: appManager1.recentCollections.length > 3 ? appManager1.recentCollections[3].iconName : ""
-                    text:      appManager1.recentCollections.length > 3 ? appManager1.recentCollections[3].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[3])
-                }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 4
-                    icon.name: appManager1.recentCollections.length > 4 ? appManager1.recentCollections[4].iconName : ""
-                    text:      appManager1.recentCollections.length > 4 ? appManager1.recentCollections[4].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[4])
-                }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 5
-                    icon.name: appManager1.recentCollections.length > 5 ? appManager1.recentCollections[5].iconName : ""
-                    text:      appManager1.recentCollections.length > 5 ? appManager1.recentCollections[5].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[5])
-                }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 6
-                    icon.name: appManager1.recentCollections.length > 6 ? appManager1.recentCollections[6].iconName : ""
-                    text:      appManager1.recentCollections.length > 6 ? appManager1.recentCollections[6].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[6])
-                }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 7
-                    icon.name: appManager1.recentCollections.length > 7 ? appManager1.recentCollections[7].iconName : ""
-                    text:      appManager1.recentCollections.length > 7 ? appManager1.recentCollections[7].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[7])
-                }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 8
-                    icon.name: appManager1.recentCollections.length > 8 ? appManager1.recentCollections[8].iconName : ""
-                    text:      appManager1.recentCollections.length > 8 ? appManager1.recentCollections[8].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[8])
-                }
-                Kirigami.Action {
-                    visible: appManager1.recentCollections.length > 9
-                    icon.name: appManager1.recentCollections.length > 9 ? appManager1.recentCollections[9].iconName : ""
-                    text:      appManager1.recentCollections.length > 9 ? appManager1.recentCollections[9].displayName : ""
-                    onTriggered: root.openRecentCollection(appManager1.recentCollections[9])
-                }
-            },
-            Kirigami.Action {
-                text: qsTr("New...")
-                icon.name: "document-new"
-                Kirigami.Action {
-                    icon.name: "network-server-database"
-                    text: qsTr("SQLite Database...")
-                    onTriggered: {
-                        var p = appManager1.getNewCollectionDefaultPath()
-                        newDatabaseFileDialog.currentFile = appManager1.pathToFileUrl(p)
-                        newDatabaseFileDialog.open()
-                    }
-                }
-            },
-            Kirigami.Action {
-                separator: true
-            },
-            // Fork: the everyday pages first; the rest under "Tools"
-            Kirigami.Action {
-                icon.name: "edit-select"
-                text: qsTr("Selection")
-                onTriggered: { appManager1.setLastPage("Selection"); root.showPage(pageSelection) }
-            },
-            Kirigami.Action {
-                icon.name: "edit-find"
-                text: qsTr("Search")
-                onTriggered: { appManager1.setLastPage("Search"); root.showPage(pageSearch) }
-            },
-            Kirigami.Action {
-                icon.name: "view-list-tree"
-                text: qsTr("Explore")
-                onTriggered: { appManager1.setLastPage("Explore"); root.showPage(pageExplore) }
-            },
-            Kirigami.Action {
-                icon.name: "journal-new"
-                text: qsTr("Create")
-                onTriggered: { appManager1.setLastPage("Create"); root.showPage(pageCreate) }
-            },
-            Kirigami.Action {
-                // What runs, where, with which resources (fork, MDI-F61)
-                icon.name: "utilities-system-monitor"
-                text: qsTr("Activity")
-                onTriggered: { appManager1.setLastPage("Activity"); root.showPage(pageActivity) }
-            },
-            Kirigami.Action {
-                text: qsTr("Tools")
-                icon.name: "applications-utilities"
-                Kirigami.Action {
-                    icon.name: "drive-multidisk"
-                    text: qsTr("Devices")
-                    onTriggered: { appManager1.setLastPage("Devices"); root.showPage(pageDevices) }
-                }
-                Kirigami.Action {
-                    icon.name: "tag"
-                    text: qsTr("Tags")
-                    onTriggered: { appManager1.setLastPage("Tags"); root.showPage(pageTags) }
-                }
-                Kirigami.Action {
-                    icon.name: "view-statistics"
-                    text: qsTr("Statistics")
-                    onTriggered: { appManager1.setLastPage("Statistics"); root.showPage(pageStatistics) }
-                }
-                Kirigami.Action {
-                    icon.name: "backup"
-                    text: qsTr("Backup")
-                    onTriggered: { appManager1.setLastPage("Backup"); root.showPage(pageBackup) }
-                }
-                Kirigami.Action {
-                    // The domain the AI interprets the collection in (fork, D33, MDI-F107)
-                    icon.name: "documentinfo"
-                    text: qsTr("Context")
-                    onTriggered: { appManager1.setLastPage("Context"); root.showPage(pageContext) }
-                }
-                Kirigami.Action {
-                    text: qsTr("About") //i18n("About")
-                    icon.name: "help-about"
-                    onTriggered: root.showLayer(aboutPage)
-                }
-            },
-            Kirigami.Action {
-                icon.name: "configure"
-                text: qsTr("Settings")
-                onTriggered: { appManager1.setLastPage("Settings"); root.showLayer(settingsPageComponent) }
+                Controls.Label { text: qsTr("Other").toUpperCase(); font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 0.6; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
+                KSidebarItem { iconName: "view-statistics"; title: qsTr("Archive in numbers"); active: root.openFeaturePage === pageStatistics; onClicked: root.sidebarGo("Statistics", pageStatistics) }
+                KSidebarItem { iconName: "tag"; title: qsTr("Labels"); active: root.openFeaturePage === pageTags; onClicked: root.sidebarGo("Tags", pageTags) }
+                KSidebarItem { iconName: "backup"; title: qsTr("Safety copies"); active: root.openFeaturePage === pageBackup; onClicked: root.sidebarGo("Backup", pageBackup) }
+                KSidebarItem { iconName: "drive-multidisk"; title: qsTr("Manage drives"); active: root.openFeaturePage === pageDevices; onClicked: root.sidebarGo("Devices", pageDevices) }
+                KSidebarItem { iconName: "help-about"; title: qsTr("About"); onClicked: root.showLayer(aboutPage) }
             }
         ]
 
-        footer: RowLayout {
-            spacing: Kirigami.Units.smallSpacing
-            height: implicitHeight + Kirigami.Units.largeSpacing
-            // Compact (fork): the two pins as icon buttons, their state in the tooltip
-            Item { Layout.preferredWidth: Kirigami.Units.smallSpacing }
-            IconButton {
-                flat: true
-                // Plain buttons: the checked style painted a filled square over the icon
-                icon.name: windowSettings.drawerPinned ? "window-unpin" : "window-pin"
-                onClicked: windowSettings.drawerPinned = !windowSettings.drawerPinned
-                Controls.ToolTip.text: windowSettings.drawerPinned ? qsTr("Drawer pinned") : qsTr("Drawer floating")
-                Controls.ToolTip.visible: hovered
+        footer: ColumnLayout {
+            spacing: 6
+            // The running job, compact; opens Work in progress (MDI-F61)
+            Controls.AbstractButton {
+                id: jobButton
+                visible: appManager1.mdiIsRunning
+                Layout.fillWidth: true
+                Layout.leftMargin: 12
+                Layout.rightMargin: 12
+                padding: 12
+                hoverEnabled: true
+                Accessible.name: qsTr("Work in progress")
+                onClicked: root.sidebarGo("Activity", pageActivity)
+                background: Rectangle { radius: 12; color: jobButton.hovered ? KTheme.hover : KTheme.surface; border.color: KTheme.line }
+                contentItem: ColumnLayout {
+                    spacing: 6
+                    RowLayout {
+                        Controls.Label { text: qsTr("AI analysis"); font.pixelSize: KTheme.note; font.weight: Font.DemiBold; color: KTheme.text; Layout.fillWidth: true }
+                        KInfoTag {
+                            text: appManager1.mdiIsPaused ? qsTr("Paused")
+                                  : appManager1.mdiJobInfo.waitingForSource ? qsTr("Waiting for the drive") : qsTr("In Progress")
+                            tone: appManager1.mdiIsPaused || appManager1.mdiJobInfo.waitingForSource ? "warn" : "info"
+                        }
+                    }
+                    KProgressBar {
+                        Layout.fillWidth: true
+                        indeterminate: !(appManager1.mdiJobInfo.fileCount > 0)
+                        value: appManager1.mdiJobInfo.fileCount > 0 ? appManager1.mdiJobInfo.fileIndex / appManager1.mdiJobInfo.fileCount : 0
+                    }
+                    Controls.Label { Layout.fillWidth: true; text: appManager1.mdiJobInfo.catalog || ""; elide: Text.ElideRight; font.pixelSize: KTheme.note; color: KTheme.text3 }
+                }
             }
-            IconButton {
-                flat: true
-                // Collapse/restore the Selection column beside the open feature
-                // page (K2 ShowHideFilters portage). Disabled when Selection is
-                // the only page — there is nothing to collapse to.
-                icon.name: "edit-select"   // the Selection page's own icon
-                opacity: appManager1.showSelectionPage ? 1.0 : 0.5
-                enabled: root.featureOpen
-                onClicked: appManager1.showSelectionPage = !appManager1.showSelectionPage
-                Controls.ToolTip.text: appManager1.showSelectionPage ? qsTr("Selection shown") : qsTr("Selection hidden")
-                Controls.ToolTip.visible: hovered
+            RowLayout {
+                Layout.leftMargin: 12
+                Layout.rightMargin: 12
+                Layout.bottomMargin: 10
+                KSidebarItem {
+                    iconName: "configure"
+                    title: qsTr("Settings")
+                    onClicked: { appManager1.setLastPage("Settings"); root.showLayer(settingsPageComponent) }
+                }
+                IconButton {
+                    flat: true
+                    // Show or hide the drives column beside the open page (K2 ShowHideFilters portage)
+                    icon.name: "edit-select"
+                    opacity: appManager1.showSelectionPage ? 1.0 : 0.5
+                    enabled: root.featureOpen
+                    onClicked: appManager1.showSelectionPage = !appManager1.showSelectionPage
+                    Controls.ToolTip.text: appManager1.showSelectionPage ? qsTr("Selection shown") : qsTr("Selection hidden")
+                    Controls.ToolTip.visible: hovered
+                }
             }
-            Item { Layout.fillWidth: true }
         }
     }
 
@@ -1183,7 +1123,7 @@ Kirigami.ApplicationWindow {
             function onDatabaseConnectionChanged(success, message) {
                 if (success) {
                     showPassiveNotification("✓ " + message, 5000)
-                    root.showPage(pageSelection)  // clear col 2, go to Selection
+                    root.showPage(pageHome)  // the new collection at a glance (D34)
                     pageSearchForm.restoreLastSearch()
                     if (appManager1.isFirstRun) {
                         appManager1.clearFirstRun()
@@ -1252,7 +1192,8 @@ Kirigami.ApplicationWindow {
                 "Tags":       pageTags,
                 "Backup":     pageBackup,
                 "Activity":   pageActivity,
-                "Context":    pageContext
+                "Context":    pageContext,
+                "Home":       pageHome
             }
             if (last !== "Selection" && pageMap[last])
                 root.showPage(pageMap[last])
@@ -2066,7 +2007,7 @@ Kirigami.ApplicationWindow {
         background: Rectangle {
             color: root.selectionPageColor
         }
-        title: qsTr("Selection")
+        title: qsTr("My drives")
         property string deviceType: "Storage"
 
         header: ColumnLayout {
@@ -2245,7 +2186,7 @@ Kirigami.ApplicationWindow {
         // on the window behind the page stack.
         visible: false
         property Kirigami.Action escapeAction: pageSearchEscapeAction  // Esc (KBS-F1)
-        title: qsTr("Search")
+        title: qsTr("Search the drives")
 
         // Run the search and show the results page. Shared by the Search action button
         // and the Enter key in the search text field so both behave identically.
@@ -2426,7 +2367,7 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageDevicesEscapeAction  // Esc (KBS-F1)
         visible: false
         padding: 0
-        title: qsTr("Devices")
+        title: qsTr("Manage drives")
         actions: [
             Kirigami.Action {
                 text:        qsTr("All active")
@@ -2523,7 +2464,7 @@ Kirigami.ApplicationWindow {
         id: pageExplore
         property Kirigami.Action escapeAction: pageExploreEscapeAction  // Esc (KBS-F1)
         visible: false
-        title: qsTr("Explore")
+        title: qsTr("Browse the archive")
         padding: 0
 
         actions: [
@@ -2714,7 +2655,7 @@ Kirigami.ApplicationWindow {
         id: pageActivity
         property Kirigami.Action escapeAction: pageActivityEscapeAction  // Esc (KBS-F1)
         visible: false
-        title: qsTr("Activity")
+        title: qsTr("Work in progress")
         // The monitor samples only while the page is shown (or a job runs)
         onVisibleChanged: pageActivity_form.setShown(visible)
         actions: [
@@ -2730,12 +2671,39 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    //Pages - Home (fork, D34): the archive at a glance
+    ScrollablePageFitted {
+        id: pageHome
+        property Kirigami.Action escapeAction: pageHomeEscapeAction  // Esc (KBS-F1)
+        visible: false
+        title: qsTr("Home")
+        background: Rectangle { color: KTheme.ground }
+        onVisibleChanged: pageHome_form.setShown(visible)
+        actions: [
+            Kirigami.Action {
+                id: pageHomeEscapeAction
+                text: qsTr("Close")
+                icon.name: "view-close"
+                onTriggered: root.closeFeaturePage(pageHome)
+            }
+        ]
+        PageHome {
+            id: pageHome_form
+            onOpenPage: (name) => {
+                var pages = { "Search": pageSearch, "Create": pageCreate, "Explore": pageExplore,
+                              "Context": pageContext, "Activity": pageActivity, "Selection": pageSelection }
+                if (pages[name])
+                    root.sidebarGo(name, pages[name])
+            }
+        }
+    }
+
     //Pages - Context (fork, SpecMediaIntelligence.md D33, MDI-F94..F107)
     ScrollablePageFitted {
         id: pageContext
         property Kirigami.Action escapeAction: pageContextEscapeAction  // Esc (KBS-F1)
         visible: false
-        title: qsTr("Context")
+        title: qsTr("Archive knowledge")
         onVisibleChanged: pageContext_form.setShown(visible)
         actions: [
             Kirigami.Action {
@@ -2769,7 +2737,7 @@ Kirigami.ApplicationWindow {
         id: pageCreate
         property Kirigami.Action escapeAction: pageCreateEscapeAction  // Esc (KBS-F1)
         visible: false
-        title: qsTr("Create")
+        title: qsTr("Add a drive")
         Connections {
             target: appManager1
             function onCatalogCreationCompleted(success, report) {
@@ -2913,7 +2881,7 @@ Kirigami.ApplicationWindow {
         id: pageStatistics
         property Kirigami.Action escapeAction: pageStatisticsEscapeAction  // Esc (KBS-F1)
         visible: false
-        title: qsTr("Statistics")
+        title: qsTr("Archive in numbers")
         padding: 0
 
         actions: [
@@ -2935,7 +2903,7 @@ Kirigami.ApplicationWindow {
         id: pageTags
         property Kirigami.Action escapeAction: pageTagsEscapeAction  // Esc (KBS-F1)
         visible: false
-        title: qsTr("Tags")
+        title: qsTr("Labels")
         actions: [
             Kirigami.Action {
                 id: pageTagsEscapeAction
@@ -2956,7 +2924,7 @@ Kirigami.ApplicationWindow {
         id: pageBackup
         property Kirigami.Action escapeAction: pageBackupEscapeAction  // Esc (KBS-F1)
         visible: false
-        title: qsTr("Backup")
+        title: qsTr("Safety copies")
 
         onVisibleChanged: {
             if (visible)

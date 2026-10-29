@@ -48,6 +48,9 @@ set(UI_SOURCES
     filesview.h filesview.cpp
 )
 
+# Design-system tokens (fork, D34): one shared instance for every component
+set_source_files_properties(KTheme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 # URI uses reverse-domain path (io/github/stephanecouturier/Katalog/) — no conflict with Katalog3 binary
 qt_add_qml_module(Katalog3
     URI io.github.stephanecouturier.Katalog
@@ -69,6 +72,15 @@ qt_add_qml_module(Katalog3
         MdiDetailsDialog.qml
         PageActivity.qml
         PageContext.qml
+        PageHome.qml
+        KTheme.qml
+        KCard.qml
+        KInfoTag.qml
+        KSidebarItem.qml
+        KSectionHeader.qml
+        KMetricCard.qml
+        KProgressBar.qml
+        KButton.qml
         Inspector.qml
         ColumnBrowser.qml
         PageDeviceEditForm.qml

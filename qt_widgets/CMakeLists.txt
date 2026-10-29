@@ -102,6 +102,15 @@ set(K3_QML_FILES
     ${CMAKE_SOURCE_DIR}/qt_quick/MdiDetailsDialog.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/PageActivity.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/PageContext.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/PageHome.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/KTheme.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/KCard.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/KInfoTag.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/KSidebarItem.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/KSectionHeader.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/KMetricCard.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/KProgressBar.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/KButton.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/Inspector.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/ColumnBrowser.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/OperationQueueView.qml

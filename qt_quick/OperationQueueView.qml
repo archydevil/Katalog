@@ -165,7 +165,7 @@ Controls.ToolBar {
             }
             Controls.Button {
                 // The compact summary opens the full Activity page (MDI-F61)
-                text: qsTr("Activity")
+                text: qsTr("Work in progress")
                 icon.name: "utilities-system-monitor"
                 flat: true
                 onClicked: applicationWindow().showActivityPage()
