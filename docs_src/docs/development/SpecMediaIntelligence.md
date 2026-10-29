@@ -239,6 +239,37 @@ If he wants to review that wording, it is in the *K3 redesign* section.
   the redesign in this spec and updating the user docs at the end of the
   redesign (R8). Both stay open.
 
+**Blanket authorisation, 2026-10-30.** The fork owner's instruction in the main
+session, relayed by the main agent (the agent did not see it itself): "falli
+tutti, committa, sybca e pusha senza chiedermelo. Fai tutto fino alla fine
+aggiornando tutto con il nuovo stile e ux". The main agent's gloss: do all the
+phases; commit, sync and push without asking; update everything to the new
+style and UX. What it is recorded as authorising:
+
+- **Phases R2–R8.** The rows `MDI-F116`–`F122` and `MDI-C40` were written by
+  the specifications agent on 2026-10-30 from the main agent's phase plan.
+  The owner authorised the phases as a whole; he did not see these rows.
+  They are bounded to presentation (`MDI-C40`).
+- **New strings.** The new strings of R2–R8 (English source and Italian, as
+  `MDI-C39` states) are approved by this instruction. There is no
+  end-of-step approval for them; this amends D16 for these strings.
+- **Commits and pushes** without further questions. That is a process
+  decision for the main agent and authorises no requirement.
+- **`KButton.qml`** (`Q43`) is covered, on the main agent's reading.
+
+What it does **not** change:
+
+- A behaviour that no row authorises stays NOT IN SPEC and needs its own row
+  (`Q45`).
+- No existing source string is edited (`MDI-C39`).
+- The constraints of this spec and the bounds of `MDI-C38` and `MDI-C40` hold.
+- `Q41`, `Q42`, `Q44` and `Q46` are left open as trade-offs for the owner;
+  none blocks a phase.
+
+`CLAUDE.md` lines 52 ("Never add, change, or delete any user-visible string
+… explicit per-string approval") and 95 (the fork's end-of-step string
+approval) do not yet carry this exception.
+
 | # | Decision (2026-10-29, fork owner) |
 | --- | ------------------------ |
 | D34 | **New design system and new K3 interface** (owner's request, 2026-10-29: "adesso cambiamo completamente il design system e generiamo una interfaccia completamente nuova e con una nomenclatura parlante. con card, infotags, descrizioni e una navigabilità moderna e semplice."). Answers: (1) "Che stile vuoi per il nuovo design system?" → "Control Center (Consigliato)" — card su fondo morbido, angoli arrotondati, un colore d'accento, infotag colorati per stato e tipo; segue chiaro/scuro del Mac; (2) "Come vuoi muoverti nell'app?" → "Barra laterale + Home (Consigliato)" — una barra fissa a sinistra con poche voci raggruppate e descritte; una Home con card dei dischi, lavori in corso e scorciatoie; (3) "Nomenclatura parlante … Vale solo per Katalog 3 (Katalog 2 resta com'è)?" → free answer: "tutto nuovo e con traduzione solo in ita e inglese per ora. cambiamo tutto"; (4) "Come procediamo?" → "Prima un prototipo da vedere (Consigliato)"; (5) design system of the prototype → "Uno nuovo per Katalog (Consigliato)". Prototype: <https://claude.ai/artifact/JVQYDfH6v7wgLsv96WGQpY> (Home, Design system, Sfoglia l'archivio, Cerca nei dischi, Conoscenza dell'archivio, Lavori in corso), with the names of the table *Nomenclature (D34)* and the sidebar groups *Archivio*, *Intelligenza*, *Altro*. After the prototype: «procedi». Effects: the sidebar replaces the side menu of D29 (`MDI-F89`) and the *Tools* place of the *Context* page (`Q19`, `MDI-F107`) once phase R1 is built; D20's "Search, Devices and Settings are unchanged for now" ends with phases R3, R7 and R8; new strings of the redesign are in English and Italian only "per ora" (`MDI-C39`). "Cambiamo tutto" is the whole K3 interface; K2 stays unchanged ("Solo Katalog 3", `Q32`; D1, `MDI-C1`). Text sizes and colours are fixed, as in the prototype, independent of the *Text size* and *Theme* settings (`Q34`, `Q35`). The navigation and Home choices made in code were approved ("Approvo tutto", `Q36`–`Q38`). Phases R1–R8 (*Phasing*); only R1 has rows (`MDI-O9`, `MDI-F111`–`F115`, `MDI-C18`, `MDI-C37`–`C39`). |
@@ -279,9 +310,9 @@ and Italian only for now.
 characterising information for applications and other files; MCP servers and
 online or cloud sources for the context (D33, context phase 2).
 
-**Later phases of the redesign (in scope, no rows yet):** phases R2–R8 of D34
-(*Phasing*). No code for them is authorised until their rows are drafted and
-ratified.
+**Later phases of the redesign (in scope):** phases R2–R8 of D34 (*Phasing*),
+authorised by the owner on 2026-10-30 and bounded to presentation (`MDI-F116`–`F122`,
+`MDI-C40`).
 
 **Out of scope (non-goals):**
 
@@ -616,7 +647,7 @@ strings; *Intelligenza* / "Intelligence" is new.
 | MDI-F112 | **Home page (D34, answer 2; `Q37`).** A K3 page *Home* shows the open collection at a glance: key numbers of the archive; a card per catalogued drive or folder, with info tags for its state (`MDI-F114`); the work in progress (the running enrichment job); the archive knowledge (the context, `MDI-F94`, and the knowledge base, `MDI-F104`); and shortcuts. Its cards and shortcuts only open existing pages, or start actions that already exist elsewhere, with the same behaviour and the same confirmations as there: Home adds no action of its own. **Katalog always opens on Home**: at launch and after a collection is opened. The last page is no longer restored at launch, which amends `SET-F4` for the start page (`Q37`, choice 6). Its texts are the approved strings of R1. | [Implemented — R1] |
 | MDI-F113 | **Speaking names (D34, answer 3).** The sidebar entries and the page titles use the names of the nomenclature table; the sidebar entries that have a description show it (`MDI-F111`). The Selection page is titled *I miei dischi* and the Devices page *Gestisci i dischi* until phase R7. The bottom activity panel's title is *Lavori in corso* (`Q38`, choice 7). In phase R1 nothing else changes: labels, buttons and menus inside a page change with that page's phase (R2–R8). *Analisi AI* and *Dettagli del file* apply with the phases of the pages that show the enrichment and the Inspector. Names not in the table (Search results, Device edit, Backup mapping and preview, About's own page) are unchanged. Every name and description is a new string or a reused existing one (`MDI-C39`); no existing source string is edited. | [Implemented — R1] |
 | MDI-F114 | **Info tags (D34, answer 1).** States and kinds are shown as info tags: a short text on a rounded, coloured background, in one of six tones — neutral, info, ok, warn, bad, and ai for AI-derived data. The tone adds to the text and never replaces it: every tag carries its text, and a tag's text is never elided (`CDT-C1`). The tones take the fixed Katalog palette of `MDI-C37` (`Q35`). In phase R1 info tags appear on Home and in the sidebar's job card. | [Implemented — R1] |
-| MDI-F115 | **Look (D34, answers 1 and 5; `Q34`, `Q35`).** The sidebar, Home and every page rebuilt in a phase of D34 use Katalog's new design system in the *Control Center* style: cards on a soft background, rounded corners, one accent colour, coloured info tags (`MDI-F114`). Text sizes and colours are **fixed, as in the prototype**: they follow neither the *Text size* setting (`TYP-F2`) nor the *Theme* setting (`THM-C3`). The look follows the system's light or dark scheme, and a change of that scheme while Katalog runs, without restart. Pages not yet rebuilt keep their present look and keep following both settings. | [Implemented — R1] |
+| MDI-F115 | **Look (D34, answers 1 and 5; `Q34`, `Q35`).** The sidebar, Home and every page rebuilt in a phase of D34 use Katalog's new design system in the *Control Center* style: cards on a soft background, rounded corners, one accent colour, coloured info tags (`MDI-F114`). Text sizes and colours are **fixed, as in the prototype**: they follow neither the *Text size* setting (`TYP-F2`) nor the *Theme* setting (`THM-C3`). The look follows the system's light or dark scheme, and a change of that scheme while Katalog runs, without restart. Since 2026-10-30 every page's background is the design system's ground colour, in place of the Selection page's tinted surface (`THM-F19`) and the style's window colour. Apart from that background, a page not yet rebuilt keeps its present look, and keeps following both settings, until its phase (R2–R8). | [Implemented — R1; ground on every page 2026-10-30] |
 
 ## Constructional requirements — *how it is built / limits / MUST-NOTs*
 
