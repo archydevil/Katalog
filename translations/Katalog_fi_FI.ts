@@ -675,12 +675,12 @@ Valitse toinen nimi.</translation>
     <message>
         <location line="-3284"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Luokittelu</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Viiteasiakirjat</translation>
     </message>
     <message>
         <location line="+3328"/>
@@ -1107,7 +1107,7 @@ Valitse toinen nimi.</translation>
     <message>
         <location line="+10"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Luokittelu</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1417,7 +1417,7 @@ Valitse toinen nimi.</translation>
     <message>
         <location line="+82"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Viiteasiakirjat</translation>
     </message>
     <message>
         <location line="+48"/>
@@ -2098,7 +2098,7 @@ Haluatko tallentaa sen silti (luettelo olisi tyhjä)?</translation>
     <message>
         <location line="+194"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Tulkitse uudelleen kontekstin avulla</translation>
     </message>
     <message>
         <location line="+87"/>
@@ -6664,7 +6664,7 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
     <message>
         <location line="+51"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Viiteasiakirjat</translation>
     </message>
     <message>
         <location line="+93"/>
@@ -7567,17 +7567,17 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
     <message>
         <location filename="../qt_quick/PageContext.qml" line="+108"/>
         <source>Context saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Konteksti tallennettu</translation>
     </message>
     <message>
         <location line="+43"/>
         <source>The draft could not be made: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Luonnosta ei voitu tehdä: %1</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Draft ready, not saved yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Luonnos valmis, ei vielä tallennettu.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -7588,17 +7588,17 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
         <location line="+5"/>
         <location line="+170"/>
         <source>Organisation</source>
-        <translation type="unfinished"></translation>
+        <translation>Organisaatio</translation>
     </message>
     <message>
         <location line="-164"/>
         <source>Period</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajanjakso</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Domain</source>
-        <translation type="unfinished"></translation>
+        <translation>Aihealue</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7608,45 +7608,45 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
     <message>
         <location line="+6"/>
         <source>Narrative style and terminology</source>
-        <translation type="unfinished"></translation>
+        <translation>Kerrontatyyli ja terminologia</translation>
     </message>
     <message>
         <location line="+7"/>
         <location line="+150"/>
         <source>Notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Muistiinpanot</translation>
     </message>
     <message>
         <location line="-142"/>
         <source>Suggest the glossary terms to the transcription</source>
-        <translation type="unfinished"></translation>
+        <translation>Ehdota sanaston termejä litteroinnille</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Glossary</source>
-        <translation type="unfinished"></translation>
+        <translation>Sanasto</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Term</source>
-        <translation type="unfinished"></translation>
+        <translation>Termi</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Preferred form</source>
-        <translation type="unfinished"></translation>
+        <translation>Suositeltu muoto</translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+106"/>
         <source>Also written as</source>
-        <translation type="unfinished"></translation>
+        <translation>Kirjoitetaan myös</translation>
     </message>
     <message>
         <location line="-100"/>
         <location line="+38"/>
         <source>Definition</source>
-        <translation type="unfinished"></translation>
+        <translation>Määritelmä</translation>
     </message>
     <message>
         <location line="-32"/>
@@ -7666,7 +7666,7 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
     <message>
         <location line="-101"/>
         <source>Categories</source>
-        <translation type="unfinished"></translation>
+        <translation>Luokat</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -7677,37 +7677,37 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
     <message>
         <location line="-44"/>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation>Arvot</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Only these values</source>
-        <translation type="unfinished"></translation>
+        <translation>Vain nämä arvot</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>More than one value</source>
-        <translation type="unfinished"></translation>
+        <translation>Useampi kuin yksi arvo</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>Known names</source>
-        <translation type="unfinished"></translation>
+        <translation>Tunnetut nimet</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Person</source>
-        <translation type="unfinished"></translation>
+        <translation>Henkilö</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Place</source>
-        <translation type="unfinished"></translation>
+        <translation>Paikka</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Event</source>
-        <translation type="unfinished"></translation>
+        <translation>Tapahtuma</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -7723,22 +7723,22 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
     <message>
         <location line="-119"/>
         <source>Draft from the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Luonnos katalogista</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>Notes for this catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Tämän katalogin muistiinpanot</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Viiteasiakirjat</translation>
     </message>
     <message>
         <location line="+31"/>
         <source>%1 passages</source>
-        <translation type="unfinished"></translation>
+        <translation>Tekstijaksoja: %1</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7748,22 +7748,22 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
     <message>
         <location line="+0"/>
         <source>To be indexed</source>
-        <translation type="unfinished"></translation>
+        <translation>Odottaa indeksointia</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Add files</source>
-        <translation type="unfinished"></translation>
+        <translation>Lisää tiedostoja</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Add folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Lisää kansio</translation>
     </message>
     <message>
         <location line="+35"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Tulkitse uudelleen kontekstin avulla</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -7813,7 +7813,7 @@ Tarkista, että lähdekansio (%1) on oikea tai että laite on liitetty lähdekan
     <message>
         <location line="+1"/>
         <source>%1, about %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, noin %2</translation>
     </message>
 </context>
 <context>

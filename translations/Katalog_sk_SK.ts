@@ -675,12 +675,12 @@ Zvoľte iný názov.</translation>
     <message>
         <location line="-3284"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Klasifikácia</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Referenčné dokumenty</translation>
     </message>
     <message>
         <location line="+3328"/>
@@ -1107,7 +1107,7 @@ Zvoľte iný názov.</translation>
     <message>
         <location line="+10"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Klasifikácia</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1417,7 +1417,7 @@ Zvoľte iný názov.</translation>
     <message>
         <location line="+82"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Referenčné dokumenty</translation>
     </message>
     <message>
         <location line="+48"/>
@@ -2098,7 +2098,7 @@ Chcete ho aj tak uložiť (katalóg by bol prázdny)?</translation>
     <message>
         <location line="+194"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Znova interpretovať s kontextom</translation>
     </message>
     <message>
         <location line="+87"/>
@@ -6664,7 +6664,7 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="+51"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Referenčné dokumenty</translation>
     </message>
     <message>
         <location line="+93"/>
@@ -7567,17 +7567,17 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location filename="../qt_quick/PageContext.qml" line="+108"/>
         <source>Context saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontext uložený</translation>
     </message>
     <message>
         <location line="+43"/>
         <source>The draft could not be made: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Koncept sa nepodarilo vytvoriť: %1</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Draft ready, not saved yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Koncept je pripravený, zatiaľ neuložený.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -7588,17 +7588,17 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
         <location line="+5"/>
         <location line="+170"/>
         <source>Organisation</source>
-        <translation type="unfinished"></translation>
+        <translation>Organizácia</translation>
     </message>
     <message>
         <location line="-164"/>
         <source>Period</source>
-        <translation type="unfinished"></translation>
+        <translation>Obdobie</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Domain</source>
-        <translation type="unfinished"></translation>
+        <translation>Odbor</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7608,45 +7608,45 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="+6"/>
         <source>Narrative style and terminology</source>
-        <translation type="unfinished"></translation>
+        <translation>Štýl rozprávania a terminológia</translation>
     </message>
     <message>
         <location line="+7"/>
         <location line="+150"/>
         <source>Notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Poznámky</translation>
     </message>
     <message>
         <location line="-142"/>
         <source>Suggest the glossary terms to the transcription</source>
-        <translation type="unfinished"></translation>
+        <translation>Navrhovať termíny z glosára pri prepise</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Glossary</source>
-        <translation type="unfinished"></translation>
+        <translation>Glosár</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Term</source>
-        <translation type="unfinished"></translation>
+        <translation>Termín</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Preferred form</source>
-        <translation type="unfinished"></translation>
+        <translation>Preferovaný tvar</translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+106"/>
         <source>Also written as</source>
-        <translation type="unfinished"></translation>
+        <translation>Píše sa aj ako</translation>
     </message>
     <message>
         <location line="-100"/>
         <location line="+38"/>
         <source>Definition</source>
-        <translation type="unfinished"></translation>
+        <translation>Definícia</translation>
     </message>
     <message>
         <location line="-32"/>
@@ -7666,7 +7666,7 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="-101"/>
         <source>Categories</source>
-        <translation type="unfinished"></translation>
+        <translation>Kategórie</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -7677,37 +7677,37 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="-44"/>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation>Hodnoty</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Only these values</source>
-        <translation type="unfinished"></translation>
+        <translation>Iba tieto hodnoty</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>More than one value</source>
-        <translation type="unfinished"></translation>
+        <translation>Viac ako jedna hodnota</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>Known names</source>
-        <translation type="unfinished"></translation>
+        <translation>Známe mená</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Person</source>
-        <translation type="unfinished"></translation>
+        <translation>Osoba</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Place</source>
-        <translation type="unfinished"></translation>
+        <translation>Miesto</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Event</source>
-        <translation type="unfinished"></translation>
+        <translation>Udalosť</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -7723,22 +7723,22 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="-119"/>
         <source>Draft from the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Koncept z katalógu</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>Notes for this catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Poznámky k tomuto katalógu</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Referenčné dokumenty</translation>
     </message>
     <message>
         <location line="+31"/>
         <source>%1 passages</source>
-        <translation type="unfinished"></translation>
+        <translation>Úryvky: %1</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7748,22 +7748,22 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="+0"/>
         <source>To be indexed</source>
-        <translation type="unfinished"></translation>
+        <translation>Čaká na indexovanie</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Add files</source>
-        <translation type="unfinished"></translation>
+        <translation>Pridať súbory</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Add folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Pridať priečinok</translation>
     </message>
     <message>
         <location line="+35"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Znova interpretovať s kontextom</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -7813,7 +7813,7 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="+1"/>
         <source>%1, about %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, približne %2</translation>
     </message>
 </context>
 <context>

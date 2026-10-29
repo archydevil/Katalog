@@ -675,12 +675,12 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="-3284"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Classificazione</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documenti di riferimento</translation>
     </message>
     <message>
         <location line="+3328"/>
@@ -1107,7 +1107,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+10"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Classificazione</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1417,7 +1417,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+82"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documenti di riferimento</translation>
     </message>
     <message>
         <location line="+48"/>
@@ -2098,7 +2098,7 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
     <message>
         <location line="+194"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Reinterpreta con il contesto</translation>
     </message>
     <message>
         <location line="+87"/>
@@ -6664,7 +6664,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="+51"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documenti di riferimento</translation>
     </message>
     <message>
         <location line="+93"/>
@@ -7567,17 +7567,17 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location filename="../qt_quick/PageContext.qml" line="+108"/>
         <source>Context saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Contesto salvato</translation>
     </message>
     <message>
         <location line="+43"/>
         <source>The draft could not be made: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Non è stato possibile creare la bozza: %1</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Draft ready, not saved yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bozza pronta, non ancora salvata.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -7588,17 +7588,17 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
         <location line="+5"/>
         <location line="+170"/>
         <source>Organisation</source>
-        <translation type="unfinished"></translation>
+        <translation>Organizzazione</translation>
     </message>
     <message>
         <location line="-164"/>
         <source>Period</source>
-        <translation type="unfinished"></translation>
+        <translation>Periodo</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Domain</source>
-        <translation type="unfinished"></translation>
+        <translation>Ambito</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7608,45 +7608,45 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="+6"/>
         <source>Narrative style and terminology</source>
-        <translation type="unfinished"></translation>
+        <translation>Stile narrativo e terminologia</translation>
     </message>
     <message>
         <location line="+7"/>
         <location line="+150"/>
         <source>Notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Note</translation>
     </message>
     <message>
         <location line="-142"/>
         <source>Suggest the glossary terms to the transcription</source>
-        <translation type="unfinished"></translation>
+        <translation>Suggerisci i termini del glossario alla trascrizione</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Glossary</source>
-        <translation type="unfinished"></translation>
+        <translation>Glossario</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Term</source>
-        <translation type="unfinished"></translation>
+        <translation>Termine</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Preferred form</source>
-        <translation type="unfinished"></translation>
+        <translation>Forma preferita</translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+106"/>
         <source>Also written as</source>
-        <translation type="unfinished"></translation>
+        <translation>Scritto anche come</translation>
     </message>
     <message>
         <location line="-100"/>
         <location line="+38"/>
         <source>Definition</source>
-        <translation type="unfinished"></translation>
+        <translation>Definizione</translation>
     </message>
     <message>
         <location line="-32"/>
@@ -7666,7 +7666,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="-101"/>
         <source>Categories</source>
-        <translation type="unfinished"></translation>
+        <translation>Categorie</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -7677,37 +7677,37 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="-44"/>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation>Valori</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Only these values</source>
-        <translation type="unfinished"></translation>
+        <translation>Solo questi valori</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>More than one value</source>
-        <translation type="unfinished"></translation>
+        <translation>Più di un valore</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>Known names</source>
-        <translation type="unfinished"></translation>
+        <translation>Nomi noti</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Person</source>
-        <translation type="unfinished"></translation>
+        <translation>Persona</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Place</source>
-        <translation type="unfinished"></translation>
+        <translation>Luogo</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Event</source>
-        <translation type="unfinished"></translation>
+        <translation>Evento</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -7723,22 +7723,22 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="-119"/>
         <source>Draft from the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Bozza dal catalogo</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>Notes for this catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Note per questo catalogo</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documenti di riferimento</translation>
     </message>
     <message>
         <location line="+31"/>
         <source>%1 passages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 brani</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7748,22 +7748,22 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="+0"/>
         <source>To be indexed</source>
-        <translation type="unfinished"></translation>
+        <translation>Da indicizzare</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Add files</source>
-        <translation type="unfinished"></translation>
+        <translation>Aggiungi file</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Add folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Aggiungi cartella</translation>
     </message>
     <message>
         <location line="+35"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Reinterpreta con il contesto</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -7813,7 +7813,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="+1"/>
         <source>%1, about %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, circa %2</translation>
     </message>
 </context>
 <context>

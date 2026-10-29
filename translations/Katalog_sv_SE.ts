@@ -675,12 +675,12 @@ Välj ett annat namn.</translation>
     <message>
         <location line="-3284"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Klassificering</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Referensdokument</translation>
     </message>
     <message>
         <location line="+3328"/>
@@ -1107,7 +1107,7 @@ Välj ett annat namn.</translation>
     <message>
         <location line="+10"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Klassificering</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1417,7 +1417,7 @@ Välj ett annat namn.</translation>
     <message>
         <location line="+82"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Referensdokument</translation>
     </message>
     <message>
         <location line="+48"/>
@@ -2098,7 +2098,7 @@ Vill du spara den ändå (katalogen blir tom)?</translation>
     <message>
         <location line="+194"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Tolka om med kontexten</translation>
     </message>
     <message>
         <location line="+87"/>
@@ -6664,7 +6664,7 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="+51"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Referensdokument</translation>
     </message>
     <message>
         <location line="+93"/>
@@ -7567,17 +7567,17 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location filename="../qt_quick/PageContext.qml" line="+108"/>
         <source>Context saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontext sparad</translation>
     </message>
     <message>
         <location line="+43"/>
         <source>The draft could not be made: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Utkastet kunde inte skapas: %1</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Draft ready, not saved yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Utkast klart, inte sparat än.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -7588,17 +7588,17 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
         <location line="+5"/>
         <location line="+170"/>
         <source>Organisation</source>
-        <translation type="unfinished"></translation>
+        <translation>Organisation</translation>
     </message>
     <message>
         <location line="-164"/>
         <source>Period</source>
-        <translation type="unfinished"></translation>
+        <translation>Period</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Domain</source>
-        <translation type="unfinished"></translation>
+        <translation>Ämnesområde</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7608,45 +7608,45 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="+6"/>
         <source>Narrative style and terminology</source>
-        <translation type="unfinished"></translation>
+        <translation>Berättarstil och terminologi</translation>
     </message>
     <message>
         <location line="+7"/>
         <location line="+150"/>
         <source>Notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Anteckningar</translation>
     </message>
     <message>
         <location line="-142"/>
         <source>Suggest the glossary terms to the transcription</source>
-        <translation type="unfinished"></translation>
+        <translation>Föreslå ordlistans termer för transkriptionen</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Glossary</source>
-        <translation type="unfinished"></translation>
+        <translation>Ordlista</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Term</source>
-        <translation type="unfinished"></translation>
+        <translation>Term</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Preferred form</source>
-        <translation type="unfinished"></translation>
+        <translation>Föredragen form</translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+106"/>
         <source>Also written as</source>
-        <translation type="unfinished"></translation>
+        <translation>Även skrivet som</translation>
     </message>
     <message>
         <location line="-100"/>
         <location line="+38"/>
         <source>Definition</source>
-        <translation type="unfinished"></translation>
+        <translation>Definition</translation>
     </message>
     <message>
         <location line="-32"/>
@@ -7666,7 +7666,7 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="-101"/>
         <source>Categories</source>
-        <translation type="unfinished"></translation>
+        <translation>Kategorier</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -7677,37 +7677,37 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="-44"/>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation>Värden</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Only these values</source>
-        <translation type="unfinished"></translation>
+        <translation>Endast dessa värden</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>More than one value</source>
-        <translation type="unfinished"></translation>
+        <translation>Mer än ett värde</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>Known names</source>
-        <translation type="unfinished"></translation>
+        <translation>Kända namn</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Person</source>
-        <translation type="unfinished"></translation>
+        <translation>Person</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Place</source>
-        <translation type="unfinished"></translation>
+        <translation>Plats</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Event</source>
-        <translation type="unfinished"></translation>
+        <translation>Händelse</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -7723,22 +7723,22 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="-119"/>
         <source>Draft from the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Utkast från katalogen</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>Notes for this catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Anteckningar för den här katalogen</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Referensdokument</translation>
     </message>
     <message>
         <location line="+31"/>
         <source>%1 passages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 textavsnitt</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7748,22 +7748,22 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="+0"/>
         <source>To be indexed</source>
-        <translation type="unfinished"></translation>
+        <translation>Ska indexeras</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Add files</source>
-        <translation type="unfinished"></translation>
+        <translation>Lägg till filer</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Add folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Lägg till mapp</translation>
     </message>
     <message>
         <location line="+35"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Tolka om med kontexten</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -7813,7 +7813,7 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="+1"/>
         <source>%1, about %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, cirka %2</translation>
     </message>
 </context>
 <context>

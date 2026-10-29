@@ -675,12 +675,12 @@ Escolha um nome diferente.</translation>
     <message>
         <location line="-3284"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Classificação</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documentos de referência</translation>
     </message>
     <message>
         <location line="+3328"/>
@@ -1107,7 +1107,7 @@ Escolha um nome diferente.</translation>
     <message>
         <location line="+10"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>Classificação</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1417,7 +1417,7 @@ Escolha um nome diferente.</translation>
     <message>
         <location line="+82"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documentos de referência</translation>
     </message>
     <message>
         <location line="+48"/>
@@ -2098,7 +2098,7 @@ Deseja guardá-lo mesmo assim (o catálogo ficaria vazio)?</translation>
     <message>
         <location line="+194"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Reinterpretar com o contexto</translation>
     </message>
     <message>
         <location line="+87"/>
@@ -6664,7 +6664,7 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="+51"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documentos de referência</translation>
     </message>
     <message>
         <location line="+93"/>
@@ -7567,17 +7567,17 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location filename="../qt_quick/PageContext.qml" line="+108"/>
         <source>Context saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Contexto guardado</translation>
     </message>
     <message>
         <location line="+43"/>
         <source>The draft could not be made: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Não foi possível criar o rascunho: %1</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Draft ready, not saved yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>Rascunho pronto, ainda não guardado.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -7588,17 +7588,17 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
         <location line="+5"/>
         <location line="+170"/>
         <source>Organisation</source>
-        <translation type="unfinished"></translation>
+        <translation>Organização</translation>
     </message>
     <message>
         <location line="-164"/>
         <source>Period</source>
-        <translation type="unfinished"></translation>
+        <translation>Período</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Domain</source>
-        <translation type="unfinished"></translation>
+        <translation>Domínio</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7608,45 +7608,45 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="+6"/>
         <source>Narrative style and terminology</source>
-        <translation type="unfinished"></translation>
+        <translation>Estilo narrativo e terminologia</translation>
     </message>
     <message>
         <location line="+7"/>
         <location line="+150"/>
         <source>Notes</source>
-        <translation type="unfinished"></translation>
+        <translation>Notas</translation>
     </message>
     <message>
         <location line="-142"/>
         <source>Suggest the glossary terms to the transcription</source>
-        <translation type="unfinished"></translation>
+        <translation>Sugerir os termos do glossário à transcrição</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Glossary</source>
-        <translation type="unfinished"></translation>
+        <translation>Glossário</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Term</source>
-        <translation type="unfinished"></translation>
+        <translation>Termo</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Preferred form</source>
-        <translation type="unfinished"></translation>
+        <translation>Forma preferida</translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+106"/>
         <source>Also written as</source>
-        <translation type="unfinished"></translation>
+        <translation>Também escrito como</translation>
     </message>
     <message>
         <location line="-100"/>
         <location line="+38"/>
         <source>Definition</source>
-        <translation type="unfinished"></translation>
+        <translation>Definição</translation>
     </message>
     <message>
         <location line="-32"/>
@@ -7666,7 +7666,7 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="-101"/>
         <source>Categories</source>
-        <translation type="unfinished"></translation>
+        <translation>Categorias</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -7677,37 +7677,37 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="-44"/>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation>Valores</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Only these values</source>
-        <translation type="unfinished"></translation>
+        <translation>Apenas estes valores</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>More than one value</source>
-        <translation type="unfinished"></translation>
+        <translation>Mais de um valor</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>Known names</source>
-        <translation type="unfinished"></translation>
+        <translation>Nomes conhecidos</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Person</source>
-        <translation type="unfinished"></translation>
+        <translation>Pessoa</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Place</source>
-        <translation type="unfinished"></translation>
+        <translation>Local</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Event</source>
-        <translation type="unfinished"></translation>
+        <translation>Evento</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -7723,22 +7723,22 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="-119"/>
         <source>Draft from the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Rascunho a partir do catálogo</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>Notes for this catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Notas para este catálogo</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>Documentos de referência</translation>
     </message>
     <message>
         <location line="+31"/>
         <source>%1 passages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 excertos</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7748,22 +7748,22 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="+0"/>
         <source>To be indexed</source>
-        <translation type="unfinished"></translation>
+        <translation>Por indexar</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Add files</source>
-        <translation type="unfinished"></translation>
+        <translation>Adicionar ficheiros</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Add folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Adicionar pasta</translation>
     </message>
     <message>
         <location line="+35"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>Reinterpretar com o contexto</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -7813,7 +7813,7 @@ Verifique se a pasta de origem (%1) está correta, ou se o dispositivo está mon
     <message>
         <location line="+1"/>
         <source>%1, about %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, cerca de %2</translation>
     </message>
 </context>
 <context>

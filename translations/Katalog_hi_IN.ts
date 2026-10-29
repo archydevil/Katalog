@@ -675,12 +675,12 @@ Choose a different name.</source>
     <message>
         <location line="-3284"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>वर्गीकरण</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>संदर्भ दस्तावेज़</translation>
     </message>
     <message>
         <location line="+3328"/>
@@ -1107,7 +1107,7 @@ Choose a different name.</source>
     <message>
         <location line="+10"/>
         <source>Classification</source>
-        <translation type="unfinished"></translation>
+        <translation>वर्गीकरण</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -1417,7 +1417,7 @@ Choose a different name.</source>
     <message>
         <location line="+82"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>संदर्भ दस्तावेज़</translation>
     </message>
     <message>
         <location line="+48"/>
@@ -2098,7 +2098,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     <message>
         <location line="+194"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रसंग के साथ फिर से व्याख्या करें</translation>
     </message>
     <message>
         <location line="+87"/>
@@ -6663,7 +6663,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+51"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>संदर्भ दस्तावेज़</translation>
     </message>
     <message>
         <location line="+93"/>
@@ -7566,17 +7566,17 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location filename="../qt_quick/PageContext.qml" line="+108"/>
         <source>Context saved</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रसंग सहेजा गया</translation>
     </message>
     <message>
         <location line="+43"/>
         <source>The draft could not be made: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ड्राफ़्ट नहीं बन सका: %1</translation>
     </message>
     <message>
         <location line="+4"/>
         <source>Draft ready, not saved yet.</source>
-        <translation type="unfinished"></translation>
+        <translation>ड्राफ़्ट तैयार है, अभी सहेजा नहीं गया।</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -7587,17 +7587,17 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <location line="+5"/>
         <location line="+170"/>
         <source>Organisation</source>
-        <translation type="unfinished"></translation>
+        <translation>संगठन</translation>
     </message>
     <message>
         <location line="-164"/>
         <source>Period</source>
-        <translation type="unfinished"></translation>
+        <translation>अवधि</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Domain</source>
-        <translation type="unfinished"></translation>
+        <translation>क्षेत्र</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -7607,45 +7607,45 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+6"/>
         <source>Narrative style and terminology</source>
-        <translation type="unfinished"></translation>
+        <translation>वर्णन शैली और पारिभाषिक शब्द</translation>
     </message>
     <message>
         <location line="+7"/>
         <location line="+150"/>
         <source>Notes</source>
-        <translation type="unfinished"></translation>
+        <translation>नोट्स</translation>
     </message>
     <message>
         <location line="-142"/>
         <source>Suggest the glossary terms to the transcription</source>
-        <translation type="unfinished"></translation>
+        <translation>शब्दावली के शब्द प्रतिलेखन को सुझाएँ</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Glossary</source>
-        <translation type="unfinished"></translation>
+        <translation>शब्दावली</translation>
     </message>
     <message>
         <location line="+12"/>
         <source>Term</source>
-        <translation type="unfinished"></translation>
+        <translation>शब्द</translation>
     </message>
     <message>
         <location line="+6"/>
         <source>Preferred form</source>
-        <translation type="unfinished"></translation>
+        <translation>पसंदीदा रूप</translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+106"/>
         <source>Also written as</source>
-        <translation type="unfinished"></translation>
+        <translation>इस रूप में भी लिखा जाता है</translation>
     </message>
     <message>
         <location line="-100"/>
         <location line="+38"/>
         <source>Definition</source>
-        <translation type="unfinished"></translation>
+        <translation>परिभाषा</translation>
     </message>
     <message>
         <location line="-32"/>
@@ -7665,7 +7665,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-101"/>
         <source>Categories</source>
-        <translation type="unfinished"></translation>
+        <translation>श्रेणियाँ</translation>
     </message>
     <message>
         <location line="+13"/>
@@ -7676,37 +7676,37 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-44"/>
         <source>Values</source>
-        <translation type="unfinished"></translation>
+        <translation>मान</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Only these values</source>
-        <translation type="unfinished"></translation>
+        <translation>केवल ये मान</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>More than one value</source>
-        <translation type="unfinished"></translation>
+        <translation>एक से अधिक मान</translation>
     </message>
     <message>
         <location line="+22"/>
         <source>Known names</source>
-        <translation type="unfinished"></translation>
+        <translation>ज्ञात नाम</translation>
     </message>
     <message>
         <location line="+18"/>
         <source>Person</source>
-        <translation type="unfinished"></translation>
+        <translation>व्यक्ति</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Place</source>
-        <translation type="unfinished"></translation>
+        <translation>स्थान</translation>
     </message>
     <message>
         <location line="+0"/>
         <source>Event</source>
-        <translation type="unfinished"></translation>
+        <translation>घटना</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -7722,22 +7722,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="-119"/>
         <source>Draft from the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>कैटलॉग से ड्राफ़्ट</translation>
     </message>
     <message>
         <location line="+15"/>
         <source>Notes for this catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>इस कैटलॉग के लिए नोट्स</translation>
     </message>
     <message>
         <location line="+7"/>
         <source>Reference documents</source>
-        <translation type="unfinished"></translation>
+        <translation>संदर्भ दस्तावेज़</translation>
     </message>
     <message>
         <location line="+31"/>
         <source>%1 passages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 अंश</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -7747,22 +7747,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+0"/>
         <source>To be indexed</source>
-        <translation type="unfinished"></translation>
+        <translation>अनुक्रमण बाकी</translation>
     </message>
     <message>
         <location line="+13"/>
         <source>Add files</source>
-        <translation type="unfinished"></translation>
+        <translation>फ़ाइलें जोड़ें</translation>
     </message>
     <message>
         <location line="+5"/>
         <source>Add folder</source>
-        <translation type="unfinished"></translation>
+        <translation>फ़ोल्डर जोड़ें</translation>
     </message>
     <message>
         <location line="+35"/>
         <source>Re-interpret with the context</source>
-        <translation type="unfinished"></translation>
+        <translation>प्रसंग के साथ फिर से व्याख्या करें</translation>
     </message>
     <message>
         <location line="+16"/>
@@ -7812,7 +7812,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+1"/>
         <source>%1, about %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, लगभग %2</translation>
     </message>
 </context>
 <context>
