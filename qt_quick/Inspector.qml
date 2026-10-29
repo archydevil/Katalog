@@ -134,6 +134,55 @@ Rectangle {
                 text: e ? (e.value.caption || e.value.summary || "") : ""
             }
 
+            // ── Classification in the collection's context (D33) ──────────
+            ColumnLayout {
+                id: classificationBox
+                readonly property var e: inspector.entry("classification")
+                readonly property var v: e ? e.value : ({})
+                visible: e !== null
+                Layout.fillWidth: true
+                Layout.leftMargin: Kirigami.Units.largeSpacing
+                Layout.rightMargin: Kirigami.Units.largeSpacing
+                Kirigami.Heading { level: 5; text: classificationBox.e ? classificationBox.e.label : "" }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    font.bold: true
+                    visible: text !== ""
+                    text: classificationBox.v.title || ""
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    visible: text !== ""
+                    text: classificationBox.v.description || ""
+                }
+                Repeater {
+                    model: Object.keys(classificationBox.v.categories || {})
+                    delegate: Controls.Label {
+                        required property string modelData
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        text: modelData + ": " + (classificationBox.v.categories[modelData] || []).join(", ")
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    opacity: 0.7
+                    visible: text !== ""
+                    text: (classificationBox.v.tags || []).join(", ")
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    opacity: 0.7
+                    visible: (classificationBox.v.sources || []).length > 0
+                    text: qsTr("Reference documents") + ": "
+                          + [...new Set((classificationBox.v.sources || []).map(function (s) { return s.title }))].join(", ")
+                }
+            }
+
             // ── Text snippet ───────────────────────────────────────────────
             ColumnLayout {
                 readonly property var e: inspector.entry("snippet")

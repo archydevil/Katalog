@@ -44,6 +44,7 @@ ColumnLayout {
     property bool aiSummary: true          // documents and recording transcripts
     property bool aiTranscript: true       // audio and video, local whisper.cpp
     property bool aiSegments:   true       // timecoded topic segments; needs the transcript
+    property bool aiClassification: true   // in the collection's context, when it has one (D33)
 
     readonly property var clipModel: [
         { text: qsTr("Off"),     value: "off"     },
@@ -92,7 +93,8 @@ ColumnLayout {
                     waveform:     audioWaveform
                 },
                 ai: { caption: aiCaption, summary: aiSummary,
-                      transcript: aiTranscript || aiSegments, segments: aiSegments }
+                      transcript: aiTranscript || aiSegments, segments: aiSegments,
+                      classification: aiClassification }
             }
         }
     }
@@ -124,6 +126,7 @@ ColumnLayout {
         aiSummary          = ai.summary !== false
         aiTranscript       = ai.transcript !== false
         aiSegments         = ai.segments !== false
+        aiClassification   = ai.classification !== false
     }
 
     function restoreSettings() {
@@ -328,6 +331,12 @@ ColumnLayout {
             if (!checked) createWizard.aiSegments = false   // segments are cut from the transcript
             createWizard.choiceEdited()
         }
+    }
+    Controls.Switch {
+        // Uses the Context page; off while the collection has none (MDI-F100)
+        text: qsTr("Classification")
+        checked: createWizard.aiClassification
+        onToggled: { createWizard.aiClassification = checked; createWizard.choiceEdited() }
     }
     Controls.Switch {
         enabled: createWizard.typeAudio || createWizard.typeVideo
