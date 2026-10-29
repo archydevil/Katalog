@@ -147,7 +147,8 @@ QHash<QString, QString> termForms(const QJsonObject &context)
         const QString preferred = text(g, "preferred").isEmpty() ? text(g, "term") : text(g, "preferred");
         if (preferred.isEmpty())
             continue;
-        for (const QString &alias : strings(g.value("aliases")) << text(g, "term") << preferred)
+        const QStringList names = strings(g.value("aliases")) + QStringList{text(g, "term"), preferred};
+        for (const QString &alias : names)
             if (!alias.isEmpty())
                 forms.insert(alias.toLower(), preferred);
     }
@@ -155,7 +156,8 @@ QHash<QString, QString> termForms(const QJsonObject &context)
         const QJsonObject e = v.toObject();
         if (text(e, "name").isEmpty())
             continue;
-        for (const QString &alias : strings(e.value("aliases")) << text(e, "name"))
+        const QStringList names = strings(e.value("aliases")) + QStringList{text(e, "name")};
+        for (const QString &alias : names)
             forms.insert(alias.toLower(), text(e, "name"));
     }
     return forms;
