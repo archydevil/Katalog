@@ -558,7 +558,7 @@ D33. Rows `MDI-F94`–`F108` are context phase 1 (local only); `MDI-F109` and
 | **E** | Other documents; applications and other files. | `MDI-F42`, `F43` (`[Backlog]`) |
 | **Activity** | Activity page, core resource monitor, per-step activity reporting from the runner (D19, D21). Not bound to the A–E order. | `MDI-F61`–`F75`, `MDI-C21` |
 | **Increment 3** | Instant search index, WebP thumbnails and contact sheets, technical data, text snippets, archive listings, quick hash and duplicates, Inspector, column view, side menu, connected drives (D22–D30). Not bound to the A–E order. | `MDI-F76`–`F90`, `MDI-C22`–`C27` |
-| **Context 1** | Domain context and catalog notes, draft from the catalog, context in new analyses, classification, re-interpretation on request, local knowledge base (D33). Starts only after the fork owner ratifies the D33 rows and answers `Q19`–`Q24`, `Q27` and `Q28`. Not bound to the A–E order. | `MDI-O8`, `MDI-F94`–`F108`, `MDI-C30`–`C34` |
+| **Context 1** | Domain context and catalog notes, draft from the catalog, context in new analyses, classification, re-interpretation on request, local knowledge base, the *Context* page in *Tools* (D33). Rows ratified 2026-10-29; starts with the fork owner's `MDI-C14` approval of the core design. Not bound to the A–E order. | `MDI-O8`, `MDI-F89` (*Context* entry), `MDI-F94`–`F108`, `MDI-C18` (exception), `MDI-C30`–`C34`, `MDI-C36` |
 | **Context 2** | MCP servers, online and cloud sources (D33). `[Backlog]` until `Q29`–`Q31` are decided. | `MDI-F109`, `F110`, `MDI-C35` |
 
 A phase starts only when the previous one is implemented, and each phase starts
