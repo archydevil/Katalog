@@ -542,7 +542,7 @@ ratified.
 
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
-| MDI-F89 | The K3 side menu's main entries are Selection, Search, Explore, Create, Activity and Settings; a *Tools* submenu holds Devices, Tags, Statistics, Backup and About. The drawer has no *Documentation* and no *Quit* entry; Quit stays available through the standard shortcut. The footer pins are icon buttons with tooltips (`SpecIconButtons.md`). The drawer's *Open* menu (`OPN-F7`, `OPN-F9`) is unchanged (D29). Since D33 the *Tools* submenu also holds *Context* (`MDI-F107`); the main entries do not change. **Superseded by D34:** the sidebar of `MDI-F111` replaces this menu when phase R1 is built; this row is then marked `[Removed]`. Until then it stays the authority for the side menu. | [Implemented — increment 3; *Context* entry in Context 1; to be superseded by `MDI-F111` (D34, phase R1)] |
+| MDI-F89 | The K3 side menu's main entries are Selection, Search, Explore, Create, Activity and Settings; a *Tools* submenu holds Devices, Tags, Statistics, Backup and About. The drawer has no *Documentation* and no *Quit* entry; Quit stays available through the standard shortcut. The footer pins are icon buttons with tooltips (`SpecIconButtons.md`). The drawer's *Open* menu (`OPN-F7`, `OPN-F9`) is unchanged (D29). Since D33 the *Tools* submenu also holds *Context* (`MDI-F107`); the main entries do not change. **Superseded by D34:** the sidebar of `MDI-F111` replaced this menu in phase R1 (2026-10-29). | [Removed — superseded by `MDI-F111` (D34, R1)] |
 
 ### Connected drives {#connected-drives}
 
@@ -570,7 +570,7 @@ D33. Rows `MDI-F94`–`F108` are context phase 1 (local only); `MDI-F109` and
 | MDI-F104 | **Knowledge base: documents (D33, answer 3).** The user adds files and folders to the collection's *knowledge base*: PDF, Word (`doc`, `docx`), OpenDocument (`odt`, `ods`), Excel (`xlsx`), `csv`, `txt`, `md`, and the other text formats of `MDI-F81`. The list shows each document's name, path, state (indexed, waiting, not reachable, or failed with the reason), passage count and indexing date. Documents are only read: never copied, moved, renamed or modified. Their text passages are stored, so the knowledge base is used while their drive is disconnected. Removing a document removes its passages and leaves the file untouched. Archive files (`zip`, `7z`, `tar`) are not knowledge-base sources: they are refused when added one by one and left out when a folder is added; spreadsheets are read as text (`Q27`, 2026-10-29). | [Planned — part implemented in Context 1] |
 | MDI-F105 | **Knowledge base: indexing.** Adding documents starts their indexing in the background: text is extracted as for `MDI-F81` (`pdftotext`, KFileMetaData, `textutil` on macOS), split into overlapping passages of about 1,000 characters, and each passage is embedded by the collection's embeddings model (`MDI-F23`). Progress shows in the activity panel and on the Activity page, built with the standard builder (`MDI-C16`); Stop ends it and keeps the documents already indexed. A new indexing skips a document whose size and modified date are unchanged and redoes a changed one. Searches, Explore and the enrichment runner keep working meanwhile. | [Planned — part implemented in Context 1] |
 | MDI-F106 | **Knowledge base: retrieval.** For each file classified, the knowledge-base passages most similar to the file's name, path and derived text — at most 5 by default — are given to the text model (`MDI-F100`). Passages embedded by a model other than the collection's current embeddings model are not used, and the document list shows them as needing indexing again. With an empty knowledge base the classification uses the context alone. | [Planned — part implemented in Context 1] |
-| MDI-F107 | **Context editor.** K3 lets the user edit the context (`MDI-F94`), each catalog's notes (`MDI-F95`) and the knowledge base (`MDI-F104`), and start *Draft from the catalog* (`MDI-F97`) and the re-interpretation (`MDI-F103`), on a K3 page *Context* reached from the side menu's *Tools* submenu; the six main entries stay as they are (`MDI-F89`). The page is the second exception of `MDI-C18` (`Q19`, 2026-10-29). **Amended by D34:** from phase R1 the page is reached from the sidebar's *Intelligenza* group and titled *Conoscenza dell'archivio* (`MDI-F111`, `MDI-F113`); its content is unchanged until phase R4. | [Implemented — Context 1; place and title change in phase R1 (D34)] |
+| MDI-F107 | **Context editor.** K3 lets the user edit the context (`MDI-F94`), each catalog's notes (`MDI-F95`) and the knowledge base (`MDI-F104`), and start *Draft from the catalog* (`MDI-F97`) and the re-interpretation (`MDI-F103`), on a K3 page *Context* reached from the side menu's *Tools* submenu; the six main entries stay as they are (`MDI-F89`). The page is the second exception of `MDI-C18` (`Q19`, 2026-10-29). **Amended by D34:** since phase R1 the page is reached from the sidebar's *Intelligenza* group and titled *Conoscenza dell'archivio* (`MDI-F111`, `MDI-F113`); its content is unchanged until phase R4. | [Implemented — Context 1; place and title in R1 (D34)] |
 | MDI-F108 | **Context and egress.** The context, catalog notes and knowledge-base passages are sent only to the collection's text and embeddings providers, and only as `MDI-C11` allows. When such a provider is not local, the `MDI-F24` confirmation of a classification, re-interpretation, draft or knowledge-base indexing names, among the content sent, the context, the knowledge-base passages and the file paths; declining sends nothing. | [Implemented — Context 1] |
 | MDI-F109 | **MCP sources (context phase 2, D33 answer 3).** Katalog is a client of MCP servers configured per collection — local servers started as a program (stdio) and remote servers (Streamable HTTP) — and uses the resources and the tools the user allows as further sources for classification, recorded among the datum's sources (`MDI-F96`). Each server is enabled explicitly per collection or per job, with a warning. Open: `Q29`–`Q31`. | [Backlog] |
 | MDI-F110 | **Online and cloud sources (context phase 2, D33 answer 3).** Online and cloud knowledge bases are reached through MCP servers, each enabled explicitly with the D3 warning. Any remote use is confirmed as `MDI-F24` states, appears in the Activity page's *Data sent* tile with the host (`MDI-F63`), and each call is recorded in the datum's provenance (`MDI-F52`). | [Backlog] |
@@ -639,7 +639,7 @@ strings; *Intelligenza* / "Intelligence" is new.
 | MDI-C15 | **`mdi_` tables outside the core schema (D5).** The core schema stays 3.0: this fork MUST NOT change the core schema version, never stamps 3.1, and MUST NOT edit `runMigration_3_0`. The new tables (at least: enrichment profile, enrichment job, derived datum with provenance, derived file, transcript passage, topic segment, topic cluster and membership, embedding) all have the prefix `mdi_`. The enrichment profile table (`mdi_profile`) and a `mdi_schema` record are in the collection database; the derived-data tables, the enrichment job table `mdi_job` (`MDI-C28`) and their own `mdi_schema` record are in `mdi_data.db` (D17, `MDI-C4`). Their own version ("media intelligence schema version 1") is stored separately from the core schema version, in a single-row `mdi_schema` table or equivalent. A separate migration creates the `mdi_` tables when they are absent and upgrades them when their version is older; it is idempotent and touches only `mdi_` tables. No 3.0 table or column is altered, added to or removed. File and Memory modes add the new `mdi_data.db` to the collection folder; Memory mode also adds `mdi_profile.csv`. No existing file format changes. | [Planned — part implemented in Phase A] |
 | MDI-C16 | Every progress and status message is built with `StatusBarMessageBuilder` (`SpecProgressReport.md`); no raw status string. | [Implemented — Phase A] |
 | MDI-C17 | **User-visible text.** New strings are written in English while a step is built, reusing existing K2/K3 strings wherever they fit; the fork owner approves all of a step's new strings together at the end of the step, before its commit, and translations run after that approval (D16). Existing strings are never changed without per-string approval. Copy states what is needed, without "Please" or orders. Blocking validation uses `Kirigami.InlineMessage`; decisions (egress confirmation, deletions) use modal dialogs; transient success uses `showPassiveNotification`. No string is approved by this spec; approved strings are listed under *User-visible text*. | [Implemented — process, D16] |
-| MDI-C18 | **UI structure.** No new Page: the wizard is a mode of the existing `PageCreateForm.qml`, derived data is shown inside the existing Explore and Search results pages, provider and tool settings inside the existing Settings page. Creating any new `.qml`, `.cpp` or `.h` file needs the user's explicit request first. **Exception (D19, 2026-10-28):** the *Activity* page (`MDI-F61`) is approved as a new Page. **Exception (D33, 2026-10-29):** the *Context* page, `qt_quick/PageContext.qml` (`MDI-F107`), reached from the *Tools* submenu. **Exception (D34, 2026-10-29):** the *Home* page, `qt_quick/PageHome.qml` (`MDI-F112`). These three exceptions cover those pages only. **New files approved by the fork owner (2026-10-28/29), none of them a Page:** `core/mdifts.{h,cpp}` (D22), `core/mdivolumes.{h,cpp}` (D30), `qt_quick/Inspector.qml` (D27), `qt_quick/ColumnBrowser.qml` (D28), and the design-system files of `MDI-C37` (D34, phase R1; their approval rests on the ratification of the D34 rows). | [Planned] |
+| MDI-C18 | **UI structure.** No new Page: the wizard is a mode of the existing `PageCreateForm.qml`, derived data is shown inside the existing Explore and Search results pages, provider and tool settings inside the existing Settings page. Creating any new `.qml`, `.cpp` or `.h` file needs the user's explicit request first. **Exception (D19, 2026-10-28):** the *Activity* page (`MDI-F61`) is approved as a new Page. **Exception (D33, 2026-10-29):** the *Context* page, `qt_quick/PageContext.qml` (`MDI-F107`), reached from the *Tools* submenu. **Exception (D34, 2026-10-29):** the *Home* page, `qt_quick/PageHome.qml` (`MDI-F112`). These three exceptions cover those pages only. **New files approved by the fork owner (2026-10-28/29), none of them a Page:** `core/mdifts.{h,cpp}` (D22), `core/mdivolumes.{h,cpp}` (D30), `qt_quick/Inspector.qml` (D27), `qt_quick/ColumnBrowser.qml` (D28), and the design-system files of `MDI-C37` (D34, phase R1; `KButton.qml` awaits the owner's confirmation, `Q43`). | [Planned] |
 | MDI-C19 | **Cross-platform.** Tools are resolved with the platform's executable suffix; paths are built with Qt path functions. Derived-file names are short identifiers, not source names, so they stay within Windows path limits and cannot collide. No platform-specific API is used in phases A–D. | [Planned — part implemented in Phase A] |
 | MDI-C20 | HTTP requests have a time limit (default 120 s, configurable) and are aborted on Stop. A provider response that cannot be parsed into the expected fields is recorded as a failed datum with the reason, never stored as a result. | [Planned — part implemented in Phase B] |
 | MDI-C21 | **Resource monitor sources.** The resource monitor (`MDI-F70`) obtains its values on macOS through the external programs `ps`, `vm_stat`, `sysctl`, `memory_pressure`, `ioreg` and `pmset`; on Linux by reading `/proc` and running `ps`; Ollama's loaded models through its `/api/ps` over `Qt6::Network`. Programs are started as `MDI-C7` requires; no library is linked (`MDI-C8`). On Windows no platform-specific API is used; values not obtainable otherwise are unavailable (`MDI-F73`). The monitor runs on its own thread and never on the UI thread or the runner's thread. | [Planned — part implemented in Activity phase] |
@@ -677,7 +677,7 @@ strings; *Intelligenza* / "Intelligence" is new.
 | **Increment 3** | Instant search index, WebP thumbnails and contact sheets, technical data, text snippets, archive listings, quick hash and duplicates, Inspector, column view, side menu, connected drives (D22–D30). Not bound to the A–E order. | `MDI-F76`–`F90`, `MDI-C22`–`C27` |
 | **Context 1** | Domain context and catalog notes, draft from the catalog, context in new analyses, classification, re-interpretation on request, local knowledge base, the *Context* page in *Tools* (D33). Rows ratified and core design approved (`MDI-C14`) on 2026-10-29. Not bound to the A–E order. | `MDI-O8`, `MDI-F89` (*Context* entry), `MDI-F94`–`F108`, `MDI-C18` (exception), `MDI-C30`–`C34`, `MDI-C36` |
 | **Context 2** | MCP servers, online and cloud sources (D33). `[Backlog]` until `Q29`–`Q31` are decided. | `MDI-F109`, `F110`, `MDI-C35` |
-| **R1** | Redesign (D34): the design system (tokens and components), the sidebar in place of the side menu, the *Home* page, the new names on sidebar entries and page titles, new strings in English and Italian. Not bound to the A–E order. Rows drafted, awaiting ratification; `Q32` and `Q34`–`Q37` answered before the parts they concern are built. Code committed before ratification: see *Phase R1 (D34) — code committed before the rows were ratified*. | `MDI-O9`, `MDI-F111`–`F115`, `MDI-C18` (exception), `MDI-C37`–`C39`; supersedes `MDI-F89`; amends `MDI-F107` |
+| **R1** | Redesign (D34): the design system (tokens and components), the sidebar in place of the side menu, the *Home* page, the new names on sidebar entries and page titles, new strings in English and Italian. Not bound to the A–E order. Coded and committed before the rows were ratified; the rows were then settled by the owner's answers of 2026-10-29 (`Q32`–`Q38`). Implemented, except as stated in the R1 review. | `MDI-O9`, `MDI-F111`–`F115`, `MDI-C18` (exception), `MDI-C37`–`C39`; `MDI-F89` removed; `MDI-F107` amended |
 | **R2** | *Sfoglia l'archivio*: Explore with the Inspector as *Dettagli del file*, filter pills, a view switch (D34; main agent's plan). | No rows yet. `SpecExplore.md`, `MDI-F87`, `MDI-F88`; `Q18` (Explore tiles) |
 | **R3** | *Cerca nei dischi*: the Search form and results (D34). | No rows yet. `SpecSearchList.md`, `SpecSearchResults.md`, `SpecSearchResultsFilters.md` |
 | **R4** | *Conoscenza dell'archivio*: the Context page (D34). | No rows yet. `MDI-F107` |
@@ -925,6 +925,87 @@ the 33rd new string on 2026-10-29 ("Correzione mia: il testo "Context" (voce
 del menu Strumenti e titolo della pagina) non esisteva, quindi è un testo
 nuovo, non riusato come ti avevo scritto. … Lo approvi?" → "Approvo
 "Context""); relayed by the main agent.
+
+### Approved 2026-10-29 — D34, phase R1 (redesign)
+
+The fork owner approved these strings verbatim, with their Italian, together
+at the end of the step (D16, `MDI-C39`), before the Italian was filled in
+("Approvo tutti"). Reported by the main agent, which also supplied the list;
+the specifications agent did not see the reply itself. Translated into Italian
+only, as `MDI-C39` states; every other language shows the English source.
+
+New strings (45):
+
+| String | Italian |
+| --- | --- |
+| "Home" | "Home" |
+| "Archive overview" | "Panoramica dell'archivio" |
+| "My drives" | "I miei dischi" |
+| "Catalogued drives and folders" | "Dischi e cartelle catalogati" |
+| "Browse the archive" | "Sfoglia l'archivio" |
+| "Folders, previews, details" | "Cartelle, anteprime, dettagli" |
+| "Search the drives" | "Cerca nei dischi" |
+| "By name, content or meaning" | "Per nome, contenuto o significato" |
+| "Add a drive" | "Aggiungi un disco" |
+| "Catalogue a drive or a folder" | "Cataloga un disco o una cartella" |
+| "Intelligence" | "Intelligenza" |
+| "Archive knowledge" | "Conoscenza dell'archivio" |
+| "Context, glossary, documents" | "Contesto, glossario, documenti" |
+| "Work in progress" | "Lavori in corso" |
+| "Analysis, resources, history" | "Analisi, risorse, cronologia" |
+| "Archive in numbers" | "Numeri dell'archivio" |
+| "Labels" | "Etichette" |
+| "Safety copies" | "Copie di sicurezza" |
+| "Manage drives" | "Gestisci i dischi" |
+| "Your archive" | "Il tuo archivio" |
+| "Search all the drives" | "Cerca in tutti i dischi" |
+| "Catalogued files" | "File catalogati" |
+| "Drives: %1" | "Dischi: %1" |
+| "Files with AI results" | "File con risultati dell'AI" |
+| "Previews, descriptions, transcripts" | "Anteprime, descrizioni, trascrizioni" |
+| "Each drive is a card: whether it is connected, what it holds and what the AI has understood." | "Ogni disco è una card: se è collegato, cosa contiene e cosa ha già capito l'AI." |
+| "All the drives" | "Tutti i dischi" |
+| "%1 files" | "%1 file" |
+| "AI: %1 files" | "AI: %1 file" |
+| "Saved search results" | "Risultati di ricerca salvati" |
+| "Previews and descriptions stay visible; the drive is needed to open the files." | "Anteprime e descrizioni restano visibili; per aprire i file serve il disco." |
+| "Browse" | "Sfoglia" |
+| "Add a drive or a folder" | "Aggiungi un disco o una cartella" |
+| "Katalog reads the drive, NTFS too, without changing it." | "Katalog legge il disco, anche NTFS, senza modificarlo." |
+| "Details and resources" | "Dettagli e risorse" |
+| "Context active" | "Contesto attivo" |
+| "No context yet" | "Nessun contesto per ora" |
+| "New files are classified with the archive's own language. Files already analysed are re-interpreted when you choose, one folder at a time too." | "I file nuovi vengono classificati con il linguaggio dell'archivio. Quelli già analizzati si rielaborano quando vuoi, anche una cartella alla volta." |
+| "Describing the archive lets the AI classify the files with its own terms, categories and names." | "Descrivere l'archivio permette all'AI di classificare i file con i suoi termini, categorie e nomi." |
+| "%1 terms" | "%1 termini" |
+| "%1 categories" | "%1 categorie" |
+| "%1 known names" | "%1 nomi noti" |
+| "%1 documents" | "%1 documenti" |
+| "Edit the context" | "Modifica il contesto" |
+| "Describe the archive" | "Descrivi l'archivio" |
+
+Existing strings reused by R1 (already translated, not edited): "Archive",
+"Other", "About", "Settings", "AI analysis", "Open...", "New...", "SQLite
+Database...", "Collection Folder...", "Hosted Database...", "Recent
+collections", "Selection shown", "Selection hidden", "In Progress", "Paused",
+"Waiting for the drive", "Pause", "Resume", "Stop", "Nothing running",
+"Connected", "Not connected", "Data sent", "Nothing sent", "On this computer",
+"Image", "Video", "Audio", "Text", "Re-interpret with the context",
+"Reference documents", "%1 passages", "%1 waiting", "Queue", "Create",
+"Update", "Remove", "Clear".
+
+Their existing Italian does not always match the D34 names (`Q44`). "AI
+analysis" reads *Analisi IA*, not *Analisi AI*. "Waiting for the drive" reads
+*In attesa dell'unità*, not *disco*. "Connected" reads *Connesso*, while the
+approved Home text says *collegato*. "Re-interpret with the context" reads
+*Reinterpreta con il contesto*, while the owner's wording was «Rielabora con il
+contesto» (D33). "Selection shown" and "Selection hidden" now toggle the *I miei
+dischi* column. Changing any of these needs per-string approval (`MDI-C17`).
+
+No longer used by K3 since R1 (kept in the translation files, marked
+vanished): the old navigation labels, among them "Selection", "Activity",
+"Context", "Statistics", "Tags", "Tools", "Drawer pinned" and "Drawer
+floating" — twelve in all, as reported by the main agent.
 
 ### No longer used (D15)
 
@@ -1313,22 +1394,35 @@ relayed by the main agent):
 
 ### Phase R1 (D34) — code committed before the rows were ratified, reviewed 2026-10-29
 
-Commits from `c1f037c8` onward (2026-10-29, from 23:44; reviewed up to
-`980650fc`) built phase R1 while its rows were being drafted; `28ca0c0f`,
-`c994d57d` and `8c892e90` also carried this spec's D34 edits. Read against the drafted rows, not as a
-source of requirements. Each point is for the fork owner: change the code, or
-ratify a row that covers it.
+Commits from `c1f037c8` onward built phase R1 while its rows were being
+drafted. They ran from 23:44 on 2026-10-29; the first review went up to
+`980650fc`, and this update covers up to `15bec997` (sidebar layout only).
+`28ca0c0f`, `c994d57d`, `8c892e90`, `03a60bb5` and `0683c4aa` also carried
+this spec's D34 edits, which were committed while they were being written. The main agent
+told the fork owner that R1 had been committed before ratification; the owner
+then settled `Q32`–`Q38` and approved the choices made in code (D34). The code
+was read against the rows, not as a source of requirements.
+
+**Resolved by the owner's answers or by later commits (2026-10-29).**
+
+| Row | First finding | Now |
+| --- | --- | --- |
+| `MDI-C37` / `MDI-F115` | Pixel text scale and fixed hex palette, outside `SpecTypography.md` and `SpecTheme.md` | Owner's exception ("Fisse come nel prototipo", `Q34`, `Q35`). The monospace font now falls back per platform. |
+| `MDI-C38` | `homeOverview()` read every catalog's file list on the UI thread | `0463f88b`: the counts run on a worker thread with their own read-only connections (File: a read-only SQLite connection; Memory: the `.idx` file; Hosted: file-type counts skipped), are cached, and Home refreshes on `homeOverviewChanged`. The UI thread reads no file list. No raw SQL in `qt_quick/`, no core change. |
+| `MDI-F111` | Navigation choices made in code (`Q36`) | Approved ("Approvo tutto"); the row now states them. |
+| `MDI-F112` | Start page and Home content made in code (`Q37`) | Approved; Katalog always opens on Home, and the last page is no longer restored at launch. |
+| `MDI-F113` | Bottom panel retitled; *Manage drives* not in the nomenclature | Approved (`Q36`, `Q38`); both are in the nomenclature table. |
+| `MDI-C39` | New strings not approved, `.ts` not updated | The 45 strings were approved with their Italian ("Approvo tutti"). The Italian file is complete; every other `.ts` file lists them unfinished. Twelve old navigation labels are marked vanished. |
+
+**Still unmet or open.**
 
 | Row | Finding |
 | --- | --- |
-| `MDI-C37` | `qt_quick/KButton.qml` is a new file that the row does not list. `KMetricCard.qml` sets a 26 px text size of its own, `KSectionHeader.qml` derives `titleCard + 1`, and the sidebar's group titles in `Main.qml` set 11 px and their own letter spacing: values outside `KTheme.qml`. |
-| `MDI-C38` (`TYP-C1`, `TYP-C3`, `TYP-F2`, `TYP-F3`, `TYP-F4`, `TYP-F7`; `Q34`) | `KTheme.qml` defines a pixel text scale (28, 18, 15, 14, 12 px) used by the components, Home and the sidebar: absolute sizes, outside the base size and the *Text size* setting. `TYP-C1`, `TYP-C3` and `TYP-F3` are `[Implemented]` in `SpecTypography.md`, so this is a conflict with implemented rows, pending `Q34`. The `"Menlo"` font exists on macOS only. |
-| `MDI-C38` (`THM-C1`, `THM-C2`, `THM-C21`, `THM-C22`; `Q35`) | `KTheme.qml` has a fixed hex palette (option b of `Q35`), chosen in code, not by the owner; it ignores the *Theme* setting. `KProgressBar.qml` paints its own colours (`THM-C21` keeps progress bars on the desktop's). Light/dark reads `Qt.styleHints.colorScheme` only; an *Unknown* scheme (some Linux desktops) falls to light, where `THM-F11` falls back to the palette's lightness. |
-| `MDI-C38` (Memory Mode Caveat) | `AppManager::homeOverview()` counts each catalog's files by type with `MdiEnrichmentJob::listCatalogFiles`, which reads the catalog's whole file list (`.idx` in Memory mode), on the UI thread, for every catalog, cached per catalog date; it also checks each catalog's source path on the UI thread (`MDI-C29` accepted that risk for queued catalogs only). The drafted clause forbids loading file lists for Home. No raw SQL and no core change: core boundary holds. |
-| `MDI-F111` (`Q36`) | The sidebar answers `Q36` without an owner decision: *Add a drive* in the *Archive* group; *Manage drives* (the Devices page — a name not in the nomenclature) and *About* in the *Other* group; *Open*, *New* and recent collections in a menu on the collection's name; the drawer-pinned toggle removed, the Selection toggle kept. The drawer is `modal: false` at a fixed 264 px width: whether every place stays reachable at phone width (`PGL-O3`) is untested. |
-| `MDI-F112` (`Q37`) | Home is shown after each connection, while `pageStack.initialPage` stays the Selection page and the last page is still restored (`SET-F4`). Its content (drive cards for Catalog devices only, file-type counts, AI file counts, egress line, context and knowledge counts, *Pause*/*Resume*, *Re-interpret with the context*) answers `Q37` in code. Home is on `ScrollablePageFitted.qml` (`PGL-C5` holds). |
-| `MDI-F113` | The bottom activity panel's title changed from "Activity" to "Work in progress" (`OperationQueueView.qml`): a label outside R1's sidebar entries and page titles. |
-| `MDI-C39` | Several dozen new English strings (sidebar, Home, components), some reusing existing ones; none is approved yet (D16), and no `.ts` file is updated yet. Removed from `Main.qml` with no replacement: "Tools", "Drawer pinned", "Drawer floating". |
+| `MDI-C37` | Three sizes are still set outside `KTheme.qml`: the sidebar group titles in `Main.qml` (11 px, plus their own letter spacing), `KMetricCard.qml` (26 px) and `KSectionHeader.qml` (`titleCard + 1`). `KButton.qml` awaits the owner's confirmation (`Q43`). |
+| `MDI-F111` (`PGL-O3`) | The sidebar is `modal: false` at a fixed 264 px width. Phone width is untested, and the exception is the owner's choice (`Q41`). |
+| `MDI-C38` (`Q42`) | Home checks each catalog's source path on the UI thread at every refresh. The owner accepted this risk for queued catalogs only (`MDI-C29`). |
+| `MDI-C38` (observation) | `countHomeDrive` starts one thread per catalog not yet counted, all at once. A collection with hundreds of catalogs starts hundreds of threads and connections on its first Home. No row bounds this. It is a resource risk for the owner to weigh, not a breach. |
+| — (observation) | `KSidebarItem.qml` elides its title and description. No row forbids it (`CDT-C1` covers cards), but a long translation of a sidebar name would be cut. |
 
 ### Known gaps
 
@@ -1460,15 +1554,26 @@ ratify a row that covers it.
 | Q29 | MCP servers started as programs (stdio): approve programs the user names as servers (D4 approves only named tools), and treat every stdio server as remote for D3, since it can reach the internet itself and has no host to classify (`MDI-F26`)? | Before context phase 2 |
 | Q30 | MCP calls: restrict Katalog to reading resources and to tools the user has allowed one by one (an MCP tool may write or delete)? | Before context phase 2 |
 | Q31 | Remote MCP servers usually sign in with OAuth tokens; under D10 a token is never saved, so the user signs in each session or uses an environment variable. Accept? | Before context phase 2 |
-| Q32 | **D34 scope.** "cambiamo tutto": the whole K3 interface with K2 unchanged (the reading applied to the rows, D1, `MDI-C1`), or K2 too? Changing K2 would amend D1, `MDI-C1`, `MDI-C38` and the K2 maintenance-mode rule of `CLAUDE.md`. | Before phase R1 is built |
-| Q33 | **D34 languages.** The new names take the place of labels translated today in 30 languages ("Search", "Explore", "Statistics", …); with Italian only, users of the other 28 languages see these places in English until they are translated. Accept for now (`MDI-C39`)? When are the other languages translated? Does the owner amend the three `CLAUDE.md` lines `MDI-C39` names? | Before the strings of phase R1 are approved |
-| Q34 | **D34 text sizes.** `SpecTypography.md` puts every K3 text at the base size, with hierarchy by weight, opacity or colour, never by size (`TYP-F3`, `TYP-F4`, `TYP-C3`; one exception, `TYP-F6`). Do the design system's titles, metric numbers and descriptions keep that rule, or does the design system get its own text scale (an amendment to `SpecTypography.md` first)? | Before `KTheme.qml`'s text tokens are built |
-| Q35 | **D34 colours and the Theme setting.** (a) The accent is the desktop's accent and the tones are the desktop's positive / neutral / negative colours, the *Theme* setting (Desktop Theme, Katalog Colors, Desktop Theme (gray)) kept as today; or (b) a fixed Katalog accent and palette — then what becomes of the *Theme* setting and of `THM-C1`, `THM-C2`, `THM-C21` (progress bars and controls keep the desktop's colours) and `THM-C22`? Which colour is the *ai* tone? | Before `KTheme.qml`'s colour tokens are built |
-| Q36 | **D34 navigation not in the prototype's sidebar.** Where go the *Open* menu with recent collections (`OPN-O3`, `OPN-F7`, `OPN-F9`), the *New* menu, *About*, the drawer footer's toggles (drawer pinned; Selection column shown — the K2 ShowHideFilters portage), and *Aggiungi un disco* (named, but in no sidebar group)? Until phase R7, which page does *I miei dischi* open, how is the Devices page reached, and does the Selection column beside feature pages stay? | Before the sidebar is built |
-| Q37 | **D34 Home.** Which key numbers; which drives get a card (storage devices, catalogs, every device — a collection can hold hundreds); which state tags; which shortcuts; what activating a drive card does (select it as the Selection page does, open *Sfoglia l'archivio*, …); and does Katalog open on Home at launch instead of restoring the last page (`SET-F4`; today Selection is the first column)? | Before `PageHome.qml` is built |
-| Q38 | **D34 activity panel.** The sidebar's job card adds to the bottom activity panel (`MDI-F17`, `MDI-F69`, `SpecOperationQueue.md`), as the rows assume, or replaces its enrichment row? | Default applied in the rows: both stay |
-| Q39 | **D34 documentation.** The user feature pages in `docs_src/docs/` (EN, FR, CS) describe today's names, and the FORK block keeps the documentation requirements. Updated in each phase? In which languages, given the IT + EN decision? | Before the commit of phase R1 |
-| Q40 | **D34 spec home.** The redesign is recorded here, the fork's authority, although it reaches beyond media intelligence and amends upstream specs. Keep it here, or move its rows to a separate `SpecRedesign.md`? | Owner's choice; not blocking |
+| Q39 | **D34 documentation.** The user feature pages in `docs_src/docs/` (EN, FR, CS) describe today's names, and the FORK block keeps the documentation requirements. Updated in each phase? In which languages, given the IT + EN decision? | Main agent's proposal, not put to the owner: update the user docs at the end of the redesign (R8) |
+| Q40 | **D34 spec home.** The redesign is recorded here, the fork's authority, although it reaches beyond media intelligence and amends upstream specs. Keep it here, or move its rows to a separate `SpecRedesign.md`? | Main agent's proposal, not put to the owner: keep it here. Not blocking |
+| Q41 | **D34 sidebar at phone width.** The owner approved a sidebar that is always visible, 264 px wide (`Q36`, choice 4). `PGL-O3` (`SpecPageLayout.md`) asks every K3 page to keep its content visible and usable at phone width. Accept a fork exception to `PGL-O3` for the sidebar, or let it collapse on a narrow window? Untested so far. | Owner's choice; not blocking |
+| Q42 | **D34 drive checks on the UI thread.** Home checks each catalog's source path on the UI thread to show *Connected* / *Not connected*, every time the overview is refreshed. On an unresponsive network volume this can hold the window, as `MDI-C29` states. The owner accepted that risk for queued catalogs only ("Va bene così", D31). Accept it for Home too, or move the check to the worker thread? | Owner's choice; not blocking |
+| Q43 | **D34 `KButton.qml`.** A component file added in R1 without being listed. The main agent asks for it to be added to `MDI-C37`; the FORK block needs the owner's approval for an unlisted file. Confirm? | Before the next commit that touches it |
+| Q44 | **D34 wording for later phases** (translator's notes, 2026-10-29). (a) *Backup* → *Copie di sicurezza* / "Safety copies" departs from the translation playbook's "Backup everywhere" (`.claude/agents/translations.md`). (b) *Tags* → "Labels" / *Etichette*, and *Devices* → "drives": the strings inside those pages still say Tags and Devices. (c) Existing Italian strings mix *unità* / *disco*, *IA* / *AI* and *Connesso* / *collegato*. Which form wins in each case? Aligning an existing string needs per-string approval (`MDI-C17`). | Before phases R7 and R8 |
+
+### Decided 2026-10-29 — D34 (kept for traceability)
+
+Answers relayed by the main agent (see D34).
+
+| # | Question | Decision |
+| --- | ---------- | ---------- |
+| Q32 | D34 scope: K3 only, or K2 too. | K3 only; K2 unchanged ("Solo Katalog 3 (Consigliato)") — `MDI-C38`, `MDI-C1`. |
+| Q33 | The other languages show English for the new strings; amend `CLAUDE.md`. | Accepted; `CLAUDE.md` amended by the main agent ("Sì, e aggiorna CLAUDE.md (Consigliato)") — `MDI-C39`. |
+| Q34 | Text sizes of the design system. | Fixed, as in the prototype, independent of the *Text size* setting ("Fisse come nel prototipo") — `MDI-C37`, `MDI-F115`. |
+| Q35 | Colours and the *Theme* setting. | A fixed Katalog palette, light and dark by the system's scheme, independent of the *Theme* setting ("Fisse come nel prototipo") — `MDI-C37`, `MDI-F114`, `MDI-F115`. |
+| Q36 | Navigation not in the prototype's sidebar. | The choices made in code: collection menu on the name at the top; *Aggiungi un disco* in *Archivio*; *Informazioni* and *Gestisci i dischi* in *Altro*; the drives column and its toggle stay; the sidebar always visible, no pinned / floating toggle ("Approvo tutto (Consigliato)") — `MDI-F111`, `MDI-F113`. |
+| Q37 | Home's content and the start page. | Key numbers, drive cards, work in progress and knowledge; Katalog always opens on Home ("Approvo tutto (Consigliato)") — `MDI-F112`. |
+| Q38 | The bottom activity panel. | It stays, titled *Lavori in corso* ("Approvo tutto (Consigliato)") — `MDI-F113`. |
 
 ### Decided 2026-10-28 (kept for traceability)
 
@@ -1579,7 +1684,7 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F85** — Duplicates search on checksum: groups by quick hash; with *Verify with full checksum* only true SHA-256 duplicates remain; the option is absent from the saved search history.
 - **MDI-F87** — In Explore and Search results, `Space` toggles the Inspector except while typing ahead; restart: its visibility is kept. Disconnect the device: the badge reads offline with the device name; a photo with GPS shows *Open on map*.
 - **MDI-F88** — Switch Explore to *Columns*: folders first, thumbnails, arrow keys move between columns; restart: the view is kept.
-- **MDI-F89** — Open the side menu: the six main entries and *Tools* with its entries (five, and *Context* once D33 is built); no *Documentation* or *Quit*; the Quit shortcut still quits; footer icons show tooltips. (Until phase R1 is built; then `MDI-F111`.)
+- **MDI-F89** — Removed (D34); replaced by `MDI-F111`.
 - **MDI-F90 / C27** — With an unmounted external drive: it reads *Not mounted*; *Mount read-only* mounts it read-only and fills the source path. With a failing third-party driver: the message names the driver. No raw-device access is attempted.
 - **MDI-F91 / C29** — Unplug the source drive during a job: the waiting state shows with the catalog and source path; no tool process runs; no file is counted skipped or failed; replug: the job continues with the same file. Pull the drive during a transcription: no failed datum, the previous preview is still there, the file is redone after replugging. Delete one source file with the drive connected: it is skipped, the job goes on. Stop while waiting: the job ends. Linux, fixed mount point: unmounting gives the waiting state, not a run of skipped files.
 - **MDI-F92** — A (drive unplugged) queued before B (drive connected): A steps aside, B runs, then A waits. Only A queued: A waits, nothing cycles.
@@ -1602,14 +1707,14 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-C31** — *Clear derived data* and a catalog deletion: the collection's context and knowledge base remain; the deleted catalog's notes are gone.
 - **MDI-C33** — Index a large knowledge base while searching and opening *Show analysis*: no "database is locked" error, no stall; no new linked library.
 - **MDI-C36** — Queue a re-interpretation of one folder, quit, reopen: `mdi_job` holds its kind and scope and it resumes with them; open a collection whose `mdi_job` predates D33: its jobs come back as enrichment jobs.
-- **MDI-F111** — Wide window: the sidebar is fixed at the left with *Home*, the groups *Archivio*, *Intelligenza* and *Altro* with their entries in the stated order, and *Impostazioni* and the job card at its foot; each entry shows icon, name and description; the open page's entry is marked; no Quit entry, and the Quit shortcut quits. Start a job: the card shows it, and activating it opens *Lavori in corso*. Narrow the window to phone width: every place stays reachable.
-- **MDI-F112** — Open a collection: *Home* shows its name, the key numbers, the drive cards with their tags, the work in progress, the knowledge card and the shortcuts; each card and shortcut opens an existing page or action, which behaves and confirms as it does from that page. Repeat in File, Memory and Hosted modes: the same values.
-- **MDI-F113** — With the interface in Italian and in English: the sidebar entries and page titles show the table's names and descriptions; in French they show the English source of the new strings; Search results, Device edit and About keep their titles; labels inside pages not yet rebuilt are unchanged.
-- **MDI-F114** — Show a tag in each of the six tones: each carries its text; a long tag text wraps, never ends in "…".
-- **MDI-F115** — Switch the system between light and dark while Katalog runs: the sidebar, *Home* and its cards and tags follow without restart; a page not yet rebuilt keeps its present look.
-- **MDI-C37** — The commit's new files are exactly those of `MDI-C37`; search the redesigned pages and components for colour, radius and spacing literals: none outside `KTheme.qml`, apart from the `SpecTheme.md` colours in `Main.qml`.
-- **MDI-C38** — `git diff` touches nothing under `core/` and no code under `qt_widgets/` (the K3 QML file list aside); `qt_quick/` holds no new `QSqlQuery`; no new module in `CMakeLists.txt`. In Memory mode, opening *Home* loads no catalog's file list. A blocking error on a rebuilt form still shows as an inline message at the top of the form.
-- **MDI-C39** — `Katalog_it.ts` carries the Italian of every new string; the other 28 `.ts` files list them untranslated; `git diff` of the `.ts` files changes no existing source string; the approved list of the step's strings is under *User-visible text*.
+- **MDI-F111** — The sidebar is always visible, with no pinned / floating toggle. It shows the collection's name, then *Home*, the groups *Archivio* (four entries), *Intelligenza* (two) and *Altro* (five, with *Gestisci i dischi* and *Informazioni*) in the stated order, and *Impostazioni* and the job card at its foot. Home and the *Archivio* and *Intelligenza* entries show their description. The open page's entry is marked. Click the collection's name: *Open...*, *New...* and the recent collections behave as before (`OPN-F7`, `OPN-F9`). There is no Quit entry, and the Quit shortcut quits. Start a job: the card shows it, and activating it opens *Lavori in corso*. Hide and show the *I miei dischi* column with its toggle.
+- **MDI-F112** — Launch Katalog after leaving it on another page: it opens on *Home*. Open another collection: *Home* shows. *Home* shows the key numbers, a card per catalogued drive with its tags, the work in progress and the knowledge. *Browse* on a drive card selects that drive and opens *Sfoglia l'archivio*, as the Selection card's *Explore* does. Every other card and shortcut opens an existing page or acts as it does there. Repeat in File and Memory modes: the same numbers. In Hosted mode the file-type counts are absent.
+- **MDI-F113** — With the interface in Italian and in English: the sidebar entries and page titles show the table's names; the Selection page reads *I miei dischi*, the Devices page *Gestisci i dischi*, the bottom panel *Lavori in corso*. In French they show the English source of the new strings. Search results, Device edit and About keep their titles; labels inside pages not yet rebuilt are unchanged.
+- **MDI-F114** — Show a tag in each of the six tones: each carries its text, and none ends in "…".
+- **MDI-F115** — Switch the system between light and dark while Katalog runs: the sidebar, *Home* and its cards and tags follow without restart. Change *Text size* and *Theme* in Settings: the sidebar and *Home* do not change, while a page not yet rebuilt follows both.
+- **MDI-C37** — The redesign's new files are exactly those of `MDI-C37`. Search the components, the sidebar and *Home* for colour, radius, spacing and text-size literals: none outside `KTheme.qml`. On Windows and Linux the monospace text uses Consolas and the generic monospace family.
+- **MDI-C38** — `git diff` touches nothing under `core/` and no code under `qt_widgets/` (the K3 QML file list aside). `qt_quick/` holds no new `QSqlQuery`, and no new module is added to `CMakeLists.txt`. In Memory mode, with a large catalog, open *Home* while watching the UI thread: no file list is read on it, the counts appear when the worker finishes, and the window stays responsive. A blocking error on a rebuilt form still shows as an inline message at the top of the form.
+- **MDI-C39** — The Italian `.ts` file carries the Italian of the 45 approved strings; every other `.ts` file lists them untranslated. `git diff` of the `.ts` files changes no existing source string. The navigation labels no longer used are marked vanished, not deleted.
 
 ---
 
@@ -1640,10 +1745,10 @@ target spec is edited.
 | `SpecOperationQueue.md` (D19) | `OPQ-C16` note: the enrichment row of the activity panel opens the Activity page (`MDI-F69`); the panel itself is unchanged otherwise. |
 | `SpecProgressReport.md` (D33) | Operation name and process titles for knowledge-base indexing (`MDI-F105`) and for re-interpretation (`MDI-F103`), and the classification's process title. Each new string needs approval (D16). |
 | `SpecOperationQueue.md` (D33) | Knowledge-base indexing (`MDI-F105`) is, like the runner, not a queue entry (`MDI-C3`); state it next to the `MDI-C3` constraint listed above. |
-| `SpecTheme.md` (D34) | Per `Q35`: where the design system's colours are defined (`THM-C1`, `THM-C19`, `THM-C20`, `THM-C23` define colours once in `Main.qml`); the accent and the tag tones against `THM-C2`, `THM-C21`, `THM-C22`; what becomes of the *Theme* setting (`THM-C3`) and of the drawer logo band (`THM-F20`). |
-| `SpecTypography.md` (D34) | Per `Q34`, only if the design system gets its own text scale (`TYP-F3`, `TYP-F4`, `TYP-C3`). `TYP-F11` names the drawer's collection name: name the sidebar instead. |
-| `SpecCollectionIdentity.md` (D34) | `CID-F1`–`CID-F5` speak of the "drawer header": name the sidebar and the *Home* header. |
-| `SpecCollectionOpen.md` (D34) | `OPN-O3`, `OPN-F7`, `OPN-F9` speak of the drawer's *Open* menu: its new place (`Q36`). |
-| `SpecSettingsPage.md` (D34) | `SET-F4`, `SET-F5` speak of the drawer's entries and of the last page restored at startup: the sidebar entry and the start page (`Q36`, `Q37`). |
-| `SpecSelection.md`, `SpecDevicesPage.md` (D34) | Phase R1: what *I miei dischi* opens and whether the Selection column stays (`Q36`); phase R7: the merged page. |
-| `CLAUDE.md` (D34, not a spec) | The three lines named in `MDI-C39`, and the FORK block's statement of what this spec authorises. Only the fork owner amends `CLAUDE.md` (`Q33`). |
+| `SpecTheme.md` (D34) | Note the owner's exception of `MDI-C37` (`Q35`). The design-system components, the sidebar and the pages rebuilt in D34 use a fixed Katalog palette, light or dark by the system's scheme, and do not follow the *Theme* setting. For them this departs from `THM-C1`, `THM-C2`, `THM-C3`, `THM-C21` and `THM-C22`. The drawer logo band (`THM-F20`) no longer exists. Pages not yet rebuilt stay bound. |
+| `SpecTypography.md` (D34) | Note the owner's exception of `MDI-C37` (`Q34`). The same components and pages use fixed text sizes and do not follow the *Text size* setting. For them this departs from `TYP-C1`, `TYP-C3`, `TYP-F2`, `TYP-F3`, `TYP-F4`, `TYP-F7` and `TYP-F11`. Pages not yet rebuilt stay bound. |
+| `SpecCollectionIdentity.md` (D34) | `CID-F1`–`CID-F5` speak of the "drawer header": the collection's name is now at the top of the sidebar (`MDI-F111`). |
+| `SpecCollectionOpen.md` (D34) | `OPN-O3`, `OPN-F7`, `OPN-F9` speak of the drawer's *Open* menu. It now opens from the collection's name at the top of the sidebar, with the same content (`MDI-F111`, `Q36`). |
+| `SpecSettingsPage.md` (D34) | `SET-F4`: the *Settings* entry is now the sidebar's *Impostazioni*. Katalog no longer restores the last page at launch: it always opens on *Home* (`MDI-F112`, `Q37`). `SET-F5`: the *Hosted Database...* entry is in the collection menu. |
+| `SpecSelection.md`, `SpecDevicesPage.md` (D34) | Phase R1: the Selection page is titled *I miei dischi* and keeps its column and toggle; the Devices page is titled *Gestisci i dischi* and is in the sidebar's *Altro* group (`MDI-F111`, `MDI-F113`). Phase R7: the merged page. |
+| `CLAUDE.md` (D34, not a spec) | Applied 2026-10-29 by the main agent with the owner's approval (`Q33`): fork exceptions to "K3 labels must stay in sync with K2" and to "30 languages", and a FORK bullet for the K3 redesign. |

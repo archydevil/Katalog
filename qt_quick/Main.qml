@@ -1895,7 +1895,7 @@ Kirigami.ApplicationWindow {
         standardButtons: Kirigami.Dialog.Cancel
         customFooterActions: [
             Kirigami.Action {
-                text: qsTr("Analyze")
+                text: qsTr("Analyse with AI")
                 icon.name: "tools-wizard"
                 onTriggered: enrichmentDialog.start()
             }
@@ -1985,12 +1985,10 @@ Kirigami.ApplicationWindow {
     ScrollablePageFitted {
         id: pageSelection
 
-        // Tinted rather than plain: white cards on a white page gave no contrast.
-        // Under either theme — Katalog Colors forces the brand blue, Desktop
-        // Theme steps away from the desktop's own background. See
-        // root.selectionPageColor, which keeps this in step with the logo band.
+        // The design system's ground, like every page (D34): the drive cards
+        // carry their own surface, so they stand out without a tinted page
         background: Rectangle {
-            color: root.selectionPageColor
+            color: KTheme.ground
         }
         title: qsTr("My drives")
         property string deviceType: "Storage"
@@ -2166,6 +2164,7 @@ Kirigami.ApplicationWindow {
     //Pages - Search
     ScrollablePageFitted {
         id: pageSearch
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         // Hidden until pushed, like every other feature page: when the app opens
         // on another page, Search is never pushed and would otherwise stay drawn
         // on the window behind the page stack.
@@ -2285,6 +2284,7 @@ Kirigami.ApplicationWindow {
     //Pages - SearchResults
     Kirigami.Page {
         id: pageSearchResults
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageSearchResultsEscapeAction  // Esc (KBS-F1)
         visible: false
         title: {
@@ -2300,7 +2300,7 @@ Kirigami.ApplicationWindow {
         actions: [
             Kirigami.Action {
                 // Offline Inspector beside the results (fork); also Space
-                text: qsTr("Inspector")
+                text: qsTr("File details")
                 icon.name: "document-properties"
                 checkable: true
                 checked: root.inspectorVisible
@@ -2349,6 +2349,7 @@ Kirigami.ApplicationWindow {
     //Pages - Devices
     Kirigami.Page {
         id: pageDevices
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageDevicesEscapeAction  // Esc (KBS-F1)
         visible: false
         padding: 0
@@ -2447,6 +2448,7 @@ Kirigami.ApplicationWindow {
     //Pages - Explore
     Kirigami.Page {
         id: pageExplore
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageExploreEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Browse the archive")
@@ -2463,7 +2465,7 @@ Kirigami.ApplicationWindow {
             },
             Kirigami.Action {
                 // Offline Inspector beside the file list (fork); also Space
-                text: qsTr("Inspector")
+                text: qsTr("File details")
                 icon.name: "document-properties"
                 checkable: true
                 checked: root.inspectorVisible
@@ -2471,7 +2473,7 @@ Kirigami.ApplicationWindow {
             },
             // Enrich the catalog shown (fork, SpecMediaIntelligence.md MDI-F8, Q9)
             Kirigami.Action {
-                text: qsTr("Analyze")
+                text: qsTr("Analyse with AI")
                 icon.name: "tools-wizard"
                 enabled: exploreFolders.openedDeviceId > 0
                 onTriggered: enrichmentDialog.openFor(exploreFolders.openedDeviceId,
@@ -2638,6 +2640,7 @@ Kirigami.ApplicationWindow {
     //Pages - Activity (fork, SpecMediaIntelligence.md MDI-F61..F75)
     ScrollablePageFitted {
         id: pageActivity
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageActivityEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Work in progress")
@@ -2686,6 +2689,7 @@ Kirigami.ApplicationWindow {
     //Pages - Context (fork, SpecMediaIntelligence.md D33, MDI-F94..F107)
     ScrollablePageFitted {
         id: pageContext
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageContextEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Archive knowledge")
@@ -2720,6 +2724,7 @@ Kirigami.ApplicationWindow {
     //Pages - Create
     ScrollablePageFitted {
         id: pageCreate
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageCreateEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Add a drive")
@@ -2754,7 +2759,7 @@ Kirigami.ApplicationWindow {
 
         actions: [
             Kirigami.Action {
-                text: qsTr("Create")
+                text: qsTr("Catalogue the drive")
                 icon.name: "document-save"
                 // Always enabled: a creation requested while another operation
                 // runs is queued rather than refused (SpecOperationQueue.md).
@@ -2785,6 +2790,7 @@ Kirigami.ApplicationWindow {
     //Pages - Device Edit
     ScrollablePageFitted {
         id: pageDeviceEdit
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageDeviceEditEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Edit Device")
@@ -2864,6 +2870,7 @@ Kirigami.ApplicationWindow {
     //Pages - Statistics
     Kirigami.Page {
         id: pageStatistics
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageStatisticsEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Archive in numbers")
@@ -2886,6 +2893,7 @@ Kirigami.ApplicationWindow {
     //Pages - Tags
     ScrollablePageFitted {
         id: pageTags
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageTagsEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Labels")
@@ -2907,6 +2915,7 @@ Kirigami.ApplicationWindow {
     //Pages - Backup
     ScrollablePageFitted {
         id: pageBackup
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageBackupEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Safety copies")
