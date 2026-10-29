@@ -1177,26 +1177,8 @@ Kirigami.ApplicationWindow {
 
         pageSearchForm.restoreLastSearch()
 
-        // Restore last active page
-        var last = appManager1.getLastPage()
-        if (last === "Settings") {
-            root.showLayer(settingsPageComponent)
-        } else {
-            var pageMap = {
-                "Search":     pageSearch,
-                "Devices":    pageDevices,
-                "Explore":    pageExplore,
-                "Create":     pageCreate,
-                "Statistics": pageStatistics,
-                "Tags":       pageTags,
-                "Backup":     pageBackup,
-                "Activity":   pageActivity,
-                "Context":    pageContext,
-                "Home":       pageHome
-            }
-            if (last !== "Selection" && pageMap[last])
-                root.showPage(pageMap[last])
-        }
+        // Katalog always opens on Home, the archive at a glance (D34, owner 2026-10-29)
+        root.showPage(pageHome)
         // Headers that already exist before the connections above could see them.
         for (let i = 0; i < pageStack.depth; ++i)
             root.pinHeaderFont(pageStack.get(i).globalToolBarItem)

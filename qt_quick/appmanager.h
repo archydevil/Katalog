@@ -735,6 +735,7 @@ signals:
     void mdiStepLogChanged();
     void enrichmentFinished(const QVariantMap &summary);
     void contextDraftReady(const QVariantMap &draft, const QString &error);
+    void homeOverviewChanged();   // a Home count computed in the background is ready
     void knowledgeStateChanged();
     void semanticResultsChanged();
     // End of a Memory-mode Explore load: the open's result, or stopped
@@ -888,6 +889,8 @@ private:
     // results per catalog (refreshed at most every 15 s)
     QHash<int, QPair<QString, QVariantMap>> m_homeTypeCache;
     QHash<int, QPair<qint64, int>>          m_homeAiCache;
+    QSet<int>                               m_homeCounting;   // catalogs being counted
+    void countHomeDrive(int deviceId, int catalogId, const QString &stamp, const QString &catalogFile, bool types);
     void    holdOrDropMdiJob(const MdiData::PendingJob &job, const QString &error);
     QString startMdiJob(const MdiData::PendingJob &job, bool resumed);
     bool    mdiJobReachable(const MdiData::PendingJob &job);

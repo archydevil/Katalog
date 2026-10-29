@@ -52,7 +52,8 @@ QtObject {
     readonly property int titleCard:     15
     readonly property int body:          14
     readonly property int note:          12
-    readonly property string mono:       "Menlo"
+    readonly property string mono:       Qt.platform.os === "osx" ? "Menlo"
+                                       : Qt.platform.os === "windows" ? "Consolas" : "monospace"
 
     function toneText(tone) {
         return tone === "ok" ? ok : tone === "warn" ? warn : tone === "bad" ? bad

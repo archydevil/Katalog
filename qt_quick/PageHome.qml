@@ -24,6 +24,7 @@ ColumnLayout {
         function onMdiStateChanged() { if (home.visible) home.refresh() }
         function onKnowledgeStateChanged() { if (home.visible) home.refresh() }
         function onRecentCollectionsChanged() { if (home.visible) home.refresh() }
+        function onHomeOverviewChanged() { if (home.visible) home.refresh() }
     }
 
     // ── Header ─────────────────────────────────────────────────────────────

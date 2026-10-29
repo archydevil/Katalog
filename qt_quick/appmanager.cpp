@@ -3323,23 +3323,17 @@ QVariantMap AppManager::homeOverview()
         drive[QStringLiteral("size")]      = formatDataSize(device.totalFileSize);
         drive[QStringLiteral("updated")]   = QLocale().toString(device.dateTimeUpdated.date(), QLocale::ShortFormat);
 
-        // Files by type, once per catalog state
+        // Files by type (once per catalog state) and files with AI results (at
+        // most every 15 s) are counted in the background: Home shows what is
+        // known and refreshes when the counts arrive (MDI-C38)
         const QString stamp = device.catalog ? device.catalog->dateUpdated.toString(Qt::ISODate) : QString();
-        auto types = m_homeTypeCache.constFind(device.ID);
-        if (types == m_homeTypeCache.constEnd() || types->first != stamp) {
-            QVariantMap counts;
-            if (device.catalog)
-                for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(
-                         m_connectionName, device.externalID, collection->databaseMode, device.catalog->filePath))
-                    counts[f.fileType] = counts.value(f.fileType).toInt() + 1;
-            types = m_homeTypeCache.insert(device.ID, {stamp, counts});
-        }
-        drive[QStringLiteral("types")] = types->second;
-
-        // Files with AI results, at most every 15 s
-        auto ai = m_homeAiCache.constFind(device.ID);
-        if (mdi && (ai == m_homeAiCache.constEnd() || now - ai->first > 15))
-            ai = m_homeAiCache.insert(device.ID, {now, int(MdiData::catalogIndex(kMdiMainConnection, device.externalID).size())});
+        const auto types = m_homeTypeCache.constFind(device.ID);
+        const auto ai    = m_homeAiCache.constFind(device.ID);
+        const bool typesStale = types == m_homeTypeCache.constEnd() || types->first != stamp;
+        const bool aiStale    = ai == m_homeAiCache.constEnd() || now - ai->first > 15;
+        if ((typesStale || aiStale) && device.catalog)
+            countHomeDrive(device.ID, device.externalID, stamp, device.catalog->filePath, typesStale);
+        drive[QStringLiteral("types")]   = types != m_homeTypeCache.constEnd() ? types->second : QVariantMap();
         drive[QStringLiteral("aiFiles")] = ai != m_homeAiCache.constEnd() ? ai->second : 0;
 
         totalFiles += device.totalFileCount;
@@ -3365,6 +3359,51 @@ QVariantMap AppManager::homeOverview()
     overview[QStringLiteral("documents")] = int(documents.size());
     overview[QStringLiteral("passages")]  = passages;
     return overview;
+}
+//----------------------------------------------------------------------
+void AppManager::countHomeDrive(int deviceId, int catalogId, const QString &stamp, const QString &catalogFile, bool types)
+{
+    // One count per catalog at a time, on a worker thread with its own
+    // connections: the UI thread never reads a file list (MDI-C38)
+    if (m_homeCounting.contains(deviceId))
+        return;
+    m_homeCounting.insert(deviceId);
+    const QString mode   = collection->databaseMode;
+    const QString dbFile = collection->databaseFilePath;
+    const QString mdiDb  = mdiDataPath();
+    QThread *worker = QThread::create([this, deviceId, catalogId, stamp, catalogFile, types, mode, dbFile, mdiDb]() {
+        const QString name = QStringLiteral("home_count_%1").arg(deviceId);
+        QVariantMap counts;
+        if (types && mode != QLatin1String("Hosted")) {
+            {
+                if (mode == QLatin1String("File")) {
+                    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), name);
+                    db.setDatabaseName(dbFile);
+                    db.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY"));
+                    db.open();
+                }
+                for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(name, catalogId, mode, catalogFile))
+                    counts[f.fileType] = counts.value(f.fileType).toInt() + 1;
+            }
+            QSqlDatabase::removeDatabase(name);
+        }
+        int aiFiles = -1;
+        const QString mdiName = name + QStringLiteral("_mdi");
+        if (QFileInfo::exists(mdiDb) && MdiData::open(mdiName, mdiDb)) {
+            aiFiles = int(MdiData::catalogIndex(mdiName, catalogId).size());
+            MdiData::close(mdiName);
+        }
+        QMetaObject::invokeMethod(this, [this, deviceId, stamp, counts, types, aiFiles]() {
+            if (types)
+                m_homeTypeCache.insert(deviceId, {stamp, counts});
+            if (aiFiles >= 0)
+                m_homeAiCache.insert(deviceId, {QDateTime::currentSecsSinceEpoch(), aiFiles});
+            m_homeCounting.remove(deviceId);
+            emit homeOverviewChanged();
+        }, Qt::QueuedConnection);
+    });
+    connect(worker, &QThread::finished, worker, &QObject::deleteLater);
+    worker->start();
 }
 //----------------------------------------------------------------------
 void AppManager::draftContext(int deviceId)
