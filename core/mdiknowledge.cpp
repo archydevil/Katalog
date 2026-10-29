@@ -40,8 +40,9 @@
 
 const QStringList &MdiKnowledge::supportedSuffixes()
 {
-    static const QStringList suffixes = {"pdf", "doc", "docx", "odt", "rtf", "txt", "md", "markdown",
-                                         "csv", "tsv", "xlsx", "ods"};
+    static const QStringList suffixes = {"pdf", "doc", "docx", "odt", "rtf", "pptx", "odp",
+                                         "txt", "md", "markdown", "html", "htm", "json", "xml", "log",
+                                         "srt", "vtt", "csv", "tsv", "xlsx", "ods"};
     return suffixes;
 }
 

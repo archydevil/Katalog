@@ -58,7 +58,7 @@ public:
         double  score = 0;
     };
 
-    // pdf, doc, docx, odt, rtf, txt, md, csv, tsv, xlsx, ods (zip archives are not read)
+    // Documents, presentations, spreadsheets and text formats (MDI-F104); archives are not read
     static const QStringList &supportedSuffixes();
 
     // Adds files and the supported files of folders (recursively) as pending;
