@@ -1383,12 +1383,12 @@ Choose a different name.</source>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>在线 – 单击即可打开</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>离线 – 需要 %1 才能打开文件</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 无法挂载此驱动器：其许可证或在系统设置中的权限可能需要处理。没有该驱动程序时，系统本身即可读取 NTFS 驱动器，而 Katalog 只需要读取。</translation>
     </message>
     <message>
         <location line="+1"/>

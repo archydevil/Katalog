@@ -1383,12 +1383,12 @@ Zvoľte iný názov.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – otvorí sa kliknutím</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – na otvorenie súboru je potrebný %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Skontrolujte, či je zdrojový priečinok (%1) správny, alebo či je zariadenie
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Program %1 nemohol pripojiť tento disk: jeho licencia alebo povolenie v Systémových nastaveniach môžu vyžadovať pozornosť. Bez neho systém číta disky NTFS sám a Katalog potrebuje iba čítanie.</translation>
     </message>
     <message>
         <location line="+1"/>

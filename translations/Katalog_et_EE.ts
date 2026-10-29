@@ -1383,12 +1383,12 @@ Vali teine nimi.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Ühendatud – avaneb klõpsuga</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Ühendamata – faili avamiseks on vaja %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Kontrollige, et lähtekaust (%1) on õige või et seade on lähtekausta ühendat
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 ei saanud seda draivi haakida: selle litsents või luba süsteemiseadetes võib vajada tähelepanu. Ilma selleta loeb süsteem NTFS-draive ise ning Katalogile piisab lugemisest.</translation>
     </message>
     <message>
         <location line="+1"/>

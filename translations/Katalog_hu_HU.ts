@@ -1383,12 +1383,12 @@ Válasszon másik nevet.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – kattintásra megnyílik</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – a fájl megnyitásához szükséges: %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7614,7 +7614,7 @@ Ellenőrizze, hogy a forrásmappa (%1) helyes-e, vagy hogy az eszköz a forrásm
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>A(z) %1 nem tudta csatolni ezt a meghajtót: a licence vagy az engedélye a Rendszerbeállításokban figyelmet igényelhet. Nélküle a rendszer magától is olvassa az NTFS-meghajtókat, és a Katalognak csak olvasásra van szüksége.</translation>
     </message>
     <message>
         <location line="+1"/>

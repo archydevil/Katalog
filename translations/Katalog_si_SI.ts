@@ -1383,12 +1383,12 @@ Izberite drugo ime.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Povezano – odpre se s klikom</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Ni povezano – za odpiranje datoteke je potreben %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7616,7 +7616,7 @@ Preverite, ali je izvorna mapa (%1) pravilna ali ali je naprava priklopljena v i
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Program %1 ni mogel priklopiti te enote: njegova licenca ali dovoljenje v Sistemskih nastavitvah morda zahteva pozornost. Brez njega sistem sam bere enote NTFS, Katalog pa potrebuje le branje.</translation>
     </message>
     <message>
         <location line="+1"/>

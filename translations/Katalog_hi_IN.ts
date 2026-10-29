@@ -1383,12 +1383,12 @@ Choose a different name.</source>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>ऑनलाइन – क्लिक करने पर खुलता है</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>ऑफ़लाइन – फ़ाइल खोलने के लिए %1 आवश्यक है</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7614,7 +7614,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 इस ड्राइव को माउंट नहीं कर सका: सिस्टम सेटिंग्स में इसके लाइसेंस या अनुमति पर ध्यान देने की आवश्यकता हो सकती है। इसके बिना, सिस्टम NTFS ड्राइव को स्वयं पढ़ता है, और Katalog को केवल पढ़ने की आवश्यकता है।</translation>
     </message>
     <message>
         <location line="+1"/>

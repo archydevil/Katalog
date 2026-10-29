@@ -1383,12 +1383,12 @@ Wählen Sie einen anderen Namen.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – öffnet sich per Klick</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – %1 wird zum Öffnen der Datei benötigt</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Prüfen Sie, ob der Quellordner (%1) korrekt ist oder ob das Gerät im Quellordn
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 konnte dieses Laufwerk nicht einhängen: Lizenz oder Berechtigung in den Systemeinstellungen müssen möglicherweise geprüft werden. Ohne das Programm liest das System NTFS-Laufwerke selbst, und Katalog braucht nur Lesezugriff.</translation>
     </message>
     <message>
         <location line="+1"/>

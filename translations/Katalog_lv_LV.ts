@@ -1383,12 +1383,12 @@ Izvēlieties citu nosaukumu.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Tiešsaistē – atveras ar klikšķi</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Bezsaistē – faila atvēršanai nepieciešams %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Pārbaudiet, vai avota mape (%1) ir pareiza vai ierīce ir piemontēta avota map
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nevarēja montēt šo disku: tā licencei vai atļaujai sistēmas iestatījumos var būt nepieciešama uzmanība. Bez tā sistēma pati lasa NTFS diskus, un Katalog ir vajadzīga tikai lasīšana.</translation>
     </message>
     <message>
         <location line="+1"/>

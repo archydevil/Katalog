@@ -1383,12 +1383,12 @@ Izaberite drugi naziv.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Povezano – otvara se klikom</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Nije povezano – za otvaranje datoteke potreban je %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Proverite da li je izvorna fascikla (%1) ispravna ili da li je uređaj montiran 
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Program %1 nije mogao da montira ovaj disk: njegova licenca ili dozvola u Podešavanjima sistema možda zahtevaju pažnju. Bez njega sistem sam čita NTFS diskove, a Katalogu je potrebno samo čitanje.</translation>
     </message>
     <message>
         <location line="+1"/>

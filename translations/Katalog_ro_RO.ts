@@ -1383,12 +1383,12 @@ Alegeți alt nume.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – se deschide cu un clic</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – %1 este necesar pentru a deschide fișierul</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Verificați dacă dosarul sursă (%1) este corect sau dacă dispozitivul este mo
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nu a putut monta această unitate: licența sau permisiunea acestuia în Configurări sistem ar putea necesita atenție. Fără el, sistemul citește singur unitățile NTFS, iar Katalog are nevoie doar de citire.</translation>
     </message>
     <message>
         <location line="+1"/>

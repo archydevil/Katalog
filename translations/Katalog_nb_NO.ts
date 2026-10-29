@@ -1383,12 +1383,12 @@ Velg et annet navn.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Tilkoblet – åpnes med et klikk</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Frakoblet – %1 trengs for å åpne filen</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Kontroller at kildemappen (%1) er riktig, eller at enheten er montert i kildemap
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 kunne ikke montere denne stasjonen: programmets lisens eller tillatelse i Systeminnstillinger kan trenge oppmerksomhet. Uten det leser systemet NTFS-stasjoner på egen hånd, og lesing er alt Katalog trenger.</translation>
     </message>
     <message>
         <location line="+1"/>

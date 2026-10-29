@@ -1383,12 +1383,12 @@ Välj ett annat namn.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – öppnas med ett klick</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – %1 behövs för att öppna filen</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Kontrollera att källmappen (%1) är korrekt, eller att enheten är monterad i k
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 kunde inte montera den här enheten: programmets licens eller behörighet i Systeminställningar kan behöva ses över. Utan det läser systemet NTFS-enheter på egen hand, och läsning är allt Katalog behöver.</translation>
     </message>
     <message>
         <location line="+1"/>

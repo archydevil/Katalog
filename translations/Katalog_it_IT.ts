@@ -1383,12 +1383,12 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – si apre con un clic</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – per aprire il file è necessario %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 non è riuscito a montare questa unità: la licenza o l'autorizzazione in Impostazioni di Sistema potrebbero richiedere attenzione. Senza di esso, il sistema legge da solo le unità NTFS, e a Katalog basta la lettura.</translation>
     </message>
     <message>
         <location line="+1"/>

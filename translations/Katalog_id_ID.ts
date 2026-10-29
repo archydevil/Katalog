@@ -1383,12 +1383,12 @@ Pilih nama lain.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Online – terbuka dengan sekali klik</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Offline – %1 diperlukan untuk membuka file</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7615,7 +7615,7 @@ Periksa apakah folder sumber (%1) sudah benar, atau apakah perangkat dipasang ke
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 tidak dapat memasang drive ini: lisensi atau izinnya di Pengaturan Sistem mungkin perlu diperhatikan. Tanpa driver tersebut, sistem membaca drive NTFS dengan sendirinya, dan Katalog hanya perlu membaca.</translation>
     </message>
     <message>
         <location line="+1"/>

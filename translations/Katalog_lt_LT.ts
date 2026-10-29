@@ -1383,12 +1383,12 @@ Pasirinkite kitą pavadinimą.</translation>
     <message>
         <location line="+48"/>
         <source>Online – opens with a click</source>
-        <translation type="unfinished"></translation>
+        <translation>Prijungta – atsidaro spustelėjus</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Offline – %1 is needed to open the file</source>
-        <translation type="unfinished"></translation>
+        <translation>Neprijungta – failui atidaryti reikia %1</translation>
     </message>
     <message>
         <location line="+81"/>
@@ -7614,7 +7614,7 @@ Patikrinkite, ar šaltinio aplankas (%1) teisingas, arba ar įrenginys prijungta
     <message>
         <location line="+8"/>
         <source>%1 could not mount this drive: its license or its permission in System Settings may need attention. Without it, the system reads NTFS drives on its own, and reading is all Katalog needs.</source>
-        <translation type="unfinished"></translation>
+        <translation>Programai %1 nepavyko sumontuoti šio disko: jos licencijai ar leidimui sistemos nustatymuose gali reikėti dėmesio. Be jos sistema pati skaito NTFS diskus, o Katalog užtenka skaitymo.</translation>
     </message>
     <message>
         <location line="+1"/>
