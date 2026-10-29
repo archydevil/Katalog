@@ -30,6 +30,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QSqlRecord>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QDir>
@@ -157,12 +158,58 @@ bool MdiData::open(const QString &connectionName, const QString &dbPath)
     )"));
     q.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS mdi_embedding_file ON mdi_embedding (emb_catalog_id, emb_full_path)"));
 
-    // Enrichment jobs not finished, in run order (MDI-C28)
+    // Enrichment jobs not finished, in run order (MDI-C28); a re-interpretation
+    // carries its kind and scope (D33)
     q.exec(QLatin1String(R"(
         CREATE TABLE IF NOT EXISTS mdi_job (
             job_order     INTEGER NOT NULL PRIMARY KEY,
             job_device_id INTEGER NOT NULL,
-            job_paused    INTEGER NOT NULL DEFAULT 0
+            job_paused    INTEGER NOT NULL DEFAULT 0,
+            job_kind      TEXT    NOT NULL DEFAULT 'enrich',
+            job_folder    TEXT,
+            job_file_type TEXT
+        )
+    )"));
+    // A table created by the D31 build lacks the scope columns
+    const QSqlRecord jobRecord = db.record(QStringLiteral("mdi_job"));
+    if (jobRecord.indexOf(QStringLiteral("job_kind")) < 0)
+        q.exec(QStringLiteral("ALTER TABLE mdi_job ADD COLUMN job_kind TEXT NOT NULL DEFAULT 'enrich'"));
+    if (jobRecord.indexOf(QStringLiteral("job_folder")) < 0)
+        q.exec(QStringLiteral("ALTER TABLE mdi_job ADD COLUMN job_folder TEXT"));
+    if (jobRecord.indexOf(QStringLiteral("job_file_type")) < 0)
+        q.exec(QStringLiteral("ALTER TABLE mdi_job ADD COLUMN job_file_type TEXT"));
+
+    // Domain context: scope 0 = the collection, else a catalog's notes (D33, MDI-C30)
+    q.exec(QLatin1String(R"(
+        CREATE TABLE IF NOT EXISTS mdi_context (
+            context_scope   INTEGER NOT NULL PRIMARY KEY,
+            context_json    TEXT    NOT NULL,
+            context_version TEXT,
+            context_date    TEXT
+        )
+    )"));
+    // Local knowledge base: documents referenced, passages indexed (D33, MDI-C30)
+    q.exec(QLatin1String(R"(
+        CREATE TABLE IF NOT EXISTS mdi_kb_document (
+            doc_id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            doc_path     TEXT    NOT NULL UNIQUE,
+            doc_title    TEXT,
+            doc_size     INTEGER,
+            doc_date     TEXT,
+            doc_added    TEXT,
+            doc_status   TEXT    NOT NULL DEFAULT 'pending',
+            doc_reason   TEXT,
+            doc_passages INTEGER NOT NULL DEFAULT 0
+        )
+    )"));
+    q.exec(QLatin1String(R"(
+        CREATE TABLE IF NOT EXISTS mdi_kb_passage (
+            passage_doc_id INTEGER NOT NULL,
+            passage_index  INTEGER NOT NULL,
+            passage_text   TEXT    NOT NULL,
+            passage_model  TEXT    NOT NULL,
+            passage_vector BLOB    NOT NULL,
+            PRIMARY KEY (passage_doc_id, passage_index)
         )
     )"));
     return ok;
@@ -469,10 +516,18 @@ QList<MdiData::PendingJob> MdiData::pendingJobs(const QString &connectionName)
 {
     QList<PendingJob> jobs;
     QSqlQuery q(QSqlDatabase::database(connectionName));
-    if (!q.exec(QStringLiteral("SELECT job_device_id, job_paused FROM mdi_job ORDER BY job_order")))
+    if (!q.exec(QStringLiteral("SELECT job_device_id, job_paused, job_kind, job_folder, job_file_type "
+                               "FROM mdi_job ORDER BY job_order")))
         return jobs;
-    while (q.next())
-        jobs.append({ q.value(0).toInt(), q.value(1).toBool() });
+    while (q.next()) {
+        PendingJob job;
+        job.deviceId = q.value(0).toInt();
+        job.paused   = q.value(1).toBool();
+        job.kind     = q.value(2).toString().isEmpty() ? QStringLiteral("enrich") : q.value(2).toString();
+        job.folder   = q.value(3).toString();
+        job.fileType = q.value(4).toString();
+        jobs.append(job);
+    }
     return jobs;
 }
 
@@ -484,11 +539,15 @@ bool MdiData::savePendingJobs(const QString &connectionName, const QList<Pending
         return false;
     QSqlQuery q(db);
     bool ok = q.exec(QStringLiteral("DELETE FROM mdi_job"));
-    q.prepare(QStringLiteral("INSERT INTO mdi_job (job_order, job_device_id, job_paused) VALUES (:order, :device, :paused)"));
+    q.prepare(QStringLiteral("INSERT INTO mdi_job (job_order, job_device_id, job_paused, job_kind, job_folder, job_file_type) "
+                             "VALUES (:order, :device, :paused, :kind, :folder, :type)"));
     for (int i = 0; ok && i < jobs.size(); ++i) {
         q.bindValue(":order",  i);
         q.bindValue(":device", jobs.at(i).deviceId);
         q.bindValue(":paused", jobs.at(i).paused ? 1 : 0);
+        q.bindValue(":kind",   jobs.at(i).kind);
+        q.bindValue(":folder", jobs.at(i).folder);
+        q.bindValue(":type",   jobs.at(i).fileType);
         ok = q.exec();
     }
     if (!ok) {

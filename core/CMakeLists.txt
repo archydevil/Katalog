@@ -42,6 +42,8 @@ set(CORE_HEADERS
     mdisystemmonitor.h
     mdifts.h
     mdivolumes.h
+    mdicontext.h
+    mdiknowledge.h
 )
 
 set(CORE_SOURCES
@@ -88,6 +90,8 @@ set(CORE_SOURCES
     mdisystemmonitor.cpp
     mdifts.cpp
     mdivolumes.cpp
+    mdicontext.cpp
+    mdiknowledge.cpp
 )
 
 add_library(katalog-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

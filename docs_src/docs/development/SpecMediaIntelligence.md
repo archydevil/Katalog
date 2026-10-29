@@ -998,9 +998,13 @@ Checked by the specifications agent against the working-tree diff of
 ### Context phase 1 — proposed core design (D33) — 2026-10-29
 
 Proposed by the main agent and recorded here so that the core changes of
-`MDI-C32` are listed. **Not yet approved:** the fork owner's `MDI-C14` approval
-of this class and method design has not been reported; the rows are ratified,
-the design is not. Nothing is built.
+`MDI-C32` are listed. The main agent reported it as the approved phase 1
+design; the fork owner's own `MDI-C14` reply approving it was not relayed to the
+specifications agent, so the rows are ratified (D33) and this design is
+recorded as reported. Work started the same day: `core/mdicontext.*` and
+`core/mdiknowledge.*` are committed (`3c40288c`, `920aacbc`, `48d455ef`) and
+`core/mdidata.*` is changed in the working tree; the specifications agent has
+not checked them against the rows, beyond the notes below.
 
 | Class (file) | Proposed |
 | --- | --- |
@@ -1038,6 +1042,14 @@ Checked against the ratified rows by the specifications agent:
 - **`MDI-C1`.** `qt_quick/PageContext.qml` will likely have to be added to the
   `K3_QML_FILES` list in `qt_widgets/CMakeLists.txt`, the same open finding as
   the other K3 QML files.
+- **Table name.** The working tree creates the passages table as
+  `mdi_kb_passage`; `MDI-C30` and its test line name it `mdi_kb_chunk`. One of
+  the two must change (a name only; no behaviour depends on it).
+- **Formats.** `MdiKnowledge::supportedSuffixes()` lists `pdf`, `doc`, `docx`,
+  `odt`, `rtf`, `txt`, `md`, `csv`, `tsv`, `xlsx`, `ods`. `MDI-F104` also
+  names "the other text formats of `MDI-F81`" (`pptx`, `odp`, `html`, `json`,
+  `xml`, `log`, `srt`, `vtt`). Add them, or the fork owner narrows `MDI-F104`
+  to the formats of answer (4) ("PDF, Word, Excel/CSV e testo").
 
 ### Known gaps
 
@@ -1272,7 +1284,7 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F85** — Duplicates search on checksum: groups by quick hash; with *Verify with full checksum* only true SHA-256 duplicates remain; the option is absent from the saved search history.
 - **MDI-F87** — In Explore and Search results, `Space` toggles the Inspector except while typing ahead; restart: its visibility is kept. Disconnect the device: the badge reads offline with the device name; a photo with GPS shows *Open on map*.
 - **MDI-F88** — Switch Explore to *Columns*: folders first, thumbnails, arrow keys move between columns; restart: the view is kept.
-- **MDI-F89** — Open the side menu: the six main entries and *Tools* with its five entries; no *Documentation* or *Quit*; the Quit shortcut still quits; footer icons show tooltips.
+- **MDI-F89** — Open the side menu: the six main entries and *Tools* with its entries (five, and *Context* once D33 is built); no *Documentation* or *Quit*; the Quit shortcut still quits; footer icons show tooltips.
 - **MDI-F90 / C27** — With an unmounted external drive: it reads *Not mounted*; *Mount read-only* mounts it read-only and fills the source path. With a failing third-party driver: the message names the driver. No raw-device access is attempted.
 - **MDI-F91 / C29** — Unplug the source drive during a job: the waiting state shows with the catalog and source path; no tool process runs; no file is counted skipped or failed; replug: the job continues with the same file. Pull the drive during a transcription: no failed datum, the previous preview is still there, the file is redone after replugging. Delete one source file with the drive connected: it is skipped, the job goes on. Stop while waiting: the job ends. Linux, fixed mount point: unmounting gives the waiting state, not a run of skipped files.
 - **MDI-F92** — A (drive unplugged) queued before B (drive connected): A steps aside, B runs, then A waits. Only A queued: A waits, nothing cycles.
@@ -1281,19 +1293,20 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-F94 / F95** — Write a context with a glossary, a closed category, an open category and two entities; add notes to one catalog; close and reopen (File and Memory modes): all is there; a file of the other catalog is classified without those notes.
 - **MDI-F96** — Change one glossary term and save: the version changes; save without a change: it does not. A datum made afterwards records the new version.
 - **MDI-F97** — Draft from a catalog: a proposal opens; discard it: the context is unchanged; nothing was saved before *Save*.
-- **MDI-F98** — With a context, caption a new image, summarise a new PDF and transcribe a new recording: each datum records the context version; the `whisper.cpp` invocation carries the glossary's preferred forms as its initial prompt; excerpts stay verbatim. Files enriched before the context was saved are not redone.
+- **MDI-F98** — With a context, caption a new image, summarise a new PDF and transcribe a new recording: each datum records the context version; the `whisper.cpp` invocation has no initial prompt; turn on the transcription option and transcribe another recording: the invocation carries the glossary's preferred forms. Set the context's language to Italian with the UI in English: captions, summaries, segments and classifications are in Italian; excerpts stay verbatim. Files enriched before the context was saved are not redone.
 - **MDI-F99** — Enrich a catalog, change and save the context, run *Analyze* again: zero files processed. Upgrade to the build with context support on an enriched catalog: zero files processed.
-- **MDI-F100** — Classify a catalog with a context: each file has a title, description, category values, tags and entities; no vision call and no `whisper.cpp` process appears in the Activity log for the classification steps; with no context the analysis is disabled with its reason.
+- **MDI-F100** — Classify a catalog with a context: each file has a title, description, category values, tags and entities; no vision call and no `whisper.cpp` process appears in the Activity log for the classification steps; with no context the analysis is disabled with its reason. Turn classification on for an enriched catalog and run *Analyze*: no existing file is classified; add a file and update the catalog: only that file is classified; modify a file: it is classified.
 - **MDI-F101** — A closed category receives a value outside its list: it is dropped and the datum records it; a glossary alias is stored as its preferred form; a single-value category holds one value; the `Tags` page is unchanged.
 - **MDI-F102** — Search the instant index for a category value and ask a semantic question matching a classification description: the file is found, with kind *classification*; the Inspector shows the classification and its sources.
-- **MDI-F103** — Re-interpret one folder: the confirmation shows the file count and an estimate; cancel: nothing runs; confirm: only that folder's files are redone; repeat: zero files; the old classification's provenance remains.
-- **MDI-F104 / F105** — Add a folder of PDF, `docx`, `xlsx` and `md` documents: each is indexed with its passage count; the documents' bytes and dates are unchanged; disconnect their drive: classification still uses their passages; Stop during indexing keeps the documents done; index again: unchanged documents are skipped.
+- **MDI-F103** — Re-interpret one folder: the confirmation shows the file count and an estimate; cancel: nothing runs; confirm: only that folder's files are redone; repeat: zero files; the old classification's provenance remains; no caption, summary or transcript step runs. Quit during a re-interpretation and reopen: it continues with the same folder.
+- **MDI-F104 / F105** — Add a folder of PDF, `docx`, `xlsx` and `md` documents: each is indexed with its passage count; a `zip` in the folder is left out, and adding a `zip` alone is refused; the documents' bytes and dates are unchanged; disconnect their drive: classification still uses their passages; Stop during indexing keeps the documents done; index again: unchanged documents are skipped.
 - **MDI-F106** — Change the embeddings model: the passages show as needing indexing again and are not used; empty knowledge base: classification runs with the context alone.
-- **MDI-F107** — From the editor: edit the context, a catalog's notes and the knowledge base; start a draft and a re-interpretation.
+- **MDI-F107** — Open *Tools* → *Context*: edit the context, a catalog's notes and the knowledge base; start a draft and a re-interpretation. The side menu's main entries are unchanged.
 - **MDI-F108** — With the default local provider, a network monitor shows connections to `localhost` only during classification and indexing.
 - **MDI-C30 / C34** — `mdi_context`, `mdi_kb_document`, `mdi_kb_chunk` are in `mdi_data.db` only; the collection database, the `.ini` files and the Memory-mode files are unchanged; K2 and upstream K3 open the collection normally. In Memory mode a file's classification receives its extended metadata as in File mode.
 - **MDI-C31** — *Clear derived data* and a catalog deletion: the collection's context and knowledge base remain; the deleted catalog's notes are gone.
 - **MDI-C33** — Index a large knowledge base while searching and opening *Show analysis*: no "database is locked" error, no stall; no new linked library.
+- **MDI-C36** — Queue a re-interpretation of one folder, quit, reopen: `mdi_job` holds its kind and scope and it resumes with them; open a collection whose `mdi_job` predates D33: its jobs come back as enrichment jobs.
 
 ---
 
@@ -1323,5 +1336,4 @@ target spec is edited.
 | `SpecK3Deployment.md` | State that this fork's builds do not bundle external tools or models; they are user-installed and detected (`MDI-F20`, D9). Bundling and licence review deferred. |
 | `SpecOperationQueue.md` (D19) | `OPQ-C16` note: the enrichment row of the activity panel opens the Activity page (`MDI-F69`); the panel itself is unchanged otherwise. |
 | `SpecProgressReport.md` (D33) | Operation name and process titles for knowledge-base indexing (`MDI-F105`) and for re-interpretation (`MDI-F103`), and the classification's process title. Each new string needs approval (D16). |
-| `SpecSettingsPage.md` (D33) | Only if `Q19` places the context editor in Settings: its section in the collection part (`SET-F3`). |
 | `SpecOperationQueue.md` (D33) | Knowledge-base indexing (`MDI-F105`) is, like the runner, not a queue entry (`MDI-C3`); state it next to the `MDI-C3` constraint listed above. |

@@ -79,8 +79,13 @@ public:
 
     // One enrichment job not finished, in run order (MDI-F12, MDI-C28)
     struct PendingJob {
-        int  deviceId = 0;
-        bool paused   = false;   // paused when it was last written
+        int     deviceId = 0;
+        bool    paused   = false;   // paused when it was last written
+        QString kind     = QStringLiteral("enrich");   // or "reinterpret" (D33)
+        QString folder;             // re-interpretation scope: a folder, all when empty
+        QString fileType;           // and a file type ("image"...), all when empty
+        bool sameWork(const PendingJob &o) const
+        { return deviceId == o.deviceId && kind == o.kind && folder == o.folder && fileType == o.fileType; }
     };
 
     static QString filePath(const QString &collectionFolder);

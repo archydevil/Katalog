@@ -58,6 +58,8 @@
 #include <atomic>
 #include <functional>
 
+#include "core/mdiknowledge.h"
+
 class QProcess;
 
 class MdiEnrichmentJob : public QObject
@@ -70,6 +72,7 @@ public:
         QString extension;
         qint64  size = 0;
         QString dateUpdated;
+        QString metadata;      // extended metadata (JSON), read by the classification (MDI-C34)
     };
 
     struct Config {
@@ -93,6 +96,14 @@ public:
         bool        quickHashOnly = false;   // a pass computing only the quick hash
         QString     catalogStamp;            // catalog state the passes complete on
         QString     sourceRoot;              // catalog's device path: waited for when away (MDI-F91)
+        // Domain context (D33): the collection's context and the catalog's
+        // notes; empty when none (no classification then)
+        QJsonObject context;
+        QString     catalogNotes;
+        bool        reinterpret = false;     // classification only, forced, on a scope (D33)
+        QString     scopeFolder;             // the scope's folder (full path), all when empty
+        QString     scopeFileType;           // the scope's file type ("image"...), all when empty
+        bool        knowledgeOnly = false;   // a pass indexing the knowledge base's pending documents
     };
 
     MdiEnrichmentJob(const Config &config, const QList<FileItem> &files, QObject *parent = nullptr);
@@ -172,6 +183,11 @@ private:
     Result makeQuickHash(const FileItem &file);
     Result makeMediaInfo(const FileItem &file);
     Result makeArchiveListing(const FileItem &file);
+    // Interpretation in the collection's context, text only (D33)
+    Result makeClassification(const FileItem &file);
+    // Knowledge-base pass: text, passages and embeddings of pending documents
+    void   indexKnowledge(int &completed, int &skipped, int &failed);
+    MdiKnowledge::Index m_knowledge;    // loaded once per job for the classification
     // Parallel image-thumbnail pre-pass over files [from, to) (QThreadPool)
     void   precomputeThumbnails(int from, int to);
     QHash<QString, Result> m_precomputed;   // full path -> thumbnail done by the pre-pass
@@ -179,7 +195,8 @@ private:
     bool   finishThumbnail(const QString &jpegPath, const QString &targetPath, QString *error);
     QString transcriptText(const FileItem &file);   // from this catalog's transcript datum
 
-    QString extractText(const QString &path, QString *tool, QString *reason);
+    // whole: every page and character (knowledge base), not the summary's share
+    QString extractText(const QString &path, QString *tool, QString *reason, bool whole = false);
     QString findTranscript(const FileItem &file) const;
     double  probeDuration(const QString &path);
     bool    runTool(const QString &program, const QStringList &args, QByteArray *output, QString *error,
