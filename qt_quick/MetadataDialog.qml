@@ -6,6 +6,8 @@ import org.kde.kirigami as Kirigami
 // Extended metadata viewer, shared by the Search results and Explore pages.
 // Call showFor(catalogId, fileName, folderPath): it fetches the parsed fields and
 // the raw JSON, and reports when a file has no extended metadata.
+// Drawn with the design system (fork, D34 phase R8): the file as a header with
+// the number of fields, the fields in a rounded table of alternating rows.
 Kirigami.Dialog {
     id: metadataDialog
     property string   jsonText:    ""
@@ -26,7 +28,7 @@ Kirigami.Dialog {
     }
 
     title: qsTr("Extended Metadata")
-    width: 500
+    width: Math.min(560, applicationWindow().width - 32)
     preferredHeight: Kirigami.Units.gridUnit * 32
 
     standardButtons: Kirigami.Dialog.Close
@@ -45,122 +47,169 @@ Kirigami.Dialog {
     }
 
     contentItem: ColumnLayout {
-        spacing: 0
+        spacing: 12
 
-        // File name header
+        // ── The file ─────────────────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: fileNameLabel.implicitHeight + Kirigami.Units.smallSpacing * 2
-            color: Kirigami.Theme.alternateBackgroundColor
-            radius: 4
+            Layout.leftMargin: 12
+            Layout.rightMargin: 12
+            Layout.topMargin: 8
+            implicitHeight: fileRow.implicitHeight + 20
+            radius: KTheme.radiusItem
+            color: KTheme.surface2
+            border.color: KTheme.line
+            border.width: 1
 
-            Controls.Label {
-                id: fileNameLabel
-                anchors {
-                    left: parent.left; right: parent.right
-                    verticalCenter: parent.verticalCenter
-                    leftMargin: Kirigami.Units.smallSpacing * 2
-                    rightMargin: Kirigami.Units.smallSpacing * 2
+            RowLayout {
+                id: fileRow
+                x: 12
+                y: 10
+                width: parent.width - 24
+                spacing: 10
+                Kirigami.Icon {
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
+                    Layout.alignment: Qt.AlignTop
+                    source: "documentinfo"
+                    fallback: "dialog-information"
+                    isMask: true
+                    color: KTheme.text2
                 }
-                text: metadataDialog.fileLabel
-                font.bold: true
-                elide: Text.ElideMiddle
+                // The name wraps rather than elides (CDT-C1)
+                Controls.Label {
+                    id: fileNameLabel
+                    Layout.fillWidth: true
+                    text: metadataDialog.fileLabel
+                    wrapMode: Text.WrapAnywhere
+                    color: KTheme.text
+                    font.weight: Font.Bold
+                }
+                KInfoTag {
+                    Layout.alignment: Qt.AlignTop
+                    text: qsTr("Fields: %1").arg(metadataDialog.fields.length)
+                }
             }
         }
 
-        Kirigami.Separator { Layout.fillWidth: true }
-
-        // Column headers
+        // ── The fields ───────────────────────────────────────────────────────
         Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 28
-            color: Kirigami.Theme.backgroundColor
-
-            Controls.Label {
-                x: 8; y: 0
-                width: 152
-                height: parent.height
-                text: qsTr("Field")
-                font.bold: true
-                verticalAlignment: Text.AlignVCenter
-            }
-            Rectangle {
-                x: 160; y: 4
-                width: 1; height: parent.height - 8
-                color: Kirigami.Theme.separatorColor ?? "transparent"; opacity: 0.5
-            }
-            Controls.Label {
-                x: 169; y: 0
-                width: parent.width - x - 8
-                height: parent.height
-                text: qsTr("Value")
-                font.bold: true
-                verticalAlignment: Text.AlignVCenter
-            }
-        }
-
-        Kirigami.Separator { Layout.fillWidth: true }
-
-        // Scrollable table
-        Controls.ScrollView {
-            id: metadataScrollView
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.leftMargin: 12
+            Layout.rightMargin: 12
+            Layout.bottomMargin: 8
+            radius: KTheme.radiusItem
+            color: KTheme.surface
+            border.color: KTheme.line
+            border.width: 1
             clip: true
 
-            ListView {
-                id: metadataListView
-                width: metadataScrollView.availableWidth
-                model: metadataDialog.fields
+            // Column headers
+            Rectangle {
+                id: headerRow
+                anchors { top: parent.top; left: parent.left; right: parent.right; margins: 1 }
+                implicitHeight: 32
+                height: implicitHeight
+                radius: KTheme.radiusItem
+                color: KTheme.surface2
+
+                // Square lower corners: only the top follows the rounded frame
+                Rectangle {
+                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                    height: parent.radius
+                    color: parent.color
+                }
+
+                Controls.Label {
+                    x: 12; y: 0
+                    width: 148
+                    height: parent.height
+                    text: qsTr("Field")
+                    font.weight: Font.DemiBold
+                    font.pixelSize: KTheme.note
+                    color: KTheme.text3
+                    verticalAlignment: Text.AlignVCenter
+                }
+                Controls.Label {
+                    x: 172; y: 0
+                    width: parent.width - x - 12
+                    height: parent.height
+                    text: qsTr("Value")
+                    font.weight: Font.DemiBold
+                    font.pixelSize: KTheme.note
+                    color: KTheme.text3
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+            Rectangle {
+                id: headerSep
+                anchors { top: headerRow.bottom; left: parent.left; right: parent.right }
+                height: 1
+                color: KTheme.line
+            }
+
+            // Scrollable table
+            Controls.ScrollView {
+                id: metadataScrollView
+                anchors { top: headerSep.bottom; left: parent.left; right: parent.right; bottom: parent.bottom
+                          leftMargin: 1; rightMargin: 1; bottomMargin: KTheme.radiusItem / 2 }
                 clip: true
 
-                delegate: Rectangle {
-                    required property var   modelData
-                    required property int   index
-                    width: ListView.view.width
+                ListView {
+                    id: metadataListView
+                    width: metadataScrollView.availableWidth
+                    model: metadataDialog.fields
+                    clip: true
 
-                    readonly property int   colWidth: 160
-                    readonly property int   hPad:     8
-                    implicitHeight: Math.max(28, valueText.implicitHeight + 10)
+                    delegate: Rectangle {
+                        id: fieldRow
+                        required property var   modelData
+                        required property int   index
+                        width: ListView.view.width
 
-                    readonly property bool darkTheme: Kirigami.Theme.backgroundColor.hslLightness < 0.5
-                    color: index % 2 === 0
-                           ? (darkTheme ? Kirigami.Theme.backgroundColor : "#ffffff")
-                           : (darkTheme ? "#161b1d" : "#f5f5f5")
+                        readonly property int   colWidth: 160
+                        readonly property int   hPad:     12
+                        implicitHeight: Math.max(34, Math.max(fieldLabel.implicitHeight, valueText.implicitHeight) + 14)
 
-                    Controls.Label {
-                        x: hPad
-                        y: 5
-                        width: colWidth - hPad
-                        text: modelData.label
-                        wrapMode: Text.NoWrap
-                        elide: Text.ElideRight
-                        opacity: 0.8
-                        color: Kirigami.Theme.textColor
-                    }
+                        color: index % 2 === 0 ? KTheme.surface : KTheme.surface2
 
-                    Rectangle {
-                        x: colWidth
-                        y: 0
-                        width: 1
-                        height: parent.height
-                        color: Kirigami.Theme.separatorColor ?? Kirigami.Theme.textColor
-                        opacity: 0.4
-                    }
+                        Controls.Label {
+                            id: fieldLabel
+                            x: fieldRow.hPad
+                            y: 7
+                            width: fieldRow.colWidth - fieldRow.hPad
+                            text: fieldRow.modelData.label
+                            wrapMode: Text.Wrap
+                            color: KTheme.text2
+                            font.pixelSize: KTheme.note
+                            font.weight: Font.Medium
+                        }
 
-                    Controls.Label {
-                        id: valueText
-                        x: colWidth + 1 + hPad
-                        y: 5
-                        width: parent.width - x - hPad
-                        text: modelData.value
-                        wrapMode: Text.WrapAnywhere
-                        color: Kirigami.Theme.textColor
-                    }
+                        Rectangle {
+                            x: fieldRow.colWidth
+                            y: 0
+                            width: 1
+                            height: parent.height
+                            color: KTheme.line
+                        }
 
-                    Kirigami.Separator {
-                        anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                        opacity: 0.3
+                        Controls.Label {
+                            id: valueText
+                            x: fieldRow.colWidth + 1 + fieldRow.hPad
+                            y: 7
+                            width: parent.width - x - fieldRow.hPad
+                            text: fieldRow.modelData.value
+                            wrapMode: Text.WrapAnywhere
+                            color: KTheme.text
+                        }
+
+                        Rectangle {
+                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                            height: 1
+                            color: KTheme.line
+                            opacity: 0.6
+                        }
                     }
                 }
             }

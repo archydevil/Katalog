@@ -163,8 +163,6 @@ Kirigami.Page {
                 Layout.alignment: Qt.AlignTop
                 label: qsTr("Conflicts")
                 value: root.count(root.conflictCount)
-                tagText: qsTr("Conflicts: %1").arg(root.conflictCount)
-                tagTone: root.conflictCount > 0 ? "warn" : "ok"
             }
             KMetricCard {
                 Layout.fillWidth: true
@@ -232,6 +230,7 @@ Kirigami.Page {
         // Column widths are user-adjustable by dragging the header dividers,
         // consistent with the search-results and explore tables. Drawn as a card.
         Rectangle {
+            id: tableCard
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: KTheme.surface
@@ -443,8 +442,7 @@ Kirigami.Page {
         // Keeps the cards at the top when the table is hidden
         Item {
             Layout.fillHeight: true
-            visible: !root.reportMode && !(root.previewData !== null && root.previewData.hasData === true
-                                           && (root.copyCount + root.conflictCount) > 0)
+            visible: !tableCard.visible
         }
     }
 }

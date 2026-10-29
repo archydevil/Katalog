@@ -21,9 +21,10 @@ ColumnLayout {
              : type
     }
 
+    // A field's name, on its left, or above it when the page is narrow and
+    // its grid has one column.
     component FieldLabel: Controls.Label {
-        Layout.preferredWidth: root.narrow ? -1 : 180
-        Layout.fillWidth: root.narrow
+        Layout.preferredWidth: 180
         Layout.alignment: Qt.AlignVCenter
         wrapMode: Text.WordWrap
         color: KTheme.text2
@@ -427,7 +428,7 @@ ColumnLayout {
                     function positionToRectangle(pos) { return Qt.rect(0, 0, 0, 0) }
                     property int selectionStart: 0
                     spacing: Kirigami.Units.smallSpacing
-                    Item { width: Kirigami.Units.smallSpacing }
+                    Item { implicitWidth: Kirigami.Units.smallSpacing }
                     Kirigami.Icon {
                         source: edit_comboBox_FileType.currentIndex >= 0
                                 ? edit_comboBox_FileType.model[edit_comboBox_FileType.currentIndex].iconName : ""
