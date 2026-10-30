@@ -9079,6 +9079,14 @@ QString AppManager::runWebQueries(int deviceId, const QVariantList &queries)
     return QString();
 }
 //----------------------------------------------------------------------
+int AppManager::deviceIdOfCatalog(int catalogId)
+{
+    for (const Device::DeviceTreeNode &n : Device::loadDeviceTree(m_connectionName))
+        if (n.type == QLatin1String("Catalog") && n.externalId == catalogId)
+            return n.id;
+    return -1;
+}
+//----------------------------------------------------------------------
 QVariantMap AppManager::documentStudy(int catalogId, const QString &fullPath)
 {
     QVariantMap out{ { QStringLiteral("available"), false } };

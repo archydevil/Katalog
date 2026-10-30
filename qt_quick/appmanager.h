@@ -583,6 +583,9 @@ public slots:
     Q_INVOKABLE QString      runWebQueries(int deviceId, const QVariantList &queries);
     bool                     getWebQueriesRunning() const { return m_webThread != nullptr; }
     Q_INVOKABLE QVariantMap  documentStudy(int catalogId, const QString &fullPath);
+    // The device of a catalog, -1 when none: actions started from a file
+    // (study its drive, show it in Browse) work on the file's own drive
+    Q_INVOKABLE int          deviceIdOfCatalog(int catalogId);
     // scope: "file", "folder" or "catalog"; empty or the reason
     Q_INVOKABLE QString      exportHtml(const QString &scope, int catalogId, const QString &path,
                                         const QString &targetFile);

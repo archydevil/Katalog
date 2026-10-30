@@ -20,11 +20,31 @@ ColumnLayout {
     property var    similar: []
     property var    groups: []
     property bool   similarShown: false
+    property bool   allPhotos: false
     // Faces ticked in a grid, by face id: the bulk actions apply to them
     property var    picked: ({})
     readonly property bool facesOn: appManager1.facesAvailable()
+    // Something changed while the page was hidden: it reloads when shown
+    property bool   stale: true
+    readonly property int groupFacesShown: 12
 
+    // Reading everything is heavy (the grouping compares every unnamed face
+    // with the others): only while the page is shown, and once for a burst of
+    // changes (an approval alone signals people, faces and information)
     function refresh() {
+        if (!people.visible) {
+            people.stale = true
+            return
+        }
+        refreshTimer.restart()
+    }
+    function setShown(shown) {
+        if (shown && people.stale)
+            people.refreshNow()
+    }
+    function refreshNow() {
+        refreshTimer.stop()
+        people.stale = false
         people.list = appManager1.people(people.filter)
         if (people.currentId > 0) {
             people.current = appManager1.person(people.currentId)
@@ -37,12 +57,26 @@ ColumnLayout {
             people.groups  = appManager1.unnamedFaceGroups(24)
         }
     }
+    Timer {
+        id: refreshTimer
+        interval: 150
+        onTriggered: people.refreshNow()
+    }
+    // A face search or a dating job in the background writes for hours: the
+    // page follows it, at most every 10 seconds
+    Timer {
+        id: jobTimer
+        interval: 10000
+        onTriggered: people.refresh()
+    }
     function choose(personId) {
         people.currentId = personId
         people.similarShown = false
+        people.allPhotos = false
         people.similar = []
         people.picked = ({})
-        people.refresh()
+        people.current = appManager1.person(personId)
+        people.personFiles = appManager1.filesOfPerson(personId)
     }
     function pick(faceId, on) {
         let p = Object.assign({}, people.picked)
@@ -53,17 +87,30 @@ ColumnLayout {
     function pickedIds(from) {
         return from.filter(f => people.picked[f.faceId]).map(f => f.faceId)
     }
+    function nameFaces(ids) {
+        applicationWindow().pickPerson(function(personId) {
+            if (personId <= 0) return
+            const error = appManager1.confirmFaces(ids, personId)
+            people.picked = ({})
+            people.notify(error, qsTr("Named."))
+        })
+    }
     function notify(error, done) {
         applicationWindow().showPassiveNotification(error !== "" ? error : done)
     }
     function count(n) { return Number(n || 0).toLocaleString(Qt.locale(), "f", 0) }
 
-    Component.onCompleted: refresh()
     Connections {
         target: appManager1
         function onPeopleChanged()   { people.refresh() }
         function onFacesChanged()    { people.refresh() }
         function onFileInfoChanged() { people.refresh() }
+        function onMdiRevisionChanged() {
+            if (!people.visible)
+                people.stale = true
+            else if (!jobTimer.running)
+                jobTimer.start()
+        }
     }
 
     // A face as a small tile: the crop, who it is (or is proposed to be), how
@@ -80,7 +127,13 @@ ColumnLayout {
         checkable: tickable
         checked: ticked
         onToggled: people.pick(face.faceId, checked)
+        Keys.onReturnPressed: if (tickable) people.pick(face.faceId, !ticked)
+        Keys.onEnterPressed:  if (tickable) people.pick(face.faceId, !ticked)
         Accessible.name: (face.personName || face.suggestedName || qsTr("Unknown person")) + " · " + (face.fileName || "")
+        // Which photo the face comes from
+        Controls.ToolTip.text: face.fullPath || ""
+        Controls.ToolTip.visible: hovered && (face.fullPath || "") !== ""
+        Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
         background: Rectangle {
             radius: KTheme.radiusItem
             color: tile.ticked ? KTheme.accentSoft : tile.hovered ? KTheme.hover : KTheme.surface2
@@ -197,7 +250,7 @@ ColumnLayout {
             Layout.fillWidth: true
             placeholderText: qsTr("Name, role or organisation…")
             Accessible.name: placeholderText
-            onTextChanged: { people.filter = text; people.refresh() }
+            onTextChanged: { people.filter = text; people.list = appManager1.people(people.filter) }
         }
         KButton {
             variant: "primary"
@@ -225,6 +278,8 @@ ColumnLayout {
                 Accessible.description: modelData.role || ""
                 Accessible.selected: people.currentId === modelData.id
                 onClicked: people.choose(modelData.id)
+                Keys.onReturnPressed: people.choose(modelData.id)
+                Keys.onEnterPressed:  people.choose(modelData.id)
                 background: Rectangle {
                     radius: KTheme.radiusCard
                     color: people.currentId === personCard.modelData.id ? KTheme.accentSoft
@@ -332,7 +387,7 @@ ColumnLayout {
             Layout.fillWidth: true
             spacing: 6
             Repeater {
-                model: people.personFiles.slice(0, 60)
+                model: people.allPhotos ? people.personFiles : people.personFiles.slice(0, 60)
                 delegate: Controls.AbstractButton {
                     id: photoTile
                     required property var modelData
@@ -344,6 +399,8 @@ ColumnLayout {
                     Controls.ToolTip.text: modelData.name
                     Controls.ToolTip.visible: hovered || visualFocus
                     onClicked: applicationWindow().showFileInBrowse(modelData.deviceId, modelData.fullPath)
+                    Keys.onReturnPressed: clicked()
+                    Keys.onEnterPressed:  clicked()
                     background: Rectangle {
                         radius: KTheme.radiusItem
                         color: KTheme.surface2
@@ -357,6 +414,12 @@ ColumnLayout {
                     }
                 }
             }
+        }
+        KButton {
+            visible: !people.allPhotos && people.personFiles.length > 60
+            variant: "link"
+            text: qsTr("Show all %1 photos").arg(people.count(people.personFiles.length))
+            onClicked: people.allPhotos = true
         }
 
         // Their face in the other photos
@@ -440,35 +503,71 @@ ColumnLayout {
             id: groupCard
             required property var modelData
             Layout.fillWidth: true
+            property bool expanded: false
             KSectionHeader {
                 level: 3
                 title: qsTr("%1 faces").arg(people.count(groupCard.modelData.size))
             }
+            // A large group draws only its first faces until asked
             Flow {
                 Layout.fillWidth: true
                 spacing: 8
                 Repeater {
-                    model: groupCard.modelData.faces
+                    model: groupCard.expanded ? groupCard.modelData.faces
+                                              : groupCard.modelData.faces.slice(0, people.groupFacesShown)
                     delegate: FaceTile { required property var modelData; face: modelData }
                 }
             }
-            KButton {
-                variant: "primary"
-                icon.name: "list-add"
-                text: qsTr("Name these faces")
-                onClicked: {
-                    const faces = groupCard.modelData.faces
-                    const ticked = faces.filter(f => people.picked[f.faceId]).map(f => f.faceId)
-                    const ids = ticked.length > 0 ? ticked : faces.map(f => f.faceId)
-                    applicationWindow().pickPerson(function(personId) {
-                        if (personId <= 0) return
-                        const error = appManager1.confirmFaces(ids, personId)
-                        people.picked = ({})
-                        people.notify(error, qsTr("Named."))
-                    })
+            Flow {
+                Layout.fillWidth: true
+                spacing: 8
+                KButton {
+                    variant: "primary"
+                    icon.name: "list-add"
+                    text: qsTr("Name these faces")
+                    onClicked: {
+                        const faces = groupCard.modelData.faces
+                        const ticked = faces.filter(f => people.picked[f.faceId]).map(f => f.faceId)
+                        // None ticked names the whole group, faces not seen included: asked first
+                        if (ticked.length > 0)
+                            people.nameFaces(ticked)
+                        else
+                            nameGroupDialog.ask(faces.map(f => f.faceId))
+                    }
+                }
+                KButton {
+                    visible: !groupCard.expanded && groupCard.modelData.faces.length > people.groupFacesShown
+                    variant: "link"
+                    text: qsTr("Show all %1 faces").arg(people.count(groupCard.modelData.faces.length))
+                    onClicked: groupCard.expanded = true
                 }
             }
         }
+    }
+    Kirigami.PromptDialog {
+        id: nameGroupDialog
+        property var ids: []
+        function ask(faceIds) { ids = faceIds; open() }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Name all %n faces of the group?", "", nameGroupDialog.ids.length)
+        subtitle: qsTr("No face is ticked, so the name goes to the whole group, the faces not shown included. The groups are approximate: ticking the right faces first is safer.")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Name these faces")
+                icon.name: "list-add"
+                onTriggered: {
+                    nameGroupDialog.close()
+                    people.nameFaces(nameGroupDialog.ids)
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: nameGroupDialog.close()
+            }
+        ]
     }
 
     // ── Looking for faces on a drive ──────────────────────────────────────

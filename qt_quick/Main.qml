@@ -3986,6 +3986,7 @@ Kirigami.ApplicationWindow {
         visible: false
         title: qsTr("People")
         titleDelegate: Component { NavTitle { text: pagePeople.title } }   // Back, Forward, title (D36)
+        onVisibleChanged: pagePeople_form.setShown(visible)
         PagePeople {
             id: pagePeople_form
         }

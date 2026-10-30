@@ -19,18 +19,38 @@ Rectangle {
     property string fullPath:  ""
     property var    info: ({})
 
-    function reload() {
-        info = (catalogId > 0 && fullPath !== "") ? appManager1.inspectorInfo(catalogId, fullPath) : ({})
+    // A new selection is read once, after the arrow keys settle (the catalog
+    // and the path change together, and each reading asks the drive too)
+    function reload() { reloadTimer.restart() }
+    function reloadNow() {
+        reloadTimer.stop()
+        setIfChanged("info", (catalogId > 0 && fullPath !== "") ? appManager1.inspectorInfo(catalogId, fullPath) : ({}))
         reloadPeople()
         reloadDeductions()
+    }
+    // Only what changed is assigned: a job writing elsewhere must not rebuild
+    // the cards, nor take the keyboard focus away
+    function setIfChanged(name, value) {
+        if (JSON.stringify(inspector[name]) !== JSON.stringify(value))
+            inspector[name] = value
+    }
+    Timer {
+        id: reloadTimer
+        interval: 80
+        onTriggered: inspector.reloadNow()
+    }
+    Timer {
+        id: jobTimer
+        interval: 3000
+        onTriggered: if (inspector.visible) inspector.reloadNow()
     }
     // What the owner wrote about the file, its people and their faces (D38)
     property var fileFacts: ({})
     property var faces: []
     function reloadPeople() {
         const shown = catalogId > 0 && fullPath !== ""
-        fileFacts = shown ? appManager1.fileInfo(catalogId, fullPath) : ({})
-        faces = shown && appManager1.facesAvailable() ? appManager1.facesInFile(catalogId, fullPath) : []
+        setIfChanged("fileFacts", shown ? appManager1.fileInfo(catalogId, fullPath) : ({}))
+        setIfChanged("faces", shown && appManager1.facesAvailable() ? appManager1.facesInFile(catalogId, fullPath) : [])
     }
     readonly property var factRows: [
         [qsTr("Title"), fileFacts.title], [qsTr("Description"), fileFacts.description],
@@ -44,8 +64,8 @@ Rectangle {
     property var study: ({})
     function reloadDeductions() {
         const shown = catalogId > 0 && fullPath !== ""
-        proposals = shown ? appManager1.proposalsForFile(catalogId, fullPath).filter(p => p.status === "pending") : []
-        study = shown ? appManager1.documentStudy(catalogId, fullPath) : ({})
+        setIfChanged("proposals", shown ? appManager1.proposalsForFile(catalogId, fullPath).filter(p => p.status === "pending") : [])
+        setIfChanged("study", shown ? appManager1.documentStudy(catalogId, fullPath) : ({}))
     }
     function fieldName(field) {
         return field === "date" ? qsTr("Date") : field === "event" ? qsTr("Event") : field === "place" ? qsTr("Place")
@@ -54,11 +74,12 @@ Rectangle {
     function personMenuFor(face) { faceMenu.face = face; faceMenu.popup() }
     onCatalogIdChanged: reload()
     onFullPathChanged:  reload()
-    onVisibleChanged:   if (visible) reload()
+    onVisibleChanged:   if (visible) reloadNow()
     Connections {
         target: appManager1
-        // New results of the enrichment job for the file shown
-        function onMdiRevisionChanged() { if (inspector.visible) inspector.reload() }
+        // New results of the enrichment job for the file shown: a job signals
+        // every second, the panel looks every 3
+        function onMdiRevisionChanged() { if (inspector.visible && !jobTimer.running) jobTimer.start() }
         function onFileInfoChanged()    { if (inspector.visible) inspector.reloadPeople() }
         function onPeopleChanged()      { if (inspector.visible) inspector.reloadPeople() }
         function onFacesChanged()       { if (inspector.visible) inspector.reloadPeople() }

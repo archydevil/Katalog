@@ -19,11 +19,23 @@ Kirigami.ScrollablePage {
     title: qsTr("Reading: %1").arg(fileName)
     background: Rectangle { color: KTheme.ground }
 
-    function load() { reader.study = appManager1.documentStudy(reader.catalogId, reader.fullPath) }
+    // Read again only when the study itself changed: a job running elsewhere
+    // signals every second, and rebuilding would close the opened fragments
+    // and move the reading
+    function load() {
+        const study = appManager1.documentStudy(reader.catalogId, reader.fullPath)
+        if (JSON.stringify(study) !== JSON.stringify(reader.study))
+            reader.study = study
+    }
     Component.onCompleted: load()
+    Timer {
+        id: reloadTimer
+        interval: 3000
+        onTriggered: reader.load()
+    }
     Connections {
         target: appManager1
-        function onMdiRevisionChanged() { reader.load() }
+        function onMdiRevisionChanged() { if (!reloadTimer.running) reloadTimer.start() }
     }
 
     actions: [
@@ -45,7 +57,9 @@ Kirigami.ScrollablePage {
         id: exportDialog
         fileMode: FileDialog.SaveFile
         nameFilters: [qsTr("HTML page (*.html)")]
-        currentFile: "file:///" + reader.fileName.replace(/\.[^.]*$/, "") + ".html"
+        // Beside the document, when its folder is reachable
+        currentFolder: "file://" + reader.fullPath.slice(0, Math.max(0, reader.fullPath.lastIndexOf("/")))
+        currentFile: currentFolder + "/" + reader.fileName.replace(/\.[^.]*$/, "") + ".html"
         onAccepted: {
             const error = appManager1.exportHtml("file", reader.catalogId, reader.fullPath,
                                                  appManager1.pathFromFileUrl(selectedFile.toString()))
@@ -96,8 +110,8 @@ Kirigami.ScrollablePage {
                     text: qsTr("Study the documents of this drive")
                     icon.name: "media-playback-start"
                     onTriggered: {
-                        const error = appManager1.startDocumentStudy(appManager1.selectedDeviceType === "Catalog"
-                                                                     ? appManager1.selectedDeviceId : -1)
+                        // The drive of this document, whatever My drives shows
+                        const error = appManager1.startDocumentStudy(appManager1.deviceIdOfCatalog(reader.catalogId))
                         applicationWindow().showPassiveNotification(error !== "" ? error
                             : qsTr("Studying in the background: Work in progress shows how it goes."))
                     }
