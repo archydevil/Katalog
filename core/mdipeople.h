@@ -190,6 +190,8 @@ public:
     static QList<QPair<Face, double>> similarFaces(const QString &connectionName, int personId,
                                                    int limit, double minScore);
     static QList<Face> pendingFaces(const QString &connectionName, int limit);
+    // How many faces pendingFaces lists without a limit: read only, for Home
+    static int         pendingFaceCount(const QString &connectionName);
     // Unknown faces grouped greedily: each group's faces match its first face
     // (the best detection) by at least `threshold`; groups of 2 or more, largest first
     static QList<QList<Face>> unnamedGroups(const QString &connectionName, int limit, double threshold);

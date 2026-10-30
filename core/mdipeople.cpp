@@ -1090,6 +1090,16 @@ QList<MdiPeople::Face> MdiPeople::pendingFaces(const QString &connectionName, in
     return faces;
 }
 
+int MdiPeople::pendingFaceCount(const QString &connectionName)
+{
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    if (q.exec(QStringLiteral("SELECT COUNT(*) FROM mdi_face "
+                              "WHERE face_status = 'suggested' AND face_suggested_person_id IS NOT NULL"))
+        && q.next())
+        return q.value(0).toInt();
+    return 0;
+}
+
 QList<QList<MdiPeople::Face>> MdiPeople::unnamedGroups(const QString &connectionName, int limit, double threshold)
 {
     QList<Face> faces = selectFaces(connectionName, QStringLiteral("face_person_id IS NULL AND face_status = 'unknown'"),

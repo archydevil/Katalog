@@ -27,6 +27,16 @@ ColumnLayout {
     // Something changed while the page was hidden: it reloads when shown
     property bool   stale: true
     readonly property int groupFacesShown: 12
+    // Similar faces and the groups are computed in the background: busy until
+    // they come; a result already drawn (same serial) is not drawn again
+    property bool   groupsBusy: false
+    property bool   similarBusy: false
+    property int    groupsSerial: -1
+    property int    similarSerial: -1
+    // "Look for similar faces" says when none is found, once it has looked
+    property bool   similarAsked: false
+    // Faces to ignore, waiting for the answer of ignoreDialog
+    property var    toIgnore: []
 
     // Reading everything is heavy (the grouping compares every unnamed face
     // with the others): only while the page is shown, and once for a burst of
@@ -50,12 +60,17 @@ ColumnLayout {
             people.current = appManager1.person(people.currentId)
             people.personFiles = appManager1.filesOfPerson(people.currentId)
             if (people.similarShown)
-                people.similar = appManager1.similarFaces(people.currentId, 80, 0.30)
+                people.askSimilar()
         }
         if (people.facesOn) {
             people.pending = appManager1.pendingFaces(120)
-            people.groups  = appManager1.unnamedFaceGroups(24)
+            people.groupsBusy = true
+            appManager1.requestFaceGroups(24)   // answered by onFaceGroupsReady
         }
+    }
+    function askSimilar() {
+        people.similarBusy = true
+        appManager1.requestSimilarFaces(people.currentId, 80, 0.30)   // answered by onSimilarFacesReady
     }
     Timer {
         id: refreshTimer
@@ -74,6 +89,9 @@ ColumnLayout {
         people.similarShown = false
         people.allPhotos = false
         people.similar = []
+        people.similarSerial = -1
+        people.similarBusy = false
+        people.similarAsked = false
         people.picked = ({})
         people.current = appManager1.person(personId)
         people.personFiles = appManager1.filesOfPerson(personId)
@@ -98,6 +116,11 @@ ColumnLayout {
     function notify(error, done) {
         applicationWindow().showPassiveNotification(error !== "" ? error : done)
     }
+    // Ignored faces leave this page and no list brings them back: asked first
+    function ignoreFaces(ids) {
+        if (ids.length > 0)
+            ignoreDialog.ask(ids)
+    }
     function count(n) { return Number(n || 0).toLocaleString(Qt.locale(), "f", 0) }
 
     Connections {
@@ -105,6 +128,25 @@ ColumnLayout {
         function onPeopleChanged()   { people.refresh() }
         function onFacesChanged()    { people.refresh() }
         function onFileInfoChanged() { people.refresh() }
+        function onFaceGroupsReady(groups, serial) {
+            people.groupsBusy = false
+            if (serial !== people.groupsSerial || serial === 0) {
+                people.groupsSerial = serial
+                people.groups = groups
+            }
+        }
+        function onSimilarFacesReady(personId, faces, serial) {
+            if (personId !== people.currentId)
+                return   // asked for the person chosen before
+            people.similarBusy = false
+            if (serial !== people.similarSerial || serial === 0) {
+                people.similarSerial = serial
+                people.similar = faces
+            }
+            if (people.similarAsked && faces.length === 0)
+                applicationWindow().showPassiveNotification(qsTr("No similar face found. Approving more faces of this person helps."))
+            people.similarAsked = false
+        }
         function onMdiRevisionChanged() {
             if (!people.visible)
                 people.stale = true
@@ -129,11 +171,50 @@ ColumnLayout {
         onToggled: people.pick(face.faceId, checked)
         Keys.onReturnPressed: if (tickable) people.pick(face.faceId, !ticked)
         Keys.onEnterPressed:  if (tickable) people.pick(face.faceId, !ticked)
+        // The menu key and a right click open the tile's menu, as "⋯" does
+        Keys.onMenuPressed: faceTileMenu.openFor(tile.face, moreButton)
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: faceTileMenu.openFor(tile.face, moreButton)
+        }
         Accessible.name: (face.personName || face.suggestedName || qsTr("Unknown person")) + " · " + (face.fileName || "")
         // Which photo the face comes from
         Controls.ToolTip.text: face.fullPath || ""
-        Controls.ToolTip.visible: hovered && (face.fullPath || "") !== ""
+        Controls.ToolTip.visible: hovered && !moreButton.hovered && (face.fullPath || "") !== ""
         Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+        // Show the photo, ignore the face: in a menu, not more buttons
+        Controls.ToolButton {
+            id: moreButton
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: 4
+            z: 1
+            width: 28
+            height: 28
+            padding: 4
+            icon.name: "overflow-menu"
+            icon.width: 16
+            icon.height: 16
+            display: Controls.AbstractButton.IconOnly
+            hoverEnabled: true
+            focusPolicy: Qt.TabFocus
+            // Icon only: the tooltip and the accessible name say what it is
+            Accessible.name: qsTr("More actions")
+            Accessible.description: tile.Accessible.name
+            Controls.ToolTip.text: qsTr("More actions")
+            Controls.ToolTip.visible: hovered || visualFocus
+            Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+            onClicked: faceTileMenu.openFor(tile.face, moreButton)
+            Keys.onReturnPressed: faceTileMenu.openFor(tile.face, moreButton)
+            Keys.onEnterPressed:  faceTileMenu.openFor(tile.face, moreButton)
+            // Readable over any photo: its own surface, not only on hover
+            background: Rectangle {
+                radius: KTheme.radiusItem
+                color: moreButton.hovered || moreButton.down ? KTheme.hover : KTheme.surface
+                border.width: moreButton.visualFocus ? 2 : 1
+                border.color: moreButton.visualFocus ? KTheme.accent : KTheme.line
+            }
+        }
         background: Rectangle {
             radius: KTheme.radiusItem
             color: tile.ticked ? KTheme.accentSoft : tile.hovered ? KTheme.hover : KTheme.surface2
@@ -232,6 +313,13 @@ ColumnLayout {
                 people.picked = ({})
                 people.notify(error, qsTr("The proposals were removed; the faces stay without a name."))
             }
+        }
+        KButton {
+            variant: "secondary"
+            icon.name: "view-hidden"
+            enabled: people.pickedIds(people.pending).length > 0
+            text: qsTr("Ignore the selected (%1)").arg(people.pickedIds(people.pending).length)
+            onClicked: people.ignoreFaces(people.pickedIds(people.pending))
         }
     }
 
@@ -437,9 +525,24 @@ ColumnLayout {
             text: qsTr("Look for similar faces")
             onClicked: {
                 people.similarShown = true
-                people.similar = appManager1.similarFaces(people.currentId, 80, 0.30)
-                if (people.similar.length === 0)
-                    applicationWindow().showPassiveNotification(qsTr("No similar face found. Approving more faces of this person helps."))
+                people.similarAsked = true   // says so when none is found
+                people.askSimilar()
+            }
+        }
+        // Until the first answer: later ones replace the faces in place, so
+        // the page does not jump while a job runs
+        RowLayout {
+            visible: people.similarShown && people.similarBusy && people.similar.length === 0
+            spacing: 8
+            Controls.BusyIndicator {
+                running: parent.visible
+                implicitWidth: 32
+                implicitHeight: 32
+                Accessible.ignored: true   // the label says it
+            }
+            Controls.Label {
+                text: qsTr("Comparing the faces…")
+                color: KTheme.text2
             }
         }
         Flow {
@@ -481,9 +584,9 @@ ColumnLayout {
                 enabled: people.pickedIds(people.similar).length > 0
                 text: qsTr("Not %1").arg(people.current.name || "")
                 onClicked: {
+                    // facesChanged follows: the page asks for the similar faces again
                     const error = appManager1.rejectFaces(people.pickedIds(people.similar))
                     people.picked = ({})
-                    people.similar = appManager1.similarFaces(people.currentId, 80, 0.30)
                     people.notify(error, qsTr("Done."))
                 }
             }
@@ -491,11 +594,27 @@ ColumnLayout {
     }
 
     // ── Faces without a name, grouped ─────────────────────────────────────
+    // Shown while the first grouping runs, then when there are groups; a
+    // grouping again keeps the groups drawn until the new ones come
     KSectionHeader {
-        visible: people.facesOn && people.groups.length > 0
+        visible: people.facesOn && (people.groups.length > 0 || (people.groupsBusy && people.groupsSerial < 0))
         level: 2
         title: qsTr("Faces without a name")
         description: qsTr("Faces that look alike are grouped. Naming a group attributes its ticked faces, or all of them when none is ticked.")
+    }
+    RowLayout {
+        visible: people.facesOn && people.groupsBusy && people.groups.length === 0 && people.groupsSerial < 0
+        spacing: 8
+        Controls.BusyIndicator {
+            running: parent.visible
+            implicitWidth: 32
+            implicitHeight: 32
+            Accessible.ignored: true   // the label says it
+        }
+        Controls.Label {
+            text: qsTr("Comparing the faces…")
+            color: KTheme.text2
+        }
     }
     Repeater {
         model: people.facesOn ? people.groups : []
@@ -536,6 +655,13 @@ ColumnLayout {
                     }
                 }
                 KButton {
+                    variant: "secondary"
+                    icon.name: "view-hidden"
+                    enabled: people.pickedIds(groupCard.modelData.faces).length > 0
+                    text: qsTr("Ignore the selected (%1)").arg(people.pickedIds(groupCard.modelData.faces).length)
+                    onClicked: people.ignoreFaces(people.pickedIds(groupCard.modelData.faces))
+                }
+                KButton {
                     visible: !groupCard.expanded && groupCard.modelData.faces.length > people.groupFacesShown
                     variant: "link"
                     text: qsTr("Show all %1 faces").arg(people.count(groupCard.modelData.faces.length))
@@ -566,6 +692,60 @@ ColumnLayout {
                 text: qsTr("Cancel")
                 icon.name: "dialog-cancel"
                 onTriggered: nameGroupDialog.close()
+            }
+        ]
+    }
+
+    // A face tile's menu ("⋯", right click or the menu key)
+    Controls.Menu {
+        id: faceTileMenu
+        property var face: ({})
+        property int deviceId: -1
+        function openFor(face, item) {
+            faceTileMenu.face = face
+            // The photo's drive, looked up once the menu is asked for
+            faceTileMenu.deviceId = appManager1.deviceIdOfCatalog(face.catalogId || 0)
+            faceTileMenu.popup(item, 0, item.height)
+        }
+        Controls.MenuItem {
+            text: qsTr("Show the photo")
+            icon.name: "view-preview"
+            enabled: faceTileMenu.deviceId >= 0 && (faceTileMenu.face.fullPath || "") !== ""
+            onTriggered: applicationWindow().showFileInBrowse(faceTileMenu.deviceId, faceTileMenu.face.fullPath)
+        }
+        Controls.MenuItem {
+            text: qsTr("Ignore this face")
+            icon.name: "view-hidden"
+            onTriggered: people.ignoreFaces([faceTileMenu.face.faceId])
+        }
+    }
+    Kirigami.PromptDialog {
+        id: ignoreDialog
+        property var ids: []
+        function ask(faceIds) { ids = faceIds; open() }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Ignore %n faces?", "", ignoreDialog.ids.length)
+        subtitle: qsTr("Ignored faces are no longer proposed nor grouped, and no list on this page brings them back. On their photo, in File details, they can still be named.")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Ignore")
+                icon.name: "view-hidden"
+                onTriggered: {
+                    const error = appManager1.ignoreFaces(ignoreDialog.ids)
+                    ignoreDialog.close()
+                    // Only these faces lose their tick
+                    let p = Object.assign({}, people.picked)
+                    for (const id of ignoreDialog.ids) delete p[id]
+                    people.picked = p
+                    people.notify(error, qsTr("Done."))
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: ignoreDialog.close()
             }
         ]
     }
