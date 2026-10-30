@@ -458,7 +458,7 @@ Rectangle {
                                 Layout.fillWidth: true
                                 spacing: 8
                                 Controls.Label {
-                                    text: inspector.fieldName(proposal.modelData.field)
+                                    text: proposal.modelData.fieldLabel || inspector.fieldName(proposal.modelData.field)
                                     color: KTheme.text3
                                     font.pixelSize: KTheme.note
                                 }
@@ -474,16 +474,36 @@ Rectangle {
                                     tone: (proposal.modelData.confidence || 0) >= 0.8 ? "ok" : (proposal.modelData.confidence || 0) >= 0.5 ? "warn" : "neutral"
                                 }
                             }
-                            // Where it comes from, each source named
+                            // The value already written by hand, which an approval does not replace
+                            Controls.Label {
+                                Layout.fillWidth: true
+                                readonly property string own: proposal.modelData.ownValue || ""
+                                visible: own !== "" && own !== proposal.modelData.value
+                                text: qsTr("Yours: %1").arg(own)
+                                color: KTheme.text2
+                                font.pixelSize: KTheme.note
+                                wrapMode: Text.Wrap
+                            }
+                            // Where it comes from, each source named in words; the
+                            // technical name of a metadata field stays in the tooltip
                             Flow {
                                 Layout.fillWidth: true
                                 spacing: 4
                                 Repeater {
                                     model: proposal.modelData.sources || []
                                     delegate: KInfoTag {
+                                        id: sourceTag
                                         required property var modelData
-                                        text: modelData.label + (modelData.detail ? ": " + modelData.detail : "")
+                                        readonly property bool metadata: modelData.kind === "exif" || modelData.kind === "video"
+                                        text: (modelData.kindLabel || modelData.label) + ": "
+                                              + (metadata ? (modelData.detail || modelData.label)
+                                                          : modelData.label + (modelData.detail && modelData.detail !== modelData.label
+                                                                               ? " — " + modelData.detail : ""))
                                         tone: "info"
+                                        HoverHandler { id: sourceHover }
+                                        Controls.ToolTip.text: modelData.label + (modelData.detail ? ": " + modelData.detail : "")
+                                        Controls.ToolTip.visible: sourceHover.hovered && sourceTag.metadata
+                                        Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
                                     }
                                 }
                             }
@@ -491,11 +511,21 @@ Rectangle {
                                 Layout.fillWidth: true
                                 spacing: 8
                                 KButton {
+                                    readonly property bool hasOwn: (proposal.modelData.ownValue || "") !== ""
+                                                                   && proposal.modelData.ownValue !== proposal.modelData.value
                                     variant: "tonal"
                                     icon.name: "dialog-ok-apply"
-                                    text: qsTr("Approve")
+                                    text: hasOwn ? qsTr("Use this value instead") : qsTr("Approve")
                                     Accessible.description: inspector.fieldName(proposal.modelData.field) + " " + proposal.modelData.value
-                                    onClicked: appManager1.acceptProposals([proposal.modelData.proposalId])
+                                    onClicked: {
+                                        if (hasOwn) {
+                                            replaceOwnDialog.ask(proposal.modelData)
+                                            return
+                                        }
+                                        const message = appManager1.acceptProposals([proposal.modelData.proposalId])
+                                        if (message !== "")
+                                            applicationWindow().showPassiveNotification(message)
+                                    }
                                 }
                                 KButton {
                                     variant: "link"
