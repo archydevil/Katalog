@@ -391,7 +391,7 @@ Rectangle {
                         wrapMode: Text.WordWrap
                         color: KTheme.text2
                         font.pixelSize: KTheme.note
-                        text: qsTr("%1 faces without a confirmed name: a click on a face says who it is.")
+                        text: qsTr("%1 faces without a confirmed name: clicking a face is how to say who it is.")
                                   .arg(inspector.faces.filter(f => f.status === "suggested" || f.status === "unknown").length)
                     }
                     Flow {

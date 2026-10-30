@@ -27,6 +27,7 @@
 /////////////////////////////////////////////////////////////////////////////
 */
 #include "core/mdifts.h"
+#include "core/mdidocument.h"
 #include "core/mdidata.h"
 #include "core/mdipeople.h"
 #include "core/search.h"
@@ -87,6 +88,9 @@ QString composeText(const QHash<QString, QJsonObject> &byAnalysis)
         for (auto it = categories.begin(); it != categories.end(); ++it)
             parts << joinTags(it.value());
     }
+    if (byAnalysis.contains(QStringLiteral("document")))
+        // The study of a document: synthesis, tags, key facts (fork, 2026-10-30)
+        parts << MdiDocument::searchText(byAnalysis.value(QStringLiteral("document")));
     if (byAnalysis.contains(QStringLiteral("archive"))) {
         // Names inside the archive: found offline by content search
         int n = 0;

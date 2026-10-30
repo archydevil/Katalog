@@ -48,6 +48,11 @@ set(CORE_HEADERS
     mditranscriptfilter.h
     mdipeople.h
     mdifaces.h
+    mdiproposals.h
+    mdidating.h
+    mdiwebsearch.h
+    mdidocument.h
+    mdihtmlexport.h
 )
 
 set(CORE_SOURCES
@@ -100,6 +105,11 @@ set(CORE_SOURCES
     mditranscriptfilter.cpp
     mdipeople.cpp
     mdifaces.cpp
+    mdiproposals.cpp
+    mdidating.cpp
+    mdiwebsearch.cpp
+    mdidocument.cpp
+    mdihtmlexport.cpp
 )
 
 add_library(katalog-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

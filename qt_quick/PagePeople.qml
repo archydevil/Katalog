@@ -134,7 +134,7 @@ ColumnLayout {
         visible: people.facesOn && people.pending.length > 0
         level: 2
         title: qsTr("Faces to approve")
-        description: qsTr("The analysis proposes who these faces are. Approve the right ones; the others stay without a name.")
+        description: qsTr("The analysis proposes who these faces are. Only the ones approved get the name; the others stay without one.")
     }
     Flow {
         visible: people.facesOn && people.pending.length > 0
@@ -187,7 +187,7 @@ ColumnLayout {
         level: 2
         title: qsTr("People")
         description: people.list.length > 0
-                     ? qsTr("Choose a person to see their photos and to look for their face in the others.")
+                     ? qsTr("A person chosen shows their photos, and the faces like theirs in the other photos.")
                      : qsTr("Nobody yet. A person is added here, or from File details on a photo.")
     }
     RowLayout {
@@ -325,8 +325,8 @@ ColumnLayout {
         KSectionHeader {
             level: 3
             title: qsTr("Photos (%1)").arg(people.personFiles.length)
-            description: people.personFiles.length > 0 ? qsTr("Selecting one shows it in Browse.")
-                                                       : qsTr("No photo yet: approve their faces, or add them to a photo from File details.")
+            description: people.personFiles.length > 0 ? qsTr("Selecting one shows it in Browse the archive.")
+                                                       : qsTr("No photo yet: their faces, once approved, or File details on a photo, add them.")
         }
         Flow {
             Layout.fillWidth: true
@@ -364,7 +364,7 @@ ColumnLayout {
             visible: people.facesOn
             level: 3
             title: qsTr("Similar faces")
-            description: qsTr("Faces in the other photos that look like the approved faces of %1, most alike first. Tick the right ones and attribute them, one by one or all at once.")
+            description: qsTr("Faces in the other photos that look like the approved faces of %1, most alike first. The ones ticked are attributed together; one face can also be attributed on its own.")
                          .arg(people.current.name || "")
         }
         KButton {
@@ -432,7 +432,7 @@ ColumnLayout {
         visible: people.facesOn && people.groups.length > 0
         level: 2
         title: qsTr("Faces without a name")
-        description: qsTr("Faces that look alike are grouped: naming a group attributes all its faces at once. Untick the ones that do not belong first.")
+        description: qsTr("Faces that look alike are grouped. Naming a group attributes its ticked faces, or all of them when none is ticked.")
     }
     Repeater {
         model: people.facesOn ? people.groups : []

@@ -28,6 +28,10 @@
 */
 #include "core/mdidata.h"
 #include "core/mdipeople.h"
+#include "core/mdiproposals.h"
+#include "core/mdidating.h"
+#include "core/mdiwebsearch.h"
+#include "core/mdidocument.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -217,6 +221,12 @@ bool MdiData::open(const QString &connectionName, const QString &dbPath)
     // store version 2
     if (!MdiPeople::ensureTables(connectionName))
         qWarning() << "MdiData::open: people tables not created:" << dbPath;
+    // Proposals to approve, folder readings, web lookups and document
+    // fragments (owner's decisions of 2026-10-30)
+    MdiProposals::ensureTables(connectionName);
+    MdiDating::ensureTables(connectionName);
+    MdiWebSearch::ensureTables(connectionName);
+    MdiDocument::ensureTables(connectionName);
     return ok;
 }
 
@@ -611,6 +621,8 @@ QStringList MdiData::clearCatalog(const QString &connectionName, int catalogId)
     delEmb.prepare(QLatin1String("DELETE FROM mdi_embedding WHERE emb_catalog_id = :catalog_id"));
     delEmb.bindValue(":catalog_id", catalogId);
     delEmb.exec();
+    MdiProposals::clearCatalog(connectionName, catalogId);
+    MdiDocument::clearCatalog(connectionName, catalogId);
     return derived;
 }
 
@@ -652,9 +664,14 @@ int MdiData::moveToCatalogs(const QString &connectionName, int oldCatalogId,
         UPDATE mdi_face SET face_catalog_id = :new_id
         WHERE face_catalog_id = :old_id AND face_full_path = :full_path
     )"));
+    // Proposals to approve and a document's fragments follow it as well
+    QSqlQuery proposal(db);
+    proposal.prepare(MdiProposals::moveStatement());
+    QSqlQuery fragment(db);
+    fragment.prepare(MdiDocument::moveStatement());
     int moved = 0;
     for (auto it = newCatalogByPath.cbegin(); it != newCatalogByPath.cend(); ++it) {
-        for (QSqlQuery *q : {&datum, &emb, &annotation, &filePerson, &face}) {
+        for (QSqlQuery *q : {&datum, &emb, &annotation, &filePerson, &face, &proposal, &fragment}) {
             q->bindValue(":new_id",    it.value());
             q->bindValue(":old_id",    oldCatalogId);
             q->bindValue(":full_path", it.key());

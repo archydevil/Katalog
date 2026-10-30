@@ -485,6 +485,10 @@ ColumnLayout {
                     case "caption":  return qsTr("Caption and tags")
                     case "segment":  return qsTr("Topic segments")
                     case "passage":  return qsTr("Transcript")
+                    // D38/D41: the owner's information, a document's study
+                    case "info":      return qsTr("Information and people")
+                    case "synthesis": return qsTr("Study of the document")
+                    case "fragment":  return qsTr("Fragment of the document")
                     default:         return qsTr("Summary and excerpts")
                 }
             }

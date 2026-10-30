@@ -111,6 +111,13 @@ public:
         QString     scopeFileType;           // the scope's file type ("image"...), all when empty
         bool        knowledgeOnly = false;   // a pass indexing the knowledge base's pending documents
         bool        facesOnly = false;       // the "faces" analysis only, on the catalog's images
+        // "dating" or "document": that analysis only (and the embeddings
+        // the study feeds), on the catalog's photos and videos or documents
+        QString     onlyAnalysis;
+        QString     exiv2Path;               // photo metadata when KFileMetaData gives no date
+        QString     pdftoppmPath;            // scanned PDF pages, rendered for OCR
+        QString     tesseractPath;           // OCR, local
+        QString     tessdataDir;             // Tesseract's language data (--tessdata-dir)
     };
 
     MdiEnrichmentJob(const Config &config, const QList<FileItem> &files, QObject *parent = nullptr);
@@ -197,6 +204,13 @@ private:
     Result makeClassification(const FileItem &file);
     // Faces of an image: found, embedded, cropped, suggested (never confirmed)
     Result makeFaces(const FileItem &file);
+    // When, at which event and where a photo or video was taken: the file's
+    // own evidence (MdiDating); the catalog pass then makes the proposals
+    Result makeDating(const FileItem &file);
+    void   deriveDating(int fileCount, int &completed, int &failed);
+    bool   m_datingChanged = false;
+    // Study of a document: pages (OCR when scanned), fragments, synthesis (MdiDocument)
+    Result makeDocument(const FileItem &file);
     std::unique_ptr<MdiFaces::Engine> m_faceEngine;   // loaded on the job's thread at first use
     QString                           m_faceEngineError;
     // Knowledge-base pass: text, passages and embeddings of pending documents

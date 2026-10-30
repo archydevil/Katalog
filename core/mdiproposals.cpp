@@ -104,15 +104,36 @@ QString ownValue(const MdiPeople::Annotation &a, const QString &field)
     return QString();
 }
 
+// Statements of a pass, prepared once
+struct Statements {
+    QSqlQuery read, update, insert, remove;
+    explicit Statements(QSqlDatabase &db) : read(db), update(db), insert(db), remove(db)
+    {
+        read.prepare(QLatin1String(R"(
+            SELECT proposal_id, proposal_field, proposal_value, proposal_status, proposal_origin
+            FROM mdi_proposal WHERE proposal_catalog_id = :catalog_id AND proposal_full_path = :full_path
+        )"));
+        update.prepare(QLatin1String(R"(
+            UPDATE mdi_proposal SET proposal_precision = :precision, proposal_confidence = :confidence,
+                   proposal_sources = :sources, proposal_value = :value
+            WHERE proposal_id = :id
+        )"));
+        insert.prepare(QLatin1String(R"(
+            INSERT OR IGNORE INTO mdi_proposal (proposal_catalog_id, proposal_full_path, proposal_field,
+                proposal_value, proposal_value_key, proposal_precision, proposal_confidence, proposal_sources,
+                proposal_status, proposal_origin, proposal_created)
+            VALUES (:catalog_id, :full_path, :field, :value, :value_key, :precision, :confidence, :sources,
+                    'pending', :origin, :created)
+        )"));
+        remove.prepare(QStringLiteral("DELETE FROM mdi_proposal WHERE proposal_id = :id"));
+    }
+};
+
 // Writes or refreshes one file's proposals of an origin on an open transaction
-bool replaceOne(QSqlDatabase &db, int catalogId, const QString &fullPath, const QString &origin,
+bool replaceOne(Statements &st, int catalogId, const QString &fullPath, const QString &origin,
                 const QList<MdiProposals::Proposal> &proposals, int *pending)
 {
-    QSqlQuery read(db);
-    read.prepare(QLatin1String(R"(
-        SELECT proposal_id, proposal_field, proposal_value, proposal_status, proposal_origin
-        FROM mdi_proposal WHERE proposal_catalog_id = :catalog_id AND proposal_full_path = :full_path
-    )"));
+    QSqlQuery &read = st.read;
     read.bindValue(":catalog_id", catalogId);
     read.bindValue(":full_path", fullPath);
     if (!read.exec())
@@ -123,20 +144,8 @@ bool replaceOne(QSqlDatabase &db, int catalogId, const QString &fullPath, const 
         existing.insert(valueKey(read.value(1).toString(), read.value(2).toString()),
                         Existing{read.value(0).toInt(), read.value(3).toString(), read.value(4).toString()});
 
-    QSqlQuery update(db);
-    update.prepare(QLatin1String(R"(
-        UPDATE mdi_proposal SET proposal_precision = :precision, proposal_confidence = :confidence,
-               proposal_sources = :sources, proposal_value = :value
-        WHERE proposal_id = :id
-    )"));
-    QSqlQuery insert(db);
-    insert.prepare(QLatin1String(R"(
-        INSERT OR IGNORE INTO mdi_proposal (proposal_catalog_id, proposal_full_path, proposal_field,
-            proposal_value, proposal_value_key, proposal_precision, proposal_confidence, proposal_sources,
-            proposal_status, proposal_origin, proposal_created)
-        VALUES (:catalog_id, :full_path, :field, :value, :value_key, :precision, :confidence, :sources,
-                'pending', :origin, :created)
-    )"));
+    QSqlQuery &update = st.update;
+    QSqlQuery &insert = st.insert;
 
     QSet<QString> kept;
     const QString created = nowIso();
@@ -182,9 +191,9 @@ bool replaceOne(QSqlDatabase &db, int catalogId, const QString &fullPath, const 
     for (auto it = existing.cbegin(); it != existing.cend(); ++it)
         if (it->status == QLatin1String("pending") && it->origin == origin && !kept.contains(it.key()))
             stale << it->id;
-    if (!stale.isEmpty()) {
-        QSqlQuery del(db);
-        if (!del.exec(QStringLiteral("DELETE FROM mdi_proposal WHERE proposal_id IN (%1)").arg(idList(stale))))
+    for (int id : std::as_const(stale)) {
+        st.remove.bindValue(":id", id);
+        if (!st.remove.exec())
             return false;
     }
     return true;
@@ -257,7 +266,11 @@ bool MdiProposals::ensureTables(const QString &connectionName)
     if (!ok)
         qWarning() << "MdiProposals::ensureTables:" << q.lastError().text();
     q.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS mdi_proposal_file ON mdi_proposal (proposal_catalog_id, proposal_full_path)"));
-    q.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS mdi_proposal_status ON mdi_proposal (proposal_catalog_id, proposal_status)"));
+    // Status with the path: the pending ones of a folder, and of one file
+    // (a status-only index made SQLite scan a catalog's pending rows per file)
+    q.exec(QStringLiteral("DROP INDEX IF EXISTS mdi_proposal_status"));
+    q.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS mdi_proposal_state ON mdi_proposal "
+                          "(proposal_catalog_id, proposal_status, proposal_full_path)"));
     return ok;
 }
 
@@ -267,7 +280,8 @@ bool MdiProposals::replaceForFile(const QString &connectionName, int catalogId, 
     QSqlDatabase db = QSqlDatabase::database(connectionName);
     if (!db.transaction())
         return false;
-    if (!replaceOne(db, catalogId, fullPath, origin, proposals, nullptr)) {
+    Statements st(db);
+    if (!replaceOne(st, catalogId, fullPath, origin, proposals, nullptr)) {
         qWarning() << "MdiProposals::replaceForFile failed:" << db.lastError().text();
         db.rollback();
         return false;
@@ -278,18 +292,33 @@ bool MdiProposals::replaceForFile(const QString &connectionName, int catalogId, 
 int MdiProposals::replaceForFiles(const QString &connectionName, int catalogId, const QString &origin,
                                   const QHash<QString, QList<Proposal>> &byFile)
 {
+    // Committed every few hundred files: the app's own writes (the owner
+    // approving, editing information) never wait long for the pass
     QSqlDatabase db = QSqlDatabase::database(connectionName);
-    if (!db.transaction())
-        return -1;
-    int pending = 0;
+    Statements st(db);
+    int pending = 0, inBatch = 0;
+    bool open = false;
     for (auto it = byFile.cbegin(); it != byFile.cend(); ++it) {
-        if (!replaceOne(db, catalogId, it.key(), origin, it.value(), &pending)) {
+        if (!open) {
+            if (!db.transaction())
+                return -1;
+            open = true;
+        }
+        if (!replaceOne(st, catalogId, it.key(), origin, it.value(), &pending)) {
             qWarning() << "MdiProposals::replaceForFiles failed:" << it.key();
             db.rollback();
             return -1;
         }
+        if (++inBatch >= 500) {
+            if (!db.commit()) {
+                db.rollback();
+                return -1;
+            }
+            open = false;
+            inBatch = 0;
+        }
     }
-    if (!db.commit()) {
+    if (open && !db.commit()) {
         db.rollback();
         return -1;
     }
@@ -406,6 +435,21 @@ QVariantList MdiProposals::forFolder(const QString &connectionName, int catalogI
     return out;
 }
 
+QSet<QString> MdiProposals::filesWithProposals(const QString &connectionName, int catalogId)
+{
+    QSet<QString> files;
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    q.prepare(QLatin1String(R"(
+        SELECT DISTINCT proposal_full_path FROM mdi_proposal
+        WHERE proposal_catalog_id = :catalog_id AND proposal_status IN ('pending', 'accepted')
+    )"));
+    q.bindValue(":catalog_id", catalogId);
+    if (q.exec())
+        while (q.next())
+            files.insert(q.value(0).toString());
+    return files;
+}
+
 QVariantMap MdiProposals::pendingCounts(const QString &connectionName, int catalogId)
 {
     QVariantMap counts;
@@ -446,6 +490,9 @@ MdiProposals::AcceptResult MdiProposals::acceptAndApply(const QString &connectio
 
     QSet<QString> filled;           // catalog/path/field written in this call
     QList<int> accepted, superseded;
+    // The same value for many files is written in one call (a folder approved in bulk)
+    struct Write { QString field, value; QList<MdiPeople::FileRef> files; QList<int> ids; };
+    QHash<QString, Write> writes;
     for (const Proposal &p : std::as_const(chosen)) {
         if (p.status == QLatin1String("accepted"))
             continue;
@@ -462,18 +509,34 @@ MdiProposals::AcceptResult MdiProposals::acceptAndApply(const QString &connectio
             ++result.kept;          // the owner's value stays; the proposal waits
             continue;
         }
-        if (current.compare(p.value.trimmed(), Qt::CaseInsensitive) != 0) {
-            const MdiPeople::FileRef ref{p.catalogId, p.fullPath};
-            if (!MdiPeople::updateAnnotations(connectionName, {ref}, QVariantMap{{p.field, p.value}})) {
-                ++result.failed;
-                result.ok = false;
-                continue;
-            }
-        }
         filled.insert(slot);
-        accepted << p.id;
-        ++result.applied;
+        if (current.compare(p.value.trimmed(), Qt::CaseInsensitive) == 0) {
+            accepted << p.id;      // already the owner's value
+            ++result.applied;
+            continue;
+        }
+        Write &w = writes[p.field + QLatin1Char('\x1f') + p.value];
+        w.field = p.field;
+        w.value = p.value;
+        w.files << MdiPeople::FileRef{p.catalogId, p.fullPath};
+        w.ids << p.id;
     }
+    for (const Write &w : std::as_const(writes)) {
+        if (MdiPeople::updateAnnotations(connectionName, w.files, QVariantMap{{w.field, w.value}})) {
+            accepted << w.ids;
+            result.applied += w.ids.size();
+        } else {
+            result.failed += w.ids.size();
+            result.ok = false;
+            // Not written: these fields are free again for the other values
+            for (const MdiPeople::FileRef &f : w.files)
+                filled.remove(QString::number(f.catalogId) + QLatin1Char('\x1f') + f.fullPath
+                              + QLatin1Char('\x1f') + w.field);
+        }
+    }
+    // One transaction for the statuses: a folder approved in bulk is one write
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
+    const bool inTransaction = db.transaction();
     if (!setStatus(connectionName, accepted, QStringLiteral("accepted"))
         || !setStatus(connectionName, superseded, QStringLiteral("superseded")))
         result.ok = false;
@@ -494,6 +557,10 @@ MdiProposals::AcceptResult MdiProposals::acceptAndApply(const QString &connectio
             q.bindValue(":field", parts.value(2));
             q.exec();
         }
+    }
+    if (inTransaction && !db.commit()) {
+        db.rollback();
+        result.ok = false;
     }
     return result;
 }

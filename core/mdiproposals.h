@@ -46,6 +46,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 #include <QHash>
+#include <QSet>
 #include <QList>
 
 class MdiProposals
@@ -105,6 +106,8 @@ public:
     //   proposalIds: [...], sources: [{kind, label, detail, url}] (distinct, at most 12)}]
     static QVariantList forFolder(const QString &connectionName, int catalogId, const QString &folderPath,
                                   bool recursive);
+    // Files of a catalog with pending or accepted proposals (reports)
+    static QSet<QString> filesWithProposals(const QString &connectionName, int catalogId);
     // Pending proposal counts per field of a catalog: {date: n, event: n...}
     static QVariantMap pendingCounts(const QString &connectionName, int catalogId);
 

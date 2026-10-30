@@ -711,5 +711,44 @@ ColumnLayout {
         }
     }
 
+    // ── Upkeep: transcripts (D40) ─────────────────────────────────────────
+    // Whisper invents sentences on silence and music ("Thank you.", repeated
+    // lines): the stored transcripts are cleaned of them; where no speech is
+    // left, the transcript goes, and what was built from it is rebuilt
+    KCard {
+        id: transcriptUpkeep
+        Layout.fillWidth: true
+        property string result: ""
+        KSectionHeader {
+            level: 3
+            title: qsTr("Clean the transcripts")
+            description: qsTr("Removes the sentences the transcription invented on silence or music, and the repeated lines. A recording with no speech left has no transcript any more. Nothing on the drives is touched.")
+        }
+        Controls.Label {
+            Layout.fillWidth: true
+            visible: transcriptUpkeep.result !== ""
+            text: transcriptUpkeep.result
+            wrapMode: Text.Wrap
+            color: KTheme.text2
+        }
+        KButton {
+            variant: "secondary"
+            icon.name: "edit-clear"
+            text: qsTr("Clean now")
+            enabled: !pageActivity.job.running
+            onClicked: {
+                const r = appManager1.cleanTranscripts()
+                transcriptUpkeep.result = r.error ? r.error : qsTr("Cleaning…")
+            }
+        }
+        Connections {
+            target: appManager1
+            function onTranscriptsCleaned(counts) {
+                transcriptUpkeep.result = qsTr("Checked %1 transcripts: %2 cleaned, %3 removed because no speech was left.")
+                    .arg(counts.checked || 0).arg(counts.cleaned || 0).arg(counts.removed || 0)
+            }
+        }
+    }
+
     Item { Layout.preferredHeight: KTheme.gap }
 }

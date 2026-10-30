@@ -1368,7 +1368,7 @@ Kirigami.ApplicationWindow {
                 Controls.Label { text: qsTr("Date"); color: KTheme.text2 }
                 Controls.TextField { id: fiDate; Layout.fillWidth: true; placeholderText: qsTr("e.g. 2015-07-12 or July 2015"); Accessible.name: qsTr("Date") }
                 Controls.Label { text: qsTr("Author"); color: KTheme.text2 }
-                Controls.TextField { id: fiAuthor; Layout.fillWidth: true; placeholderText: qsTr("Who took the photo"); Accessible.name: qsTr("Author") }
+                Controls.TextField { id: fiAuthor; Layout.fillWidth: true; placeholderText: qsTr("Who made it"); Accessible.name: qsTr("Author") }
                 Controls.Label { text: qsTr("Tags"); color: KTheme.text2 }
                 Controls.TextField { id: fiTags; Layout.fillWidth: true; placeholderText: qsTr("Separated by commas"); Accessible.name: qsTr("Tags") }
                 Controls.Label { text: qsTr("Notes"); color: KTheme.text2; Layout.alignment: Qt.AlignTop }
@@ -1542,6 +1542,17 @@ Kirigami.ApplicationWindow {
                             onClicked: appManager1.rejectProposals(group.modelData.proposalIds)
                         }
                     }
+                }
+            }
+            // Deduce again for the whole drive: dates, events and places, as
+            // proposals (runs in the background, Work in progress shows it)
+            KButton {
+                variant: folderProposalsDialog.groups.length > 0 ? "secondary" : "primary"
+                icon.name: "tools-wizard"
+                text: qsTr("Deduce dates and context for this drive")
+                onClicked: {
+                    const error = appManager1.startDating(exploreFolders.openedDeviceId)
+                    showPassiveNotification(error !== "" ? error : qsTr("Deducing in the background: the proposals appear here as it goes."))
                 }
             }
             // The web, only when asked, after showing what would be searched

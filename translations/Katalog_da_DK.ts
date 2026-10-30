@@ -4,15 +4,15 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../qt_quick/appmanager.cpp" line="+176"/>
+        <location filename="../qt_quick/appmanager.cpp" line="+184"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+6982"/>
+        <location line="+7018"/>
         <source>Search</source>
         <translation>Søg</translation>
     </message>
     <message>
-        <location line="-7106"/>
+        <location line="-7142"/>
         <source>Stopped</source>
         <translation>Stoppet</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+5400"/>
+        <location line="+5436"/>
         <source>Evaluated</source>
         <translation>Evalueret</translation>
     </message>
     <message>
-        <location line="-5522"/>
+        <location line="-5558"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -46,10 +46,10 @@
         <location line="+7"/>
         <location line="+83"/>
         <location line="+2343"/>
-        <location line="+381"/>
-        <location line="+153"/>
+        <location line="+407"/>
+        <location line="+155"/>
         <location line="+482"/>
-        <location line="+1176"/>
+        <location line="+1184"/>
         <location line="+28"/>
         <location line="+20"/>
         <location line="+802"/>
@@ -70,12 +70,12 @@
         <translation>I gang</translation>
     </message>
     <message>
-        <location line="-6983"/>
-        <location line="+2735"/>
+        <location line="-7019"/>
+        <location line="+2761"/>
         <location line="+1"/>
-        <location line="+613"/>
+        <location line="+615"/>
         <location line="+1"/>
-        <location line="+2725"/>
+        <location line="+2733"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -85,7 +85,7 @@
         <translation>Fuldført</translation>
     </message>
     <message>
-        <location line="-6566"/>
+        <location line="-6602"/>
         <source>Empty database path provided</source>
         <translation>Tom databasesti angivet</translation>
     </message>
@@ -171,17 +171,20 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+4950"/>
+        <location line="+4986"/>
+        <location line="+1740"/>
         <source>Size</source>
         <translation>Størrelse</translation>
     </message>
     <message>
-        <location line="-4949"/>
+        <location line="-6725"/>
+        <location line="+6733"/>
+        <location line="+72"/>
         <source>Date</source>
         <translation>Dato</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-6804"/>
         <source>Checksum</source>
         <translation>Kontrolsum</translation>
     </message>
@@ -237,12 +240,12 @@
     </message>
     <message>
         <location line="+240"/>
-        <location line="+3068"/>
+        <location line="+3104"/>
         <source>Provide a name for this new catalog.</source>
         <translation>Angiv et navn til dette nye katalog.</translation>
     </message>
     <message>
-        <location line="-3066"/>
+        <location line="-3102"/>
         <source>Provide a path for this new catalog.</source>
         <translation>Angiv en sti til dette nye katalog.</translation>
     </message>
@@ -271,7 +274,7 @@ Vælg et andet navn, og prøv igen.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+2730"/>
+        <location line="+2766"/>
         <location line="+17"/>
         <location line="+374"/>
         <location line="+622"/>
@@ -279,8 +282,8 @@ Vælg et andet navn, og prøv igen.</translation>
         <translation>En enhedsoperation kører allerede.</translation>
     </message>
     <message>
-        <location line="-3657"/>
-        <location line="+2219"/>
+        <location line="-3693"/>
+        <location line="+2255"/>
         <source>Create</source>
         <translation>Opret</translation>
     </message>
@@ -473,14 +476,15 @@ Vælg et andet navn.</translation>
         <translation type="vanished">Der findes allerede et lager med dette ID. Vælg et andet ID.</translation>
     </message>
     <message>
-        <location line="-3200"/>
-        <location line="+61"/>
-        <location line="+3346"/>
+        <location line="-3222"/>
+        <location line="+73"/>
+        <location line="+3356"/>
+        <location line="+2617"/>
         <source>Selected device is not a catalog</source>
         <translation>Den valgte enhed er ikke et katalog</translation>
     </message>
     <message>
-        <location line="+330"/>
+        <location line="-2287"/>
         <source>Error: could not open collection</source>
         <translation>Fejl: kunne ikke åbne samlingen</translation>
     </message>
@@ -532,9 +536,9 @@ Vælg et andet navn.</translation>
         <translation>Eksporter</translation>
     </message>
     <message>
-        <location line="-3829"/>
-        <location line="+614"/>
-        <location line="+2723"/>
+        <location line="-3839"/>
+        <location line="+616"/>
+        <location line="+2731"/>
         <location line="+411"/>
         <location line="+26"/>
         <location line="+17"/>
@@ -545,7 +549,7 @@ Vælg et andet navn.</translation>
         <translation>Annulleret</translation>
     </message>
     <message>
-        <location line="-4820"/>
+        <location line="-4846"/>
         <source>Thumbnail</source>
         <translation>Miniature</translation>
     </message>
@@ -561,22 +565,24 @@ Vælg et andet navn.</translation>
     </message>
     <message>
         <location line="+1"/>
+        <location line="+6308"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-6308"/>
         <location line="+1"/>
         <source>Clip</source>
         <translation>Klip</translation>
     </message>
     <message>
         <location line="+0"/>
+        <location line="+6308"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-6307"/>
         <source>Waveform</source>
         <translation>Bølgeform</translation>
     </message>
@@ -636,7 +642,7 @@ Vælg et andet navn.</translation>
         <translation>Arkivindhold</translation>
     </message>
     <message>
-        <location line="+49"/>
+        <location line="+53"/>
         <source>Provide a destination path for the previews and derived data.</source>
         <translation>Angiv en destinationssti til forhåndsvisningerne og de afledte data.</translation>
     </message>
@@ -646,14 +652,14 @@ Vælg et andet navn.</translation>
         <translation>Vælg en destinationssti, der kan skrives til.</translation>
     </message>
     <message>
-        <location line="+95"/>
-        <location line="+158"/>
+        <location line="+107"/>
+        <location line="+160"/>
         <source>Enrichment</source>
         <translation>Berigelse</translation>
     </message>
     <message>
-        <location line="-147"/>
-        <location line="+149"/>
+        <location line="-149"/>
+        <location line="+151"/>
         <source>Paused</source>
         <translation>På pause</translation>
     </message>
@@ -663,31 +669,54 @@ Vælg et andet navn.</translation>
         <translation>Venter på drevet</translation>
     </message>
     <message>
-        <location line="+3153"/>
+        <location line="+3161"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>Udforsk</translation>
     </message>
     <message>
-        <location line="-2698"/>
-        <location line="+2700"/>
+        <location line="-2706"/>
+        <location line="+2708"/>
         <location line="+450"/>
         <location line="+10"/>
         <source>Loaded</source>
         <translation>Indlæst</translation>
     </message>
     <message>
-        <location line="-3954"/>
+        <location line="-3980"/>
+        <location line="+5935"/>
         <source>Classification</source>
         <translation>Klassificering</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-5934"/>
         <source>Reference documents</source>
         <translation>Referencedokumenter</translation>
     </message>
     <message>
-        <location line="+1529"/>
+        <location line="+1"/>
+        <source>Faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dates, events and places</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+5898"/>
+        <location line="+38"/>
+        <source>Document study</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-5935"/>
+        <source>Proposals to approve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1551"/>
         <source>Deleted: %1.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -990,11 +1019,12 @@ Vælg et andet navn.</translation>
     </message>
     <message>
         <location line="+7"/>
+        <location line="+1006"/>
         <source>Report</source>
         <translation>Rapport</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-1002"/>
         <source>Conflicts</source>
         <translation>Konflikter</translation>
     </message>
@@ -1032,6 +1062,537 @@ Vælg et andet navn.</translation>
         <location line="+7"/>
         <source>Mapping not found.</source>
         <translation>Tilknytning ikke fundet.</translation>
+    </message>
+    <message>
+        <location line="+198"/>
+        <source>File information and people are not available for hosted collections.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+234"/>
+        <location line="+75"/>
+        <location line="+17"/>
+        <location line="+13"/>
+        <location line="+102"/>
+        <location line="+23"/>
+        <location line="+22"/>
+        <location line="+16"/>
+        <location line="+283"/>
+        <location line="+13"/>
+        <location line="+216"/>
+        <source>The change could not be saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-905"/>
+        <source>The enrichment is running: the transcripts can be cleaned once it ends or is stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The transcripts are being cleaned.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>No transcript to clean in this collection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+93"/>
+        <location line="+113"/>
+        <source>Select one or more files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+82"/>
+        <source>Face recognition is not available for hosted collections.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Face recognition is not available: this version of Teca was built without OpenCV.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Face recognition models not found: face_detection_yunet and face_recognition_sface (ONNX) are needed in %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+186"/>
+        <source>Letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Email</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Regulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Results</source>
+        <translation>Resultater</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Press release</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Invoice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Receipt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Minutes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Contract</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Programme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Newsletter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Article</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Presentation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>List</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Budget</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Notice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+450"/>
+        <source>Other</source>
+        <translation>Anden</translation>
+    </message>
+    <message>
+        <location line="-436"/>
+        <source>Contents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Skip to content</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Back to contents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Path</source>
+        <translation>Sti</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Type</source>
+        <translation>Type</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Modified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Information</source>
+        <translation>Information</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>No information written for this file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+29"/>
+        <location line="+51"/>
+        <source>Title</source>
+        <translation>Titel</translation>
+    </message>
+    <message>
+        <location line="-79"/>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+75"/>
+        <source>Event</source>
+        <translation>Begivenhed</translation>
+    </message>
+    <message>
+        <location line="-74"/>
+        <location line="+75"/>
+        <source>Place</source>
+        <translation>Sted</translation>
+    </message>
+    <message>
+        <location line="-73"/>
+        <location line="+74"/>
+        <source>Author</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-73"/>
+        <source>Notes</source>
+        <translation>Noter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Tags</source>
+        <translation>Tags</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>People</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Proposals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Information inferred by Teca, with its sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Field</source>
+        <translation>Felt</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Value</source>
+        <translation>Værdi</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Confidence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Status</source>
+        <translation>Status</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>To approve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Approved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Rejected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Replaced</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>month</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>year</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>period</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>coordinates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>AI description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Named</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Excerpts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Synthesis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Kind of document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Date of the document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Recipients</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pages read by OCR</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Key facts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Places</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Organisations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Terms of the glossary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Related reference documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>People named</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fragments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>page %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>pages %1–%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Full text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Preview of %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Photo metadata</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Video metadata</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>File name</source>
+        <translation>Filnavn</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Folder</source>
+        <translation>Mappe</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Other files of the folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Image description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Context of the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reference document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Web</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <location line="+76"/>
+        <source>%n proposal(s) left to approve: the file already has its own value for that field.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+68"/>
+        <source>Web lookups are off for this collection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Web lookups are already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+160"/>
+        <source>Select a file to save the report to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+49"/>
+        <source>Image</source>
+        <translation>Billede</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Text</source>
+        <translation>Tekst</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Generated by Teca on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>The report could not be saved: %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1155,7 +1716,7 @@ Vælg et andet navn.</translation>
         <translation type="vanished">Kilde</translation>
     </message>
     <message>
-        <location filename="../qt_quick/CreateWizard.qml" line="+179"/>
+        <location filename="../qt_quick/CreateWizard.qml" line="+186"/>
         <source>Destination path</source>
         <translation>Destinationssti</translation>
     </message>
@@ -1179,7 +1740,7 @@ Vælg et andet navn.</translation>
         <translation type="vanished">Oversigt</translation>
     </message>
     <message>
-        <location line="-228"/>
+        <location line="-232"/>
         <source>Off</source>
         <translation>Fra</translation>
     </message>
@@ -1202,7 +1763,7 @@ Vælg et andet navn.</translation>
         <translation type="vanished">Trin %1 af %2</translation>
     </message>
     <message>
-        <location line="+134"/>
+        <location line="+138"/>
         <source>Path for previews and derived data</source>
         <translation>Sti til forhåndsvisninger og afledte data</translation>
     </message>
@@ -1343,7 +1904,32 @@ Vælg et andet navn.</translation>
         <translation>Emnesegmenter</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+11"/>
+        <source>Dates and context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Study of the documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Dates, events and places are deduced from the metadata, the names, the folders, the context and the reference documents, and proposed for your approval. Scanned documents are read with OCR, then summarised fragment by fragment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Faces of the people</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Finds the faces in the photos and proposes who they are; nothing is attributed without your approval, in People. Faces are personal data: they stay on this computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Analysed on this computer by the local model (%1). Nothing is sent to the internet.</source>
         <translation>Analyseret på denne computer af den lokale model (%1). Intet sendes til internettet.</translation>
     </message>
@@ -1605,6 +2191,164 @@ Vælg et andet navn.</translation>
     </message>
 </context>
 <context>
+    <name>DocumentReader</name>
+    <message>
+        <location filename="../qt_quick/DocumentReader.qml" line="+19"/>
+        <source>Reading: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Export HTML</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Close</source>
+        <translation>Luk</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>HTML page (*.html)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Exported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+41"/>
+        <source>This document has not been studied yet. The study runs with the AI analysis of its drive (Study of the documents), on this computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Study the documents of this drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Studying in the background: Work in progress shows how it goes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Read with OCR</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 fragments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Synthesis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Key facts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Dates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>People</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Places</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Organisations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Recipients</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Tags</source>
+        <translation>Tags</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>In the archive&apos;s context</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The glossary terms it uses, the reference documents and the people of the archive it relates to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Glossary</source>
+        <translation>Ordliste</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reference documents</source>
+        <translation>Referencedokumenter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>People of the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The document, fragment by fragment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Each part with its summary; its text opens below it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Part %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Pages %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Hide the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Show the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Text of the fragment</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ExploreTreeModel</name>
     <message>
         <location filename="../qt_widgets/exploretreemodel.cpp" line="+39"/>
@@ -1625,7 +2369,7 @@ Vælg et andet navn.</translation>
 <context>
     <name>Inspector</name>
     <message>
-        <location filename="../qt_quick/Inspector.qml" line="+91"/>
+        <location filename="../qt_quick/Inspector.qml" line="+125"/>
         <source>No file selected.</source>
         <translation>Ingen fil valgt.</translation>
     </message>
@@ -1646,7 +2390,46 @@ Vælg et andet navn.</translation>
         <translation type="vanished">Offline – %1 er nødvendig for at åbne filen</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="-89"/>
+        <location line="+16"/>
+        <source>Title</source>
+        <translation>Titel</translation>
+    </message>
+    <message>
+        <location line="-16"/>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+14"/>
+        <source>Event</source>
+        <translation>Begivenhed</translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <location line="+14"/>
+        <source>Place</source>
+        <translation>Sted</translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <location line="+14"/>
+        <source>Date</source>
+        <translation>Dato</translation>
+    </message>
+    <message>
+        <location line="-13"/>
+        <source>Author</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Notes</source>
+        <translation>Noter</translation>
+    </message>
+    <message>
+        <location line="+96"/>
         <source>The details of the selected file appear here: preview, AI description, technical data.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1661,7 +2444,22 @@ Vælg et andet navn.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+67"/>
+        <location line="+52"/>
+        <source>Unknown person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Maybe %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Who is it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+35"/>
         <source>Online</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1681,7 +2479,67 @@ Vælg et andet navn.</translation>
         <translation>Åbn fil</translation>
     </message>
     <message>
-        <location line="+71"/>
+        <location line="+20"/>
+        <source>Information and people</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Nothing written yet: a title, an event, a place, the people in it…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+54"/>
+        <source>%1 faces without a confirmed name: clicking a face is how to say who it is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Edit the information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Add a person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Proposals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Deduced from the metadata, the names, the folder, the context and the reference documents. Nothing is written until you approve it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>%1% sure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Approve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Study of the document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Read the document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+62"/>
         <source>Recognised names</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1716,7 +2574,32 @@ Vælg et andet navn.</translation>
         <translation>Kontrolsum</translation>
     </message>
     <message>
-        <location line="-195"/>
+        <location line="+79"/>
+        <source>It is %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Someone else…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Who is it?…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Not %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Remove the name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-480"/>
         <source>Show analysis</source>
         <translation>Vis analyse</translation>
     </message>
@@ -1724,7 +2607,7 @@ Vælg et andet navn.</translation>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1805"/>
+        <location filename="../qt_quick/Main.qml" line="+2337"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>Vil du &lt;b&gt;slette&lt;/b&gt; denne %1-enhed?&lt;br/&gt;&lt;br/&gt;Navn: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1739,16 +2622,19 @@ Vælg et andet navn.</translation>
         <translation>Ja</translation>
     </message>
     <message>
-        <location line="-581"/>
+        <location line="-1671"/>
+        <location line="+27"/>
+        <location line="+136"/>
+        <location line="+927"/>
         <location line="+72"/>
         <location line="+270"/>
-        <location line="+1440"/>
+        <location line="+1490"/>
         <location line="+136"/>
         <source>Cancel</source>
         <translation>Annuller</translation>
     </message>
     <message>
-        <location line="-2085"/>
+        <location line="-2135"/>
         <location line="+126"/>
         <location line="+81"/>
         <location line="+195"/>
@@ -1771,7 +2657,7 @@ Vælg et andet navn.</translation>
         <translation>Indstillinger</translation>
     </message>
     <message>
-        <location line="-390"/>
+        <location line="-397"/>
         <source>Open...</source>
         <translation>Åbn...</translation>
     </message>
@@ -1822,8 +2708,10 @@ Vælg et andet navn.</translation>
         <translation type="vanished">Statistik</translation>
     </message>
     <message>
+        <location line="-497"/>
+        <location line="+1"/>
         <source>Tags</source>
-        <translation type="vanished">Tags</translation>
+        <translation>Tags</translation>
     </message>
     <message>
         <source>Activity</source>
@@ -1834,7 +2722,7 @@ Vælg et andet navn.</translation>
         <translation type="vanished">Dokumentation</translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+604"/>
         <source>About</source>
         <translation>Om</translation>
     </message>
@@ -2171,12 +3059,12 @@ Vælg et andet navn.</translation>
     </message>
     <message>
         <location line="+21"/>
-        <location line="+708"/>
+        <location line="+745"/>
         <source>Analyse with AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-665"/>
+        <location line="-702"/>
         <source>The source folder does not contain any file.
 This could mean that the source is empty or the device is not mounted to this folder.
 Do you want to save it anyway (the catalog would be empty)?</source>
@@ -2200,7 +3088,7 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <translation>Søg</translation>
     </message>
     <message>
-        <location line="+889"/>
+        <location line="+939"/>
         <source>Numbers of: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2222,7 +3110,7 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <translation type="vanished">Velkommen til Katalog 3. Nyheder, spørgsmål og feedback deles i projektets diskussioner:</translation>
     </message>
     <message>
-        <location line="-1144"/>
+        <location line="-1194"/>
         <source>Name</source>
         <translation>Navn</translation>
     </message>
@@ -2239,12 +3127,12 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
     <message>
         <location line="+7"/>
         <location line="+129"/>
-        <location line="+632"/>
+        <location line="+682"/>
         <source>Stop</source>
         <translation>Stop</translation>
     </message>
     <message>
-        <location line="-754"/>
+        <location line="-804"/>
         <source>Reset</source>
         <translation>Nulstil</translation>
     </message>
@@ -2258,8 +3146,8 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <location line="+343"/>
         <location line="+50"/>
         <location line="+110"/>
-        <location line="+141"/>
-        <location line="+315"/>
+        <location line="+178"/>
+        <location line="+328"/>
         <location line="+23"/>
         <location line="+43"/>
         <location line="+64"/>
@@ -2278,7 +3166,7 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
 </translation>
     </message>
     <message>
-        <location line="-1278"/>
+        <location line="-1328"/>
         <source>Copy version and system information</source>
         <translation>Kopiér versions- og systemoplysninger</translation>
     </message>
@@ -2360,7 +3248,7 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <translation type="vanished">Kataloget blev oprettet.</translation>
     </message>
     <message>
-        <location line="+578"/>
+        <location line="+628"/>
         <source>Catalog creation failed: </source>
         <translation>Oprettelse af katalog mislykkedes: </translation>
     </message>
@@ -2369,30 +3257,299 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <translation type="vanished">Opret</translation>
     </message>
     <message>
-        <location line="-449"/>
+        <location line="-499"/>
         <source>Columns</source>
         <translation>Kolonner</translation>
     </message>
     <message>
-        <location line="-1657"/>
-        <location line="+2022"/>
+        <location line="-1664"/>
+        <location line="+2079"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2358"/>
+        <location line="-2937"/>
         <source>Undo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+94"/>
+        <source>Who is it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Name, role or organisation…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+45"/>
+        <source>New person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-38"/>
+        <location line="+46"/>
+        <location line="+1"/>
+        <source>First name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-46"/>
+        <location line="+47"/>
+        <location line="+1"/>
+        <source>Last name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-47"/>
+        <location line="+48"/>
+        <location line="+1"/>
+        <source>Role</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-43"/>
+        <source>Add and choose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Person</source>
+        <translation>Person</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <location line="+1"/>
+        <source>Organisation</source>
+        <translation>Organisation</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1"/>
+        <location line="+142"/>
+        <location line="+1"/>
+        <source>Notes</source>
+        <translation>Noter</translation>
+    </message>
+    <message>
+        <location line="-106"/>
+        <source>Delete this person?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 is removed from the people and from the photos they were in. The photos and the files stay as they are; their faces go back to having no name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+11"/>
-        <location line="+1891"/>
+        <source>Deleted.</source>
+        <translation>Slettet.</translation>
+    </message>
+    <message>
+        <location line="+57"/>
+        <source>Information saved for %1 files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Information saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Information for %1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+2249"/>
+        <source>Information</source>
+        <translation>Information</translation>
+    </message>
+    <message>
+        <location line="-2238"/>
+        <source>Only the fields filled in are applied to the %1 files; the others stay as each file has them. Tags and people are added.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+1"/>
+        <location line="+108"/>
+        <source>Title</source>
+        <translation>Titel</translation>
+    </message>
+    <message>
+        <location line="-107"/>
+        <location line="+1"/>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1"/>
+        <location line="+103"/>
+        <source>Event</source>
+        <translation>Begivenhed</translation>
+    </message>
+    <message>
+        <location line="-102"/>
+        <location line="+1"/>
+        <location line="+101"/>
+        <source>Place</source>
+        <translation>Sted</translation>
+    </message>
+    <message>
+        <location line="-100"/>
+        <location line="+1"/>
+        <location line="+99"/>
+        <source>Date</source>
+        <translation>Dato</translation>
+    </message>
+    <message>
+        <location line="-99"/>
+        <source>e.g. 2015-07-12 or July 2015</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+1"/>
+        <source>Author</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Separated by commas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+574"/>
+        <location line="+1987"/>
+        <source>People</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-2560"/>
+        <source>Added to every file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Remove</source>
+        <translation>Fjern</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Add a person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>HTML page (*.html)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Exported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Proposals for this folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Deduced for the files of %1 and its sub-folders. Approving writes the value into each file&apos;s information; your own information is never replaced without you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Nothing to approve here. Proposals appear after the AI analysis of the drive (Dates and context).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>%1% sure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Approve for %1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Approved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Deduce dates and context for this drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Deducing in the background: the proposals appear here as it goes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Look on the web</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Searches DuckDuckGo for the events, places and years found in the names, to date them better. Only the search words leave this computer, never the files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Web searches allowed for this collection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Prepare the searches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>These %1 searches would be sent:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing to search: the names hold no event to look up.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Send these searches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Searching: the proposals update when it ends.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <location line="+11"/>
+        <location line="+1898"/>
         <source>All the drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1897"/>
+        <location line="-1904"/>
         <source>Change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2420,57 +3577,57 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1056"/>
+        <location line="+1063"/>
         <source>My drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1055"/>
+        <location line="-1062"/>
         <source>Catalogued drives and folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1570"/>
+        <location line="+1577"/>
         <source>Browse the archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1569"/>
+        <location line="-1576"/>
         <source>Folders, previews, details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1276"/>
+        <location line="+1283"/>
         <source>Search the drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1275"/>
+        <location line="-1282"/>
         <source>By name, content or meaning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1847"/>
-        <location line="+213"/>
+        <location line="+1892"/>
+        <location line="+225"/>
         <source>Add a drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2059"/>
+        <location line="-2116"/>
         <source>Catalogue a drive or a folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1950"/>
+        <location line="+2007"/>
         <source>Action history</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1949"/>
+        <location line="-2006"/>
         <source>Undo, earlier versions of the catalogs</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2480,25 +3637,30 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
-        <location line="+2008"/>
+        <location line="+4"/>
+        <source>Names, roles, faces to approve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+2058"/>
         <source>Archive knowledge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2007"/>
+        <location line="-2057"/>
         <source>Context, glossary, documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+26"/>
-        <location line="+1922"/>
+        <location line="+1972"/>
         <source>Work in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1947"/>
+        <location line="-1997"/>
         <source>Analysis, resources, history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2509,24 +3671,24 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+2181"/>
+        <location line="+2231"/>
         <source>Archive in numbers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2180"/>
-        <location line="+2206"/>
+        <location line="-2230"/>
+        <location line="+2256"/>
         <source>Labels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2205"/>
-        <location line="+2229"/>
+        <location line="-2255"/>
+        <location line="+2279"/>
         <source>Safety copies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2228"/>
+        <location line="-2278"/>
         <location line="+1425"/>
         <source>Manage drives</source>
         <translation type="unfinished"></translation>
@@ -2568,12 +3730,42 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+74"/>
+        <source>Information (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Proposals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Export HTML</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The selected file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>This folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The whole catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Topic clusters</source>
         <translation>Emneklynger</translation>
     </message>
     <message>
-        <location line="+184"/>
+        <location line="+185"/>
         <source>Choose what to browse</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2603,12 +3795,18 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-2369"/>
+        <location line="+2372"/>
         <source>%1 files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-2513"/>
+        <source>Who made it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2516"/>
         <source>AI: %1 files</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2618,7 +3816,7 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
         <translation>Åbn</translation>
     </message>
     <message>
-        <location line="+125"/>
+        <location line="+137"/>
         <source>Re-interpret with the context</source>
         <translation>Genfortolk med konteksten</translation>
     </message>
@@ -2646,19 +3844,23 @@ Vil du gemme den alligevel (kataloget vil være tomt)?</translation>
 (Kataloget skal opdateres for at afspejle disse ændringer)</translation>
     </message>
     <message>
-        <location line="-108"/>
+        <location line="-2896"/>
+        <location line="+180"/>
+        <location line="+2608"/>
         <location line="+133"/>
         <source>Save</source>
         <translation>Gem</translation>
     </message>
     <message>
-        <location line="-578"/>
+        <location line="-628"/>
         <location line="+1"/>
         <source>Up one folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+582"/>
+        <location line="-2278"/>
+        <location line="+23"/>
+        <location line="+2887"/>
         <source>Delete</source>
         <translation>Slet</translation>
     </message>
@@ -7663,11 +8865,36 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
         <translation>Ikke fundet</translation>
     </message>
     <message>
+        <location line="+19"/>
+        <source>Clean the transcripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Removes the sentences the transcription invented on silence or music, and the repeated lines. A recording with no speech left has no transcript any more. Nothing on the drives is touched.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Clean now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Cleaning…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Checked %1 transcripts: %2 cleaned, %3 removed because no speech was left.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Log</source>
         <translation type="vanished">Log</translation>
     </message>
     <message>
-        <location line="-277"/>
+        <location line="-319"/>
         <source>%1 tokens/s</source>
         <translation>%1 tokens/s</translation>
     </message>
@@ -9840,7 +11067,7 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
 <context>
     <name>PageExploreFiles</name>
     <message>
-        <location filename="../qt_quick/PageExploreFiles.qml" line="+110"/>
+        <location filename="../qt_quick/PageExploreFiles.qml" line="+139"/>
         <location line="+11"/>
         <source>The device is not active. It may be disconnected, or its path may have changed.</source>
         <translation>Enheden er ikke aktiv. Den kan være frakoblet, eller dens sti kan være ændret.</translation>
@@ -9874,7 +11101,7 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
         <translation type="vanished">Samlet størrelse</translation>
     </message>
     <message>
-        <location line="+431"/>
+        <location line="+450"/>
         <location line="+11"/>
         <source>Open folder</source>
         <translation>Åbn mappe</translation>
@@ -9911,12 +11138,12 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
         <translation>Verificer kontrolsum</translation>
     </message>
     <message>
-        <location line="+197"/>
+        <location line="+200"/>
         <source>Checksum</source>
         <translation>Kontrolsum</translation>
     </message>
     <message>
-        <location line="-254"/>
+        <location line="-257"/>
         <source>Copy folder name</source>
         <translation>Kopiér mappenavn</translation>
     </message>
@@ -9953,14 +11180,14 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
         <translation type="vanished">Beregn tjeksum (SHA-256)</translation>
     </message>
     <message>
-        <location line="-640"/>
-        <location line="+669"/>
+        <location line="-659"/>
+        <location line="+688"/>
         <location line="+40"/>
         <source>File not found or could not be read</source>
         <translation>Filen blev ikke fundet eller kunne ikke læses</translation>
     </message>
     <message>
-        <location line="-698"/>
+        <location line="-717"/>
         <source>Folder not found.</source>
         <translation>Mappen blev ikke fundet.</translation>
     </message>
@@ -9974,7 +11201,7 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+291"/>
+        <location line="+292"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9984,7 +11211,17 @@ Kontroller, at kildemappen (%1) er korrekt, eller at enheden er monteret i kilde
         <translation>Katalog</translation>
     </message>
     <message>
-        <location line="+266"/>
+        <location line="+124"/>
+        <source>Add information to %1 files…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add information…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+159"/>
         <source>Error: </source>
         <translation>Fejl: </translation>
     </message>
@@ -10045,12 +11282,12 @@ til papirkurven?</translation>
     <message>
         <location line="-48"/>
         <location line="+53"/>
-        <location line="+107"/>
+        <location line="+110"/>
         <source>Cancel</source>
         <translation>Annuller</translation>
     </message>
     <message>
-        <location line="-99"/>
+        <location line="-102"/>
         <source>File deleted</source>
         <translation>Fil slettet</translation>
     </message>
@@ -10073,7 +11310,7 @@ til papirkurven?</translation>
         <translation type="vanished">Tjeksum (SHA-256)</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+45"/>
         <source>Checksum saved to database.</source>
         <translation>Kontrolsum gemt i database.</translation>
     </message>
@@ -10541,6 +11778,210 @@ til papirkurven?</translation>
     </message>
 </context>
 <context>
+    <name>PagePeople</name>
+    <message>
+        <location filename="../qt_quick/PagePeople.qml" line="+83"/>
+        <location line="+20"/>
+        <source>Unknown person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>%1% similar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>The people of the archive: who they are and the photos they are in. Faces found by the analysis stay proposals until you approve them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>People can still be added to photos by hand, from File details.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Faces to approve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Approve the selected (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Approved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Not them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The proposals were removed; the faces stay without a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>People</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Nobody yet. A person is added here, or from File details on a photo.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Name, role or organisation…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>New person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+79"/>
+        <source>%1 photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 to approve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Edit</source>
+        <translation>Rediger</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Photos (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>Similar faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-229"/>
+        <source>The analysis proposes who these faces are. Only the ones approved get the name; the others stay without one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>A person chosen shows their photos, and the faces like theirs in the other photos.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+138"/>
+        <source>Selecting one shows it in Browse the archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>No photo yet: their faces, once approved, or File details on a photo, add them.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Faces in the other photos that look like the approved faces of %1, most alike first. The ones ticked are attributed together; one face can also be attributed on its own.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Look for similar faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>No similar face found. Approving more faces of this person helps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Attribute to %1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Attributed to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Tick all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Not %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Done.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Faces without a name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Faces that look alike are grouped. Naming a group attributes its ticked faces, or all of them when none is ticked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>%1 faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Name these faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Named.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Find the faces in a drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Looks for faces in the photos of a catalogued drive, on this computer, in the background. Nothing is attributed without your approval.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Drive</source>
+        <translation>Drev</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Find the faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The faces are looked for in the background: Work in progress shows how it goes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>PageSearchForm</name>
     <message>
         <location filename="../qt_quick/PageSearchForm.qml" line="+512"/>
@@ -10752,7 +12193,7 @@ til papirkurven?</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-5897"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-7236"/>
         <source>Exact Phrase</source>
         <translation>Nøjagtig frase</translation>
     </message>
@@ -11084,7 +12525,7 @@ til papirkurven?</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1285"/>
+        <location line="+1289"/>
         <location line="+63"/>
         <source>Verify Checksums</source>
         <translation>Verificer kontrolsummer</translation>
@@ -11117,15 +12558,15 @@ til papirkurven?</translation>
         <translation>Inkluder metadata</translation>
     </message>
     <message>
-        <location line="-1346"/>
-        <location line="+914"/>
+        <location line="-1350"/>
+        <location line="+918"/>
         <location line="+38"/>
         <location line="+329"/>
         <source>Move to Trash</source>
         <translation>Flyt til papirkurv</translation>
     </message>
     <message>
-        <location line="-1364"/>
+        <location line="-1368"/>
         <location line="+11"/>
         <source>The device is not active. It may be disconnected, or its path may have changed.</source>
         <translation>Enheden er ikke aktiv. Den kan være frakoblet, eller dens sti kan være ændret.</translation>
@@ -11142,12 +12583,12 @@ til papirkurven?</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1104"/>
+        <location line="+1108"/>
         <source>Delete</source>
         <translation>Slet</translation>
     </message>
     <message>
-        <location line="-1053"/>
+        <location line="-1057"/>
         <source>Run process on all results</source>
         <translation>Kør proces på alle resultater</translation>
     </message>
@@ -11172,7 +12613,7 @@ til papirkurven?</translation>
         <translation>Eksport mislykkedes — ingen resultater eller databasefejl</translation>
     </message>
     <message>
-        <location line="+661"/>
+        <location line="+665"/>
         <source>(no selection)</source>
         <translation>(intet valg)</translation>
     </message>
@@ -11183,7 +12624,7 @@ til papirkurven?</translation>
         <translation>Åbn fil</translation>
     </message>
     <message>
-        <location line="-977"/>
+        <location line="-981"/>
         <source>All Words</source>
         <translation>Alle ord</translation>
     </message>
@@ -11304,6 +12745,21 @@ til papirkurven?</translation>
         <translation>Transskription</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>Information and people</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Study of the document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Fragment of the document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+1"/>
         <source>Summary and excerpts</source>
         <translation>Resumé og uddrag</translation>
@@ -11379,8 +12835,8 @@ til papirkurven?</translation>
         <translation type="vanished">Beregn tjeksum (SHA-256)</translation>
     </message>
     <message>
-        <location line="-886"/>
-        <location line="+940"/>
+        <location line="-890"/>
+        <location line="+944"/>
         <location line="+47"/>
         <source>File not found or could not be read</source>
         <translation>Filen blev ikke fundet eller kunne ikke læses</translation>

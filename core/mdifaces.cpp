@@ -31,6 +31,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/objdetect/face.hpp>
+#include <opencv2/core/utils/logger.hpp>
 #endif
 
 #include "core/mdifaces.h"
@@ -138,6 +139,9 @@ bool MdiFaces::Engine::isLoaded() const
 bool MdiFaces::Engine::load(const QString &detectorModel, const QString &recognizerModel, QString *error)
 {
 #ifdef TECA_HAVE_OPENCV
+    // OpenCV's notices (e.g. "Targets are not supported by the new graph
+    // engine") are not the user's concern: errors only
+    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_ERROR);
     try {
         d->detector = cv::FaceDetectorYN::create(detectorModel.toStdString(), std::string(), cv::Size(320, 320),
                                                  kDetectScore, 0.3f, 5000);

@@ -27,6 +27,11 @@
 #include "core/mdipeople.h"
 #include "core/mdifaces.h"
 #include "core/mditranscriptfilter.h"
+#include "core/mdiproposals.h"
+#include "core/mdidating.h"
+#include "core/mdiwebsearch.h"
+#include "core/mdidocument.h"
+#include "core/mdihtmlexport.h"
 #include <QThread>
 #include <QThread>
 #include <QJsonDocument>
@@ -2770,8 +2775,9 @@ const QString kMdiMainConnection = QStringLiteral("mdi_main");
 const QStringList kMdiAnalysisOrder = {
     QStringLiteral("thumbnail"), QStringLiteral("poster"), QStringLiteral("keyframes"),
     QStringLiteral("clip_video"), QStringLiteral("clip_audio"), QStringLiteral("waveform"),
-    QStringLiteral("caption"), QStringLiteral("faces"), QStringLiteral("transcript"), QStringLiteral("segments"),
-    QStringLiteral("summary"), QStringLiteral("mediainfo"), QStringLiteral("snippet"),
+    QStringLiteral("caption"), QStringLiteral("faces"), QStringLiteral("dating"), QStringLiteral("transcript"),
+    QStringLiteral("segments"), QStringLiteral("summary"), QStringLiteral("document"), QStringLiteral("mediainfo"),
+    QStringLiteral("snippet"),
     QStringLiteral("archive"), QStringLiteral("classification"), QStringLiteral("quickhash"),
     QStringLiteral("embeddings")
 };
@@ -2831,6 +2837,11 @@ QVariantMap AppManager::getEnrichmentTools()
     tools[QStringLiteral("faceDetectorModel")]   = MdiFaces::findDetectorModel(settings.value("MediaIntelligence/FaceDetectorModelPath").toString());
     tools[QStringLiteral("faceRecognizerModel")] = MdiFaces::findRecognizerModel(settings.value("MediaIntelligence/FaceRecognizerModelPath").toString());
     tools[QStringLiteral("opencv")] = MdiFaces::openCvVersion();
+    // Dating and document study (fork, 2026-10-30): photo metadata, scanned pages
+    tools[QStringLiteral("exiv2")]     = MdiEnrichmentJob::findTool(QStringLiteral("exiv2"),     settings.value("MediaIntelligence/Exiv2Path").toString());
+    tools[QStringLiteral("pdftoppm")]  = MdiEnrichmentJob::findTool(QStringLiteral("pdftoppm"),  settings.value("MediaIntelligence/PdftoppmPath").toString());
+    tools[QStringLiteral("tesseract")] = MdiEnrichmentJob::findTool(QStringLiteral("tesseract"), settings.value("MediaIntelligence/TesseractPath").toString());
+    tools[QStringLiteral("tessdata")]  = MdiDocument::findTessdata(settings.value("MediaIntelligence/TessdataPath").toString());
     tools[QStringLiteral("ollamaUrl")]   = settings.value("MediaIntelligence/OllamaUrl", QStringLiteral("http://localhost:11434")).toString();
     tools[QStringLiteral("visionModel")] = settings.value("MediaIntelligence/VisionModel", QStringLiteral("gemma4")).toString();
     tools[QStringLiteral("textModel")]   = settings.value("MediaIntelligence/TextModel",   QStringLiteral("gemma4")).toString();
@@ -2860,6 +2871,9 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
     if (analysis == QLatin1String("classification")) return tr("Classification");
     if (analysis == QLatin1String("knowledge"))  return tr("Reference documents");
     if (analysis == QLatin1String("faces"))      return tr("Faces");
+    if (analysis == QLatin1String("dating"))     return tr("Dates, events and places");
+    if (analysis == QLatin1String("document"))   return tr("Document study");
+    if (analysis == QLatin1String("proposals"))  return tr("Proposals to approve");
     return analysis;
 }
 //----------------------------------------------------------------------
@@ -2930,6 +2944,13 @@ QString AppManager::startMdiJob(const MdiData::PendingJob &job, bool resumed)
     config.faceRecognizerModelPath = tools.value(QStringLiteral("faceRecognizerModel")).toString();
     config.faceMatchThreshold      = faceMatchThreshold();
     config.facesOnly               = job.kind == QLatin1String("faces");
+    // Dating or document study on its own (fork, 2026-10-30)
+    if (job.kind == QLatin1String("dating") || job.kind == QLatin1String("document"))
+        config.onlyAnalysis        = job.kind;
+    config.exiv2Path               = tools.value(QStringLiteral("exiv2")).toString();
+    config.pdftoppmPath            = tools.value(QStringLiteral("pdftoppm")).toString();
+    config.tesseractPath           = tools.value(QStringLiteral("tesseract")).toString();
+    config.tessdataDir             = tools.value(QStringLiteral("tessdata")).toString();
     config.ollamaUrl       = tools.value(QStringLiteral("ollamaUrl")).toString();
     config.visionModel     = tools.value(QStringLiteral("visionModel")).toString();
     config.textModel       = tools.value(QStringLiteral("textModel")).toString();
@@ -3813,8 +3834,9 @@ QVariantMap AppManager::getMdiJobInfo() const
         d.loadDevice(m_connectionName);
         waiting << (job.kind == QLatin1String("reinterpret")
                     ? d.name + QStringLiteral(" · ") + mdiAnalysisLabel(QStringLiteral("classification"))
-                    : job.kind == QLatin1String("faces")
-                    ? d.name + QStringLiteral(" · ") + mdiAnalysisLabel(QStringLiteral("faces")) : d.name);
+                    : job.kind == QLatin1String("faces") || job.kind == QLatin1String("dating")
+                      || job.kind == QLatin1String("document")
+                    ? d.name + QStringLiteral(" · ") + mdiAnalysisLabel(job.kind) : d.name);
     }
     info[QStringLiteral("waiting")] = waiting;
     // Where data went in this session: anything not on this Mac is egress
@@ -3844,6 +3866,11 @@ QVariantMap AppManager::mdiToolsInfo()
     info[QStringLiteral("visionModel")] = tools.value(QStringLiteral("visionModel"));
     info[QStringLiteral("textModel")]   = tools.value(QStringLiteral("textModel"));
     info[QStringLiteral("embedModel")]  = tools.value(QStringLiteral("embedModel"));
+    // Voice activity (transcripts) and faces (fork, 2026-10-30)
+    info[QStringLiteral("whisperVadModel")]     = tools.value(QStringLiteral("whisperVadModel"));
+    info[QStringLiteral("faceDetectorModel")]   = tools.value(QStringLiteral("faceDetectorModel"));
+    info[QStringLiteral("faceRecognizerModel")] = tools.value(QStringLiteral("faceRecognizerModel"));
+    info[QStringLiteral("opencv")]              = tools.value(QStringLiteral("opencv"));
     return info;
 }
 //----------------------------------------------------------------------
@@ -8082,6 +8109,11 @@ double AppManager::faceMatchThreshold()
 //----------------------------------------------------------------------
 void AppManager::reindexFileInfo(const QList<QPair<int, QString>> &files)
 {
+    // Files of a collection left meanwhile are not written to the new one's store
+    if (m_infoIndexPath != mdiDataPath()) {
+        m_infoIndexPending.clear();
+        m_infoIndexPath = mdiDataPath();
+    }
     for (const auto &f : files)
         if (!m_infoIndexPending.contains(f))
             m_infoIndexPending.append(f);
@@ -8095,7 +8127,7 @@ void AppManager::runInfoIndexing()
     // nothing when none is configured or reachable). Never on the UI thread.
     if (m_infoIndexThread || m_infoIndexPending.isEmpty())
         return;
-    if (collection->databaseMode == QLatin1String("Hosted")) {
+    if (collection->databaseMode == QLatin1String("Hosted") || m_infoIndexPath != mdiDataPath()) {
         m_infoIndexPending.clear();
         return;
     }
@@ -8159,6 +8191,9 @@ void AppManager::stopPeopleWorkers()
 {
     m_infoIndexStop = true;
     m_transcriptCleanStop = true;
+    m_webStop = true;
+    if (m_webThread)
+        m_webThread->wait(10000);
     if (m_infoIndexThread)
         m_infoIndexThread->wait(10000);
     if (m_transcriptCleanThread)
@@ -8628,4 +8663,542 @@ QString AppManager::startFaceAnalysis(int deviceId)
     job.deviceId = deviceId;
     job.kind     = QStringLiteral("faces");
     return startMdiJob(job, false);
+}
+//----------------------------------------------------------------------
+// Dating, document study, web lookups and HTML export (fork, owner's
+// decisions of 2026-10-30). Inferred information is only proposed; the
+// owner approves it (MdiProposals).
+//----------------------------------------------------------------------
+namespace {
+
+QList<int> intList(const QVariantList &values)
+{
+    QList<int> ids;
+    for (const QVariant &v : values) {
+        const int id = v.toInt();
+        if (id > 0 && !ids.contains(id))
+            ids.append(id);
+    }
+    return ids;
+}
+
+QString ownFieldValue(const MdiPeople::Annotation &a, const QString &field)
+{
+    if (field == QLatin1String("date"))   return a.date;
+    if (field == QLatin1String("event"))  return a.event;
+    if (field == QLatin1String("place"))  return a.place;
+    if (field == QLatin1String("author")) return a.author;
+    if (field == QLatin1String("title"))  return a.title;
+    return QString();
+}
+
+QString documentTypeLabel(const QString &key)
+{
+    if (key == QLatin1String("letter"))        return AppManager::tr("Letter");
+    if (key == QLatin1String("email"))         return AppManager::tr("Email");
+    if (key == QLatin1String("regulation"))    return AppManager::tr("Regulation");
+    if (key == QLatin1String("results"))       return AppManager::tr("Results");
+    if (key == QLatin1String("press-release")) return AppManager::tr("Press release");
+    if (key == QLatin1String("invoice"))       return AppManager::tr("Invoice");
+    if (key == QLatin1String("receipt"))       return AppManager::tr("Receipt");
+    if (key == QLatin1String("minutes"))       return AppManager::tr("Minutes");
+    if (key == QLatin1String("report"))        return AppManager::tr("Report");
+    if (key == QLatin1String("contract"))      return AppManager::tr("Contract");
+    if (key == QLatin1String("form"))          return AppManager::tr("Form");
+    if (key == QLatin1String("programme"))     return AppManager::tr("Programme");
+    if (key == QLatin1String("certificate"))   return AppManager::tr("Certificate");
+    if (key == QLatin1String("newsletter"))    return AppManager::tr("Newsletter");
+    if (key == QLatin1String("article"))       return AppManager::tr("Article");
+    if (key == QLatin1String("manual"))        return AppManager::tr("Manual");
+    if (key == QLatin1String("presentation"))  return AppManager::tr("Presentation");
+    if (key == QLatin1String("list"))          return AppManager::tr("List");
+    if (key == QLatin1String("budget"))        return AppManager::tr("Budget");
+    if (key == QLatin1String("notice"))        return AppManager::tr("Notice");
+    return AppManager::tr("Other");
+}
+
+QString pagesText(int from, int to)
+{
+    if (from <= 0)
+        return QString();
+    return from == to ? QString::number(from) : QStringLiteral("%1–%2").arg(from).arg(to);
+}
+
+// The words of the exported page, translated (MdiHtmlExport keys)
+MdiHtmlExport::Labels htmlLabels(const std::function<QString(const QString &)> &kindLabel)
+{
+    MdiHtmlExport::Labels l;
+    l["contents"] = AppManager::tr("Contents");
+    l["skipToContent"] = AppManager::tr("Skip to content");
+    l["backToContents"] = AppManager::tr("Back to contents");
+    l["fileCount"] = AppManager::tr("%1 files");
+    l["path"] = AppManager::tr("Path");
+    l["type"] = AppManager::tr("Type");
+    l["size"] = AppManager::tr("Size");
+    l["modified"] = AppManager::tr("Modified");
+    l["information"] = AppManager::tr("Information");
+    l["noInformation"] = AppManager::tr("No information written for this file.");
+    l["title"] = AppManager::tr("Title");
+    l["description"] = AppManager::tr("Description");
+    l["event"] = AppManager::tr("Event");
+    l["place"] = AppManager::tr("Place");
+    l["date"] = AppManager::tr("Date");
+    l["author"] = AppManager::tr("Author");
+    l["notes"] = AppManager::tr("Notes");
+    l["tags"] = AppManager::tr("Tags");
+    l["people"] = AppManager::tr("People");
+    l["proposals"] = AppManager::tr("Proposals");
+    l["proposalsCaption"] = AppManager::tr("Information inferred by Teca, with its sources");
+    l["field"] = AppManager::tr("Field");
+    l["value"] = AppManager::tr("Value");
+    l["confidence"] = AppManager::tr("Confidence");
+    l["status"] = AppManager::tr("Status");
+    l["sources"] = AppManager::tr("Sources");
+    l["pending"] = AppManager::tr("To approve");
+    l["accepted"] = AppManager::tr("Approved");
+    l["rejected"] = AppManager::tr("Rejected");
+    l["superseded"] = AppManager::tr("Replaced");
+    l["precision-day"] = AppManager::tr("day");
+    l["precision-month"] = AppManager::tr("month");
+    l["precision-year"] = AppManager::tr("year");
+    l["precision-range"] = AppManager::tr("period");
+    l["precision-coordinates"] = AppManager::tr("coordinates");
+    for (const char *k : {"exif", "video", "filename", "folder", "folder-consistency", "caption", "classification",
+                          "context", "knowledge", "web", "model", "document"})
+        l[QStringLiteral("source-") + QLatin1String(k)] = kindLabel(QLatin1String(k));
+    l["aiDescription"] = AppManager::tr("AI description");
+    l["classificationTitle"] = AppManager::tr("Title");
+    l["entities"] = AppManager::tr("Named");
+    l["excerpts"] = AppManager::tr("Excerpts");
+    l["study"] = AppManager::tr("Document study");
+    l["synthesis"] = AppManager::tr("Synthesis");
+    l["documentType"] = AppManager::tr("Kind of document");
+    l["documentDate"] = AppManager::tr("Date of the document");
+    l["recipients"] = AppManager::tr("Recipients");
+    l["pages"] = AppManager::tr("Pages");
+    l["ocrPages"] = AppManager::tr("Pages read by OCR");
+    l["keyFacts"] = AppManager::tr("Key facts");
+    l["dates"] = AppManager::tr("Dates");
+    l["places"] = AppManager::tr("Places");
+    l["organisations"] = AppManager::tr("Organisations");
+    l["events"] = AppManager::tr("Events");
+    l["glossary"] = AppManager::tr("Terms of the glossary");
+    l["relatedDocuments"] = AppManager::tr("Related reference documents");
+    l["relatedPeople"] = AppManager::tr("People named");
+    l["fragments"] = AppManager::tr("Fragments");
+    l["page"] = AppManager::tr("page %1");
+    l["pageRange"] = AppManager::tr("pages %1–%2");
+    l["fullText"] = AppManager::tr("Full text");
+    l["previewOf"] = AppManager::tr("Preview of %1");
+    return l;
+}
+
+} // namespace
+//----------------------------------------------------------------------
+QString AppManager::proposalKindLabel(const QString &kind) const
+{
+    if (kind == QLatin1String("exif"))               return tr("Photo metadata");
+    if (kind == QLatin1String("video"))              return tr("Video metadata");
+    if (kind == QLatin1String("filename"))           return tr("File name");
+    if (kind == QLatin1String("folder"))             return tr("Folder");
+    if (kind == QLatin1String("folder-consistency")) return tr("Other files of the folder");
+    if (kind == QLatin1String("caption"))            return tr("Image description");
+    if (kind == QLatin1String("classification"))     return tr("Classification");
+    if (kind == QLatin1String("context"))            return tr("Context of the archive");
+    if (kind == QLatin1String("knowledge"))          return tr("Reference document");
+    if (kind == QLatin1String("web"))                return tr("Web");
+    if (kind == QLatin1String("model"))              return tr("Text model");
+    if (kind == QLatin1String("document"))           return tr("Document study");
+    return kind;
+}
+//----------------------------------------------------------------------
+QString AppManager::proposalFieldLabel(const QString &field) const
+{
+    if (field == QLatin1String("date"))   return tr("Date");
+    if (field == QLatin1String("event"))  return tr("Event");
+    if (field == QLatin1String("place"))  return tr("Place");
+    if (field == QLatin1String("author")) return tr("Author");
+    if (field == QLatin1String("title"))  return tr("Title");
+    return field;
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::proposalSources(const QVariantList &sources) const
+{
+    QVariantList out;
+    for (const QVariant &v : sources) {
+        QVariantMap m = v.toMap();
+        m[QStringLiteral("kindLabel")] = proposalKindLabel(m.value(QStringLiteral("kind")).toString());
+        out.append(m);
+    }
+    return out;
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::proposalsForFile(int catalogId, const QString &fullPath)
+{
+    QVariantList list;
+    if (!peopleStoreRefusal().isEmpty())
+        return list;
+    const MdiPeople::Annotation own = MdiPeople::annotation(kMdiMainConnection, catalogId, fullPath);
+    for (const MdiProposals::Proposal &p : MdiProposals::forFile(kMdiMainConnection, catalogId, fullPath)) {
+        QVariantMap m = p.toVariant();
+        m[QStringLiteral("fieldLabel")] = proposalFieldLabel(p.field);
+        m[QStringLiteral("ownValue")]   = ownFieldValue(own, p.field);
+        m[QStringLiteral("sources")]    = proposalSources(m.value(QStringLiteral("sources")).toList());
+        list.append(m);
+    }
+    return list;
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::proposalsForFolder(int catalogId, const QString &folderPath, bool recursive)
+{
+    QVariantList list;
+    if (!peopleStoreRefusal().isEmpty())
+        return list;
+    for (const QVariant &v : MdiProposals::forFolder(kMdiMainConnection, catalogId, folderPath, recursive)) {
+        QVariantMap m = v.toMap();
+        m[QStringLiteral("fieldLabel")] = proposalFieldLabel(m.value(QStringLiteral("field")).toString());
+        m[QStringLiteral("sources")]    = proposalSources(m.value(QStringLiteral("sources")).toList());
+        list.append(m);
+    }
+    return list;
+}
+//----------------------------------------------------------------------
+QString AppManager::acceptProposals(const QVariantList &proposalIds, bool replaceOwnValues)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const QList<int> ids = intList(proposalIds);
+    if (ids.isEmpty())
+        return QString();
+    QList<QPair<int, QString>> files;
+    for (const MdiProposals::Proposal &p : MdiProposals::byIds(kMdiMainConnection, ids))
+        if (!files.contains(qMakePair(p.catalogId, p.fullPath)))
+            files.append(qMakePair(p.catalogId, p.fullPath));
+    const MdiProposals::AcceptResult result = MdiProposals::acceptAndApply(kMdiMainConnection, ids, replaceOwnValues);
+    // The written values are searchable like any information of the owner's
+    reindexFileInfo(files);
+    emit fileInfoChanged();
+    emit proposalsChanged();
+    if (!result.ok)
+        return tr("The change could not be saved.");
+    if (result.kept > 0)
+        return tr("%n proposal(s) left to approve: the file already has its own value for that field.", "", result.kept);
+    return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::rejectProposals(const QVariantList &proposalIds)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const bool ok = MdiProposals::setStatus(kMdiMainConnection, intList(proposalIds), QStringLiteral("rejected"));
+    emit proposalsChanged();
+    return ok ? QString() : tr("The change could not be saved.");
+}
+//----------------------------------------------------------------------
+QString AppManager::startDating(int deviceId)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    MdiData::PendingJob job;
+    job.deviceId = deviceId;
+    job.kind     = QStringLiteral("dating");
+    return startMdiJob(job, false);
+}
+//----------------------------------------------------------------------
+QString AppManager::startDocumentStudy(int deviceId)
+{
+    MdiData::PendingJob job;
+    job.deviceId = deviceId;
+    job.kind     = QStringLiteral("document");
+    return startMdiJob(job, false);
+}
+//----------------------------------------------------------------------
+bool AppManager::webSearchEnabled()
+{
+    // Per collection, off by default (owner's decision 2026-10-30)
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    return settings.value(QStringLiteral("MediaIntelligence/WebSearch"), false).toBool();
+}
+//----------------------------------------------------------------------
+void AppManager::setWebSearchEnabled(bool enabled)
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    settings.setValue(QStringLiteral("MediaIntelligence/WebSearch"), enabled);
+    settings.sync();
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::pendingWebQueries(int deviceId)
+{
+    // Listed whether lookups are on or off: the owner sees what would be
+    // sent before turning them on. Event, place and year words only.
+    if (!peopleStoreRefusal().isEmpty())
+        return {};
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog"))
+        return {};
+    QStringList names;
+    for (const MdiPeople::Person &p : MdiPeople::persons(kMdiMainConnection))
+        names << p.displayName();
+    return MdiDating::webQueries(kMdiMainConnection, device.externalID, device.path,
+                                 MdiContext::load(kMdiMainConnection, MdiContext::kCollectionScope), names);
+}
+//----------------------------------------------------------------------
+QString AppManager::runWebQueries(int deviceId, const QVariantList &queries)
+{
+    if (!webSearchEnabled())
+        return tr("Web lookups are off for this collection.");
+    if (m_webThread)
+        return tr("Web lookups are already running.");
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog"))
+        return tr("Selected device is not a catalog");
+    QStringList list;
+    for (const QVariant &v : queries) {
+        const QString q = (v.typeId() == QMetaType::QVariantMap ? v.toMap().value(QStringLiteral("query")).toString()
+                                                                : v.toString()).simplified();
+        if (!q.isEmpty() && !list.contains(q, Qt::CaseInsensitive) && list.size() < 50)
+            list << q;
+    }
+    if (list.isEmpty())
+        return QString();
+
+    const QString dbPath = mdiDataPath();
+    const int catalogId = device.externalID;
+    const QString root = device.path;
+    const QJsonObject context = MdiContext::load(kMdiMainConnection, MdiContext::kCollectionScope);
+    QStringList names;
+    for (const MdiPeople::Person &p : MdiPeople::persons(kMdiMainConnection))
+        names << p.displayName();
+    m_webStop = false;
+    m_webThread = QThread::create([this, dbPath, catalogId, root, context, names, list]() {
+        const QString conn = QStringLiteral("mdi_web_%1").arg(quintptr(QThread::currentThreadId()));
+        int asked = 0, found = 0;
+        QString lastError;
+        if (MdiData::open(conn, dbPath)) {
+            for (const QString &q : list) {
+                if (m_webStop.load())
+                    break;
+                QString err;
+                const QList<MdiWebSearch::Result> results = MdiWebSearch::search(q, &err, &m_webStop);
+                if (m_webStop.load())
+                    break;
+                ++asked;
+                // A failed lookup is not kept: the query stays pending
+                if (results.isEmpty() && !err.isEmpty()) {
+                    lastError = err;
+                    continue;
+                }
+                MdiWebSearch::storeResults(conn, q, results);
+                if (!results.isEmpty())
+                    ++found;
+            }
+            // The proposals again, with what the web said (no model call here)
+            if (!m_webStop.load() && found > 0) {
+                MdiDating::DeriveOptions o;
+                o.sourceRoot  = root;
+                o.context     = context;
+                o.personNames = names;
+                o.stop        = &m_webStop;
+                MdiDating::deriveCatalog(conn, catalogId, o);
+            }
+            MdiData::close(conn);
+        } else {
+            lastError = QStringLiteral("mdi_data.db could not be opened");
+        }
+        QMetaObject::invokeMethod(this, [this, asked, found, lastError]() {
+            emit webQueriesFinished(asked, found, lastError);
+            emit proposalsChanged();
+        }, Qt::QueuedConnection);
+    });
+    connect(qApp, &QCoreApplication::aboutToQuit, m_webThread, [this]() { stopPeopleWorkers(); });
+    connect(m_webThread, &QThread::finished, this, [this]() {
+        m_webThread->deleteLater();
+        m_webThread = nullptr;
+        emit webQueriesRunningChanged();
+    });
+    m_webThread->start(QThread::LowPriority);
+    emit webQueriesRunningChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::documentStudy(int catalogId, const QString &fullPath)
+{
+    QVariantMap out{ { QStringLiteral("available"), false } };
+    if (!openMdiMainConnection())
+        return out;
+    MdiData::Datum datum;
+    bool found = false;
+    for (const MdiData::Datum &d : MdiData::forFile(kMdiMainConnection, catalogId, fullPath))
+        if (d.analysis == QLatin1String("document")) {
+            datum = d;
+            found = true;
+        }
+    if (!found)
+        return out;
+    const QJsonObject &v = datum.value;
+    out[QStringLiteral("available")]  = datum.outcome == QLatin1String("completed");
+    out[QStringLiteral("outcome")]    = datum.outcome;
+    out[QStringLiteral("reason")]     = datum.reason;
+    out[QStringLiteral("model")]      = datum.model;
+    out[QStringLiteral("studied")]    = datum.date;
+    out[QStringLiteral("ocr")]        = v.value("ocr").toBool();
+    out[QStringLiteral("ocrPages")]   = v.value("ocrPages").toArray().toVariantList();
+    out[QStringLiteral("pages")]      = v.value("pages").toInt();
+    out[QStringLiteral("partial")]    = v.value("partial").toBool();
+    out[QStringLiteral("language")]   = v.value("language").toString();
+    out[QStringLiteral("title")]      = v.value("title").toString();
+    out[QStringLiteral("synthesis")]  = v.value("synthesis").toString();
+    out[QStringLiteral("typeKey")]    = v.value("type").toString();
+    out[QStringLiteral("type")]       = v.value("type").toString().isEmpty() ? QString()
+                                                                              : documentTypeLabel(v.value("type").toString());
+    out[QStringLiteral("date")]       = v.value("date").toString();
+    out[QStringLiteral("dateValue")]  = v.value("dateValue").toString();
+    out[QStringLiteral("author")]     = v.value("author").toString();
+    out[QStringLiteral("recipients")] = v.value("recipients").toArray().toVariantList();
+    out[QStringLiteral("keyFacts")]   = v.value("keyFacts").toObject().toVariantMap();
+    out[QStringLiteral("tags")]       = v.value("tags").toArray().toVariantList();
+    out[QStringLiteral("glossary")]   = v.value("glossary").toArray().toVariantList();
+
+    QVariantList fragments;
+    QString allText;
+    for (const MdiDocument::Fragment &f : MdiDocument::fragments(kMdiMainConnection, catalogId, fullPath)) {
+        QVariantList entities;
+        for (auto it = f.entities.begin(); it != f.entities.end(); ++it)
+            for (const QJsonValue &e : it.value().toArray())
+                if (!e.toString().isEmpty() && !entities.contains(e.toString()))
+                    entities.append(e.toString());
+        fragments.append(QVariantMap{ { QStringLiteral("index"),        f.index },
+                                      { QStringLiteral("pages"),        pagesText(f.pageFrom, f.pageTo) },
+                                      { QStringLiteral("pageFrom"),     f.pageFrom },
+                                      { QStringLiteral("pageTo"),       f.pageTo },
+                                      { QStringLiteral("title"),        f.title },
+                                      { QStringLiteral("summary"),      f.summary },
+                                      { QStringLiteral("tags"),         f.tags },
+                                      { QStringLiteral("entities"),     entities },
+                                      { QStringLiteral("entityGroups"), f.entities.toVariantMap() },
+                                      { QStringLiteral("text"),         f.text } });
+        allText += f.text + QLatin1Char('\n');
+    }
+    out[QStringLiteral("fragments")] = fragments;
+
+    // Related: reference documents found by the study; known people named,
+    // with today's list of people
+    QVariantList kb;
+    for (const QJsonValue &d : v.value("related").toObject().value("kb").toArray())
+        kb.append(QVariantMap{ { QStringLiteral("title"), d.toObject().value("title").toString() },
+                               { QStringLiteral("path"),  d.toObject().value("path").toString() } });
+    QList<MdiDocument::PersonName> people;
+    if (collection->databaseMode != QLatin1String("Hosted"))
+        for (const MdiPeople::Person &p : MdiPeople::persons(kMdiMainConnection))
+            people.append(MdiDocument::PersonName{p.id, p.displayName(), p.firstName, p.lastName});
+    out[QStringLiteral("related")] = QVariantMap{
+        { QStringLiteral("kb"),     kb },
+        { QStringLiteral("people"), MdiDocument::peopleFound(allText, people).toVariantList() } };
+    return out;
+}
+//----------------------------------------------------------------------
+QString AppManager::exportHtml(const QString &scope, int catalogId, const QString &path, const QString &targetFile)
+{
+    if (!openMdiMainConnection())
+        return tr("The change could not be saved.");
+    const QString target = QUrl(targetFile).isLocalFile() ? QUrl(targetFile).toLocalFile() : targetFile;
+    if (target.isEmpty())
+        return tr("Select a file to save the report to.");
+
+    Catalog catalog;
+    catalog.ID = catalogId;
+    catalog.setConnectionName(m_connectionName);
+    catalog.loadCatalog();
+    QString root = catalog.sourcePath;
+    while (root.size() > 1 && root.endsWith(QLatin1Char('/')))
+        root.chop(1);
+    QString folder = path;
+    while (folder.size() > 1 && folder.endsWith(QLatin1Char('/')))
+        folder.chop(1);
+
+    // The files of the scope that have something to tell: information,
+    // people, proposals, AI results or a study (every file for one file)
+    const bool single = scope == QLatin1String("file");
+    QSet<QString> worth;
+    if (!single) {
+        worth = MdiProposals::filesWithProposals(kMdiMainConnection, catalogId);
+        if (collection->databaseMode != QLatin1String("Hosted")) {
+            const QHash<QString, QString> info = MdiPeople::searchTextByFile(kMdiMainConnection, catalogId);
+            for (auto it = info.cbegin(); it != info.cend(); ++it)
+                worth.insert(it.key());
+        }
+        for (const QString &a : {QStringLiteral("caption"), QStringLiteral("summary"),
+                                 QStringLiteral("classification"), QStringLiteral("document")})
+            for (const MdiData::Datum &d : MdiData::forCatalog(kMdiMainConnection, catalogId, a))
+                worth.insert(d.fullPath);
+    }
+    QList<MdiEnrichmentJob::FileItem> files;
+    for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(m_connectionName, catalogId,
+                                                                                    collection->databaseMode,
+                                                                                    catalog.filePath)) {
+        if (single ? f.fullPath == path
+                   : (scope == QLatin1String("catalog") || f.fullPath.startsWith(folder + QLatin1Char('/')))
+                     && worth.contains(f.fullPath))
+            files.append(f);
+    }
+    if (single && files.isEmpty()) {
+        MdiEnrichmentJob::FileItem f;
+        f.fullPath = path;
+        files.append(f);
+    }
+    std::sort(files.begin(), files.end(), [](const MdiEnrichmentJob::FileItem &a, const MdiEnrichmentJob::FileItem &b) {
+        const QString fa = QFileInfo(a.fullPath).path(), fb = QFileInfo(b.fullPath).path();
+        return fa == fb ? a.fullPath.compare(b.fullPath, Qt::CaseInsensitive) < 0
+                        : fa.compare(fb, Qt::CaseInsensitive) < 0;
+    });
+
+    const QHash<QString, QString> typeLabels{ { QStringLiteral("image"), tr("Image") }, { QStringLiteral("video"), tr("Video") },
+                                              { QStringLiteral("audio"), tr("Audio") }, { QStringLiteral("text"),  tr("Text") },
+                                              { QStringLiteral("other"), tr("Other") } };
+    QVariantList records;
+    for (const MdiEnrichmentJob::FileItem &f : std::as_const(files)) {
+        QString relative = QFileInfo(f.fullPath).path();
+        if (!root.isEmpty() && relative.startsWith(root))
+            relative = relative.mid(root.size());
+        QVariantMap facts{ { QStringLiteral("folder"),   relative.isEmpty() ? QStringLiteral("/") : relative },
+                           { QStringLiteral("type"),     typeLabels.value(f.fileType, f.fileType) },
+                           { QStringLiteral("size"),     f.size > 0 ? QLocale().formattedDataSize(f.size) : QString() },
+                           { QStringLiteral("modified"), f.dateUpdated } };
+        QVariantMap record = MdiHtmlExport::fileRecord(kMdiMainConnection, catalogId, f.fullPath, facts);
+        if (record.contains(QStringLiteral("study"))) {
+            QVariantMap study = record.value(QStringLiteral("study")).toMap();
+            study[QStringLiteral("typeLabel")] = documentTypeLabel(study.value(QStringLiteral("type")).toString());
+            record[QStringLiteral("study")] = study;
+        }
+        records.append(record);
+    }
+
+    MdiHtmlExport::Options options;
+    options.scope    = scope;
+    options.language = QLocale(getCurrentLanguage()).bcp47Name();
+    if (single)
+        options.title = QFileInfo(path).fileName();
+    else if (scope == QLatin1String("folder"))
+        options.title = QFileInfo(folder).fileName().isEmpty() ? folder : QFileInfo(folder).fileName();
+    else
+        options.title = QFileInfo(root).fileName().isEmpty() ? root : QFileInfo(root).fileName();
+    options.subtitle = single ? QFileInfo(path).path() : (scope == QLatin1String("folder") ? folder : root);
+    options.generatedText = tr("Generated by Teca on %1").arg(QLocale().toString(QDate::currentDate(), QLocale::ShortFormat));
+    options.includeFragmentText = true;
+    const QString html = MdiHtmlExport::build(records, options,
+                                              htmlLabels([this](const QString &k) { return proposalKindLabel(k); }));
+    QString error;
+    if (!MdiHtmlExport::write(target, html, &error))
+        return tr("The report could not be saved: %1").arg(error);
+    return QString();
 }

@@ -91,6 +91,18 @@ Kirigami.ScrollablePage {
             visible: reader.study.available !== true
             type: Kirigami.MessageType.Information
             text: qsTr("This document has not been studied yet. The study runs with the AI analysis of its drive (Study of the documents), on this computer.")
+            actions: [
+                Kirigami.Action {
+                    text: qsTr("Study the documents of this drive")
+                    icon.name: "media-playback-start"
+                    onTriggered: {
+                        const error = appManager1.startDocumentStudy(appManager1.selectedDeviceType === "Catalog"
+                                                                     ? appManager1.selectedDeviceId : -1)
+                        applicationWindow().showPassiveNotification(error !== "" ? error
+                            : qsTr("Studying in the background: Work in progress shows how it goes."))
+                    }
+                }
+            ]
         }
 
         // What it is

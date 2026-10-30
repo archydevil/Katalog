@@ -32,6 +32,9 @@
 #include "core/mdifts.h"
 #include "core/mdipeople.h"
 #include "core/mditranscriptfilter.h"
+#include "core/mdidating.h"
+#include "core/mdidocument.h"
+#include "core/mdiproposals.h"
 #include "core/filechecksum.h"
 
 #include <QSqlDatabase>
@@ -147,6 +150,13 @@ QString archiveKind(const QString &fullPath)
 }
 
 // Files whose first characters are kept as a snippet, whatever their catalog type
+// Documents studied (fork, 2026-10-30): text formats whose content reads as
+// prose; spreadsheets, data and subtitle files are not
+const QStringList kDocumentSuffixes = {
+    QStringLiteral("pdf"), QStringLiteral("doc"), QStringLiteral("docx"), QStringLiteral("odt"),
+    QStringLiteral("rtf"), QStringLiteral("txt"), QStringLiteral("md"), QStringLiteral("markdown"),
+    QStringLiteral("htm"), QStringLiteral("html"), QStringLiteral("pptx"), QStringLiteral("odp")};
+
 const QStringList kSnippetSuffixes = {
     "txt", "md", "markdown", "csv", "tsv", "json", "xml", "log", "srt", "vtt", "rtf", "html", "htm",
     "pdf", "docx", "odt", "doc", "pptx", "odp", "xlsx", "ods",
@@ -657,9 +667,11 @@ void MdiEnrichmentJob::run()
             // Instant-search index: the file's derived text changed
             if (r.outcome == QLatin1String("completed")
                 && (analysis == QLatin1String("snippet") || analysis == QLatin1String("summary")
-                    || analysis == QLatin1String("classification")
+                    || analysis == QLatin1String("classification") || analysis == QLatin1String("document")
                     || analysis == QLatin1String("caption") || analysis == QLatin1String("archive")))
                 MdiFts::updateDerivedText(m_connectionName, m_config.catalogId, file.fullPath);
+            if (analysis == QLatin1String("dating"))
+                m_datingChanged = true;
             if (analysis == QLatin1String("segments") && r.outcome == QLatin1String("completed"))
                 m_segmentsChanged = true;
             if (r.outcome == QLatin1String("completed"))
@@ -723,6 +735,13 @@ void MdiEnrichmentJob::run()
         }
     }
 
+    // Dating proposals: the catalog's photos and videos, from their own
+    // evidence, their folders, their neighbours, the context, the knowledge
+    // base and the web results the owner fetched (fork, 2026-10-30)
+    if (!m_stop.load() && !m_config.quickHashOnly && !m_config.facesOnly
+        && (m_datingChanged || m_config.onlyAnalysis == QLatin1String("dating")))
+        deriveDating(fileCount, completed, failed);
+
     // The quick-hash pass is complete for this catalog state when every file
     // was reached (a disconnected drive leaves it pending for next time)
     const bool hashesWanted = m_config.quickHashOnly
@@ -751,7 +770,8 @@ QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
         info[QStringLiteral("model")] = m_config.visionModel;
         info[QStringLiteral("where")] = ollamaWhere;
     } else if (analysis == QLatin1String("summary") || analysis == QLatin1String("segments")
-               || analysis == QLatin1String("clusters") || analysis == QLatin1String("classification")) {
+               || analysis == QLatin1String("clusters") || analysis == QLatin1String("classification")
+               || analysis == QLatin1String("document")) {
         info[QStringLiteral("tool")]  = QStringLiteral("ollama");
         info[QStringLiteral("model")] = m_config.textModel;
         info[QStringLiteral("where")] = ollamaWhere;
@@ -763,6 +783,13 @@ QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
         info[QStringLiteral("tool")]  = QStringLiteral("whisper.cpp");
         info[QStringLiteral("model")] = QFileInfo(m_config.whisperModelPath).fileName();
         info[QStringLiteral("where")] = QStringLiteral("local");
+    } else if (analysis == QLatin1String("dating")) {
+        info[QStringLiteral("tool")]  = m_config.exiv2Path.isEmpty() ? QStringLiteral("katalog") : QStringLiteral("exiv2");
+        info[QStringLiteral("where")] = QStringLiteral("local");
+    } else if (analysis == QLatin1String("proposals")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("katalog");
+        info[QStringLiteral("model")] = m_config.textModel;
+        info[QStringLiteral("where")] = providerClass(QUrl(m_config.ollamaUrl));
     } else if (analysis == QLatin1String("faces")) {
         info[QStringLiteral("tool")]  = QStringLiteral("opencv");
         info[QStringLiteral("model")] = QStringLiteral("YuNet + SFace");
@@ -802,6 +829,19 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
     // Faces only (asked for from the People page): every image of the catalog
     if (m_config.facesOnly)
         return file.fileType == QLatin1String("image") ? QStringList{QStringLiteral("faces")} : QStringList();
+    // Dating or document study only, on demand: the catalog's photos and
+    // videos, or its documents (with the index the study feeds)
+    if (m_config.onlyAnalysis == QLatin1String("dating"))
+        return (file.fileType == QLatin1String("image") || file.fileType == QLatin1String("video"))
+               ? QStringList{QStringLiteral("dating")} : QStringList();
+    if (m_config.onlyAnalysis == QLatin1String("document")) {
+        if (!kDocumentSuffixes.contains(file.extension))
+            return {};
+        QStringList list{QStringLiteral("document")};
+        if (s.value("ai").toObject().value("embeddings").toBool(true))
+            list << QStringLiteral("embeddings");
+        return list;
+    }
 
     // Quick hash: every file, whatever its type (duplicates across disks)
     QStringList hashes;
@@ -842,8 +882,11 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
         if (caption)                           list << QStringLiteral("caption");
         // Faces: off unless chosen (owner's request 2026-10-30)
         if (ai.value("faces").toBool(false))   list << QStringLiteral("faces");
+        // Dating: cheap, on by default (owner's decision 2026-10-30)
+        if (ai.value("dating").toBool(true))   list << QStringLiteral("dating");
     } else if (file.fileType == QLatin1String("video")) {
         list << QStringLiteral("mediainfo");
+        if (ai.value("dating").toBool(true))   list << QStringLiteral("dating");
         if (video.value("posterFrame").toBool())   list << QStringLiteral("poster");
         if (video.value("keyframeStrip").toBool()) list << QStringLiteral("keyframes");
         if (video.value("clip").toString(QStringLiteral("off")) != QLatin1String("off"))
@@ -862,6 +905,9 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
         if (segments)                         list << QStringLiteral("segments");
     } else if (file.fileType == QLatin1String("text")) {
         if (summary) list << QStringLiteral("summary");
+        // Study of the document in fragments (owner's decision 2026-10-30)
+        if (ai.value("document").toBool(true) && kDocumentSuffixes.contains(file.extension))
+            list << QStringLiteral("document");
     }
     // Interpretation in the collection's context: text only, after the
     // analyses whose results it reads (D33, MDI-F100)
@@ -935,6 +981,11 @@ QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
     } else if (analysis == QLatin1String("embeddings")) {
         p["model"]   = m_config.embedModel;
         p["version"] = kEmbedVersion;
+    } else if (analysis == QLatin1String("dating")) {
+        p["version"] = MdiDating::kVersion;
+    } else if (analysis == QLatin1String("document")) {
+        p["model"]   = m_config.textModel;
+        p["version"] = MdiDocument::kVersion;
     }
     return p;
 }
@@ -947,7 +998,8 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
                         && analysis != QLatin1String("snippet") && analysis != QLatin1String("quickhash")
                         && analysis != QLatin1String("mediainfo") && analysis != QLatin1String("thumbnail")
                         && analysis != QLatin1String("archive") && analysis != QLatin1String("classification")
-                        && analysis != QLatin1String("faces");
+                        && analysis != QLatin1String("faces") && analysis != QLatin1String("dating")
+                        && analysis != QLatin1String("document");
     if (isPreview && m_config.ffmpegPath.isEmpty()) {
         Result r;
         r.outcome = QStringLiteral("skipped");
@@ -971,6 +1023,8 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     if (analysis == QLatin1String("mediainfo"))  return makeMediaInfo(file);
     if (analysis == QLatin1String("archive"))    return makeArchiveListing(file);
     if (analysis == QLatin1String("faces"))      return makeFaces(file);
+    if (analysis == QLatin1String("dating"))     return makeDating(file);
+    if (analysis == QLatin1String("document"))   return makeDocument(file);
     Result r;
     r.outcome = QStringLiteral("skipped");
     r.reason  = QStringLiteral("unknown analysis");
@@ -2129,6 +2183,18 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeEmbeddings(const FileItem &file)
                 d.value.value("title").toString() + QStringLiteral(". ") + d.value.value("description").toString()
                 + QStringLiteral(" ") + values.join(QStringLiteral("; "))
                 + QStringLiteral(" (") + joinTags(d.value.value("tags")) + QStringLiteral(")"));
+        } else if (d.analysis == QLatin1String("document")) {
+            // The study: its synthesis, then each fragment's summary (a hit
+            // lands on the fragment; fork, 2026-10-30)
+            add(QStringLiteral("synthesis"), 0, -1, -1,
+                name + QStringLiteral(". ") + d.value.value("title").toString() + QStringLiteral(". ")
+                + d.value.value("synthesis").toString() + QStringLiteral(" (") + joinTags(d.value.value("tags"))
+                + QStringLiteral(")"));
+            for (const MdiDocument::Fragment &f : MdiDocument::fragments(m_connectionName, m_config.catalogId, file.fullPath))
+                if (!f.summary.isEmpty())
+                    add(QStringLiteral("fragment"), f.index, -1, -1,
+                        f.title + QStringLiteral(". ") + f.summary + QStringLiteral(" (") + f.tags.join(QStringLiteral(", "))
+                        + QStringLiteral(")"));
         } else if (d.analysis == QLatin1String("caption")) {
             add(QStringLiteral("caption"), 0, -1, -1,
                 d.value.value("caption").toString() + QStringLiteral(" (") + joinTags(d.value.value("tags")) + QStringLiteral(")"));
@@ -2621,5 +2687,135 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeFaces(const FileItem &file)
     r.value["suggested"] = suggested;
     r.value["width"]     = image.width();
     r.value["height"]    = image.height();
+    return r;
+}
+
+//----------------------------------------------------------------------
+// Dating (fork, owner's decisions of 2026-10-30): the file's own evidence,
+// read while its drive is here; proposals come from the catalog pass
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeDating(const FileItem &file)
+{
+    Result r;
+    MdiDating::Tools tools;
+    tools.exiv2     = m_config.exiv2Path;
+    tools.ffprobe   = m_config.ffprobePath;
+    tools.timeoutMs = qMin(m_config.toolTimeoutMs, 60 * 1000);
+    tools.stop      = &m_stop;
+    r.value = MdiDating::analyseFile(file.fullPath, file.fileType, tools, &r.outcome, &r.reason);
+    r.tool  = r.value.value("embedded").toObject().value("source").toString();
+    return r;
+}
+
+void MdiEnrichmentJob::deriveDating(int fileCount, int &completed, int &failed)
+{
+    emit progress(fileCount, fileCount, QStringLiteral("proposals"), m_config.catalogName);
+    QVariantMap step = stepInfo(QStringLiteral("proposals"));
+    step[QStringLiteral("analysis")]  = QStringLiteral("proposals");
+    step[QStringLiteral("filePath")]  = m_config.catalogName;
+    step[QStringLiteral("fileIndex")] = fileCount;
+    step[QStringLiteral("fileCount")] = fileCount;
+    QVariantMap started = step;
+    started[QStringLiteral("event")]     = QStringLiteral("start");
+    started[QStringLiteral("startedAt")] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    emit activity(started);
+    QElapsedTimer clock;
+    clock.start();
+    m_lastTokensPerSecond = -1;
+
+    MdiDating::DeriveOptions o;
+    o.sourceRoot = m_config.sourceRoot;
+    o.context    = m_config.context;
+    o.language   = MdiContext::language(m_config.context, m_config.uiLanguageName);
+    o.stop       = &m_stop;
+    // The local text model reads the folder names the rules leave unread
+    if (m_config.settings.value("ai").toObject().value("datingModel").toBool(true))
+        o.ask = [this](const QString &prompt, QString *error) {
+            return askOllama(m_config.textModel, prompt, {}, error);
+        };
+    for (const MdiPeople::Person &p : MdiPeople::persons(m_connectionName))
+        o.personNames << p.displayName();
+    o.progress = [&](int done, int total) {
+        QVariantMap p = step;
+        p[QStringLiteral("event")]    = QStringLiteral("progress");
+        p[QStringLiteral("progress")] = total > 0 ? double(done) / total : 0.0;
+        p[QStringLiteral("detail")]   = QStringLiteral("%1 / %2").arg(done).arg(total);
+        emit activity(p);
+    };
+    const MdiDating::DeriveSummary summary = MdiDating::deriveCatalog(m_connectionName, m_config.catalogId, o);
+
+    QVariantMap ended = step;
+    ended[QStringLiteral("event")]      = QStringLiteral("end");
+    ended[QStringLiteral("outcome")]    = m_stop.load() || summary.stopped ? QStringLiteral("stopped")
+                                        : summary.error.isEmpty() ? QStringLiteral("completed") : QStringLiteral("failed");
+    ended[QStringLiteral("reason")]     = summary.error;
+    ended[QStringLiteral("durationMs")] = clock.elapsed();
+    if (m_lastTokensPerSecond > 0)
+        ended[QStringLiteral("tokensPerSecond")] = m_lastTokensPerSecond;
+    emit activity(ended);
+    if (summary.stopped || m_stop.load())
+        return;
+    if (summary.error.isEmpty())
+        ++completed;
+    else
+        ++failed;
+    emit datumCommitted(QString(), QStringLiteral("proposals"));
+}
+
+//----------------------------------------------------------------------
+// Study of a document (fork, owner's decisions of 2026-10-30)
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeDocument(const FileItem &file)
+{
+    Result r;
+    r.model = m_config.textModel;
+    MdiDocument::StudyOptions o;
+    o.tools.pdftotext   = m_config.pdftotextPath;
+    o.tools.pdftoppm    = m_config.pdftoppmPath;
+    o.tools.tesseract   = m_config.tesseractPath;
+    o.tools.tessdataDir = m_config.tessdataDir;
+    o.tools.timeoutMs   = m_config.toolTimeoutMs;
+    o.tools.stop        = &m_stop;
+    o.extractOther = [this](const QString &path, QString *tool, QString *reason) {
+        return extractText(path, tool, reason, true);
+    };
+    o.ask = [this](const QString &prompt, QString *error) {
+        return askOllama(m_config.textModel, prompt, {}, error);
+    };
+    if (!m_knowledge.isEmpty())
+        o.embed = [this](const QString &text) {
+            QString err;
+            const QList<QVector<float>> v = embedTexts(m_config.ollamaUrl, m_config.embedModel, {text.left(2000)},
+                                                       &err, m_config.httpTimeoutMs);
+            return v.isEmpty() ? QVector<float>() : v.first();
+        };
+    o.context        = m_config.context;
+    o.preamble       = MdiContext::preamble(m_config.context, m_config.catalogNotes);
+    o.language       = MdiContext::language(m_config.context, m_config.uiLanguageName);
+    o.connectionName = m_connectionName;
+    for (const MdiPeople::Person &p : MdiPeople::persons(m_connectionName))
+        o.people.append(MdiDocument::PersonName{p.id, p.displayName(), p.firstName, p.lastName});
+    o.progress = [this](double fraction, const QString &detail) {
+        QVariantMap step = stepInfo(QStringLiteral("document"));
+        step[QStringLiteral("event")]     = QStringLiteral("progress");
+        step[QStringLiteral("analysis")]  = QStringLiteral("document");
+        step[QStringLiteral("filePath")]  = m_stepFile;
+        step[QStringLiteral("fileIndex")] = m_stepIndex;
+        step[QStringLiteral("fileCount")] = m_files.size();
+        step[QStringLiteral("progress")]  = fraction;
+        if (!detail.isEmpty())
+            step[QStringLiteral("detail")] = detail;
+        emit activity(step);
+    };
+
+    QList<MdiDocument::Fragment> fragments;
+    r.value = MdiDocument::study(file.fullPath, o, &fragments, &r.outcome, &r.reason, &r.tool);
+    if (r.outcome == QLatin1String("stopped") || m_stop.load())
+        return r;
+    // The fragments go with the study; a study redone replaces them
+    if (!fragments.isEmpty() || r.outcome == QLatin1String("completed"))
+        MdiDocument::storeFragments(m_connectionName, m_config.catalogId, file.fullPath, fragments);
+    // Date, author and title of the document: proposals, never written by themselves
+    if (r.outcome == QLatin1String("completed"))
+        MdiProposals::replaceForFile(m_connectionName, m_config.catalogId, file.fullPath, QStringLiteral("document"),
+                                     MdiDocument::proposals(r.value, QFileInfo(file.fullPath).fileName()));
     return r;
 }

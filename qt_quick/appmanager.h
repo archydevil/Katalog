@@ -154,6 +154,8 @@ class AppManager : public QObject
     Q_PROPERTY(bool    mdiIsPaused   READ getMdiIsPaused   NOTIFY mdiStateChanged)
     Q_PROPERTY(QString mdiStatusText READ getMdiStatusText NOTIFY mdiStatusTextChanged)
     Q_PROPERTY(int     mdiRevision   READ getMdiRevision   NOTIFY mdiRevisionChanged)
+    // Web lookups of the dating running on their worker (fork, 2026-10-30)
+    Q_PROPERTY(bool    webQueriesRunning READ getWebQueriesRunning NOTIFY webQueriesRunningChanged)
     // Activity page (fork, MDI-F61..F75): resources, current step, log, session history
     Q_PROPERTY(QVariantMap  mdiSystem  READ getMdiSystem  NOTIFY mdiSystemChanged)
     Q_PROPERTY(QVariantList mdiHistory READ getMdiHistory NOTIFY mdiSystemChanged)
@@ -551,6 +553,38 @@ public slots:
     // Queues the runner with the "faces" analysis only, on the catalog's images
     Q_INVOKABLE QString      startFaceAnalysis(int deviceId);
 
+    // Dating, document study, web lookups and HTML export (fork, owner's
+    // decisions of 2026-10-30). Inferred information is only proposed: the
+    // owner approves it per file, per folder or in bulk; nothing is written
+    // into a file's information by itself.
+    // [{proposalId, field, fieldLabel, value, precision, confidence, status,
+    //   ownValue, sources: [{kind, kindLabel, label, detail, url}]}]
+    Q_INVOKABLE QVariantList proposalsForFile(int catalogId, const QString &fullPath);
+    // Pending ones of a folder, grouped: [{field, fieldLabel, value, precision,
+    //   confidence, fileCount, proposalIds: [...], sources: [...]}]
+    Q_INVOKABLE QVariantList proposalsForFolder(int catalogId, const QString &folderPath, bool recursive);
+    // A field the owner already filled keeps its value unless replaceOwnValues;
+    // the message then says how many were left waiting
+    Q_INVOKABLE QString      acceptProposals(const QVariantList &proposalIds, bool replaceOwnValues = false);
+    Q_INVOKABLE QString      rejectProposals(const QVariantList &proposalIds);
+    // Queue the runner with the dating analysis (photos, videos) or the
+    // document study (documents) only
+    Q_INVOKABLE QString      startDating(int deviceId);
+    Q_INVOKABLE QString      startDocumentStudy(int deviceId);
+    // Web lookups: off by default per collection; the queries are shown
+    // before anything is sent ([{query, reason, folder, fileCount}])
+    Q_INVOKABLE bool         webSearchEnabled();
+    Q_INVOKABLE void         setWebSearchEnabled(bool enabled);
+    Q_INVOKABLE QVariantList pendingWebQueries(int deviceId);
+    // Runs on a worker, then proposals are derived again: webQueriesFinished
+    // and proposalsChanged follow
+    Q_INVOKABLE QString      runWebQueries(int deviceId, const QVariantList &queries);
+    bool                     getWebQueriesRunning() const { return m_webThread != nullptr; }
+    Q_INVOKABLE QVariantMap  documentStudy(int catalogId, const QString &fullPath);
+    // scope: "file", "folder" or "catalog"; empty or the reason
+    Q_INVOKABLE QString      exportHtml(const QString &scope, int catalogId, const QString &path,
+                                        const QString &targetFile);
+
     // Storage pre-selection for Create page (used by DeviceTreeComboBox storageOnly mode)
     Q_INVOKABLE int getDefaultStorageId() const;
 
@@ -797,6 +831,10 @@ signals:
     void peopleChanged();
     void facesChanged();
     void transcriptsCleaned(const QVariantMap &counts);
+    void proposalsChanged();
+    void webQueriesRunningChanged();
+    // asked: queries sent; found: those with results; error: the last failure
+    void webQueriesFinished(int asked, int found, const QString &error);
     // End of a Memory-mode Explore load: the open's result, or stopped
     void exploreCatalogOpened(const QVariantMap &info);
     // The latest open requested during a load, to run now that it has ended
@@ -1046,11 +1084,18 @@ private:
     QThread          *m_infoIndexThread = nullptr;
     std::atomic<bool> m_infoIndexStop{false};
     QList<QPair<int, QString>> m_infoIndexPending;   // files whose info changed: instant index + "info" vectors
+    QString           m_infoIndexPath;                // the mdi_data.db they belong to
     QString peopleStoreRefusal();                     // empty when mdi_data.db is open for them
     double  faceMatchThreshold();
     void    reindexFileInfo(const QList<QPair<int, QString>> &files);
     void    runInfoIndexing();
     void    stopPeopleWorkers();
+    // Web lookups of the dating (fork, 2026-10-30)
+    QThread          *m_webThread = nullptr;
+    std::atomic<bool> m_webStop{false};
+    QString proposalKindLabel(const QString &kind) const;
+    QString proposalFieldLabel(const QString &field) const;
+    QVariantList proposalSources(const QVariantList &sources) const;
     DeviceUpdateManager    *m_deviceUpdateManager    = nullptr;
     CatalogProgressManager *m_catalogProgressManager = nullptr;
     CollectionImporter     *m_importer               = nullptr;

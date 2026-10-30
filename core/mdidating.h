@@ -176,6 +176,9 @@ public:
         // Local text model for folder names the rules cannot read; null: rules only
         std::function<QJsonObject(const QString &prompt, QString *error)> ask;
         QString     language;       // of the model's answers (MdiContext::language)
+        // Names of known people (D38): their words never go into a web
+        // query; the same list as for webQueries, so cached results are found
+        QStringList personNames;
         const std::atomic<bool> *stop = nullptr;
         std::function<void(int done, int total)> progress;
         int         maxModelFolders = 400;
@@ -200,9 +203,9 @@ public:
     static QString webQuery(const FolderReading &reading, const QJsonObject &context,
                             const QStringList &personNames = {});
 
-    // Table of folder readings made by the text model (cache), in mdi_data.db
+    // Table of folder readings made by the text model (cache by folder
+    // name, all catalogs), in mdi_data.db
     static bool ensureTables(const QString &connectionName);
-    static bool clearCatalog(const QString &connectionName, int catalogId);
 };
 
 #endif // MDIDATING_H
