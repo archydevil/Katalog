@@ -15,6 +15,19 @@ ColumnLayout {
     // adapter builds the whole map on every read.
     readonly property var searchProps: newSearch1.properties
 
+    // Where the results were searched: the choice in My drives when the search
+    // started (captured then: it may change afterwards), or the connected
+    // drive or folder searched straight. Not said for a comparison of two
+    // devices, which names its own two.
+    property string searchedDeviceName: ""
+    readonly property bool searchedTwoDevices: !appManager1.semanticOnly
+        && (searchProps.searchOnDifferences === true
+            || (searchProps.searchOnDuplicates === true && searchProps.duplicatesCompareDevices === true))
+    readonly property bool searchedConnected: !appManager1.semanticOnly && searchProps.searchInConnectedChecked === true
+    readonly property string searchedScope: searchedConnected
+        ? String(searchProps.connectedDirectory ?? "")
+        : (searchedDeviceName !== "" ? searchedDeviceName : qsTranslate("Main", "All the drives"))
+
     // The results header's title: the existing wording per kind of result
     readonly property string resultsCountText: {
         if (appManager1.semanticOnly)
@@ -351,11 +364,19 @@ ColumnLayout {
             }
         }
 
-        // Where the search ran
+        // Where the search ran: the scope as the Search page says it, then the
+        // device's place in the tree
+        KInfoTag {
+            visible: !pageSearchResults_column.searchedTwoDevices
+            text: qsTranslate("Main", "Search in: %1").arg(pageSearchResults_column.searchedScope)
+            tone: "info"
+        }
         RowLayout {
             Layout.fillWidth: true
             spacing: 6
-            visible: devicePathLabel.text !== ""
+            // The path of the choice in My drives says nothing about a folder
+            // searched straight on a connected drive
+            visible: devicePathLabel.text !== "" && !pageSearchResults_column.searchedConnected
             Kirigami.Icon {
                 Layout.alignment: Qt.AlignTop
                 source: "drive-harddisk"
@@ -1643,6 +1664,10 @@ ColumnLayout {
     Connections {
         target: root
         function onSearchTriggered() {
+            // The scope the search starts with (AppManager::executeSearch reads
+            // the same selection)
+            pageSearchResults_column.searchedDeviceName =
+                appManager1.selectedDeviceId > 0 ? appManager1.selectedDeviceName : ""
             tableView.selectedRow = -1
             tableView.model = emptyModel
             tableView.model = appManager1.searchSortModel

@@ -215,12 +215,18 @@ ColumnLayout {
                              : pageActivity.job.sourceConnected ? qsTr("Connected") : qsTr("Not connected"),
                       tag: appManager1.mdiIsRunning && !pageActivity.job.sourceConnected && pageActivity.job.waitingForSource
                            ? qsTr("Waiting for the drive") : "", tone: "warn" },
+                    // As on Home: the web searches of this session count too
                     { icon: "network-connect",   label: qsTr("Data sent"),
                       value: pageActivity.job.egress && pageActivity.job.egress.length > 0
-                             ? pageActivity.job.egress.join(", ") : qsTr("Nothing sent"),
-                      tag: pageActivity.job.egress && pageActivity.job.egress.length > 0
+                             ? pageActivity.job.egress.join(", ")
+                             : applicationWindow().webSearchesSent > 0
+                               ? qsTranslate("PageHome", "Web searches: %1").arg(applicationWindow().webSearchesSent)
+                               : qsTr("Nothing sent"),
+                      tag: (pageActivity.job.egress && pageActivity.job.egress.length > 0)
+                           || applicationWindow().webSearchesSent > 0
                            ? qsTr("Sent outside this computer") : qsTr("On this computer"),
-                      tone: pageActivity.job.egress && pageActivity.job.egress.length > 0 ? "warn" : "ok" }
+                      tone: (pageActivity.job.egress && pageActivity.job.egress.length > 0)
+                            || applicationWindow().webSearchesSent > 0 ? "warn" : "ok" }
                 ]
                 delegate: KCard {
                     id: tile

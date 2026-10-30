@@ -33,6 +33,10 @@ cp -R "$BUILD/qt_quick/Teca.app" "$OUT/"
 APP="$OUT/Teca.app"
 /opt/homebrew/bin/macdeployqt "$APP" -qmldir="$ROOT/qt_quick" -qmlimport="$KF6/lib/qml" > "$OUT/macdeployqt.log" 2>&1
 
+# The build leaves a qt.conf that points at the build folder: the app would
+# look for QML modules in a folder of this Mac. The app's own folders only.
+printf '[Paths]\nPlugins = PlugIns\nImports = Resources/qml\nQmlImports = Resources/qml\n' > "$APP/Contents/Resources/qt.conf"
+
 # Kirigami's Fusion theme (as in .github/workflows/Katalog_3_Build_macOS.yml)
 KIRIGAMI_DIR="$APP/Contents/Resources/qml/org/kde/kirigami"
 for style in Fusion TecaStyle; do

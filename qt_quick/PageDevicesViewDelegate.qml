@@ -393,13 +393,15 @@ Kirigami.AbstractCard {
                 display: Controls.AbstractButton.IconOnly
             }
 
+            // The same "more" mark as the My drives cards and the table rows
             IconButton {
+                id: moreButton
                 Layout.alignment: Qt.AlignTop
                 flat: true
                 implicitWidth:  40
                 implicitHeight: 40
-                icon.name: "application-menu"
-                onClicked: contextMenu.popup()
+                icon.name: "overflow-menu"
+                onClicked: contextMenu.popup(moreButton, 0, moreButton.height)
                 Controls.ToolTip.text: qsTr("Actions")
                 Controls.ToolTip.visible: hovered
             }

@@ -273,6 +273,21 @@ Kirigami.AbstractCard {
                 }
             }
 
+            // The card's menu without a right click or a long press: the same
+            // menu, from a visible button. Not a Tab stop of its own: from the
+            // keyboard the card's Menu key opens it (WCAG 2.1.1 is met there).
+            IconButton {
+                id: moreButton
+                Layout.alignment: Qt.AlignTop
+                flat: true
+                implicitWidth:  40
+                implicitHeight: 40
+                focusPolicy: Qt.NoFocus
+                icon.name: "overflow-menu"
+                text: qsTranslate("PageBackupForm", "More actions")
+                onClicked: contextMenu.popup(moreButton, 0, moreButton.height)
+            }
+
             // One button, always in the layout, rather than two that come and
             // go. A Catalog can never hold children, so its slot was simply
             // absent and its card came out shorter than a Storage or Virtual

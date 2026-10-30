@@ -1279,6 +1279,22 @@ Item {
                         Accessible.name: qsTr("Yes")
                     }
 
+                    // The row's menu without a right click: a "more" button at
+                    // the end of the selected row's name (the Menu key and the
+                    // right click open the same menu)
+                    IconButton {
+                        id: rowMoreButton
+                        visible: column === 0 && deviceTable.selectedRow === row
+                        // Above the row-wide MouseArea declared after it
+                        z: 2
+                        anchors { right: parent.right; rightMargin: 2; verticalCenter: parent.verticalCenter }
+                        flat: true
+                        focusPolicy: Qt.NoFocus
+                        icon.name: "overflow-menu"
+                        text: qsTranslate("PageDevicesViewDelegate", "Actions")
+                        onClicked: parent.openRowMenu(rowMoreButton)
+                    }
+
                     Controls.Label {
                         id: cellLabel
                         visible: !isBoolean
@@ -1287,7 +1303,7 @@ Item {
                             right: parent.right
                             verticalCenter: parent.verticalCenter
                             leftMargin:  deviceRowIcon.visible ? 4 : 6
-                            rightMargin: 6
+                            rightMargin: rowMoreButton.visible ? rowMoreButton.width + 4 : 6
                         }
                         text: display === undefined || display === null ? "" : String(display)
                         horizontalAlignment: alignment === "right" ? Text.AlignRight : Text.AlignLeft

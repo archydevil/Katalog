@@ -265,6 +265,12 @@ jobs:
           exit 1
         fi
 
+        # The build leaves a qt.conf (MergeQtConf + QmlImports) that points at
+        # the build folder, and macdeployqt keeps it: the app would look for QML
+        # modules in a folder of the build machine. The app's own folders only.
+        printf '[Paths]\nPlugins = PlugIns\nImports = Resources/qml\nQmlImports = Resources/qml\n' \
+          > qt_quick/Teca.app/Contents/Resources/qt.conf
+
         # Kirigami colour theme for the Fusion style (DPL-F5 / DPL-C6). Without
         # it Kirigami falls back to fixed Breeze Light colours and the app
         # ignores the system's dark mode. Copied before the bundle is signed.

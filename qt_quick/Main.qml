@@ -4110,11 +4110,14 @@ Kirigami.ApplicationWindow {
         Connections {
             target: appManager1
             function onCatalogCreationCompleted(success, report) {
-                // A full success is reported by the creation report dialog, on
-                // the Devices page, whichever page is open (OPQ-F16, OPQ-F18)
+                // A full success is reported by the creation report dialog,
+                // whichever page is open (OPQ-F16, OPQ-F18). The new catalog is
+                // already the selection (AppManager::onCatalogCreationCompleted):
+                // Browse opens on it, the owner's simple flow, rather than the
+                // Manage drives table
                 if (success && report.length === 0) {
                     appManager1.refreshDeviceList()
-                    root.showPage(pageDevices)
+                    root.sidebarGo("Explore", pageExplore)
                     return
                 }
                 if (pageCreate.visible) {

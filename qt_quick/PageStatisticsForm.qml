@@ -366,6 +366,14 @@ Controls.ScrollView {
                     }
                 }
             }
+            // What the Source choices mean, in one line
+            Controls.Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: KTheme.text3
+                font.pixelSize: KTheme.note
+                text: qsTr("Source: a record is kept each time a drive is updated, and each time a snapshot is taken in Manage drives.")
+            }
         }
 
         // ── Key numbers ───────────────────────────────────────────────────────
@@ -419,17 +427,35 @@ Controls.ScrollView {
                 KSectionHeader {
                     level: 3
                     title: qsTr("Over time")
-                    description: qsTr("Dragging across the chart zooms in; a double-click or a right-click shows it whole again.")
+                    // How to zoom only when there is a chart to zoom
+                    description: root.stats.hasData === true
+                                 ? qsTr("Dragging across the chart zooms in; a double-click or a right-click shows it whole again.") : ""
                 }
-                KInfoTag {
-                    Layout.alignment: Qt.AlignTop
-                    visible: root.stats.hasData !== true
-                    text: qsTr("No data")
+            }
+
+            // Nothing to draw: why, and where to go, instead of an empty chart
+            // with 1970 on its axis
+            Kirigami.PlaceholderMessage {
+                Layout.fillWidth: true
+                Layout.topMargin: KTheme.gap
+                Layout.bottomMargin: KTheme.gap
+                visible: root.stats.hasData !== true
+                icon.name: "view-statistics"
+                text: qsTr("No data")
+                explanation: appManager1.selectedDeviceId > 0
+                             ? qsTr("Nothing recorded for %1 with these choices yet. Each update of the drive, and each snapshot taken in Manage drives, adds a record.")
+                                   .arg(appManager1.selectedDeviceName)
+                             : qsTr("The numbers appear once a drive is selected in My drives.")
+                helpfulAction: Kirigami.Action {
+                    icon.name: "drive-harddisk"
+                    text: qsTranslate("Main", "My drives")
+                    onTriggered: applicationWindow().sidebarGo("Selection", pageSelection)
                 }
             }
 
             ChartView {
                 id: chart
+                visible: root.stats.hasData === true
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.max(Kirigami.Units.gridUnit * 20, root.availableHeight * 0.6)
                 antialiasing: true

@@ -557,6 +557,23 @@ Item {
                             implicitHeight: root.rowIconSize
                         }
 
+                        // The row's menu without a right click: a "more" button
+                        // at the end of the selected row's name. Only on the
+                        // selected row, so the list stays quiet; the Menu key,
+                        // the right click and a long press open the same menu.
+                        IconButton {
+                            id: rowMoreButton
+                            visible: column === 0 && exploreTableView.selectedRow === row
+                            // Above the row-wide MouseArea declared after it
+                            z: 2
+                            anchors { right: parent.right; rightMargin: 2; verticalCenter: parent.verticalCenter }
+                            flat: true
+                            focusPolicy: Qt.NoFocus
+                            icon.name: "overflow-menu"
+                            text: qsTranslate("PageBackupForm", "More actions")
+                            onClicked: parent.openExploreContextMenu(rowMoreButton)
+                        }
+
                         // A file that already has a description, summary, transcript
                         // or classification (File details shows them); a folder
                         // that is a catalog of its own, which opening it shows
@@ -566,7 +583,11 @@ Item {
                             visible: column === 0
                                      && (ownCatalog || (entryType === "file"
                                          && appManager1.mdiHasAi(root.catalogId, fullPath, appManager1.mdiRevision)))
-                            anchors { right: parent.right; rightMargin: 4; verticalCenter: parent.verticalCenter }
+                            anchors {
+                                right: rowMoreButton.visible ? rowMoreButton.left : parent.right
+                                rightMargin: 4
+                                verticalCenter: parent.verticalCenter
+                            }
                             text: ownCatalog ? qsTr("Catalog") : qsTr("AI")
                             tone: ownCatalog ? "info" : "ai"
                         }
@@ -578,7 +599,8 @@ Item {
                                 right: parent.right
                                 verticalCenter: parent.verticalCenter
                                 leftMargin:  column === 0 ? 4 : 6
-                                rightMargin: rowTag.visible ? rowTag.width + 8 : 4
+                                rightMargin: (rowTag.visible ? rowTag.width + 8 : 4)
+                                             + (rowMoreButton.visible ? rowMoreButton.width + 2 : 0)
                             }
                             text: {
                                 // Merged metadata columns, as in Search results: the
