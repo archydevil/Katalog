@@ -1,7 +1,7 @@
 ---
 id: SpecMediaIntelligence
 title: "Media Intelligence: Previews, AI Enrichment and Semantic Search"
-description: "Requirements for the fork-only K3 enrichment of catalogs: previews, transcripts, AI summaries, provenance and semantic search; the fork's K3 redesign (D34); catalog history, navigation and accessibility (D36, D37)"
+description: "Requirements for the fork-only K3 enrichment of catalogs: previews, transcripts, AI summaries, provenance and semantic search; the fork's K3 redesign (D34); catalog history, navigation and accessibility (D36, D37); file information, people, faces and real transcripts (D38–D40)"
 version: "3.1"
 ---
 
@@ -59,6 +59,10 @@ collection folder, `mdi_data.db` (D17). The result is browsable when the device 
 | **History** (*Storico*) | The list of recorded actions with their restore points, and the K3 page that shows it (D36, `MDI-F138`). |
 | **Recompose** (*Ricomponi*) | Putting the catalogs of a split back into one catalog (D36, `MDI-F142`). |
 | **Scope chip** | A short statement, on a page that acts on the choice in *I miei dischi*, of what that choice is, with *Cambia* (D37, `MDI-F147`). |
+| **File information** | The fields the user writes about a file: title, description, event, place, date, author, notes and tags (D38, `MDI-F158`). |
+| **Person** | A person of the collection — first name, last name, role, organisation, notes — linked to files by the user or through confirmed faces (D38, `MDI-F161`). |
+| **Face** | A face found in an image by the *faces* analysis, with its place in the image and a recognition feature. It is *unknown*, *suggested* for a person, or *confirmed* by the user (D39, `MDI-F166`). |
+| **Similar faces** | For a person, the faces not yet confirmed, ranked by similarity to that person's confirmed faces (D39, `MDI-F168`). |
 
 ---
 
@@ -438,13 +442,89 @@ not put to the owner.
 | # | Decision (2026-10-30, fork owner) |
 | --- | ------------------------ |
 | D36 | **Catalog history, restore points and recomposition** (owner's request and answers above). Before each action that changes a catalog — update, split, recompose, delete, edit — Teca records a restore point of the catalogs concerned in `teca_history.db`, a separate file in the collection folder; the collection database and its schema do not change (D5). A page *Storico* lists the actions with date and description; each can be restored ("Ripristina com'era prima") or opened as a separate catalog ("Apri questa versione come catalogo a parte"); right after an action, "Annulla" undoes it. AI results follow by file path (`MdiData::moveToCatalogs`, D35). The last 10 restore points per catalog are kept, older ones pruned automatically, the number changeable in Settings. *Ricomponi* merges split catalogs back into one, with files, folders, AI results and profile, after a restore point. A split gives its catalogs a valid update date. Approved core changes (`MDI-C14`): new history classes in new core files, the recomposition, the split date fix. The owner's 22 UITS catalogs are to be recomposed into "CATALOGO BASE UITS DISCO RIGIDO" (`MDI-O10`, `MDI-F136`–`F143`, `MDI-C45`, `MDI-C46`). |
-| D37 | **Navigation and accessibility** (owner's request above; the main session's design, not put to the owner). K3 only, no core change. Navigation: Back and Forward over pages and Browse locations; a clickable breadcrumb with Up in Browse; the sidebar mark follows the page shown; no legacy Close on pages reached from the sidebar (`Esc` = Back); a scope chip with *Cambia* on the pages that act on the choice in *I miei dischi*; `Cmd/Ctrl+1…9` and `F6`. Accessibility, WCAG 2.2 AA as the bar: non-text contrast of controls, visible focus, states not by colour alone, keyboard use of *I miei dischi*, accessible names, roles and values, a text alternative for the Inspector image, text that scales (held, `Q46`), limited motion, dimmed disabled buttons, an activity panel that covers nothing (`MDI-O11`, `MDI-O12`, `MDI-F144`–`F156`, `MDI-C47`). **Confirmed by the owner, 2026-10-30 (second round above):** the navigation of `MDI-F144`–`F146`, and text that follows *Text size* (`MDI-F154`). |
+| D37 | **Navigation and accessibility** (owner's request above; the main session's design, not put to the owner). K3 only, no core change. Navigation: Back and Forward over pages and Browse locations; a clickable breadcrumb with Up in Browse; the sidebar mark follows the page shown; no legacy Close on pages reached from the sidebar (`Esc` = Back); a scope chip with *Cambia* on the pages that act on the choice in *I miei dischi*; `Cmd/Ctrl+1…9` and `F6`. Accessibility, WCAG 2.2 AA as the bar: non-text contrast of controls, visible focus, states not by colour alone, keyboard use of *I miei dischi*, accessible names, roles and values, a text alternative for the Inspector image, text that follows *Text size* (`MDI-F154`, confirmed in the second round; a range beyond 1.2 is still `Q46`), limited motion, dimmed disabled buttons, an activity panel that covers nothing (`MDI-O11`, `MDI-O12`, `MDI-F144`–`F156`, `MDI-C47`). **Confirmed by the owner, 2026-10-30 (second round above):** the navigation of `MDI-F144`–`F146`, and text that follows *Text size* (`MDI-F154`). |
 
 **Parity fix, 2026-10-30 (no decision needed).** Browse's *Move file to
 Trash* / *Move folder to Trash* and Search results' *Move to Trash* acted at
 once, with no confirmation. K2 confirms both. That broke the `CLAUDE.md` rule
 that every destructive action has a confirmation dialog matching K2. The fix
 reuses K2's strings verbatim (`MDI-F157`).
+
+D38, D39 and D40 come from one request of the fork owner on **2026-10-30**,
+in the main session: "voglio poter aggiungere info a una foto o a un gruppo di
+foto. Voglio poter aggiungere nome cognome ruolo e altre info a una o più foto
+con persone e voglio poter approvare l'associazione dei visi in primis. Una
+volta fatta l'attribuzione, voglio poter fare una ricerca di volti simili e
+dargli attribuzione in singolo o in bulk. Voglio che le trascrizioni siano
+reali. non serie di nomi di file uguali. Se non ci sta parlato non mettere
+nulla."
+
+**D38–D40 — the owner's answers (2026-10-30).** The main session put four
+questions to him with AskUserQuestion. His answers are relayed by the main
+agent, with his labels verbatim; the specifications agent did not see them
+itself. The text after each "—" is the main session's description of the
+option, not the owner's words.
+
+- **Transcripts** → "Filtro + pulizia esistenti (Consigliato)" — new
+  transcripts: `whisper.cpp` with voice activity detection (Silero model
+  `ggml-silero-v5.1.2.bin`, about 1 MB, in `~/whisper-models`), no context
+  carried over (`-mc 0`), non-speech tokens suppressed (`-sns`), then a filter
+  that drops known invented phrases, sound tags and repetitions; no speech →
+  nothing stored ("no speech found"). The existing 534: invented parts
+  removed; when no speech remains the transcript is removed; the segments and
+  searches built from it are computed again.
+- **Faces** → "OpenCV locale (Consigliato)" — a new library (Homebrew
+  `opencv` on macOS; optional at build: absent → the feature is off with a
+  clear message) and the free models YuNet (detection) and SFace
+  (recognition), about 40 MB, placed once in `~/teca-models`; all local,
+  offline. The question stated that faces are biometric data (GDPR art. 9) and
+  that the UITS archive needs a legal basis (`Q65`). This answer is the
+  approval of a new library that `CLAUDE.md` (KF6 usage rules) and `MDI-C8`
+  require; packaging on Windows and Linux is open (`Q66`).
+- **Fields** → "Sì, questo set (Consigliato)" — file or photo: Title,
+  Description, Event, Place, Date, Author (photographer), Notes, free Tags;
+  person: First name, Last name, Role, Organisation/club, Notes; editable for
+  one file or many at once; all searchable.
+- **Core and new files** → "Approvo" — new tables in `mdi_data.db`
+  (`mdi_annotation`, `mdi_person`, `mdi_file_person`, `mdi_face`), new core
+  classes, a *faces* analysis in the background runner (a profile option, off
+  by default), the transcript filter and cleaning, a *Persone* page in the
+  sidebar (new K3 file `qt_quick/PagePeople.qml`), a section "Information and
+  people" in *Dettagli del file*, multi-selection and bulk edit in Browse.
+  This answer is the `MDI-C14` approval of those changes. The class and method
+  design is the main agent's, listed before it is written (`MDI-C53`).
+
+**Design rules** (the main session's, relayed with the answers; they follow
+the request and were not put to the owner one by one): face associations are
+only ever *suggested* automatically and become *confirmed* only by the owner,
+one at a time or in bulk; *similar faces* for a person ranks unconfirmed faces
+by cosine similarity to that person's confirmed faces; unnamed faces are
+grouped, so a group can be named in bulk; rejecting a suggestion ("not this
+person") keeps the face unknown; deleting a person never deletes files;
+information and people's names feed the instant index (`MDI-F77`) so that
+Search finds files by person, role, event and place; split, recomposition and
+restore carry the new tables as they carry `mdi_datum`; Hosted mode has no
+`mdi_data.db`, so the features are unavailable there. The `AppManager` names
+are a contract (`MDI-C53`).
+
+**Main session's finding (owner's data).** Of the 534 stored transcripts, 169
+were mostly repeated invented phrases ("We'll be right back.", "Thank you.",
+"\*Gunshot\*", "\*music\*", "Music by …", "Grazie.", "ご視聴ありがとうございました")
+and 113 partly.
+
+**Flagged by the specifications agent while recording** (for the owner): the
+instant index alone cannot make Search find files by person, because it never
+changes a search's results (`MDI-F77`, `MDI-C23`; `Q67`); the carry-over
+changes an existing core method, `MdiData::moveToCatalogs` (`MDI-C49`,
+`Q69`); a model download by Teca would be a network destination other than
+`localhost` (`MDI-C11`, `Q66`); `-mc 0` may also silence the glossary prompt
+of `MDI-F98` (`Q68`).
+
+| # | Decision (2026-10-30, fork owner) |
+| --- | ------------------------ |
+| D38 | **Information and people on files** ("Sì, questo set (Consigliato)", "Approvo"). A file — a photo above all — carries information the user writes: Title, Description, Event, Place, Date, Author (photographer), Notes, free Tags. A person has First name, Last name, Role, Organisation/club and Notes. People are added to one file or many. Information and people are edited for one file or for many at once, and are searchable. They are stored in `mdi_data.db` (`mdi_annotation`, `mdi_person`, `mdi_file_person`). A page *Persone* (`qt_quick/PagePeople.qml`, the fifth Page exception of `MDI-C18`), a section "Information and people" in *Dettagli del file*, and multi-selection with bulk edit in Browse. Deleting a person never deletes a file. Information and people follow a split, a recomposition and a restore, as AI data does. Hosted mode: unavailable. Approved core changes (`MDI-C14`): new core classes and the new tables (`MDI-O13`, `MDI-F158`–`F164`, `MDI-C48`, `MDI-C49`, `MDI-C53`). |
+| D39 | **Faces** ("OpenCV locale (Consigliato)", "Approvo"). A *faces* analysis of the enrichment runner, an option of the profile that is off by default, finds the faces in images with OpenCV — YuNet to detect, SFace to recognise — on this computer, offline. OpenCV is optional at build: without it the faces features are off with a clear message. The models, about 40 MB, are in `~/teca-models`. A face is only ever *suggested* for a person by Teca; it becomes *confirmed* only by the owner, one face at a time or many at once. "Not this person" leaves the face unknown. For a named person, *similar faces* ranks unconfirmed faces by cosine similarity to that person's confirmed faces, for attribution one by one or in bulk. Unnamed faces are grouped, so a group can be named at once. Table `mdi_face` in `mdi_data.db`. Faces are biometric data (GDPR art. 9): legal basis, retention and a "delete all face data" action are open (`Q65`). Packaging: `Q66` (`MDI-O14`, `MDI-F165`–`F170`, `MDI-C50`, `MDI-C51`; `MDI-C8` amended). |
+| D40 | **Real transcripts** (owner: "Voglio che le trascrizioni siano reali. non serie di nomi di file uguali. Se non ci sta parlato non mettere nulla."; "Filtro + pulizia esistenti (Consigliato)"). New transcripts: `whisper.cpp` with voice activity detection (Silero), no context carried over (`-mc 0`), non-speech tokens suppressed (`-sns`), then a filter that drops known invented phrases, sound tags and repetitions. No speech → nothing stored ("no speech found"). Existing transcripts: the invented parts are removed, a transcript with no speech left is removed, and the segments and search data built from it are computed again (`MDI-O15`, `MDI-F171`–`F173`, `MDI-C52`; `MDI-F35` amended). |
 
 ---
 
@@ -558,6 +638,9 @@ name *Teca* and the `TecaStyle` controls style (`MDI-F123`–`F125`,
 | MDI-O10 | A user sees what was done to each catalog and when, puts a catalog back as it was before an action, opens an earlier version — the one from before a split included — beside the current one, and puts a split catalog back together, without losing the AI results of its files (D36). | [Planned — part implemented in D36] |
 | MDI-O11 | A user always knows where they are and which drive or folder a page acts on, and moves back and forward between pages and folders, and up a folder path, with the mouse or the keyboard (D37). | [Planned — part implemented in D37] |
 | MDI-O12 | A user who works with the keyboard alone, with a screen reader, with larger text or with low vision reaches, perceives and operates every K3 feature. WCAG 2.2 level AA is the bar (D37). | [Planned — part implemented in D37] |
+| MDI-O13 | A user records who and what a photo shows — the people in it with their name, role and organisation, the event, the place, the date, the author — for one photo or many at once, and finds the photos again by that information (D38). | [Planned] |
+| MDI-O14 | A user names the faces in an archive's photos with the machine's help but under their own control: the machine only suggests, the user approves; once a person is named, the user finds that person's other faces and names them one by one or all together. Face data never leaves the machine (D39). | [Planned] |
+| MDI-O15 | A user can trust a transcript: it holds only what was said, and a recording without speech has no transcript (D40). | [Planned] |
 
 ## Functional requirements — *what the system does*
 
@@ -656,7 +739,7 @@ name *Teca* and the `TecaStyle` controls style (`MDI-F123`–`F125`,
 
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
-| MDI-F35 | **Transcript:** the audio track is extracted with `ffmpeg` and transcribed locally with `whisper.cpp`. The transcript is stored as an ordered list of passages, each with start and end timecodes and text, plus the detected language. A file without an audio track (checked with `ffprobe` when it is available) is recorded as *skipped (no audio track)*: nothing is extracted, transcribed or sent (2026-10-29). | [Implemented — Phase C] |
+| MDI-F35 | **Transcript:** the audio track is extracted with `ffmpeg` and transcribed locally with `whisper.cpp`. The transcript is stored as an ordered list of passages, each with start and end timecodes and text, plus the detected language. A file without an audio track (checked with `ffprobe` when it is available) is recorded as *skipped (no audio track)*: nothing is extracted, transcribed or sent (2026-10-29). **To be amended (D40, planned):** a new transcript keeps only speech (`MDI-F171`, `MDI-F172`), and the transcripts already stored are cleaned (`MDI-F173`). | [Implemented — Phase C] |
 | MDI-F36 | **Topic segments:** the text model divides a transcript into consecutive segments. Each segment has a start and end timecode taken from transcript passage boundaries, a title, a summary and a list of topics. Segments cover the transcript without overlapping. | [Implemented — Phase C] |
 | MDI-F37 | **Topic clusters:** segments are grouped into clusters, each with a label, a description and its member segments; a segment belongs to at most one cluster. Clustering is per catalog: a cluster groups segments of files of one catalog only (D11). When clusters are recomputed is decided at the start of Phase C (`Q3b`). | [Implemented — Phase C] |
 | MDI-F38 | Wherever a segment or transcript passage is shown, its timecodes are shown as `h:mm:ss`. | [Implemented — Phase C] |
@@ -696,7 +779,7 @@ name *Teca* and the `TecaStyle` controls style (`MDI-F123`–`F125`,
 | MDI-F44 | In Explore and in Search results, a file that has derived data is marked, and selecting it shows its derived data: thumbnail or frames, clip and waveform, caption and AI tags, summary and excerpts, transcript and segments. This works identically whether the device is connected, disconnected or inactive. | [Planned — part implemented in Phase A] |
 | MDI-F45 | When the destination path is unreachable (its drive disconnected, or the collection opened on another machine), the derived text (captions, tags, summaries, excerpts, transcripts, segments) is still shown from the database, and each derived file is replaced by a placeholder saying it is not available. No error dialog is shown. | [Planned — part implemented in Phase A] |
 | MDI-F46 | From a segment, *Open at timecode* opens the derived clip, or the original when the device is connected, with the system default application; the timecode is shown for the user to seek, because seeking an external player is not portable. There is no in-app playback (D7). | [Planned — part implemented in Phase A] |
-| MDI-F87 | **Inspector.** Explore and Search results have an *Inspector* side panel, shown or hidden by the *Inspector* action and by `Space` when the focus is not in a type-ahead; its visibility is remembered (settings key `View/InspectorVisible`). For the selected file it shows: the disk state, *online* (with the volume name; activating it opens the file) or *offline* (naming the device to connect); the preview or contact sheet; the caption or summary; the text snippet; the technical data; the extended metadata, with an *Open on map* link (OpenStreetMap, in the system browser) when GPS coordinates are present; the quick hash and the SHA-256; the archive entries; and *Show analysis*. With no file selected it says so. It works whether the device is connected or not (`MDI-F44`) (D27). | [Implemented — increment 3] |
+| MDI-F87 | **Inspector.** Explore and Search results have an *Inspector* side panel, shown or hidden by the *Inspector* action and by `Space` when the focus is not in a type-ahead; its visibility is remembered (settings key `View/InspectorVisible`). For the selected file it shows: the disk state, *online* (with the volume name; activating it opens the file) or *offline* (naming the device to connect); the preview or contact sheet; the caption or summary; the text snippet; the technical data; the extended metadata, with an *Open on map* link (OpenStreetMap, in the system browser) when GPS coordinates are present; the quick hash and the SHA-256; the archive entries; and *Show analysis*. With no file selected it says so. It works whether the device is connected or not (`MDI-F44`) (D27). **To be amended (D38, D39, planned):** a section "Information and people" (`MDI-F159`), with the faces of an image (`MDI-F170`). | [Implemented — increment 3] |
 | MDI-F88 | **Explore column view.** A *Columns* action switches Explore to a Finder-style column view: one column per folder level, from the same entries as the Explore list, folders first, with thumbnails, navigable with the keyboard. The choice is remembered (settings key `View/ExploreColumns`) (D28). | [Implemented — increment 3] |
 
 ### Semantic search {#semantic}
@@ -713,7 +796,7 @@ name *Teca* and the `TecaStyle` controls style (`MDI-F123`–`F125`,
 
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
-| MDI-F76 | **Instant search index.** Each catalog has a full-text index of its files' names, folders and derived text (text snippet, summary, caption, AI tags, archive entry names). It is rebuilt in the background for every catalog whose index is missing or older than the catalog's last update, after the collection is opened and after each creation or update; the runner updates a file's entry after its analyses. Searches and Explore keep working while it is rebuilt (D22). | [Implemented — increment 3] |
+| MDI-F76 | **Instant search index.** Each catalog has a full-text index of its files' names, folders and derived text (text snippet, summary, caption, AI tags, archive entry names). It is rebuilt in the background for every catalog whose index is missing or older than the catalog's last update, after the collection is opened and after each creation or update; the runner updates a file's entry after its analyses. Searches and Explore keep working while it is rebuilt (D22). **To be amended (D38, planned):** the derived text also holds the file's information and its people's names, roles and organisations (`MDI-F163`). | [Implemented — increment 3] |
 | MDI-F77 | **Text search fast path.** When a catalog's index is current, a K3 text search on that catalog first narrows its files to the index's matches, then applies the unchanged search criteria; the results are identical to the same search without the index. The index is not used, and the search runs as before, for: regular-expression criteria; a term shorter than 3 characters; a `/` in the text outside names-only mode; Hosted mode; a missing or stale index (D22). | [Implemented — increment 3] |
 
 ### Quick hash and duplicates {#quick-hash}
@@ -841,7 +924,7 @@ named *Teca* in every language (`MDI-F123`).
 
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
-| MDI-F111 | **Sidebar (D34, answer 2; `Q36`).** In place of the side menu of `MDI-F89`, K3 shows a sidebar at the left of the window. It is always visible, with no pinned / floating toggle. From top to bottom it holds: (1) the collection's name, which opens the collection menu — *Open...* (*SQLite Database...*, *Collection Folder...*, *Hosted Database...*, `OPN-F9`), *New...* and the recent collections (`OPN-F7`), unchanged in content; (2) *Home*; (3) the group *Archivio* — *I miei dischi*, *Sfoglia l'archivio*, *Cerca nei dischi*, *Aggiungi un disco*; (4) the group *Intelligenza* — *Conoscenza dell'archivio*, *Lavori in corso*; (5) the group *Altro* — *Numeri dell'archivio*, *Etichette*, *Copie di sicurezza*, *Gestisci i dischi* (the Devices page, until phase R7), *Informazioni* (About); (6) at its foot, *Impostazioni* and a compact card of the running enrichment job (`MDI-F17`). The card opens *Lavori in corso* when activated, as the activity panel's row does (`MDI-F69`). Names are those of the nomenclature table, in the interface language (`MDI-F113`). Each entry shows an icon and its name; *Home* and the entries of *Archivio* and *Intelligenza* also show their one-line description. The entry of the page shown is marked. The *I miei dischi* column beside feature pages stays, with its show / hide toggle (`Q36`, choice 4). Quit stays on its standard shortcut, with no entry (D29). Behaviour at phone width is `Q41`. **Amended (D36, D37, 2026-10-30):** the group *Archivio* also holds *Storico delle azioni* / "Action history" (`MDI-F138`), after *Aggiungi un disco*, with its description. The mark follows the page shown after a Close, a Back or a Forward too (`MDI-F144`). **Defect reported 2026-10-30, fixed the same day:** after a page's Close the mark stayed on the closed page (`openFeaturePage` not reset, main agent's finding); the fix is bounded by this row. | [Implemented — R1; *Storico* entry and mark after Close, Back, Forward — D36/D37] |
+| MDI-F111 | **Sidebar (D34, answer 2; `Q36`).** In place of the side menu of `MDI-F89`, K3 shows a sidebar at the left of the window. It is always visible, with no pinned / floating toggle. From top to bottom it holds: (1) the collection's name, which opens the collection menu — *Open...* (*SQLite Database...*, *Collection Folder...*, *Hosted Database...*, `OPN-F9`), *New...* and the recent collections (`OPN-F7`), unchanged in content; (2) *Home*; (3) the group *Archivio* — *I miei dischi*, *Sfoglia l'archivio*, *Cerca nei dischi*, *Aggiungi un disco*; (4) the group *Intelligenza* — *Conoscenza dell'archivio*, *Lavori in corso*; (5) the group *Altro* — *Numeri dell'archivio*, *Etichette*, *Copie di sicurezza*, *Gestisci i dischi* (the Devices page, until phase R7), *Informazioni* (About); (6) at its foot, *Impostazioni* and a compact card of the running enrichment job (`MDI-F17`). The card opens *Lavori in corso* when activated, as the activity panel's row does (`MDI-F69`). Names are those of the nomenclature table, in the interface language (`MDI-F113`). Each entry shows an icon and its name; *Home* and the entries of *Archivio* and *Intelligenza* also show their one-line description. The entry of the page shown is marked. The *I miei dischi* column beside feature pages stays, with its show / hide toggle (`Q36`, choice 4). Quit stays on its standard shortcut, with no entry (D29). Behaviour at phone width is `Q41`. **Amended (D36, D37, 2026-10-30):** the group *Archivio* also holds *Storico delle azioni* / "Action history" (`MDI-F138`), after *Aggiungi un disco*, with its description. The mark follows the page shown after a Close, a Back or a Forward too (`MDI-F144`). **Defect reported 2026-10-30, fixed the same day:** after a page's Close the mark stayed on the closed page (`openFeaturePage` not reset, main agent's finding); the fix is bounded by this row. **To be amended (D38, planned):** an entry *Persone* (`MDI-F164`); its group is `Q69`. | [Implemented — R1; *Storico* entry and mark after Close, Back, Forward — D36/D37] |
 | MDI-F112 | **Home page (D34, answer 2; `Q37`).** A K3 page *Home* shows the open collection at a glance: key numbers of the archive; a card per catalogued drive or folder, with info tags for its state (`MDI-F114`); the work in progress (the running enrichment job); the archive knowledge (the context, `MDI-F94`, and the knowledge base, `MDI-F104`); and shortcuts. Its cards and shortcuts only open existing pages, or start actions that already exist elsewhere, with the same behaviour and the same confirmations as there: Home adds no action of its own. **Katalog always opens on Home**: at launch and after a collection is opened. The last page is no longer restored at launch, which amends `SET-F4` for the start page (`Q37`, choice 6). Its texts are the approved strings of R1. **Amended (2026-10-30, fix under `MDI-F129`):** Home's "AI: %1 files" tags and its *Files with AI results* key number count the files with AI results as `MDI-F130` defines them. Before, they counted every file with any completed datum, quick hash included. | [Implemented — R1] |
 | MDI-F113 | **Speaking names (D34, answer 3).** The sidebar entries and the page titles use the names of the nomenclature table; the sidebar entries that have a description show it (`MDI-F111`). The Selection page is titled *I miei dischi* and the Devices page *Gestisci i dischi* until phase R7. The bottom activity panel's title is *Lavori in corso* (`Q38`, choice 7). In phase R1 nothing else changes: labels, buttons and menus inside a page change with that page's phase (R2–R8). *Analisi AI* and *Dettagli del file* apply with the phases of the pages that show the enrichment and the Inspector. Names not in the table (Search results, Device edit, Backup mapping and preview, About's own page) are unchanged. Every name and description is a new string or a reused existing one (`MDI-C39`); no existing source string is edited. | [Implemented — R1] |
 | MDI-F114 | **Info tags (D34, answer 1).** States and kinds are shown as info tags: a short text on a rounded, coloured background, in one of six tones — neutral, info, ok, warn, bad, and ai for AI-derived data. The tone adds to the text and never replaces it: every tag carries its text, and a tag's text is never elided (`CDT-C1`). The tones take the fixed Katalog palette of `MDI-C37` (`Q35`). In phase R1 info tags appear on Home and in the sidebar's job card. | [Implemented — R1] |
@@ -952,6 +1035,47 @@ rows, except `MDI-F154`, which he confirmed on 2026-10-30 (D37, second round).
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
 | MDI-F157 | **Move to Trash asks first (K2 parity, `CLAUDE.md`).** In *Sfoglia l'archivio*, *Move file to Trash* and *Move folder to Trash* open a modal confirmation before anything moves. So does *Move to Trash* in Search results. *Cancel* moves nothing. The texts are K2's, verbatim. In Browse: the title "Confirmation", the question `"Move\n%1\nto the trash?"` with the path, then `"Moved to trash:<br/>"` with the path, or "Move to trash failed." (`mainwindow_tab_explore.cpp`, `exploreContextMoveFileToTrash`). In Search results: the title "Confirmation" and "Move this file to the trash?" with the path (`mainwindow_tab_search_ui.cpp`, `searchContextMoveFileToTrash`). The confirm button reads "Move to Trash", an existing string. Search results keep their existing K3 result notifications. Results show as passive notifications (`MDI-C17`). Before 2026-10-30 both acted at once. | [Implemented — 2026-10-30, `dd7881df`] |
+
+### File information and people (D38) {#people}
+
+The owner's answers of 2026-10-30 (see D38). The specifications agent's
+readings in these rows are listed in `Q69`. Where a row states a confirmation
+that the answers did not name, it applies the `CLAUDE.md` rule for destructive
+actions.
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F158 | **Information of a file (D38, "Sì, questo set").** A file can carry information written by the user: *Title*, *Description*, *Event*, *Place*, *Date*, *Author* (the photographer), *Notes* and free *Tags*. Every field is optional. The values are the user's own: they are kept apart from the file's dates and metadata, from AI captions, tags and classifications (`MDI-F39`, `MDI-F101`) and from Katalog's user tags (`Tags` page), and they never change any of them. They survive closing and reopening the collection, in File and Memory modes alike, and show whether the device is connected or not (`MDI-F44`). Any file can carry them; photos are the owner's case (`Q69`). | [Planned] |
+| MDI-F159 | **"Information and people" in *Dettagli del file* (D38).** For the selected file, *Dettagli del file* (`MDI-F87`), in Browse and in Search results, has a section "Information and people". It shows the file's information (`MDI-F158`) and its people (`MDI-F162`), and lets the user edit and save them. | [Planned] |
+| MDI-F160 | **Many files at once (D38).** In *Sfoglia l'archivio*, the list and column views let the user select several files, with the mouse and with the keyboard (`MDI-O12`). For a selection of several files, the user edits the information and adds or removes people for all of them at once. A field the user changes is written to every selected file; a field left untouched keeps each file's own value (`Q69`). A single click still selects one file only, and a double click still opens it (`MDI-F135`). | [Planned] |
+| MDI-F161 | **People (D38).** The collection holds a list of people. A person has *First name*, *Last name*, *Role*, *Organisation/club* and *Notes*. The user creates, edits and deletes people on the *Persone* page (`MDI-F164`). Deleting a person first asks a modal confirmation (`CLAUDE.md`, destructive actions). It then removes the person and the person's links to files and faces, and the faces confirmed for that person become unknown again (`Q69`). It never deletes, moves or changes a file, on a drive or in a catalog. | [Planned] |
+| MDI-F162 | **People on files (D38).** The user adds one or more people to one or more files, with no face needed, and removes a person from a file. The *Persone* page lists the files of each person. A face confirmed for a person (`MDI-F166`) also counts that person among the file's people (`Q69`). | [Planned] |
+| MDI-F163 | **Finding files by information and people (D38, "all searchable").** A search in *Cerca nei dischi* finds the files whose information (`MDI-F158`), or whose people's names, roles or organisations (`MDI-F161`), match it: by person, role, event or place, for example. **How is open (`Q67`).** The main session's design feeds this text into the instant search index (`MDI-F76`). That alone changes no result: the index only narrows a name search, whose results stay those of the same search without it (`MDI-F77`, `MDI-C23`). Until `Q67` is decided, this row authorises adding the text to the index, and no change to what a text search returns. | [Planned] |
+| MDI-F164 | **The *Persone* page (D38, "Approvo").** A K3 page *Persone*, reached from a sidebar entry (`MDI-F111`), holds the list of people with their fields (`MDI-F161`) and each person's files (`MDI-F162`). When faces are available (`MDI-F165`) it also holds the suggestions to review (`MDI-F167`), each person's similar faces (`MDI-F168`) and the groups of unnamed faces (`MDI-F169`); otherwise it says why. In a Hosted collection it says that the feature is not available there (`MDI-C48`). The page is the fifth exception of `MDI-C18`. Its sidebar group: `Q69`. | [Planned] |
+
+### Faces (D39) {#faces}
+
+The owner's answers of 2026-10-30 (see D39). Bounded by `MDI-C50` and
+`MDI-C51`. Open: `Q65` (GDPR), `Q66` (packaging), `Q69` (readings).
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F165 | **The *faces* analysis (D39, "OpenCV locale").** A new analysis, *faces*, is offered in the *AI analysis* section (`MDI-F5`, `MDI-F60`) and in *Analyse with AI* (`MDI-F8`). It is off by default, and can also be started on its own for a catalog. For each image it finds the faces (YuNet) and computes a recognition feature for each face (SFace), on this computer (`MDI-C51`). Each face is stored with its place in the image. The analysis records its outcome and provenance as any analysis does (`MDI-F52`) and is incremental (`MDI-F13`). When the build has no OpenCV, or a model is missing, the analysis is shown disabled with its reason and skipped with it (`MDI-F21`); nothing else is affected. Images only (`Q69`). | [Planned] |
+| MDI-F166 | **Suggested by Teca, confirmed by the user (D39).** A face is *unknown*, *suggested* or *confirmed*. Teca only ever suggests: it may propose a person for a face, with the similarity, and never confirms one by itself. A face becomes *confirmed* for a person only by the user's action, on one face or on many at once. *Not this person* rejects a suggestion and leaves the face unknown; that person is not suggested for that face again (`Q69`). *Clear* turns a confirmed face back into an unknown one. | [Planned] |
+| MDI-F167 | **Review the suggestions first (D39; owner: "approvare l'associazione dei visi in primis").** The *Persone* page lists the pending suggestions, each face with the person suggested. The user confirms or rejects them one by one or many at once (`MDI-F166`). | [Planned] |
+| MDI-F168 | **Similar faces (D39).** For a person with at least one confirmed face, *Similar faces* lists the faces not confirmed for anyone, ranked by cosine similarity to that person's confirmed faces, the most similar first. Faces rejected for that person are not listed (`Q69`). The user confirms one, several or all of them for that person. | [Planned] |
+| MDI-F169 | **Groups of unnamed faces (D39).** The unknown faces are grouped by similarity, so that a group likely holds one person. The user names a group — an existing person or a new one (`MDI-F161`) — and its faces are confirmed for that person at once (`MDI-F166`). Thresholds, and correcting a group before naming it: `Q69`. | [Planned] |
+| MDI-F170 | **Faces in *Dettagli del file* (D39).** For an image whose faces were found, the section "Information and people" (`MDI-F159`) shows its faces, each with its state and its person, and offers the actions of `MDI-F166` there. | [Planned] |
+
+### Real transcripts (D40) {#real-transcripts}
+
+The owner's answer of 2026-10-30 (see D40). Open details: `Q68`.
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F171 | **Only speech is transcribed (D40, "Filtro + pulizia esistenti").** A new transcript (`MDI-F35`) runs `whisper.cpp` with voice activity detection, using the Silero model (`ggml-silero-v5.1.2.bin`, installed by the user in the whisper models folder, D9), with no text context carried from one window to the next (`-mc 0`) and with non-speech tokens suppressed (`-sns`). The passages then go through the filter of `MDI-F172`. A recording with no speech left gets no transcript: no passage is stored, and the analysis is recorded as *skipped (no speech found)*. The provenance records the options and the filter's version (`MDI-F52`). Without the VAD model, or with a `whisper.cpp` that lacks the option: `Q68`. | [Planned] |
+| MDI-F172 | **Transcript filter (D40).** Before a transcript is stored, Teca drops from it the known invented phrases (for example "We'll be right back.", "Thank you.", "Music by …", "Grazie.", "ご視聴ありがとうございました"), the sound tags (for example "\*Gunshot\*", "\*music\*") and the repetitions. The rest of what was transcribed is kept unchanged. The phrase list is part of Teca, in `core/` (`MDI-C52`). A listed phrase that was really spoken is dropped too (`Q68`). | [Planned] |
+| MDI-F173 | **Cleaning the stored transcripts (D40).** An action cleans the transcripts already stored with the filter of `MDI-F172`. First, a modal confirmation states how many transcripts change and how many are removed; nothing changes until it is confirmed (`CLAUDE.md`, destructive actions). Then the invented parts are removed. A transcript with no speech left is removed, and its analysis is recorded as *skipped (no speech found)*, with its provenance kept (D13). For each transcript changed or removed, its topic segments (`MDI-F36`), the clusters they belong to (`MDI-F37`), its embeddings (`MDI-F47`) and its instant-index text (`MDI-F76`) are computed again; that work runs as an enrichment job (`MDI-F16`, `MDI-F17`, Pause and Stop). Summaries and classifications made from a transcript: `Q68`. | [Planned] |
 
 ## Constructional requirements — *how it is built / limits / MUST-NOTs*
 

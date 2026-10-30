@@ -120,7 +120,6 @@ Item {
             paths.push(root.selectedFullPath)
         return paths.map(p => ({ catalogId: root.catalogId, fullPath: p }))
     }
-    onCurrentFolderPathChanged: pickedPaths = ({})
 
     function loadEntries() {
         if (currentFolderPath === "") return
@@ -1013,7 +1012,10 @@ Item {
         }
     }
 
-    onCurrentFolderPathChanged: loadEntries()
+    onCurrentFolderPathChanged: {
+        pickedPaths = ({})   // a choice of files belongs to its folder
+        loadEntries()
+    }
     // Another catalog at the same folder (a joined or split catalog keeps its
     // path): the list is reloaded too, or it shows the previous catalog's rows
     onCatalogIdChanged: loadEntries()

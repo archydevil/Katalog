@@ -21,7 +21,23 @@ Rectangle {
 
     function reload() {
         info = (catalogId > 0 && fullPath !== "") ? appManager1.inspectorInfo(catalogId, fullPath) : ({})
+        reloadPeople()
     }
+    // What the owner wrote about the file, its people and their faces (D38)
+    property var fileFacts: ({})
+    property var faces: []
+    function reloadPeople() {
+        const shown = catalogId > 0 && fullPath !== ""
+        fileFacts = shown ? appManager1.fileInfo(catalogId, fullPath) : ({})
+        faces = shown && appManager1.facesAvailable() ? appManager1.facesInFile(catalogId, fullPath) : []
+    }
+    readonly property var factRows: [
+        [qsTr("Title"), fileFacts.title], [qsTr("Description"), fileFacts.description],
+        [qsTr("Event"), fileFacts.event], [qsTr("Place"), fileFacts.place], [qsTr("Date"), fileFacts.date],
+        [qsTr("Author"), fileFacts.author], [qsTr("Notes"), fileFacts.notes]
+    ].filter(r => (r[1] || "") !== "")
+    function thisFile() { return [{ catalogId: inspector.catalogId, fullPath: inspector.fullPath }] }
+    function personMenuFor(face) { faceMenu.face = face; faceMenu.popup() }
     onCatalogIdChanged: reload()
     onFullPathChanged:  reload()
     onVisibleChanged:   if (visible) reload()
@@ -29,6 +45,9 @@ Rectangle {
         target: appManager1
         // New results of the enrichment job for the file shown
         function onMdiRevisionChanged() { if (inspector.visible) inspector.reload() }
+        function onFileInfoChanged()    { if (inspector.visible) inspector.reloadPeople() }
+        function onPeopleChanged()      { if (inspector.visible) inspector.reloadPeople() }
+        function onFacesChanged()       { if (inspector.visible) inspector.reloadPeople() }
     }
 
     function entry(analysis) {
@@ -178,6 +197,36 @@ Rectangle {
                             Accessible.name: inspector.info.name || ""
                             Accessible.description: inspector.describedText
                         }
+                        // The faces found, framed on the picture: green when
+                        // confirmed, AI colour when only proposed (D38); a click
+                        // says who it is
+                        Repeater {
+                            model: inspector.faces
+                            delegate: Controls.AbstractButton {
+                                id: faceBox
+                                required property var modelData
+                                readonly property real imgX: preview.x + (preview.width - preview.paintedWidth) / 2
+                                readonly property real imgY: preview.y + (preview.height - preview.paintedHeight) / 2
+                                x: imgX + modelData.x * preview.paintedWidth
+                                y: imgY + modelData.y * preview.paintedHeight
+                                width:  Math.max(12, modelData.w * preview.paintedWidth)
+                                height: Math.max(12, modelData.h * preview.paintedHeight)
+                                hoverEnabled: true
+                                focusPolicy: Qt.TabFocus
+                                Accessible.name: modelData.personName || modelData.suggestedName || qsTr("Unknown person")
+                                onClicked: inspector.personMenuFor(modelData)
+                                background: Rectangle {
+                                    color: "transparent"
+                                    radius: 4
+                                    border.width: faceBox.hovered || faceBox.visualFocus ? 3 : 2
+                                    border.color: faceBox.modelData.status === "confirmed" ? KTheme.ok
+                                                : faceBox.modelData.status === "suggested" ? KTheme.ai : KTheme.text2
+                                }
+                                Controls.ToolTip.text: (modelData.personName || (modelData.suggestedName
+                                                        ? qsTr("Maybe %1").arg(modelData.suggestedName) : qsTr("Who is it?")))
+                                Controls.ToolTip.visible: hovered || visualFocus
+                            }
+                        }
                     }
 
                     // Title given by the AI's classification, else the file name
@@ -261,6 +310,92 @@ Rectangle {
                             icon.name: "view-preview"
                             text: qsTr("Show analysis")
                             onClicked: inspectorDetails.showFor(inspector.catalogId, inspector.fullPath, inspector.info.name)
+                        }
+                    }
+                }
+
+                // ── Information and people, written by the owner (D38) ────────
+                KCard {
+                    Layout.fillWidth: true
+                    visible: inspector.fullPath !== ""
+                    KSectionHeader {
+                        level: 3
+                        title: qsTr("Information and people")
+                        description: inspector.factRows.length === 0 && (inspector.fileFacts.people || []).length === 0
+                                     ? qsTr("Nothing written yet: a title, an event, a place, the people in it…") : ""
+                    }
+                    Repeater {
+                        model: inspector.factRows
+                        delegate: GridLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            columns: inspector.wide ? 2 : 1
+                            columnSpacing: 10
+                            rowSpacing: 0
+                            Controls.Label {
+                                Layout.preferredWidth: inspector.wide ? inspector.keyWidth : -1
+                                text: modelData[0]
+                                color: KTheme.text3
+                                font.pixelSize: KTheme.note
+                            }
+                            Controls.Label {
+                                Layout.fillWidth: true
+                                text: modelData[1]
+                                color: KTheme.text
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                    }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        visible: (inspector.fileFacts.tags || []).length > 0
+                        Repeater {
+                            model: inspector.fileFacts.tags || []
+                            delegate: KInfoTag { required property var modelData; text: modelData }
+                        }
+                    }
+                    // The people in it, with or without a face
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        visible: (inspector.fileFacts.people || []).length > 0
+                        Repeater {
+                            model: inspector.fileFacts.people || []
+                            delegate: KInfoTag {
+                                required property var modelData
+                                text: modelData.name + (modelData.role ? " · " + modelData.role : "")
+                                tone: "ok"
+                            }
+                        }
+                    }
+                    // Faces proposed, waiting for the owner
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        visible: inspector.faces.filter(f => f.status === "suggested" || f.status === "unknown").length > 0
+                        wrapMode: Text.WordWrap
+                        color: KTheme.text2
+                        font.pixelSize: KTheme.note
+                        text: qsTr("%1 faces without a confirmed name: a click on a face says who it is.")
+                                  .arg(inspector.faces.filter(f => f.status === "suggested" || f.status === "unknown").length)
+                    }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        KButton {
+                            variant: "secondary"
+                            icon.name: "document-edit"
+                            text: qsTr("Edit the information")
+                            onClicked: applicationWindow().editFileInfo(inspector.thisFile())
+                        }
+                        KButton {
+                            variant: "link"
+                            icon.name: "list-add"
+                            text: qsTr("Add a person")
+                            onClicked: applicationWindow().pickPerson(function(personId) {
+                                if (personId > 0)
+                                    appManager1.addPeopleToFiles(inspector.thisFile(), [personId])
+                            })
                         }
                     }
                 }
@@ -525,4 +660,42 @@ Rectangle {
     }
 
     MdiDetailsDialog { id: inspectorDetails }
+
+    // Who a face is: the proposal confirmed, another person, or not them
+    Controls.Menu {
+        id: faceMenu
+        property var face: ({})
+        Controls.MenuItem {
+            visible: (faceMenu.face.suggestedPersonId || 0) > 0 && faceMenu.face.status !== "confirmed"
+            height: visible ? implicitHeight : 0
+            text: qsTr("It is %1").arg(faceMenu.face.suggestedName || "")
+            icon.name: "dialog-ok-apply"
+            onTriggered: appManager1.confirmFaces([faceMenu.face.faceId], faceMenu.face.suggestedPersonId)
+        }
+        Controls.MenuItem {
+            text: faceMenu.face.status === "confirmed" ? qsTr("Someone else…") : qsTr("Who is it?…")
+            icon.name: "list-add"
+            onTriggered: {
+                const faceId = faceMenu.face.faceId
+                applicationWindow().pickPerson(function(personId) {
+                    if (personId > 0)
+                        appManager1.confirmFaces([faceId], personId)
+                })
+            }
+        }
+        Controls.MenuItem {
+            visible: (faceMenu.face.suggestedPersonId || 0) > 0 && faceMenu.face.status === "suggested"
+            height: visible ? implicitHeight : 0
+            text: qsTr("Not %1").arg(faceMenu.face.suggestedName || "")
+            icon.name: "dialog-cancel"
+            onTriggered: appManager1.rejectFaces([faceMenu.face.faceId])
+        }
+        Controls.MenuItem {
+            visible: faceMenu.face.status === "confirmed"
+            height: visible ? implicitHeight : 0
+            text: qsTr("Remove the name")
+            icon.name: "edit-clear"
+            onTriggered: appManager1.clearFace(faceMenu.face.faceId)
+        }
+    }
 }
