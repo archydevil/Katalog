@@ -83,6 +83,9 @@ AppManager::AppManager(QObject *parent) : QObject(parent)
     m_systemFont = QGuiApplication::font();
     m_importSourceDeviceModel = new DeviceListModel(this);
     m_importSourceDeviceModel->setIncludeCollectionRoot(true);
+    // Similar faces and face groups kept so far are computed again (fork)
+    connect(this, &AppManager::facesChanged,  this, &AppManager::invalidateFaceCache);
+    connect(this, &AppManager::peopleChanged, this, &AppManager::invalidateFaceCache);
 }
 //----------------------------------------------------------------------
 AppManager::~AppManager()
@@ -8226,6 +8229,8 @@ void AppManager::stopPeopleWorkers()
         m_infoIndexThread->wait(10000);
     if (m_transcriptCleanThread)
         m_transcriptCleanThread->wait(10000);
+    if (m_faceThread)
+        m_faceThread->wait(10000);
 }
 //----------------------------------------------------------------------
 QVariantMap AppManager::cleanTranscripts()
@@ -8659,22 +8664,6 @@ QString AppManager::clearFace(int faceId)
     return QString();
 }
 //----------------------------------------------------------------------
-QVariantList AppManager::similarFaces(int personId, int limit, double minScore)
-{
-    QVariantList list;
-    if (!peopleStoreRefusal().isEmpty())
-        return list;
-    const QHash<int, QString> names = personNames(kMdiMainConnection);
-    const double floor = minScore > 0 ? minScore : faceMatchThreshold();
-    for (const auto &pair : MdiPeople::similarFaces(kMdiMainConnection, personId, limit, floor)) {
-        QVariantMap row = faceRow(pair.first, names);
-        row[QStringLiteral("suggestionScore")] = row.value(QStringLiteral("score"));
-        row[QStringLiteral("score")] = pair.second;   // similarity to this person
-        list.append(row);
-    }
-    return list;
-}
-//----------------------------------------------------------------------
 QVariantList AppManager::pendingFaces(int limit)
 {
     QVariantList list;
@@ -8686,15 +8675,31 @@ QVariantList AppManager::pendingFaces(int limit)
     return list;
 }
 //----------------------------------------------------------------------
-QVariantList AppManager::unnamedFaceGroups(int limit)
+// Similar faces and face groups (fork, 2026-10-30): the grouping compares
+// every unnamed face with the others, so both run on a worker with its own
+// mdi_data.db connection (Qt SQL connections belong to one thread), and the
+// results are kept until faces or people change, a job writes, or the
+// collection changes.
+namespace {
+QVariantList similarFaceRows(const QString &connectionName, int personId, int limit, double floor)
 {
     QVariantList list;
-    if (!peopleStoreRefusal().isEmpty())
-        return list;
-    const QHash<int, QString> names = personNames(kMdiMainConnection);
-    const double threshold = qMax(MdiPeople::kGroupThreshold, faceMatchThreshold());
+    const QHash<int, QString> names = personNames(connectionName);
+    for (const auto &pair : MdiPeople::similarFaces(connectionName, personId, limit, floor)) {
+        QVariantMap row = faceRow(pair.first, names);
+        row[QStringLiteral("suggestionScore")] = row.value(QStringLiteral("score"));
+        row[QStringLiteral("score")] = pair.second;   // similarity to this person
+        list.append(row);
+    }
+    return list;
+}
+
+QVariantList faceGroupRows(const QString &connectionName, int limit, double threshold)
+{
+    QVariantList list;
+    const QHash<int, QString> names = personNames(connectionName);
     int groupId = 0;
-    for (const QList<MdiPeople::Face> &group : MdiPeople::unnamedGroups(kMdiMainConnection, limit, threshold)) {
+    for (const QList<MdiPeople::Face> &group : MdiPeople::unnamedGroups(connectionName, limit, threshold)) {
         QVariantList faces;
         for (const MdiPeople::Face &f : group)
             faces.append(faceRow(f, names));
@@ -8703,6 +8708,150 @@ QVariantList AppManager::unnamedFaceGroups(int limit)
                                  { QStringLiteral("faces"),   faces } });
     }
     return list;
+}
+
+QString similarKey(const QVariantMap &asked)
+{
+    return QStringLiteral("%1/%2/%3").arg(asked.value(QStringLiteral("personId")).toInt())
+                                     .arg(asked.value(QStringLiteral("limit")).toInt())
+                                     .arg(asked.value(QStringLiteral("floor")).toDouble(), 0, 'f', 4);
+}
+} // namespace
+//----------------------------------------------------------------------
+void AppManager::invalidateFaceCache()
+{
+    // A computation running now is dropped when it ends: it read older data
+    ++m_faceCacheRevision;
+    m_faceGroupsCache.clear();
+    m_similarCache.clear();
+}
+//----------------------------------------------------------------------
+void AppManager::checkFaceCachePath()
+{
+    // Another collection: nothing kept from the previous one
+    const QString path = mdiDataPath();
+    if (m_faceCachePath == path)
+        return;
+    invalidateFaceCache();
+    m_faceGroupsWanted = -1;
+    m_similarWanted.clear();
+    m_faceCachePath = path;
+}
+//----------------------------------------------------------------------
+void AppManager::requestSimilarFaces(int personId, int limit, double minScore)
+{
+    if (!peopleStoreRefusal().isEmpty()) {
+        emit similarFacesReady(personId, QVariantList(), 0);
+        return;
+    }
+    checkFaceCachePath();
+    const QVariantMap asked{ { QStringLiteral("personId"), personId },
+                             { QStringLiteral("limit"),    limit },
+                             { QStringLiteral("floor"),    minScore > 0 ? minScore : faceMatchThreshold() } };
+    // Kept while no job wrote since (a face search adds faces for hours)
+    const QVariantMap kept = m_similarCache.value(similarKey(asked));
+    if (!kept.isEmpty() && kept.value(QStringLiteral("mdiRevision")).toInt() == m_mdiRevision) {
+        emit similarFacesReady(personId, kept.value(QStringLiteral("rows")).toList(),
+                               kept.value(QStringLiteral("serial")).toInt());
+        return;
+    }
+    // One person is shown at a time: the last one asked is computed
+    m_similarWanted = asked;
+    runFaceWorker();
+}
+//----------------------------------------------------------------------
+void AppManager::requestFaceGroups(int limit)
+{
+    if (!peopleStoreRefusal().isEmpty()) {
+        emit faceGroupsReady(QVariantList(), 0);
+        return;
+    }
+    checkFaceCachePath();
+    if (!m_faceGroupsCache.isEmpty() && m_faceGroupsCache.value(QStringLiteral("limit")).toInt() == limit
+        && m_faceGroupsCache.value(QStringLiteral("mdiRevision")).toInt() == m_mdiRevision) {
+        emit faceGroupsReady(m_faceGroupsCache.value(QStringLiteral("rows")).toList(),
+                             m_faceGroupsCache.value(QStringLiteral("serial")).toInt());
+        return;
+    }
+    m_faceGroupsWanted = limit;
+    runFaceWorker();
+}
+//----------------------------------------------------------------------
+void AppManager::runFaceWorker()
+{
+    // One computation at a time; what is asked meanwhile runs when it ends
+    if (m_faceThread || (m_faceGroupsWanted < 0 && m_similarWanted.isEmpty()))
+        return;
+    const QString     path           = m_faceCachePath;
+    const int         revision       = m_faceCacheRevision;
+    const int         mdiRevision    = m_mdiRevision;
+    const int         groupsLimit    = m_faceGroupsWanted;
+    const double      groupThreshold = qMax(MdiPeople::kGroupThreshold, faceMatchThreshold());
+    const QVariantMap similar        = m_similarWanted;
+    m_faceGroupsWanted = -1;
+    m_similarWanted.clear();
+    // The results kept, outdated only by a job's writes: when nothing they
+    // show changed, the page keeps what it draws (open groups stay open)
+    const bool        hadGroups     = !m_faceGroupsCache.isEmpty()
+                                      && m_faceGroupsCache.value(QStringLiteral("limit")).toInt() == groupsLimit;
+    const QVariantList oldGroups    = m_faceGroupsCache.value(QStringLiteral("rows")).toList();
+    const int         oldGroupsSerial = m_faceGroupsCache.value(QStringLiteral("serial")).toInt();
+    const QVariantMap oldSimilar    = similar.isEmpty() ? QVariantMap() : m_similarCache.value(similarKey(similar));
+
+    m_faceThread = QThread::create([this, path, revision, mdiRevision, groupsLimit, groupThreshold, similar,
+                                    hadGroups, oldGroups, oldGroupsSerial, oldSimilar]() {
+        const QString connection = QStringLiteral("mdi_faces_%1").arg(reinterpret_cast<quintptr>(QThread::currentThread()));
+        const int personId = similar.value(QStringLiteral("personId")).toInt();
+        QVariantList groups, similarRows;
+        const bool opened = MdiData::open(connection, path);
+        if (opened) {
+            if (personId > 0)
+                similarRows = similarFaceRows(connection, personId, similar.value(QStringLiteral("limit")).toInt(),
+                                              similar.value(QStringLiteral("floor")).toDouble());
+            if (groupsLimit >= 0)
+                groups = faceGroupRows(connection, groupsLimit, groupThreshold);
+        }
+        MdiData::close(connection);
+        const bool sameGroups  = hadGroups && groups == oldGroups;
+        const bool sameSimilar = !oldSimilar.isEmpty() && similarRows == oldSimilar.value(QStringLiteral("rows")).toList();
+        QMetaObject::invokeMethod(this, [this, path, revision, mdiRevision, opened, personId, similar, similarRows,
+                                         sameSimilar, oldSimilar, groupsLimit, groups, sameGroups, oldGroupsSerial]() {
+            // Faces or people changed meanwhile, or another collection is open:
+            // dropped, the page asks again when it shows them
+            if (path != m_faceCachePath || revision != m_faceCacheRevision)
+                return;
+            if (personId > 0) {
+                const int serial = !opened ? 0 : sameSimilar ? oldSimilar.value(QStringLiteral("serial")).toInt()
+                                                             : ++m_faceSerial;
+                if (opened)
+                    m_similarCache.insert(similarKey(similar),
+                                          QVariantMap{ { QStringLiteral("rows"),        similarRows },
+                                                       { QStringLiteral("serial"),      serial },
+                                                       { QStringLiteral("mdiRevision"), mdiRevision } });
+                if (m_similarWanted == similar)
+                    m_similarWanted.clear();   // asked again meanwhile: just answered
+                emit similarFacesReady(personId, similarRows, serial);
+            }
+            if (groupsLimit >= 0) {
+                const int serial = !opened ? 0 : sameGroups ? oldGroupsSerial : ++m_faceSerial;
+                if (opened)
+                    m_faceGroupsCache = QVariantMap{ { QStringLiteral("limit"),       groupsLimit },
+                                                     { QStringLiteral("rows"),        groups },
+                                                     { QStringLiteral("serial"),      serial },
+                                                     { QStringLiteral("mdiRevision"), mdiRevision } };
+                if (m_faceGroupsWanted == groupsLimit)
+                    m_faceGroupsWanted = -1;
+                emit faceGroupsReady(groups, serial);
+            }
+        }, Qt::QueuedConnection);
+    });
+    connect(qApp, &QCoreApplication::aboutToQuit, m_faceThread, [this]() { stopPeopleWorkers(); });
+    connect(m_faceThread, &QThread::finished, this, [this]() {
+        m_faceThread->deleteLater();
+        m_faceThread = nullptr;
+        runFaceWorker();   // asked meanwhile
+    });
+    m_faceThread->start(QThread::LowPriority);
 }
 //----------------------------------------------------------------------
 QString AppManager::startFaceAnalysis(int deviceId)

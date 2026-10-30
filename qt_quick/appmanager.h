@@ -549,9 +549,14 @@ public slots:
     Q_INVOKABLE QString clearFaceData();
     Q_INVOKABLE QString      ignoreFaces(const QVariantList &faceIds);
     Q_INVOKABLE QString      clearFace(int faceId);
-    Q_INVOKABLE QVariantList similarFaces(int personId, int limit, double minScore);
     Q_INVOKABLE QVariantList pendingFaces(int limit);
-    Q_INVOKABLE QVariantList unnamedFaceGroups(int limit);
+    // Similar faces and the groups of unnamed faces compare many faces: they
+    // are computed on a worker with its own mdi_data.db connection and kept
+    // until faces or people change, a job writes, or the collection changes.
+    // The answer comes with similarFacesReady / faceGroupsReady, at once when
+    // kept; `serial` changes only with a new computation.
+    Q_INVOKABLE void         requestSimilarFaces(int personId, int limit, double minScore);
+    Q_INVOKABLE void         requestFaceGroups(int limit);
     // Queues the runner with the "faces" analysis only, on the catalog's images
     Q_INVOKABLE QString      startFaceAnalysis(int deviceId);
 
@@ -835,6 +840,8 @@ signals:
     void fileInfoChanged();
     void peopleChanged();
     void facesChanged();
+    void similarFacesReady(int personId, const QVariantList &faces, int serial);
+    void faceGroupsReady(const QVariantList &groups, int serial);
     void transcriptsCleaned(const QVariantMap &counts);
     void proposalsChanged();
     void webQueriesRunningChanged();
@@ -1098,6 +1105,19 @@ private:
     // Web lookups of the dating (fork, 2026-10-30)
     QThread          *m_webThread = nullptr;
     std::atomic<bool> m_webStop{false};
+    // Similar faces and face groups (fork, 2026-10-30): one worker at a time,
+    // results kept per collection until a change (see requestFaceGroups)
+    QThread          *m_faceThread = nullptr;
+    int               m_faceCacheRevision = 0;     // bumped by facesChanged / peopleChanged
+    int               m_faceSerial = 0;            // one per computation
+    QString           m_faceCachePath;             // the mdi_data.db the results belong to
+    QVariantMap       m_faceGroupsCache;           // {limit, rows, serial, mdiRevision}
+    QHash<QString, QVariantMap> m_similarCache;    // "person/limit/score" -> same shape
+    int               m_faceGroupsWanted = -1;     // limit asked, -1 when none
+    QVariantMap       m_similarWanted;             // {personId, limit, floor}, empty when none
+    void    invalidateFaceCache();
+    void    checkFaceCachePath();
+    void    runFaceWorker();
     QString proposalKindLabel(const QString &kind) const;
     QString proposalFieldLabel(const QString &field) const;
     QVariantList proposalSources(const QVariantList &sources) const;

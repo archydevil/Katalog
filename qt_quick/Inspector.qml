@@ -852,5 +852,18 @@ Rectangle {
             icon.name: "edit-clear"
             onTriggered: appManager1.clearFace(faceMenu.face.faceId)
         }
+        // Not a face, or nobody to name: no longer proposed nor grouped on
+        // People. It stays framed here, where "Who is it?…" can still name it.
+        Controls.MenuItem {
+            visible: faceMenu.face.status === "unknown" || faceMenu.face.status === "suggested"
+            height: visible ? implicitHeight : 0
+            text: qsTr("Ignore this face")
+            icon.name: "view-hidden"
+            onTriggered: {
+                const error = appManager1.ignoreFaces([faceMenu.face.faceId])
+                if (error !== "")
+                    applicationWindow().showPassiveNotification(error)
+            }
+        }
     }
 }
