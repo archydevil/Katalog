@@ -2064,6 +2064,94 @@ changes. The design is the main agent's, relayed to the specifications agent.
 - **Owner's data.** The recomposition of the 22 UITS catalogs (D36, answer 4)
   is to run after `MDI-F142` is built, with its restore point first.
 
+### D36 and D37 — reported 2026-10-30
+
+The main agent reports the step built and checked in the running app on the
+owner's collection (commits `fd76dd09`, `06d05ad1`). The specifications agent
+read the core diff of `fd76dd09` against `MDI-C46`, and the QML of the scope
+chip, the *Undo* notification and the History page.
+
+**Built.**
+
+- **History (`MDI-F136`–`F142`, `MDI-C45`, `MDI-C46`).** Restore points before
+  an update, split, recompose, delete or edit; the History page; restore;
+  *Undo* in the notification after an action; opening a version as a separate
+  catalog; *Ricomponi*. Not built: the Settings control for the limit
+  (`MDI-F137`) and the view of one catalog's actions (`MDI-F138`).
+- **Owner's data (D36, answer 4).** At 20:48 the 22 UITS catalogs were
+  recomposed into one "CATALOGO BASE UITS DISCO RIGIDO" with *Ricomponi in un
+  solo catalogo*, after a restore point. It holds 14,545 files. 23,167 AI rows
+  (captions, classifications, transcripts) moved to it. The entry offers
+  *Ripristina com'era prima*, and *Apri come catalogo a parte* for each part.
+- **Split date (`MDI-F143`).** A split gives its catalogs the split catalog's
+  update date, or the date of the split when it has none. The owner's 22
+  undated catalogs got a date at launch (`Collection::repairUndatedCatalogs`,
+  see the findings), and their instant index stopped being rebuilt.
+- **Navigation (`MDI-F144`–`F148`).** Back and Forward beside every page title
+  (`NavTitle`); `Esc`, `Cmd+[` / `Cmd+]`, `Alt+Left` / `Alt+Right` and the
+  mouse's buttons. Browse locations are history entries. Browse has a
+  breadcrumb from "All the drives" and *Up*. No Close on the sidebar's pages.
+  The scope chip is on Search, Numbers and Safety copies only (`MDI-F147`).
+  `Cmd/Ctrl+1…9` and `F6` work.
+- **Accessibility (`MDI-F149`–`F156`).** The `controlLine` token; focus rings;
+  the menu highlight; the sidebar's bar and its page-tab role; keyboard use of
+  the *My drives* cards and the Explore tree; names and roles; `KProgressBar`'s
+  role and value; limited motion; the activity panel below the pages; disabled
+  controls dimmed. `MDI-F154`: `KTheme.textScale` follows *Text size*.
+- **`onAccent` defect (`MDI-C37`, `MDI-F149`).** Fixed by the accessibility
+  work: primary-button text was 2.8:1 in light mode.
+
+**Main session's choices on open questions** (built, for the owner to confirm):
+
+- `Q52` (a) when an original ID now belongs to another catalog or device, the
+  in-place restore is refused, and opening the version as a separate catalog
+  still works. (b) Every version is a full copy of the catalog's rows, about
+  1 s per 100,000 rows, on the UI thread, before the action; *update all*
+  copies every catalog first. (c) *Undo* restores without the confirmation of
+  `MDI-F139`. (d) When a restore point cannot be written, the action goes on
+  without one. (e) and (f) were not reported.
+- `Q53`: the proposals are the catalogs of a Storage or group, or a split
+  catalog with its siblings of the same base name. The suggested name is the
+  split's base name, and it can be edited. The profile is the root part's,
+  else the first part's that has one.
+- `Q54` (a): the split catalog's own update date, else the split's date.
+  (b): every undated catalog is dated, at each collection opening.
+
+**Fixed, inside existing rows** (from the main session's read-only bug hunt):
+
+- Browse opened the wrong catalog when two catalogs share a path. It now
+  redirects only strictly below the open catalog and ignores ambiguous paths
+  (`MDI-F133`).
+- The folder list did not reload when the catalog opened had the same path as
+  the one shown: a
+  joined catalog showed the old root catalog's empty folders, with "0 byte".
+  The list and column views now reload on a change of catalog (`MDI-F129`,
+  `MDI-F133`).
+- A double click on a folder could open a file; now guarded (`MDI-F135`).
+- *File details* kept showing a trashed or deleted file. The selection is now
+  cleared (`MDI-F87`, `MDI-F157`).
+- The catalog-by-folder map is refreshed on every open and on every change of
+  the device list. A catalog that has vanished shows the cards (`MDI-F129`,
+  `MDI-F133`).
+- A tap on a selection card no longer opens its catalog twice (`SEL-F3`,
+  `EXP-C21`).
+- Home's "Cerca in tutti i dischi" now chooses every drive (`MDI-F112`).
+- The sidebar, when it slides over the pages, closes after a choice. The mark
+  follows the page after a Close (`MDI-F111`).
+- Home no longer recounts in a loop when there is no `mdi_data.db`. It shows
+  no duplicate cards for the copies in virtual groups (`MDI-F112`,
+  `MDI-C38`).
+- A split now moves the AI data before any device change, and is refused
+  while the enrichment works on that catalog (`MDI-F126`; see the findings).
+- Home's worker thread is joined on quit, with a generation counter
+  (`MDI-C38`).
+- Explore reloads the AI tags only when the shown catalog's data changed
+  (`MDI-F130`).
+
+**Not tested.** History and *Ricomponi* in a Hosted (MySQL) collection; the
+K2 build with the core changes (which reach K2: the split date, the split's
+new failure path, `moveToCatalogs`). History in Memory mode was not reported.
+
 ### Known gaps
 
 - Settings UI for tool paths and models (`MDI-F20`, `MDI-F23`).
@@ -2093,10 +2181,19 @@ changes. The design is the main agent's, relayed to the specifications agent.
 - `MDI-F133`: in the parent catalog's list view, a folder tagged "Catalog"
   shows "0 byte" as its size, because its files are counted in its own
   catalog.
-- `MDI-F132`–`F134` are kept on the main session's reading of an answer that
-  could also name a single option (`Q51`, D34).
-- D36 and D37: every row is planned (`MDI-F136`–`F156`, `MDI-C45`–`C47`);
-  `MDI-F154` is held (`Q46`). Only `MDI-F157` is built.
+- `MDI-F133` and `MDI-F134` are kept on the main session's reading of an
+  answer that could also name a single option (`Q51`, D34). `MDI-F132` is
+  superseded by `MDI-F145`.
+- D36: no Settings control for the number of restore points, fixed at 10
+  (`MDI-F137`); no view of one catalog's actions (`MDI-F138`). Every version
+  is a full copy of the catalog's rows, about 1 s per 100,000 rows on the UI
+  thread before an update, and *update all* copies every catalog first
+  (`Q52` (b)). An ID given to another catalog or device since blocks an
+  in-place restore; opening the version as a separate catalog still works
+  (`Q52` (a)). Hosted mode is untested.
+- D37: no scope chip on Search results or Browse (`MDI-F147`, `Q55`). The
+  *Text size* range stops at 1.2, short of SC 1.4.4's 200 % (`Q46`).
+- "%1 catalog(s), %2 file(s)" is not plural-aware (`Q64`).
 
 ### Findings for the fork owner (not authorised by any row)
 
