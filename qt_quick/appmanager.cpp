@@ -32,6 +32,9 @@
 #include "core/mdiwebsearch.h"
 #include "core/mdidocument.h"
 #include "core/mdihtmlexport.h"
+#include "core/mdidiskspace.h"
+#include "core/mdiarchivecopy.h"
+#include <QElapsedTimer>
 #include <QThread>
 #include <QThread>
 #include <QJsonDocument>

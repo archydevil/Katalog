@@ -80,6 +80,7 @@
 class BackupJobStoppable;
 #include "core/mdienrichmentjob.h"   // Config is passed by value
 #include "core/mdidata.h"           // PendingJob is held by value
+#include "core/mdihtmlexport.h"     // Scope and Options are prepared by value
 #include "core/cataloghistory.h"    // Entry and Error in the history helpers
 #include <QPointer>
 class QThread;
@@ -156,6 +157,12 @@ class AppManager : public QObject
     Q_PROPERTY(int     mdiRevision   READ getMdiRevision   NOTIFY mdiRevisionChanged)
     // Web lookups of the dating running on their worker (fork, 2026-10-30)
     Q_PROPERTY(bool    webQueriesRunning READ getWebQueriesRunning NOTIFY webQueriesRunningChanged)
+    // HTML export of a folder or a catalog, and the copy of the archive data,
+    // each on its own worker (fork, 2026-10-30)
+    Q_PROPERTY(bool    htmlExportRunning    READ getHtmlExportRunning    NOTIFY htmlExportStateChanged)
+    Q_PROPERTY(QString htmlExportStatusText READ getHtmlExportStatusText NOTIFY htmlExportStateChanged)
+    Q_PROPERTY(bool    archiveCopyRunning    READ getArchiveCopyRunning    NOTIFY archiveCopyStateChanged)
+    Q_PROPERTY(QString archiveCopyStatusText READ getArchiveCopyStatusText NOTIFY archiveCopyStateChanged)
     // Activity page (fork, MDI-F61..F75): resources, current step, log, session history
     Q_PROPERTY(QVariantMap  mdiSystem  READ getMdiSystem  NOTIFY mdiSystemChanged)
     Q_PROPERTY(QVariantList mdiHistory READ getMdiHistory NOTIFY mdiSystemChanged)
@@ -616,6 +623,21 @@ public slots:
     // scope: "file", "folder" or "catalog"; empty or the reason
     Q_INVOKABLE QString      exportHtml(const QString &scope, int catalogId, const QString &path,
                                         const QString &targetFile);
+    // The same for a folder or a catalog, on a worker with its own
+    // connections: empty when started (htmlExportFinished follows) or the reason
+    Q_INVOKABLE QString      startHtmlExport(const QString &scope, int catalogId, const QString &path,
+                                             const QString &targetFile);
+    Q_INVOKABLE void         stopHtmlExport();
+    bool                     getHtmlExportRunning() const { return m_htmlExportThread != nullptr; }
+    QString                  getHtmlExportStatusText() const { return m_htmlExportStatusText; }
+    // Copy of the archive data (fork, 2026-10-30): a dated folder in
+    // destination, on a worker; empty when started (archiveCopyFinished
+    // follows) or the reason. State: {lastCopy (ISO), lastCopyText, days
+    // (-1 when none), due (none, or older than 30 days), hosted}
+    Q_INVOKABLE QString      saveArchiveCopy(const QString &destination);
+    Q_INVOKABLE QVariantMap  archiveCopyState();
+    bool                     getArchiveCopyRunning() const { return m_archiveCopyThread != nullptr; }
+    QString                  getArchiveCopyStatusText() const { return m_archiveCopyStatusText; }
 
     // Storage pre-selection for Create page (used by DeviceTreeComboBox storageOnly mode)
     Q_INVOKABLE int getDefaultStorageId() const;
@@ -871,6 +893,12 @@ signals:
     void webQueriesRunningChanged();
     // asked: queries sent; found: those with results; error: the last failure
     void webQueriesFinished(int asked, int found, const QString &error);
+    void htmlExportStateChanged();
+    // error: empty on success; stopped: ended by Stop
+    void htmlExportFinished(const QString &target, const QString &error, bool stopped);
+    void archiveCopyStateChanged();
+    // message: what to tell the owner (the folder written, or why not)
+    void archiveCopyFinished(bool ok, const QString &message);
     // End of a Memory-mode Explore load: the open's result, or stopped
     void exploreCatalogOpened(const QVariantMap &info);
     // The latest open requested during a load, to run now that it has ended
@@ -1136,6 +1164,16 @@ private:
     // Web lookups of the dating (fork, 2026-10-30)
     QThread          *m_webThread = nullptr;
     std::atomic<bool> m_webStop{false};
+    // HTML export and copy of the archive data on their workers (fork, 2026-10-30)
+    QThread          *m_htmlExportThread = nullptr;
+    std::atomic<bool> m_htmlExportStop{false};
+    QString           m_htmlExportStatusText;
+    QThread          *m_archiveCopyThread = nullptr;
+    QString           m_archiveCopyStatusText;
+    QString prepareHtmlExport(const QString &scope, int catalogId, const QString &path, const QString &targetFile,
+                              MdiHtmlExport::Scope *request, MdiHtmlExport::Options *options, QString *target);
+    void    setHtmlExportProgress(const QString &target, int done, int total);
+    void    finishHtmlExport(const QString &target, const QString &error, bool stopped);
     // Similar faces and face groups (fork, 2026-10-30): one worker at a time,
     // results kept per collection until a change (see requestFaceGroups)
     QThread          *m_faceThread = nullptr;
