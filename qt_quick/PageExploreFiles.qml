@@ -824,10 +824,7 @@ Item {
             icon.name: "user-trash"
             visible: root._activeEntryType === "file"
             height: visible ? implicitHeight : 0
-            onTriggered: {
-                if (appManager1.moveFileToTrash(root._activeFilePath))
-                    appManager1.exploreRemoveRow(exploreTableView.selectedRow)
-            }
+            onTriggered: exploreTrashDialog.ask(root._activeFilePath, exploreTableView.selectedRow)
         }
 
         Controls.MenuItem {
@@ -835,10 +832,7 @@ Item {
             icon.name: "user-trash"
             visible: root._activeEntryType === "folder"
             height: visible ? implicitHeight : 0
-            onTriggered: {
-                if (appManager1.moveFileToTrash(root._activeFilePath))
-                    appManager1.exploreRemoveRow(exploreTableView.selectedRow)
-            }
+            onTriggered: exploreTrashDialog.ask(root._activeFilePath, exploreTableView.selectedRow)
         }
 
         Controls.MenuItem {
@@ -850,6 +844,60 @@ Item {
             // so the action stays discoverable and the setting can be found.
             enabled: appManager1.allowFileDeletion
             onTriggered: exploreDeleteFileDialog.open()
+        }
+    }
+
+    // Moving to the trash acts on the real drive: it asks first and then says
+    // how it went, as K2's Explore does (its strings, verbatim)
+    Kirigami.Dialog {
+        id: exploreTrashDialog
+        property string path: ""
+        property int    row: -1
+        function ask(fullPath, rowIndex) {
+            path = fullPath
+            row  = rowIndex
+            open()
+        }
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
+        title: qsTr("Confirmation")
+        preferredWidth: Kirigami.Units.gridUnit * 28
+        padding: Kirigami.Units.largeSpacing
+
+        footer: Controls.DialogButtonBox {
+            Controls.Button {
+                text: qsTr("Move to Trash")
+                icon.name: "user-trash"
+                Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.AcceptRole
+            }
+            Controls.Button {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.RejectRole
+            }
+            onAccepted: {
+                if (appManager1.moveFileToTrash(exploreTrashDialog.path)) {
+                    appManager1.exploreRemoveRow(exploreTrashDialog.row)
+                    showPassiveNotification(qsTr("Moved to trash:<br/>") + exploreTrashDialog.path)
+                } else {
+                    showPassiveNotification(qsTr("Move to trash failed."))
+                }
+                exploreTrashDialog.close()
+            }
+            onRejected: exploreTrashDialog.close()
+        }
+
+        contentItem: ColumnLayout {
+            Controls.Label {
+                Layout.fillWidth: true
+                text: qsTr("Move\n%1\nto the trash?").arg(exploreTrashDialog.path)
+                wrapMode: Text.WrapAnywhere
+            }
         }
     }
 

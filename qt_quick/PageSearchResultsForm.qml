@@ -1191,11 +1191,10 @@ ColumnLayout {
             text: qsTr("Move to Trash")
             icon.name: "user-trash"
             enabled: resultContextMenu.fileName !== ""
+            // Acts on the real drive: it asks first, as K2's Search does
             onTriggered: {
-                if (appManager1.moveFileToTrash(resultContextMenu.fullPath))
-                    showPassiveNotification(qsTr("File moved to trash"))
-                else
-                    showPassiveNotification(qsTr("Could not move file to trash"))
+                resultsTrashDialog.path = resultContextMenu.fullPath
+                resultsTrashDialog.open()
             }
         }
         Controls.MenuItem {
@@ -1211,6 +1210,39 @@ ColumnLayout {
     }
 
     // ── Metadata dialog ───────────────────────────────────────────────────
+    Kirigami.PromptDialog {
+        id: resultsTrashDialog
+        property string path: ""
+        // The design system surface, not Kirigami's View colours (D34)
+        background: Rectangle {
+            color: KTheme.surface
+            radius: KTheme.radiusCard
+            border.width: 1
+            border.color: KTheme.line
+        }
+        title: qsTr("Confirmation")
+        subtitle: qsTr("Move this file to the trash?") + "\n" + path
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Move to Trash")
+                icon.name: "user-trash"
+                onTriggered: {
+                    if (appManager1.moveFileToTrash(resultsTrashDialog.path))
+                        showPassiveNotification(qsTr("File moved to trash"))
+                    else
+                        showPassiveNotification(qsTr("Could not move file to trash"))
+                    resultsTrashDialog.close()
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: resultsTrashDialog.close()
+            }
+        ]
+    }
+
     MetadataDialog { id: metadataDialog }
     MdiDetailsDialog { id: mdiDetailsDialog }
 
