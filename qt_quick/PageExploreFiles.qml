@@ -568,6 +568,9 @@ Item {
                             z: 2
                             anchors { right: parent.right; rightMargin: 2; verticalCenter: parent.verticalCenter }
                             flat: true
+                            // Never taller than the row it sits in
+                            implicitHeight: Math.min(rowMoreButton.box, root.rowHeight - 2)
+                            implicitWidth:  implicitHeight
                             focusPolicy: Qt.NoFocus
                             icon.name: "overflow-menu"
                             text: qsTranslate("PageBackupForm", "More actions")
