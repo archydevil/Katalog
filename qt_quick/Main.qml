@@ -156,6 +156,9 @@ Kirigami.ApplicationWindow {
     // their default font per control type from the platform theme, not from
     // the application font, so buttons would not follow otherwise.
     onCardScaleChanged: appManager1.setTextScale(cardScale)
+    // The design system's sizes follow the same setting (owner, 2026-10-30,
+    // D37: "Seguano l'impostazione"; WCAG 1.4.4)
+    Binding { target: KTheme; property: "textScale"; value: root.cardScale }
 
     // A page hidden while the text size changes gets the new font values but
     // keeps drawing with the old ones (style-drawn controls do not repaint while
