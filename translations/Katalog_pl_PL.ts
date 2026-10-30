@@ -966,9 +966,14 @@ Wybierz inną nazwę.</translation>
         <translation>Nie wybrano folderu</translation>
     </message>
     <message>
-        <location line="+150"/>
+        <location line="+153"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Catalog</source>
+        <translation>Katalog</translation>
     </message>
 </context>
 <context>
@@ -1547,7 +1552,7 @@ Wybierz inną nazwę.</translation>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1509"/>
+        <location filename="../qt_quick/Main.qml" line="+1511"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>Czy chcesz &lt;b&gt;usunąć&lt;/b&gt; to urządzenie %1?&lt;br/&gt;&lt;br/&gt;Nazwa: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1565,13 +1570,13 @@ Wybierz inną nazwę.</translation>
         <location line="-581"/>
         <location line="+72"/>
         <location line="+270"/>
-        <location line="+1377"/>
+        <location line="+1378"/>
         <location line="+128"/>
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
     <message>
-        <location line="-2014"/>
+        <location line="-2015"/>
         <location line="+126"/>
         <location line="+81"/>
         <location line="+195"/>
@@ -2047,12 +2052,12 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
     <message>
         <location line="+7"/>
         <location line="+126"/>
-        <location line="+578"/>
+        <location line="+579"/>
         <source>Stop</source>
         <translation>Zatrzymaj</translation>
     </message>
     <message>
-        <location line="-697"/>
+        <location line="-698"/>
         <source>Reset</source>
         <translation>Resetuj</translation>
     </message>
@@ -2067,7 +2072,7 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
         <location line="+48"/>
         <location line="+109"/>
         <location line="+113"/>
-        <location line="+294"/>
+        <location line="+295"/>
         <location line="+21"/>
         <location line="+42"/>
         <location line="+62"/>
@@ -2086,7 +2091,7 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
 </translation>
     </message>
     <message>
-        <location line="-1208"/>
+        <location line="-1209"/>
         <source>Copy version and system information</source>
         <translation>Kopiuj informacje o wersji i systemie</translation>
     </message>
@@ -2168,7 +2173,7 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
         <translation type="vanished">Pomyślnie utworzono katalog.</translation>
     </message>
     <message>
-        <location line="+524"/>
+        <location line="+525"/>
         <source>Catalog creation failed: </source>
         <translation>Tworzenie katalogu nie powiodło się: </translation>
     </message>
@@ -2177,18 +2182,18 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
         <translation type="vanished">Utwórz</translation>
     </message>
     <message>
-        <location line="-423"/>
+        <location line="-424"/>
         <source>Columns</source>
         <translation>Kolumny</translation>
     </message>
     <message>
         <location line="-1612"/>
-        <location line="+1955"/>
+        <location line="+1956"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1954"/>
+        <location line="-1955"/>
         <source>Archive overview</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2232,13 +2237,13 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1794"/>
+        <location line="+1795"/>
         <location line="+196"/>
         <source>Add a drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1989"/>
+        <location line="-1990"/>
         <source>Catalogue a drive or a folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2249,24 +2254,24 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1947"/>
+        <location line="+1948"/>
         <source>Archive knowledge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1946"/>
+        <location line="-1947"/>
         <source>Context, glossary, documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+26"/>
-        <location line="+1864"/>
+        <location line="+1865"/>
         <source>Work in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1889"/>
+        <location line="-1890"/>
         <source>Analysis, resources, history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2277,24 +2282,24 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+2115"/>
+        <location line="+2116"/>
         <source>Archive in numbers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2114"/>
-        <location line="+2137"/>
+        <location line="-2115"/>
+        <location line="+2138"/>
         <source>Labels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2136"/>
-        <location line="+2158"/>
+        <location line="-2137"/>
+        <location line="+2159"/>
         <source>Safety copies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2157"/>
+        <location line="-2158"/>
         <location line="+1416"/>
         <source>Manage drives</source>
         <translation type="unfinished"></translation>
@@ -2346,7 +2351,7 @@ Czy mimo to chcesz go zapisać (katalog będzie pusty)?</translation>
         <translation>Grupy tematyczne</translation>
     </message>
     <message>
-        <location line="+176"/>
+        <location line="+177"/>
         <source>Choose what to browse</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9606,7 +9611,7 @@ Sprawdź, czy folder źródłowy (%1) jest poprawny lub czy urządzenie jest zam
 <context>
     <name>PageExploreFiles</name>
     <message>
-        <location filename="../qt_quick/PageExploreFiles.qml" line="+107"/>
+        <location filename="../qt_quick/PageExploreFiles.qml" line="+110"/>
         <location line="+11"/>
         <source>The device is not active. It may be disconnected, or its path may have changed.</source>
         <translation>Urządzenie nie jest aktywne. Może być odłączone lub jego ścieżka mogła ulec zmianie.</translation>
@@ -9640,7 +9645,7 @@ Sprawdź, czy folder źródłowy (%1) jest poprawny lub czy urządzenie jest zam
         <translation type="vanished">Całkowity rozmiar</translation>
     </message>
     <message>
-        <location line="+412"/>
+        <location line="+423"/>
         <location line="+11"/>
         <source>Open folder</source>
         <translation>Otwórz folder</translation>
@@ -9719,14 +9724,14 @@ Sprawdź, czy folder źródłowy (%1) jest poprawny lub czy urządzenie jest zam
         <translation type="vanished">Oblicz sumę kontrolną (SHA-256)</translation>
     </message>
     <message>
-        <location line="-621"/>
-        <location line="+650"/>
+        <location line="-632"/>
+        <location line="+661"/>
         <location line="+40"/>
         <source>File not found or could not be read</source>
         <translation>Nie znaleziono pliku lub nie można go odczytać</translation>
     </message>
     <message>
-        <location line="-679"/>
+        <location line="-690"/>
         <source>Folder not found.</source>
         <translation>Nie znaleziono folderu.</translation>
     </message>
@@ -9740,12 +9745,17 @@ Sprawdź, czy folder źródłowy (%1) jest poprawny lub czy urządzenie jest zam
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+288"/>
+        <location line="+291"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+250"/>
+        <location line="+0"/>
+        <source>Catalog</source>
+        <translation>Katalog</translation>
+    </message>
+    <message>
+        <location line="+258"/>
         <source>Error: </source>
         <translation>Błąd: </translation>
     </message>

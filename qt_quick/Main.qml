@@ -2835,6 +2835,7 @@ Kirigami.ApplicationWindow {
             PageExploreFiles {
                 id: exploreFiles
                 visible: !root.exploreColumns
+                catalogForFolder: root.otherCatalogForFolder
                 Controls.SplitView.fillWidth:    true
                 Controls.SplitView.minimumWidth: exploreSplit.filesMinimum
 

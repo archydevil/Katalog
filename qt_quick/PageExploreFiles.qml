@@ -88,6 +88,9 @@ Item {
     // Fork: the Inspector follows the selected file; Space shows or hides it
     property string selectedFullPath: ""
     signal inspectorToggleRequested()
+    // A folder that is a catalog of its own (a split catalog's sub-folder):
+    // the device ID of that catalog, 0 otherwise (D34, "Sfoglia mai vuota")
+    property var catalogForFolder: function(folderPath) { return 0 }
 
     function loadEntries() {
         if (currentFolderPath === "") return
@@ -473,7 +476,7 @@ Item {
                         implicitHeight: root.rowHeight
                         // Full, unelided content width, read by the double-click fit (CDT-F4).
                         implicitWidth: cellLabel.x + cellLabel.implicitWidth + 4
-                                       + (aiTag.visible ? aiTag.width + 4 : 0)
+                                       + (rowTag.visible ? rowTag.width + 4 : 0)
 
                         readonly property string checksum: checksumSha256
 
@@ -524,15 +527,18 @@ Item {
                             implicitHeight: root.rowIconSize
                         }
 
-                        // The file already has a description, summary, transcript
-                        // or classification: File details shows them
+                        // A file that already has a description, summary, transcript
+                        // or classification (File details shows them); a folder
+                        // that is a catalog of its own, which opening it shows
                         KInfoTag {
-                            id: aiTag
-                            visible: column === 0 && entryType === "file"
-                                     && appManager1.mdiHasAi(root.catalogId, fullPath, appManager1.mdiRevision)
+                            id: rowTag
+                            readonly property bool ownCatalog: entryType === "folder" && root.catalogForFolder(fullPath) > 0
+                            visible: column === 0
+                                     && (ownCatalog || (entryType === "file"
+                                         && appManager1.mdiHasAi(root.catalogId, fullPath, appManager1.mdiRevision)))
                             anchors { right: parent.right; rightMargin: 4; verticalCenter: parent.verticalCenter }
-                            text: qsTr("AI")
-                            tone: "ai"
+                            text: ownCatalog ? qsTr("Catalog") : qsTr("AI")
+                            tone: ownCatalog ? "info" : "ai"
                         }
 
                         Controls.Label {
@@ -542,7 +548,7 @@ Item {
                                 right: parent.right
                                 verticalCenter: parent.verticalCenter
                                 leftMargin:  column === 0 ? 4 : 6
-                                rightMargin: aiTag.visible ? aiTag.width + 8 : 4
+                                rightMargin: rowTag.visible ? rowTag.width + 8 : 4
                             }
                             text: {
                                 // Merged metadata columns, as in Search results: the
@@ -604,13 +610,21 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            // A click on a file only selects it: File details shows its
+                            // preview. It opens with a double click or Enter (owner,
+                            // 2026-10-30; K2 opens it on the click). A folder opens on
+                            // the click, as before.
                             onClicked: function(mouse) {
                                 exploreTableView.selectedRow = row
                                 exploreTableView.forceActiveFocus()   // keyboard follows the click (CDT-F5)
-                                if (mouse.button === Qt.LeftButton)
+                                if (mouse.button === Qt.LeftButton && entryType === "folder")
                                     parent.activate()
                                 if (mouse.button === Qt.RightButton)
                                     parent.openExploreContextMenu(null)
+                            }
+                            onDoubleClicked: function(mouse) {
+                                if (mouse.button === Qt.LeftButton && entryType === "file")
+                                    parent.activate()
                             }
                             onPressAndHold: {
                                 exploreTableView.selectedRow = row

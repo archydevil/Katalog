@@ -966,9 +966,14 @@ Elija un nombre diferente.</translation>
         <translation>Ninguna carpeta seleccionada</translation>
     </message>
     <message>
-        <location line="+150"/>
+        <location line="+153"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Catalog</source>
+        <translation>Catálogo</translation>
     </message>
 </context>
 <context>
@@ -1547,7 +1552,7 @@ Elija un nombre diferente.</translation>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1509"/>
+        <location filename="../qt_quick/Main.qml" line="+1511"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>¿Desea &lt;b&gt;eliminar&lt;/b&gt; este dispositivo %1?&lt;br/&gt;&lt;br/&gt;Nombre: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1565,13 +1570,13 @@ Elija un nombre diferente.</translation>
         <location line="-581"/>
         <location line="+72"/>
         <location line="+270"/>
-        <location line="+1377"/>
+        <location line="+1378"/>
         <location line="+128"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
     <message>
-        <location line="-2014"/>
+        <location line="-2015"/>
         <location line="+126"/>
         <location line="+81"/>
         <location line="+195"/>
@@ -2047,12 +2052,12 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
     <message>
         <location line="+7"/>
         <location line="+126"/>
-        <location line="+578"/>
+        <location line="+579"/>
         <source>Stop</source>
         <translation>Detener</translation>
     </message>
     <message>
-        <location line="-697"/>
+        <location line="-698"/>
         <source>Reset</source>
         <translation>Restablecer</translation>
     </message>
@@ -2067,7 +2072,7 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
         <location line="+48"/>
         <location line="+109"/>
         <location line="+113"/>
-        <location line="+294"/>
+        <location line="+295"/>
         <location line="+21"/>
         <location line="+42"/>
         <location line="+62"/>
@@ -2086,7 +2091,7 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
 </translation>
     </message>
     <message>
-        <location line="-1208"/>
+        <location line="-1209"/>
         <source>Copy version and system information</source>
         <translation>Copiar información de versión y sistema</translation>
     </message>
@@ -2168,7 +2173,7 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
         <translation type="vanished">Catálogo creado correctamente.</translation>
     </message>
     <message>
-        <location line="+524"/>
+        <location line="+525"/>
         <source>Catalog creation failed: </source>
         <translation>Error al crear el catálogo: </translation>
     </message>
@@ -2177,18 +2182,18 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
         <translation type="vanished">Crear</translation>
     </message>
     <message>
-        <location line="-423"/>
+        <location line="-424"/>
         <source>Columns</source>
         <translation>Columnas</translation>
     </message>
     <message>
         <location line="-1612"/>
-        <location line="+1955"/>
+        <location line="+1956"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1954"/>
+        <location line="-1955"/>
         <source>Archive overview</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2232,13 +2237,13 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1794"/>
+        <location line="+1795"/>
         <location line="+196"/>
         <source>Add a drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1989"/>
+        <location line="-1990"/>
         <source>Catalogue a drive or a folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2249,24 +2254,24 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1947"/>
+        <location line="+1948"/>
         <source>Archive knowledge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1946"/>
+        <location line="-1947"/>
         <source>Context, glossary, documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+26"/>
-        <location line="+1864"/>
+        <location line="+1865"/>
         <source>Work in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1889"/>
+        <location line="-1890"/>
         <source>Analysis, resources, history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2277,24 +2282,24 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
     </message>
     <message>
         <location line="+1"/>
-        <location line="+2115"/>
+        <location line="+2116"/>
         <source>Archive in numbers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2114"/>
-        <location line="+2137"/>
+        <location line="-2115"/>
+        <location line="+2138"/>
         <source>Labels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2136"/>
-        <location line="+2158"/>
+        <location line="-2137"/>
+        <location line="+2159"/>
         <source>Safety copies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2157"/>
+        <location line="-2158"/>
         <location line="+1416"/>
         <source>Manage drives</source>
         <translation type="unfinished"></translation>
@@ -2346,7 +2351,7 @@ Esto puede significar que el origen está vacío o que el dispositivo no está m
         <translation>Grupos temáticos</translation>
     </message>
     <message>
-        <location line="+176"/>
+        <location line="+177"/>
         <source>Choose what to browse</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9606,7 +9611,7 @@ Compruebe que la carpeta de origen (%1) es correcta, o que el dispositivo está 
 <context>
     <name>PageExploreFiles</name>
     <message>
-        <location filename="../qt_quick/PageExploreFiles.qml" line="+107"/>
+        <location filename="../qt_quick/PageExploreFiles.qml" line="+110"/>
         <location line="+11"/>
         <source>The device is not active. It may be disconnected, or its path may have changed.</source>
         <translation>El dispositivo no está activo. Puede estar desconectado o su ruta puede haber cambiado.</translation>
@@ -9640,7 +9645,7 @@ Compruebe que la carpeta de origen (%1) es correcta, o que el dispositivo está 
         <translation type="vanished">Tamaño total</translation>
     </message>
     <message>
-        <location line="+412"/>
+        <location line="+423"/>
         <location line="+11"/>
         <source>Open folder</source>
         <translation>Abrir carpeta</translation>
@@ -9719,14 +9724,14 @@ Compruebe que la carpeta de origen (%1) es correcta, o que el dispositivo está 
         <translation type="vanished">Calcular suma de comprobación (SHA-256)</translation>
     </message>
     <message>
-        <location line="-621"/>
-        <location line="+650"/>
+        <location line="-632"/>
+        <location line="+661"/>
         <location line="+40"/>
         <source>File not found or could not be read</source>
         <translation>Archivo no encontrado o no se pudo leer</translation>
     </message>
     <message>
-        <location line="-679"/>
+        <location line="-690"/>
         <source>Folder not found.</source>
         <translation>Carpeta no encontrada.</translation>
     </message>
@@ -9740,12 +9745,17 @@ Compruebe que la carpeta de origen (%1) es correcta, o que el dispositivo está 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+288"/>
+        <location line="+291"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+250"/>
+        <location line="+0"/>
+        <source>Catalog</source>
+        <translation>Catálogo</translation>
+    </message>
+    <message>
+        <location line="+258"/>
         <source>Error: </source>
         <translation>Error: </translation>
     </message>

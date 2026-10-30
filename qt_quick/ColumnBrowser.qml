@@ -214,13 +214,16 @@ Item {
                             font.pixelSize: KTheme.body
                             font.weight: row.highlighted ? Font.DemiBold : Font.Normal
                         }
-                        // The file already has a description, summary, transcript
-                        // or classification: File details shows them
+                        // A file that already has a description, summary, transcript
+                        // or classification (File details shows them); a folder
+                        // that is a catalog of its own, which opening it shows
                         KInfoTag {
-                            visible: row.modelData.entryType === "file"
-                                     && appManager1.mdiHasAi(browser.catalogId, row.modelData.fullPath, appManager1.mdiRevision)
-                            text: qsTr("AI")
-                            tone: "ai"
+                            readonly property bool ownCatalog: row.modelData.entryType === "folder"
+                                                               && browser.catalogForFolder(row.modelData.fullPath) > 0
+                            visible: ownCatalog || (row.modelData.entryType === "file"
+                                     && appManager1.mdiHasAi(browser.catalogId, row.modelData.fullPath, appManager1.mdiRevision))
+                            text: ownCatalog ? qsTr("Catalog") : qsTr("AI")
+                            tone: ownCatalog ? "info" : "ai"
                         }
                         Kirigami.Icon {
                             visible: row.modelData.entryType === "folder"

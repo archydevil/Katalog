@@ -966,9 +966,14 @@ Pilih nama lain.</translation>
         <translation>Tidak ada folder dipilih</translation>
     </message>
     <message>
-        <location line="+150"/>
+        <location line="+153"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Catalog</source>
+        <translation>Katalog</translation>
     </message>
 </context>
 <context>
@@ -1547,7 +1552,7 @@ Pilih nama lain.</translation>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1509"/>
+        <location filename="../qt_quick/Main.qml" line="+1511"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>Apakah Anda ingin &lt;b&gt;menghapus&lt;/b&gt; perangkat %1 ini?&lt;br/&gt;&lt;br/&gt;Nama: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1565,13 +1570,13 @@ Pilih nama lain.</translation>
         <location line="-581"/>
         <location line="+72"/>
         <location line="+270"/>
-        <location line="+1377"/>
+        <location line="+1378"/>
         <location line="+128"/>
         <source>Cancel</source>
         <translation>Batal</translation>
     </message>
     <message>
-        <location line="-2014"/>
+        <location line="-2015"/>
         <location line="+126"/>
         <location line="+81"/>
         <location line="+195"/>
@@ -2047,12 +2052,12 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
     <message>
         <location line="+7"/>
         <location line="+126"/>
-        <location line="+578"/>
+        <location line="+579"/>
         <source>Stop</source>
         <translation>Stop</translation>
     </message>
     <message>
-        <location line="-697"/>
+        <location line="-698"/>
         <source>Reset</source>
         <translation>Reset</translation>
     </message>
@@ -2067,7 +2072,7 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
         <location line="+48"/>
         <location line="+109"/>
         <location line="+113"/>
-        <location line="+294"/>
+        <location line="+295"/>
         <location line="+21"/>
         <location line="+42"/>
         <location line="+62"/>
@@ -2086,7 +2091,7 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
 </translation>
     </message>
     <message>
-        <location line="-1208"/>
+        <location line="-1209"/>
         <source>Copy version and system information</source>
         <translation>Salin informasi versi dan sistem</translation>
     </message>
@@ -2168,7 +2173,7 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
         <translation type="vanished">Katalog berhasil dibuat.</translation>
     </message>
     <message>
-        <location line="+524"/>
+        <location line="+525"/>
         <source>Catalog creation failed: </source>
         <translation>Gagal membuat katalog: </translation>
     </message>
@@ -2177,18 +2182,18 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
         <translation type="vanished">Buat</translation>
     </message>
     <message>
-        <location line="-423"/>
+        <location line="-424"/>
         <source>Columns</source>
         <translation>Kolom</translation>
     </message>
     <message>
         <location line="-1612"/>
-        <location line="+1955"/>
+        <location line="+1956"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1954"/>
+        <location line="-1955"/>
         <source>Archive overview</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2232,13 +2237,13 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1794"/>
+        <location line="+1795"/>
         <location line="+196"/>
         <source>Add a drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1989"/>
+        <location line="-1990"/>
         <source>Catalogue a drive or a folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2249,24 +2254,24 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1947"/>
+        <location line="+1948"/>
         <source>Archive knowledge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1946"/>
+        <location line="-1947"/>
         <source>Context, glossary, documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+26"/>
-        <location line="+1864"/>
+        <location line="+1865"/>
         <source>Work in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1889"/>
+        <location line="-1890"/>
         <source>Analysis, resources, history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2277,24 +2282,24 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+2115"/>
+        <location line="+2116"/>
         <source>Archive in numbers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2114"/>
-        <location line="+2137"/>
+        <location line="-2115"/>
+        <location line="+2138"/>
         <source>Labels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2136"/>
-        <location line="+2158"/>
+        <location line="-2137"/>
+        <location line="+2159"/>
         <source>Safety copies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2157"/>
+        <location line="-2158"/>
         <location line="+1416"/>
         <source>Manage drives</source>
         <translation type="unfinished"></translation>
@@ -2346,7 +2351,7 @@ Apakah Anda tetap ingin menyimpannya (katalog akan kosong)?</translation>
         <translation>Kelompok topik</translation>
     </message>
     <message>
-        <location line="+176"/>
+        <location line="+177"/>
         <source>Choose what to browse</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9606,7 +9611,7 @@ Periksa apakah folder sumber (%1) sudah benar, atau apakah perangkat dipasang ke
 <context>
     <name>PageExploreFiles</name>
     <message>
-        <location filename="../qt_quick/PageExploreFiles.qml" line="+107"/>
+        <location filename="../qt_quick/PageExploreFiles.qml" line="+110"/>
         <location line="+11"/>
         <source>The device is not active. It may be disconnected, or its path may have changed.</source>
         <translation>Perangkat tidak aktif. Perangkat mungkin terputus, atau jalurnya mungkin telah berubah.</translation>
@@ -9640,7 +9645,7 @@ Periksa apakah folder sumber (%1) sudah benar, atau apakah perangkat dipasang ke
         <translation type="vanished">Total Ukuran</translation>
     </message>
     <message>
-        <location line="+412"/>
+        <location line="+423"/>
         <location line="+11"/>
         <source>Open folder</source>
         <translation>Buka folder</translation>
@@ -9719,14 +9724,14 @@ Periksa apakah folder sumber (%1) sudah benar, atau apakah perangkat dipasang ke
         <translation type="vanished">Hitung Checksum (SHA-256)</translation>
     </message>
     <message>
-        <location line="-621"/>
-        <location line="+650"/>
+        <location line="-632"/>
+        <location line="+661"/>
         <location line="+40"/>
         <source>File not found or could not be read</source>
         <translation>Berkas tidak ditemukan atau tidak dapat dibaca</translation>
     </message>
     <message>
-        <location line="-679"/>
+        <location line="-690"/>
         <source>Folder not found.</source>
         <translation>Folder tidak ditemukan.</translation>
     </message>
@@ -9740,12 +9745,17 @@ Periksa apakah folder sumber (%1) sudah benar, atau apakah perangkat dipasang ke
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+288"/>
+        <location line="+291"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+250"/>
+        <location line="+0"/>
+        <source>Catalog</source>
+        <translation>Katalog</translation>
+    </message>
+    <message>
+        <location line="+258"/>
         <source>Error: </source>
         <translation>Kesalahan: </translation>
     </message>
