@@ -8872,26 +8872,34 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
     </message>
     <message>
         <location line="+19"/>
+        <location line="+22"/>
         <source>Clean the transcripts</source>
         <translation>Ripulisci le trascrizioni</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-21"/>
+        <location line="+22"/>
         <source>Removes the sentences the transcription invented on silence or music, and the repeated lines. A recording with no speech left has no transcript any more. Nothing on the drives is touched.</source>
         <translation>Toglie le frasi che la trascrizione ha inventato su silenzi o musica, e le righe ripetute. Una registrazione in cui non resta parlato non ha più trascrizione. Sui dischi non si tocca nulla.</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="-10"/>
+        <location line="+14"/>
         <source>Clean now</source>
         <translation>Ripulisci ora</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Cleaning…</source>
         <translation>Pulizia in corso…</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+4"/>
+        <source>Cancel</source>
+        <translation>Annulla</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Checked %1 transcripts: %2 cleaned, %3 removed because no speech was left.</source>
         <translation>Trascrizioni controllate: %1; ripulite: %2; rimosse perché senza più parlato: %3.</translation>
     </message>
@@ -8900,7 +8908,7 @@ Verifica che la cartella di origine (%1) sia corretta, o che il dispositivo sia 
         <translation type="vanished">Registro</translation>
     </message>
     <message>
-        <location line="-319"/>
+        <location line="-341"/>
         <source>%1 tokens/s</source>
         <translation>%1 token/s</translation>
     </message>
@@ -11991,7 +11999,7 @@ nel cestino?</translation>
         <translation>I volti vengono cercati in secondo piano: Lavori in corso mostra l&apos;avanzamento.</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Face data</source>
         <translation>Dati dei volti</translation>
     </message>

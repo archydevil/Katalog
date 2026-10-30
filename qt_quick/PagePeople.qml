@@ -504,8 +504,9 @@ ColumnLayout {
 
     // ── Face data (GDPR) ──────────────────────────────────────────────────
     // Recognisable faces are personal data: they can be forgotten all at once
+    // Shown even when this build cannot recognise faces: data found by another
+    // build must still be deletable (GDPR)
     KCard {
-        visible: people.facesOn
         Layout.fillWidth: true
         KSectionHeader {
             level: 3

@@ -8869,26 +8869,34 @@ Provjerite je li izvorna mapa (%1) ispravna ili je li uređaj montiran u izvornu
     </message>
     <message>
         <location line="+19"/>
+        <location line="+22"/>
         <source>Clean the transcripts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-21"/>
+        <location line="+22"/>
         <source>Removes the sentences the transcription invented on silence or music, and the repeated lines. A recording with no speech left has no transcript any more. Nothing on the drives is touched.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="-10"/>
+        <location line="+14"/>
         <source>Clean now</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Cleaning…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+4"/>
+        <source>Cancel</source>
+        <translation>Odustani</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Checked %1 transcripts: %2 cleaned, %3 removed because no speech was left.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8897,7 +8905,7 @@ Provjerite je li izvorna mapa (%1) ispravna ili je li uređaj montiran u izvornu
         <translation type="vanished">Zapisnik</translation>
     </message>
     <message>
-        <location line="-319"/>
+        <location line="-341"/>
         <source>%1 tokens/s</source>
         <translation>%1 tokena/s</translation>
     </message>
@@ -11984,7 +11992,7 @@ u smeće?</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Face data</source>
         <translation type="unfinished"></translation>
     </message>

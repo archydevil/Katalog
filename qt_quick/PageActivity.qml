@@ -736,10 +736,32 @@ ColumnLayout {
             icon.name: "edit-clear"
             text: qsTr("Clean now")
             enabled: !pageActivity.job.running
-            onClicked: {
-                const r = appManager1.cleanTranscripts()
-                transcriptUpkeep.result = r.error ? r.error : qsTr("Cleaning…")
-            }
+            onClicked: cleanTranscriptsDialog.open()
+        }
+        // It changes stored transcripts and cannot be undone: it asks first (MDI-F173)
+        Kirigami.PromptDialog {
+            id: cleanTranscriptsDialog
+            background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+            padding: Kirigami.Units.largeSpacing * 2
+            title: qsTr("Clean the transcripts")
+            subtitle: qsTr("Removes the sentences the transcription invented on silence or music, and the repeated lines. A recording with no speech left has no transcript any more. Nothing on the drives is touched.")
+            standardButtons: Kirigami.Dialog.NoButton
+            customFooterActions: [
+                Kirigami.Action {
+                    text: qsTr("Clean now")
+                    icon.name: "edit-clear"
+                    onTriggered: {
+                        cleanTranscriptsDialog.close()
+                        const r = appManager1.cleanTranscripts()
+                        transcriptUpkeep.result = r.error ? r.error : qsTr("Cleaning…")
+                    }
+                },
+                Kirigami.Action {
+                    text: qsTr("Cancel")
+                    icon.name: "dialog-cancel"
+                    onTriggered: cleanTranscriptsDialog.close()
+                }
+            ]
         }
         Connections {
             target: appManager1
