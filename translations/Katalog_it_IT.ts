@@ -1089,7 +1089,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="-928"/>
         <source>The enrichment is running: the transcripts can be cleaned once it ends or is stopped.</source>
-        <translation>L'analisi AI è in corso: le trascrizioni si potranno ripulire quando finisce o viene fermata.</translation>
+        <translation>L&apos;analisi AI è in corso: le trascrizioni si potranno ripulire quando finisce o viene fermata.</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -1236,7 +1236,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+1"/>
         <source>Back to contents</source>
-        <translation>Torna all'indice</translation>
+        <translation>Torna all&apos;indice</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1396,7 +1396,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+4"/>
         <source>AI description</source>
-        <translation>Descrizione dell'AI</translation>
+        <translation>Descrizione dell&apos;AI</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -1531,12 +1531,12 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+1"/>
         <source>Image description</source>
-        <translation>Descrizione dell'immagine</translation>
+        <translation>Descrizione dell&apos;immagine</translation>
     </message>
     <message>
         <location line="+2"/>
         <source>Context of the archive</source>
-        <translation>Contesto dell'archivio</translation>
+        <translation>Contesto dell&apos;archivio</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1918,7 +1918,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+10"/>
         <source>Dates, events and places are deduced from the metadata, the names, the folders, the context and the reference documents, and proposed for your approval. Scanned documents are read with OCR, then summarised fragment by fragment.</source>
-        <translation>Date, eventi e luoghi vengono dedotti dai metadati, dai nomi, dalle cartelle, dal contesto e dai documenti di riferimento, e proposti alla tua approvazione. I documenti scansionati vengono letti con l'OCR, poi riassunti frammento per frammento.</translation>
+        <translation>Date, eventi e luoghi vengono dedotti dai metadati, dai nomi, dalle cartelle, dal contesto e dai documenti di riferimento, e proposti alla tua approvazione. I documenti scansionati vengono letti con l&apos;OCR, poi riassunti frammento per frammento.</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -2222,7 +2222,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+41"/>
         <source>This document has not been studied yet. The study runs with the AI analysis of its drive (Study of the documents), on this computer.</source>
-        <translation>Questo documento non è ancora stato studiato. Lo studio si fa con l'analisi AI del suo disco (Studio dei documenti), su questo computer.</translation>
+        <translation>Questo documento non è ancora stato studiato. Lo studio si fa con l&apos;analisi AI del suo disco (Studio dei documenti), su questo computer.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2232,7 +2232,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+6"/>
         <source>Studying in the background: Work in progress shows how it goes.</source>
-        <translation>Studio in corso in secondo piano: Lavori in corso mostra l'avanzamento.</translation>
+        <translation>Studio in corso in secondo piano: Lavori in corso mostra l&apos;avanzamento.</translation>
     </message>
     <message>
         <location line="+18"/>
@@ -2292,12 +2292,12 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+11"/>
         <source>In the archive&apos;s context</source>
-        <translation>Nel contesto dell'archivio</translation>
+        <translation>Nel contesto dell&apos;archivio</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>The glossary terms it uses, the reference documents and the people of the archive it relates to.</source>
-        <translation>I termini del glossario che usa, i documenti di riferimento e le persone dell'archivio a cui si collega.</translation>
+        <translation>I termini del glossario che usa, i documenti di riferimento e le persone dell&apos;archivio a cui si collega.</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -2312,7 +2312,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+1"/>
         <source>People of the archive</source>
-        <translation>Persone dell'archivio</translation>
+        <translation>Persone dell&apos;archivio</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -2583,7 +2583,7 @@ Scegliere un nome diverso.</translation>
     <message>
         <location line="+5"/>
         <source>Someone else…</source>
-        <translation>Un'altra persona…</translation>
+        <translation>Un&apos;altra persona…</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -3117,7 +3117,7 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
     <message>
         <location line="+4"/>
         <source>The whole catalog</source>
-        <translation>L'intero catalogo</translation>
+        <translation>L&apos;intero catalogo</translation>
     </message>
     <message>
         <location line="+586"/>
@@ -3501,7 +3501,7 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
     <message>
         <location line="+2"/>
         <source>Nothing to approve here. Proposals appear after the AI analysis of the drive (Dates and context).</source>
-        <translation>Niente da approvare qui. Le proposte compaiono dopo l'analisi AI del disco (Date e contesto).</translation>
+        <translation>Niente da approvare qui. Le proposte compaiono dopo l&apos;analisi AI del disco (Date e contesto).</translation>
     </message>
     <message>
         <location line="+21"/>
@@ -3809,7 +3809,7 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
     <message>
         <location line="-2513"/>
         <source>Who made it</source>
-        <translation>Chi l'ha realizzato</translation>
+        <translation>Chi l&apos;ha realizzato</translation>
     </message>
     <message>
         <location line="+2516"/>
@@ -3905,7 +3905,7 @@ Vuoi salvarlo comunque (il catalogo sarebbe vuoto)?</translation>
         <translation>Seleziona il database da creare e aprire:</translation>
     </message>
     <message>
-        <location filename="../qt_quick/main.cpp" line="+173"/>
+        <location filename="../qt_quick/main.cpp" line="+192"/>
         <source>Catalog your devices to search, analyze, and backup your files.</source>
         <translation>Cataloga i tuoi dispositivi per cercare, analizzare ed eseguire il backup dei tuoi file.</translation>
     </message>
@@ -11803,7 +11803,7 @@ nel cestino?</translation>
     <message>
         <location line="+11"/>
         <source>The people of the archive: who they are and the photos they are in. Faces found by the analysis stay proposals until you approve them.</source>
-        <translation>Le persone dell'archivio: chi sono e in quali foto compaiono. I volti trovati dall'analisi restano proposte finché non li approvi.</translation>
+        <translation>Le persone dell&apos;archivio: chi sono e in quali foto compaiono. I volti trovati dall&apos;analisi restano proposte finché non li approvi.</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -11883,7 +11883,7 @@ nel cestino?</translation>
     <message>
         <location line="-229"/>
         <source>The analysis proposes who these faces are. Only the ones approved get the name; the others stay without one.</source>
-        <translation>L'analisi propone chi sono questi volti. Prendono il nome solo quelli approvati; gli altri restano senza.</translation>
+        <translation>L&apos;analisi propone chi sono questi volti. Prendono il nome solo quelli approvati; gli altri restano senza.</translation>
     </message>
     <message>
         <location line="+53"/>
@@ -11893,7 +11893,7 @@ nel cestino?</translation>
     <message>
         <location line="+138"/>
         <source>Selecting one shows it in Browse the archive.</source>
-        <translation>Selezionandone una la si vede in Sfoglia l'archivio.</translation>
+        <translation>Selezionandone una la si vede in Sfoglia l&apos;archivio.</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -11988,7 +11988,7 @@ nel cestino?</translation>
     <message>
         <location line="+2"/>
         <source>The faces are looked for in the background: Work in progress shows how it goes.</source>
-        <translation>I volti vengono cercati in secondo piano: Lavori in corso mostra l'avanzamento.</translation>
+        <translation>I volti vengono cercati in secondo piano: Lavori in corso mostra l&apos;avanzamento.</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -14114,6 +14114,64 @@ Errori: %3</translation>
         <location line="+38"/>
         <source>Collection</source>
         <translation>Raccolta</translation>
+    </message>
+</context>
+<context>
+    <name>QPlatformTheme</name>
+    <message>
+        <location filename="../qt_quick/main.cpp" line="-167"/>
+        <source>OK</source>
+        <translation type="unfinished">OK</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cancel</source>
+        <translation type="unfinished">Annulla</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Close</source>
+        <translation type="unfinished">Chiudi</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save</source>
+        <translation type="unfinished">Salva</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open</source>
+        <translation type="unfinished">Apri</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Yes</source>
+        <translation>&amp;Sì</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;No</source>
+        <translation>&amp;No</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Apply</source>
+        <translation type="unfinished">Applica</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reset</source>
+        <translation type="unfinished">Reimposta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Discard</source>
+        <translation type="unfinished">Scarta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Help</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

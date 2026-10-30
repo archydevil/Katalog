@@ -3902,7 +3902,7 @@ Chcete ho aj tak uložiť (katalóg by bol prázdny)?</translation>
         <translation>Vyberte databázu na vytvorenie a otvorenie:</translation>
     </message>
     <message>
-        <location filename="../qt_quick/main.cpp" line="+173"/>
+        <location filename="../qt_quick/main.cpp" line="+192"/>
         <source>Catalog your devices to search, analyze, and backup your files.</source>
         <translation>Katalogizujte svoje zariadenia na vyhľadávanie, analýzu a zálohovanie súborov.</translation>
     </message>
@@ -14107,6 +14107,64 @@ Chyby: %3</translation>
         <location line="+38"/>
         <source>Collection</source>
         <translation>Zbierka</translation>
+    </message>
+</context>
+<context>
+    <name>QPlatformTheme</name>
+    <message>
+        <location filename="../qt_quick/main.cpp" line="-167"/>
+        <source>OK</source>
+        <translation type="unfinished">OK</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cancel</source>
+        <translation type="unfinished">Zrušiť</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Close</source>
+        <translation type="unfinished">Zavrieť</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save</source>
+        <translation type="unfinished">Uložiť</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open</source>
+        <translation type="unfinished">Otvoriť</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Yes</source>
+        <translation>&amp;Áno</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;No</source>
+        <translation>&amp;Nie</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Apply</source>
+        <translation type="unfinished">Použiť</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reset</source>
+        <translation type="unfinished">Resetovať</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Help</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

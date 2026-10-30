@@ -3901,7 +3901,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation>Επιλογή βάσης δεδομένων για δημιουργία και άνοιγμα:</translation>
     </message>
     <message>
-        <location filename="../qt_quick/main.cpp" line="+173"/>
+        <location filename="../qt_quick/main.cpp" line="+192"/>
         <source>Catalog your devices to search, analyze, and backup your files.</source>
         <translation>Καταλογογραφήστε τις συσκευές σας για να αναζητάτε, να αναλύετε και να δημιουργείτε αντίγραφα ασφαλείας των αρχείων σας.</translation>
     </message>
@@ -14107,6 +14107,64 @@ Errors: %3</source>
         <location line="+38"/>
         <source>Collection</source>
         <translation>Συλλογή</translation>
+    </message>
+</context>
+<context>
+    <name>QPlatformTheme</name>
+    <message>
+        <location filename="../qt_quick/main.cpp" line="-167"/>
+        <source>OK</source>
+        <translation type="unfinished">Εντάξει</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cancel</source>
+        <translation type="unfinished">Ακύρωση</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Close</source>
+        <translation type="unfinished">Κλείσιμο</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save</source>
+        <translation type="unfinished">Αποθήκευση</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open</source>
+        <translation type="unfinished">Άνοιγμα</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Yes</source>
+        <translation>&amp;Ναι</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;No</source>
+        <translation>&amp;Όχι</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Apply</source>
+        <translation type="unfinished">Εφαρμογή</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reset</source>
+        <translation type="unfinished">Επαναφορά</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Help</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

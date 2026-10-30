@@ -3900,7 +3900,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation>选择要创建和打开的数据库：</translation>
     </message>
     <message>
-        <location filename="../qt_quick/main.cpp" line="+173"/>
+        <location filename="../qt_quick/main.cpp" line="+192"/>
         <source>Catalog your devices to search, analyze, and backup your files.</source>
         <translation>为您的设备编制目录，以搜索、分析和备份您的文件。</translation>
     </message>
@@ -14105,6 +14105,64 @@ Errors: %3</source>
         <location line="+38"/>
         <source>Collection</source>
         <translation>收藏</translation>
+    </message>
+</context>
+<context>
+    <name>QPlatformTheme</name>
+    <message>
+        <location filename="../qt_quick/main.cpp" line="-167"/>
+        <source>OK</source>
+        <translation type="unfinished">确定</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cancel</source>
+        <translation type="unfinished">取消</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Close</source>
+        <translation type="unfinished">关闭</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Save</source>
+        <translation type="unfinished">保存</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open</source>
+        <translation type="unfinished">打开</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Yes</source>
+        <translation>&amp;是</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;No</source>
+        <translation>&amp;否</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Apply</source>
+        <translation type="unfinished">应用</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Reset</source>
+        <translation type="unfinished">重置</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Help</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

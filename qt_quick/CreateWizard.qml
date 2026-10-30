@@ -358,7 +358,7 @@ ColumnLayout {
                 ComboBoxFitted {
                     textRole: "text"; valueRole: "value"
                     model: createWizard.clipModel
-                    currentIndex: indexOfValue(createWizard.videoClip)
+                    currentIndex: count > 0 ? indexOfValue(createWizard.videoClip) : -1   // again once the list is filled
                     onActivated: { createWizard.videoClip = currentValue; createWizard.choiceEdited() }
                 }
                 Controls.SpinBox {
@@ -405,7 +405,7 @@ ColumnLayout {
                 ComboBoxFitted {
                     textRole: "text"; valueRole: "value"
                     model: createWizard.clipModel
-                    currentIndex: indexOfValue(createWizard.audioClip)
+                    currentIndex: count > 0 ? indexOfValue(createWizard.audioClip) : -1   // again once the list is filled
                     onActivated: { createWizard.audioClip = currentValue; createWizard.choiceEdited() }
                 }
                 Controls.SpinBox {

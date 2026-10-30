@@ -27,6 +27,25 @@
 // The Teca control style, a static QML module (D34)
 Q_IMPORT_QML_PLUGIN(TecaStylePlugin)
 
+// The texts Qt gives the standard dialog buttons (Kirigami.Dialog, DialogButtonBox)
+// are looked up in the "QPlatformTheme" context. Qt's own qtbase translations are
+// not shipped with Teca, so these buttons read "Cancel" or "Close" in every
+// language: listed here, lupdate puts them in Teca's translation files, where the
+// same words are already translated in all languages (D37, 2026-10-30)
+[[maybe_unused]] static const char *const kPlatformButtonTexts[] = {
+    QT_TRANSLATE_NOOP("QPlatformTheme", "OK"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "Cancel"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "Close"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "Save"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "Open"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "&Yes"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "&No"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "Apply"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "Reset"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "Discard"),
+    QT_TRANSLATE_NOOP("QPlatformTheme", "Help"),
+};
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
