@@ -142,13 +142,20 @@ Controls.ToolBar {
                 implicitHeight: Kirigami.Units.gridUnit * 1.2
             }
             Controls.Label {
+                id: jobStatusLabel
                 Layout.fillWidth: true
                 // The builder pads the operation with leading &nbsp; for K2's
                 // status bar; here the indicator already separates it
                 text: root.statusText.replace(/^(&nbsp;)+/, "")
                 textFormat: Text.StyledText
-                elide: Text.ElideRight
+                // Cut in the middle: the operation and the file being read
+                // both stay readable; the whole line is in the tooltip
+                elide: Text.ElideMiddle
                 color: KTheme.text
+                HoverHandler { id: jobStatusHover }
+                Controls.ToolTip.text: jobStatusLabel.text
+                Controls.ToolTip.visible: jobStatusHover.hovered && jobStatusLabel.truncated
+                Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
             PanelButton {
                 text: qsTr("Stop")
@@ -181,19 +188,26 @@ Controls.ToolBar {
                 implicitWidth:  Kirigami.Units.gridUnit * 1.2
                 implicitHeight: Kirigami.Units.gridUnit * 1.2
             }
-            // The analysis state in words (the status line says it too)
+            // A state that needs attention as a tag; "In Progress" only in the
+            // line beside it, which already says it
             KInfoTag {
                 visible: appManager1.mdiIsRunning
-                text: appManager1.mdiIsPaused ? qsTr("Paused")
-                      : appManager1.mdiJobInfo.waitingForSource ? qsTr("Waiting for the drive") : qsTr("In Progress")
-                tone: appManager1.mdiIsPaused || appManager1.mdiJobInfo.waitingForSource ? "warn" : "info"
+                         && (appManager1.mdiIsPaused || appManager1.mdiJobInfo.waitingForSource === true)
+                text: appManager1.mdiIsPaused ? qsTr("Paused") : qsTr("Waiting for the drive")
+                tone: "warn"
             }
             Controls.Label {
+                id: mdiStatusLabel
                 Layout.fillWidth: true
                 text: appManager1.mdiStatusText.replace(/^(&nbsp;)+/, "")
                 textFormat: Text.StyledText
-                elide: Text.ElideRight
+                // As the line above: cut in the middle, whole in the tooltip
+                elide: Text.ElideMiddle
                 color: KTheme.text
+                HoverHandler { id: mdiStatusHover }
+                Controls.ToolTip.text: mdiStatusLabel.text
+                Controls.ToolTip.visible: mdiStatusHover.hovered && mdiStatusLabel.truncated
+                Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
             }
             PanelButton {
                 // The compact summary opens the full Activity page (MDI-F61)
@@ -240,7 +254,7 @@ Controls.ToolBar {
             PanelButton {
                 text: qsTr("Clear")
                 icon.name: "edit-clear"
-                onClicked: appManager1.clearOperationQueue()
+                onClicked: clearQueueDialog.open()
             }
         }
 
@@ -285,5 +299,31 @@ Controls.ToolBar {
                 }
             }
         }
+    }
+
+    // Emptying the queue asks first, and says what goes on
+    Kirigami.PromptDialog {
+        id: clearQueueDialog
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Clear the queue?")
+        subtitle: qsTr("The %1 waiting operations are taken off the queue and do not run. What is running now goes on, and nothing on the drives changes.")
+                  .arg(appManager1.operationQueueWaitingCount)
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Clear")
+                icon.name: "edit-clear"
+                onTriggered: {
+                    appManager1.clearOperationQueue()
+                    clearQueueDialog.close()
+                }
+            },
+            Kirigami.Action {
+                text: qsTranslate("Main", "Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: clearQueueDialog.close()
+            }
+        ]
     }
 }
