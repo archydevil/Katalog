@@ -14124,27 +14124,27 @@ Napake: %3</translation>
     <message>
         <location filename="../qt_quick/main.cpp" line="-167"/>
         <source>OK</source>
-        <translation type="unfinished">V redu</translation>
+        <translation>V redu</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Cancel</source>
-        <translation type="unfinished">Prekliči</translation>
+        <translation>Prekliči</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Close</source>
-        <translation type="unfinished">Zapri</translation>
+        <translation>Zapri</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Save</source>
-        <translation type="unfinished">Shrani</translation>
+        <translation>Shrani</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Open</source>
-        <translation type="unfinished">Odpri</translation>
+        <translation>Odpri</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -14159,12 +14159,12 @@ Napake: %3</translation>
     <message>
         <location line="+1"/>
         <source>Apply</source>
-        <translation type="unfinished">Uporabi</translation>
+        <translation>Uporabi</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reset</source>
-        <translation type="unfinished">Ponastavi</translation>
+        <translation>Ponastavi</translation>
     </message>
     <message>
         <location line="+1"/>

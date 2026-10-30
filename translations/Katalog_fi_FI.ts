@@ -14121,27 +14121,27 @@ Virheitä: %3</translation>
     <message>
         <location filename="../qt_quick/main.cpp" line="-167"/>
         <source>OK</source>
-        <translation type="unfinished">OK</translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Cancel</source>
-        <translation type="unfinished">Peruuta</translation>
+        <translation>Peruuta</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Close</source>
-        <translation type="unfinished">Sulje</translation>
+        <translation>Sulje</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Save</source>
-        <translation type="unfinished">Tallenna</translation>
+        <translation>Tallenna</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Open</source>
-        <translation type="unfinished">Avaa</translation>
+        <translation>Avaa</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -14156,12 +14156,12 @@ Virheitä: %3</translation>
     <message>
         <location line="+1"/>
         <source>Apply</source>
-        <translation type="unfinished">Käytä</translation>
+        <translation>Käytä</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reset</source>
-        <translation type="unfinished">Nollaa</translation>
+        <translation>Nollaa</translation>
     </message>
     <message>
         <location line="+1"/>

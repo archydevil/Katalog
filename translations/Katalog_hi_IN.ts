@@ -14119,27 +14119,27 @@ Errors: %3</source>
     <message>
         <location filename="../qt_quick/main.cpp" line="-167"/>
         <source>OK</source>
-        <translation type="unfinished">ठीक है</translation>
+        <translation>ठीक है</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Cancel</source>
-        <translation type="unfinished">रद्द करें</translation>
+        <translation>रद्द करें</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Close</source>
-        <translation type="unfinished">बंद करें</translation>
+        <translation>बंद करें</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Save</source>
-        <translation type="unfinished">सेव करें</translation>
+        <translation>सेव करें</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Open</source>
-        <translation type="unfinished">खोलें</translation>
+        <translation>खोलें</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -14154,12 +14154,12 @@ Errors: %3</source>
     <message>
         <location line="+1"/>
         <source>Apply</source>
-        <translation type="unfinished">लागू करें</translation>
+        <translation>लागू करें</translation>
     </message>
     <message>
         <location line="+1"/>
         <source>Reset</source>
-        <translation type="unfinished">रीसेट</translation>
+        <translation>रीसेट</translation>
     </message>
     <message>
         <location line="+1"/>
