@@ -574,6 +574,10 @@ Item {
                                 // depth must read as a zero rather than as a blank
                                 // that looks like missing data (EXP-F10). The same
                                 // now applies to an empty file.
+                                // A folder that is a catalog of its own holds its files
+                                // there: no size here rather than a misleading 0
+                                if (column === 1 && entryType === "folder" && root.catalogForFolder(fullPath) > 0)
+                                    return "—"
                                 if (column === 1) return appManager1.formatDataSizeDelta(Number(display))
                                 return String(display)
                             }
@@ -622,8 +626,12 @@ Item {
                                 if (mouse.button === Qt.RightButton)
                                     parent.openExploreContextMenu(null)
                             }
+                            // Only on the row the first click selected: a click on a
+                            // folder reloads the list, and the row now under the
+                            // pointer must not open
                             onDoubleClicked: function(mouse) {
-                                if (mouse.button === Qt.LeftButton && entryType === "file")
+                                if (mouse.button === Qt.LeftButton && entryType === "file"
+                                        && exploreTableView.selectedRow === row)
                                     parent.activate()
                             }
                             onPressAndHold: {
@@ -883,6 +891,7 @@ Item {
             onAccepted: {
                 if (appManager1.moveFileToTrash(exploreTrashDialog.path)) {
                     appManager1.exploreRemoveRow(exploreTrashDialog.row)
+                    exploreTableView.selectedRow = -1   // File details no longer shows it
                     showPassiveNotification(qsTr("Moved to trash:<br/>") + exploreTrashDialog.path)
                 } else {
                     showPassiveNotification(qsTr("Move to trash failed."))
@@ -935,6 +944,7 @@ Item {
             onAccepted: {
                 if (appManager1.deleteSingleFile(root._activeFilePath)) {
                     appManager1.exploreRemoveRow(exploreTableView.selectedRow)
+                    exploreTableView.selectedRow = -1   // File details no longer shows it
                     showPassiveNotification(qsTr("File deleted"))
                 } else {
                     showPassiveNotification(qsTr("Could not delete file"))
@@ -955,6 +965,9 @@ Item {
     }
 
     onCurrentFolderPathChanged: loadEntries()
+    // Another catalog at the same folder (a joined or split catalog keeps its
+    // path): the list is reloaded too, or it shows the previous catalog's rows
+    onCatalogIdChanged: loadEntries()
 
     // ── Checksum result dialog ────────────────────────────────────────────
     Kirigami.Dialog {

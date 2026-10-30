@@ -42,7 +42,11 @@ ColumnLayout {
             variant: "secondary"
             icon.name: "edit-find"
             text: qsTr("Search all the drives")
-            onClicked: home.openPage("Search")
+            // What it says: every drive, whatever was chosen before (bug hunt #9)
+            onClicked: {
+                appManager1.selectDeviceById(0)
+                home.openPage("Search")
+            }
         }
         KButton {
             variant: "primary"
@@ -135,6 +139,7 @@ ColumnLayout {
                                 // A coloured device icon: drawn as it is, faded when offline
                                 source: "drive-harddisk"
                                 opacity: driveCard.modelData.connected ? 1 : 0.5
+                                Accessible.ignored: true   // decoration; the tags say the state
                             }
                         }
                         ColumnLayout {
@@ -246,12 +251,27 @@ ColumnLayout {
                 hoverEnabled: true
                 padding: 18
                 Accessible.name: qsTr("Add a drive or a folder")
+                Accessible.description: qsTr("Teca reads the drive, NTFS too, without changing it.")
                 onClicked: home.openPage("Create")
+                // Return and Enter open it, as Space does (WCAG 2.1.1)
+                Keys.onReturnPressed: addCard.clicked()
+                Keys.onEnterPressed: addCard.clicked()
                 background: Rectangle {
                     radius: KTheme.radiusCard
                     color: addCard.hovered ? KTheme.hover : "transparent"
                     border.color: KTheme.line
                     border.width: 1.5
+
+                    // Keyboard focus: a ring outside the card (WCAG 2.4.7)
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: -KTheme.focusOffset
+                        radius: parent.radius + KTheme.focusOffset
+                        color: "transparent"
+                        border.width: KTheme.focusWidth
+                        border.color: KTheme.accent
+                        visible: addCard.visualFocus
+                    }
                 }
                 contentItem: ColumnLayout {
                     spacing: 8
@@ -260,14 +280,16 @@ ColumnLayout {
                         Layout.preferredHeight: 40
                         radius: 12
                         color: KTheme.accentSoft
-                        Kirigami.Icon { anchors.centerIn: parent; width: 22; height: 22; source: "list-add"; isMask: true; color: KTheme.accentText }
+                        Kirigami.Icon { anchors.centerIn: parent; width: 22; height: 22; source: "list-add"; isMask: true; color: KTheme.accentText; Accessible.ignored: true }
                     }
-                    Controls.Label { text: qsTr("Add a drive or a folder"); font.weight: Font.Bold; font.pixelSize: KTheme.titleCard; color: KTheme.text }
+                    // Read as the card's own name and description
+                    Controls.Label { Layout.fillWidth: true; wrapMode: Text.WordWrap; text: qsTr("Add a drive or a folder"); font.weight: Font.Bold; font.pixelSize: KTheme.titleCard; color: KTheme.text; Accessible.ignored: true }
                     Controls.Label {
                         Layout.fillWidth: true
                         wrapMode: Text.WordWrap
                         color: KTheme.text2
                         text: qsTr("Teca reads the drive, NTFS too, without changing it.")
+                        Accessible.ignored: true
                     }
                 }
             }

@@ -14,9 +14,11 @@ Kirigami.AbstractCard {
     id: card
 
     // Guarded: a card being released by its list briefly has no parent.
+    // The focus ring's width is kept free on both sides: the list clips.
     anchors.left: parent ? parent.left : undefined
-    anchors.leftMargin: model.level * Kirigami.Units.gridUnit
+    anchors.leftMargin: model.level * Kirigami.Units.gridUnit + KTheme.focusOffset
     anchors.right: parent ? parent.right : undefined
+    anchors.rightMargin: KTheme.focusOffset
 
     topPadding:    10
     bottomPadding: 10
@@ -39,8 +41,52 @@ Kirigami.AbstractCard {
     readonly property var infoParts: (model.description || "").split(/\s*[·\n]\s*/)
                                          .filter(function(s) { return s.length > 0 })
 
+    // Kind and state, shown as tags and read with the name
+    readonly property string typeText: model.type === "Virtual" ? qsTr("Virtual")
+                                     : model.type === "Storage" ? qsTr("Storage")
+                                     : qsTr("Catalog")
+    readonly property bool showsState: model.type === "Storage" || model.type === "Catalog"
+    readonly property string stateText: model.isActive ? qsTr("Connected") : qsTr("Not connected")
+
+    // Read as an entry of a list that says whether it is the chosen one, with
+    // what its tags say (WCAG 4.1.2)
+    Accessible.role: Accessible.ListItem
     Accessible.name: model.name
+    Accessible.description: [card.typeText].concat(card.showsState ? [card.stateText] : [],
+                                                    appManager1.showDeviceInfo ? card.infoParts : []).join(", ")
+    Accessible.selectable: true
     Accessible.selected: card.isSelected
+
+    // From the keyboard (WCAG 2.1.1): Tab reaches the cards, Up and Down move
+    // between them, Return, Enter or Space selects, the Menu key or Shift+F10
+    // opens the menu. A click does not take the focus.
+    focusPolicy: Qt.TabFocus
+    Keys.onReturnPressed: card.clicked()
+    Keys.onEnterPressed: card.clicked()
+    Keys.onUpPressed: card.focusCard(index - 1)
+    Keys.onDownPressed: card.focusCard(index + 1)
+    Keys.onMenuPressed: card.openMenuFromKeyboard()
+    Keys.onPressed: function(event) {
+        if (event.key === Qt.Key_F10 && (event.modifiers & Qt.ShiftModifier)) {
+            card.openMenuFromKeyboard()
+            event.accepted = true
+        }
+    }
+    // A card reached from the keyboard is scrolled fully into view
+    onActiveFocusChanged: if (activeFocus && ListView.view) ListView.view.positionViewAtIndex(index, ListView.Contain)
+
+    function focusCard(i) {
+        const view = ListView.view
+        if (!view || i < 0 || i >= view.count)
+            return
+        view.positionViewAtIndex(i, ListView.Contain)
+        const next = view.itemAtIndex(i)
+        if (next)
+            next.forceActiveFocus(Qt.TabFocusReason)
+    }
+    function openMenuFromKeyboard() {
+        contextMenu.popup(card, card.leftPadding, card.height / 2)
+    }
 
     background: Rectangle {
         radius: KTheme.radiusCard
@@ -48,15 +94,27 @@ Kirigami.AbstractCard {
              : card.hovered    ? KTheme.hover : KTheme.surface
         border.color: card.isSelected ? KTheme.accent : KTheme.line
         border.width: card.isSelected ? 2 : 1
+
+        // Keyboard focus: a ring outside the card, apart from the selected
+        // card's own accent border (WCAG 2.4.7)
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -KTheme.focusOffset
+            radius: parent.radius + KTheme.focusOffset
+            color: "transparent"
+            border.width: KTheme.focusWidth
+            border.color: KTheme.accent
+            visible: card.visualFocus
+        }
     }
 
-    TapHandler {
-        onTapped: {
-            appManager1.selectDeviceById(model.deviceId)
-            // With Explore open, a catalog card opens there too (EXP-F27)
-            if (model.type === "Catalog")
-                root.followSelectionInExplore(model.deviceId)
-        }
+    // Selecting is the card's click, so the keyboard selects too (Return,
+    // Enter, Space)
+    onClicked: {
+        appManager1.selectDeviceById(model.deviceId)
+        // With Explore open, a catalog card opens there too (EXP-F27)
+        if (model.type === "Catalog")
+            root.followSelectionInExplore(model.deviceId)
     }
 
     TapHandler {
@@ -64,9 +122,8 @@ Kirigami.AbstractCard {
         onTapped: contextMenu.popup()
     }
 
-    TapHandler {
-        onLongPressed: contextMenu.popup()
-    }
+    // A long press opens the menu and, being handled, is not also a click
+    onPressAndHold: contextMenu.popup()
 
     Controls.Menu {
         id: contextMenu
@@ -186,6 +243,7 @@ Kirigami.AbstractCard {
                         Layout.preferredWidth: 18
                         Layout.preferredHeight: 18
                         Layout.alignment: Qt.AlignVCenter
+                        Accessible.ignored: true   // the card reports itself selected
                     }
                 }
 
@@ -197,14 +255,12 @@ Kirigami.AbstractCard {
                     spacing: 6
 
                     KInfoTag {
-                        text: model.type === "Virtual" ? qsTr("Virtual")
-                            : model.type === "Storage" ? qsTr("Storage")
-                            : qsTr("Catalog")
+                        text: card.typeText
                         tone: model.type === "Catalog" ? "info" : "neutral"
                     }
                     KInfoTag {
-                        visible: model.type === "Storage" || model.type === "Catalog"
-                        text: model.isActive ? qsTr("Connected") : qsTr("Not connected")
+                        visible: card.showsState
+                        text: card.stateText
                         tone: model.isActive ? "ok" : "warn"
                     }
                     Repeater {

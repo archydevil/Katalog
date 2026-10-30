@@ -81,6 +81,7 @@ Rectangle {
                 source: "document-preview"
                 isMask: true
                 color: KTheme.text3
+                Accessible.ignored: true   // decoration; the text below says it
             }
         }
         Controls.Label {
@@ -171,6 +172,11 @@ Rectangle {
                             source: previewBox.url
                             fillMode: Image.PreserveAspectFit
                             asynchronous: true
+                            // Named by the file it shows and described by the
+                            // AI's caption when there is one (WCAG 1.1.1)
+                            Accessible.role: Accessible.Graphic
+                            Accessible.name: inspector.info.name || ""
+                            Accessible.description: inspector.describedText
                         }
                     }
 
@@ -502,6 +508,7 @@ Rectangle {
                                 isMask: true
                                 color: KTheme.text3
                                 implicitWidth: 16; implicitHeight: 16
+                                Accessible.ignored: true   // decoration beside the path
                             }
                             Controls.Label {
                                 Layout.fillWidth: true

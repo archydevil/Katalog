@@ -516,7 +516,12 @@ int MdiData::moveToCatalogs(const QString &connectionName, int oldCatalogId,
                             const QHash<QString, int> &newCatalogByPath)
 {
     QSqlDatabase db = QSqlDatabase::database(connectionName);
-    db.transaction();
+    // A failure must be told apart from "nothing to move": the caller would
+    // otherwise remove the old catalog and orphan its data
+    if (!db.transaction()) {
+        qWarning() << "MdiData::moveToCatalogs: no transaction:" << db.lastError().text();
+        return -1;
+    }
     // OR IGNORE: a row the new catalog already has is kept, never replaced
     QSqlQuery datum(db);
     datum.prepare(QLatin1String(R"(
@@ -537,12 +542,16 @@ int MdiData::moveToCatalogs(const QString &connectionName, int oldCatalogId,
             if (!q->exec()) {
                 qWarning() << "MdiData::moveToCatalogs failed:" << q->lastError().text();
                 db.rollback();
-                return 0;
+                return -1;
             }
         }
         moved += datum.numRowsAffected();
     }
-    db.commit();
+    if (!db.commit()) {
+        qWarning() << "MdiData::moveToCatalogs: commit failed:" << db.lastError().text();
+        db.rollback();
+        return -1;
+    }
     return moved;
 }
 

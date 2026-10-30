@@ -73,6 +73,7 @@ qt_add_qml_module(Katalog3
         PageActivity.qml
         PageContext.qml
         PageHome.qml
+        PageHistory.qml
         KTheme.qml
         KCard.qml
         KInfoTag.qml

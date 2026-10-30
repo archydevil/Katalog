@@ -30,6 +30,7 @@ Item {
     readonly property real thumbSize: 28
 
     onRootPathChanged: reset()
+    onCatalogIdChanged: reset()   // another catalog at the same path (split by type)
     function reset() {
         paths = rootPath !== "" ? [rootPath] : []
         selectedFullPath = ""
@@ -38,6 +39,22 @@ Item {
     function openFolder(columnIndex, folderPath) {
         paths = paths.slice(0, columnIndex + 1).concat([folderPath])
         selectedFullPath = ""
+        Qt.callLater(function() { columnsView.positionViewAtEnd() })
+    }
+    // One column per folder from the catalog's own down to this one (Back,
+    // Forward and the breadcrumb, D36)
+    function showFolder(folderPath) {
+        if (rootPath === "" || !folderPath.startsWith(rootPath))
+            return
+        let chain = [rootPath]
+        let path = rootPath
+        for (const part of folderPath.slice(rootPath.length).split("/").filter(x => x.length > 0)) {
+            path = path.endsWith("/") ? path + part : path + "/" + part
+            chain.push(path)
+        }
+        paths = chain
+        selectedFullPath = ""
+        focusedColumn = chain.length - 1
         Qt.callLater(function() { columnsView.positionViewAtEnd() })
     }
     function selectFile(columnIndex, fullPath) {
@@ -90,7 +107,7 @@ Item {
             required property string modelData
             width: browser.columnWidth
             height: columnsView.height
-            readonly property var entries: browser.sortedEntries(modelData)
+            readonly property var entries: browser.catalogId >= 0 ? browser.sortedEntries(modelData) : []
             property int current: -1
 
             ListView {
@@ -106,16 +123,19 @@ Item {
                 keyNavigationEnabled: false
                 Controls.ScrollBar.vertical: Controls.ScrollBar { policy: Controls.ScrollBar.AsNeeded }
 
-                function choose(i) {
+                // A folder that is a catalog of its own opens it only when asked
+                // (a click, Right, Enter): the arrows just move over it
+                function choose(i, byArrow) {
                     if (i < 0 || i >= column.entries.length)
                         return
                     column.current = i
                     list.positionViewAtIndex(i, ListView.Contain)
                     const e = column.entries[i]
                     const otherCatalog = e.entryType === "folder" ? browser.catalogForFolder(e.fullPath) : 0
-                    if (otherCatalog > 0)
-                        browser.catalogFolderRequested(otherCatalog)
-                    else if (e.entryType === "folder")
+                    if (otherCatalog > 0) {
+                        if (!byArrow)
+                            browser.catalogFolderRequested(otherCatalog)
+                    } else if (e.entryType === "folder")
                         browser.openFolder(column.index, e.fullPath)
                     else
                         browser.selectFile(column.index, e.fullPath)
@@ -123,12 +143,14 @@ Item {
 
                 Keys.onPressed: function(event) {
                     if (event.key === Qt.Key_Down) {
-                        choose(Math.min(column.entries.length - 1, column.current + 1)); event.accepted = true
+                        choose(Math.min(column.entries.length - 1, column.current + 1), true); event.accepted = true
                     } else if (event.key === Qt.Key_Up) {
-                        choose(Math.max(0, column.current - 1)); event.accepted = true
+                        choose(Math.max(0, column.current - 1), true); event.accepted = true
                     } else if (event.key === Qt.Key_Right) {
-                        if (column.current >= 0 && column.entries[column.current].entryType === "folder"
-                                && browser.paths.length > column.index + 1)
+                        const e = column.current >= 0 ? column.entries[column.current] : null
+                        if (e && e.entryType === "folder" && browser.catalogForFolder(e.fullPath) > 0)
+                            browser.catalogFolderRequested(browser.catalogForFolder(e.fullPath))
+                        else if (e && e.entryType === "folder" && browser.paths.length > column.index + 1)
                             browser.focusedColumn = column.index + 1
                         event.accepted = true
                     } else if (event.key === Qt.Key_Left) {
@@ -142,7 +164,9 @@ Item {
                         browser.inspectorToggleRequested(); event.accepted = true
                     } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         const e = column.entries[column.current]
-                        if (e && e.entryType === "file" && appManager1.inspectorInfo(browser.catalogId, e.fullPath).online)
+                        if (e && e.entryType === "folder" && browser.catalogForFolder(e.fullPath) > 0)
+                            browser.catalogFolderRequested(browser.catalogForFolder(e.fullPath))
+                        else if (e && e.entryType === "file" && appManager1.inspectorInfo(browser.catalogId, e.fullPath).online)
                             Qt.openUrlExternally(appManager1.localFileUrl(e.fullPath))
                         event.accepted = true
                     }
@@ -161,6 +185,12 @@ Item {
                     rightPadding: 8
                     hoverEnabled: true
                     highlighted: column.current === index
+                    // Read out by screen readers; the drawn content is contentItem
+                    text: row.modelData.name
+                    Accessible.selected: highlighted
+                    Accessible.description: row.modelData.entryType === "folder"
+                                            ? (browser.catalogForFolder(row.modelData.fullPath) > 0 ? qsTr("Catalog") : "")
+                                            : (appManager1.mdiHasAi(browser.catalogId, row.modelData.fullPath, appManager1.mdiRevision) ? qsTr("AI") : "")
                     // The column holding the keyboard marks its row in the
                     // accent's tone, the others in a neutral one
                     readonly property bool active: highlighted && browser.focusedColumn === column.index
@@ -181,6 +211,7 @@ Item {
                         Item {
                             implicitWidth: browser.thumbSize
                             implicitHeight: implicitWidth
+                            Accessible.ignored: true   // the row's name and tags say it
                             readonly property string thumb: row.modelData.entryType === "file"
                                 ? appManager1.mdiPreviewUrl(browser.catalogId, row.modelData.fullPath, appManager1.mdiRevision) : ""
                             Image {

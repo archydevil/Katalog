@@ -29,8 +29,10 @@ F.ComboBox {
         color: control.editable ? control.palette.base
              : control.down ? control.palette.mid
              : control.hovered ? control.palette.midlight : control.palette.button
+        // Unfocused, the edge is the controls' line, 3:1 on every surface
+        // (palette.dark, set from KTheme.controlLine; WCAG 1.4.11)
         border.width: control.visualFocus || control.activeFocus ? 2 : 1
-        border.color: control.visualFocus || control.activeFocus ? control.palette.highlight : control.palette.mid
+        border.color: control.visualFocus || control.activeFocus ? control.palette.highlight : control.palette.dark
         opacity: control.enabled ? 1 : 0.6
     }
 

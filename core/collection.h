@@ -177,8 +177,45 @@ public:
     // Signature of the currently mounted volumes' root paths. Compare successive
     // values to detect a mount or unmount without probing any device path.
     QString mountSignature() const;
-    bool executeSplitBySubDirectory(Device *activeDevice);
-    bool executeSplitByFileType(Device *activeDevice);
+
+    // Split and recompose (fork): why one did not happen. Nothing is changed
+    // when one fails.
+    enum CatalogOperationError {
+        OperationOk = 0,
+        OperationNothingToDo,       // split: no sub-folder / no files to share
+        OperationTooFew,            // recompose: fewer than two catalogs
+        OperationNoCommonFolder,    // recompose: the catalogs share no folder
+        OperationNameTaken,         // recompose: another catalog has that name
+        OperationAiMoveFailed,      // mdi_data.db busy or unreadable
+        OperationFailed             // database error
+    };
+    // newDeviceIds: the new catalogs' devices in the Physical group
+    bool executeSplitBySubDirectory(Device *activeDevice, QList<int> *newDeviceIds = nullptr,
+                                    CatalogOperationError *error = nullptr);
+    bool executeSplitByFileType(Device *activeDevice, QList<int> *newDeviceIds = nullptr,
+                                CatalogOperationError *error = nullptr);
+
+    // Recompose (fork, owner's decision 2026-10-30): merges catalogs into one
+    // new catalog, the reverse of a split. Its folder is the folder the
+    // catalogs share; files, folders, exclude filters, AI results and the
+    // enrichment profile go to it; the old catalogs' devices are deleted
+    // (nothing on disk). Memory mode: .idx files written and removed as a
+    // split does.
+    CatalogOperationError executeRecompose(const QList<int> &deviceIds, const QString &newName,
+                                           int *newDeviceId = nullptr);
+    // What recompose proposes for a device: a storage's or a group's catalogs,
+    // or a split catalog with its siblings of the same base name ("<base>_x").
+    struct RecomposeProposal {
+        QString    name;             // suggested name: the split's base, free
+        QString    path;             // the folder they share
+        QList<int> deviceIds;        // their devices in the Physical group
+        QString    problem;          // "", "type", "few", "nocommon"
+    };
+    RecomposeProposal proposeRecompose(int deviceId);
+    // Catalogs left without a date by a split before the fix get one, so the
+    // instant-search index stops rebuilding them at every launch. Returns the
+    // catalogs dated.
+    int repairUndatedCatalogs();
 
     enum CollectionFolderStatus {
         VALID_EMPTY,           // Empty folder - can create new collection
@@ -198,7 +235,9 @@ public:
 
 private:
     QString m_connectionName = "defaultConnection";
-    void applySplitResult(Device *activeDevice, const QList<Catalog*> &newCatalogs);
+    bool applySplitResult(Device *activeDevice, const QList<Catalog*> &newCatalogs,
+                          QList<int> *newDeviceIds, CatalogOperationError *error);
+    void undoSplitCatalogs(Device *activeDevice, const QList<Catalog*> &newCatalogs);
     Device* resolvePhysicalDevice(Device *activeDevice, Device &buffer);
 
 };

@@ -80,6 +80,8 @@
 class BackupJobStoppable;
 #include "core/mdienrichmentjob.h"   // Config is passed by value
 #include "core/mdidata.h"           // PendingJob is held by value
+#include "core/cataloghistory.h"    // Entry and Error in the history helpers
+#include <QPointer>
 class QThread;
 
 class MdiSystemMonitor;
@@ -193,6 +195,7 @@ class AppManager : public QObject
 
 public:
     explicit AppManager(QObject *parent = nullptr);
+    ~AppManager() override;
 
     //Application version
     QString currentVersion;
@@ -554,6 +557,20 @@ public slots:
     Q_INVOKABLE QVariantMap  recordDevicesSnapshot();
     Q_INVOKABLE QString      splitCatalogBySubDirectory(int deviceId);
     Q_INVOKABLE void         splitCatalogByFileType(int deviceId, bool verifyFirst);
+
+    // History and restore points (fork, owner's decision 2026-10-30): before
+    // an action changes catalogs, their rows are kept in teca_history.db.
+    // Entries newest first: {id, date, dateText, action, title, details,
+    // catalogs: [{deviceId, catalogId, name, files}], resultCatalogs: [...],
+    // canRestore, undone, kept, restoreProblem}
+    Q_INVOKABLE bool         historyAvailable();
+    Q_INVOKABLE QVariantList historyEntries();
+    Q_INVOKABLE QVariantList historyForDevice(int deviceId);
+    Q_INVOKABLE QString      restoreHistoryEntry(int entryId);    // "" or an error
+    Q_INVOKABLE QString      openHistoryVersion(int entryId, int catalogId, const QString &nameSuffix);
+    // Recompose: {name, path, catalogs: [{deviceId, name, files}], possible, reason}
+    Q_INVOKABLE QVariantMap  recomposeProposal(int deviceId);
+    Q_INVOKABLE QString      recomposeCatalogs(const QVariantList &deviceIds, const QString &name);
     Q_INVOKABLE QVariantMap  verifyDeviceChecksums(int deviceId);
     // MIME verification of one catalog (SpecMimeVerification.md MIV-F1..F5)
     Q_INVOKABLE void         verifyMimeTypes(int deviceId);
@@ -812,6 +829,10 @@ signals:
     void storageUserIdDuplicate();
     void checksumVerificationCompleted(QVariantMap result);
     void splitCompleted(bool success, const QString &error);
+    // History (fork): the list changed; an action just done can be undone
+    // with restoreHistoryEntry(entryId)
+    void historyChanged();
+    void undoAvailable(int entryId, const QString &message);
     // mismatchCount < 0 means the verification failed with errorMessage
     void mimeVerificationFinished(int mismatchCount, const QString &reportPath, const QString &errorMessage);
 
@@ -900,8 +921,40 @@ private:
     struct HomeCount { int deviceId; int catalogId; QString stamp; QString catalogFile; bool types; };
     QList<HomeCount>                        m_homeQueue;      // one worker at a time
     bool                                    m_homeWorkerBusy = false;
+    // A count belongs to the collection (and device numbers) it was queued
+    // for: a result from before a switch or a split is dropped
+    int                                     m_homeGeneration = 0;
+    QPointer<QThread>                       m_homeWorker;
     void countHomeDrive(int deviceId, int catalogId, const QString &stamp, const QString &catalogFile, bool types);
     void runNextHomeCount();
+    void waitForHomeCount();
+    // Catalog of the running enrichment job (-1 when none): a split,
+    // recompose or restore of it waits for the job to end
+    int                                     m_mdiRunningCatalogId = -1;
+    // Revision at which each catalog's AI data last changed, and at which all
+    // did: Explore reloads the shown catalog's index only when it changed
+    QHash<int, int>                         m_mdiCatalogRevision;
+    int                                     m_mdiAllRevision = 0;
+    void bumpMdiRevision(int catalogId);
+
+    // History (fork): the restore point of the update running, closed when
+    // the device update manager reports the end (through m_historyHook, a
+    // receiver of its own that the manager's disconnect(this) leaves alone)
+    int      m_historyUpdateEntry  = 0;
+    bool     m_historyUpdateByUser = false;
+    QObject *m_historyHook         = nullptr;
+    QPointer<DeviceUpdateManager> m_historyHookedManager;
+    int      historyBefore(const QString &action, const QList<int> &deviceIds, bool withDescendants,
+                           const QString &label = QString());
+    void     historyAfter(int entryId, const QList<int> &resultDeviceIds, const QString &undoMessage,
+                          bool dropUnchanged = false, bool byUser = true);
+    void     historyDiscard(int entryId);
+    void     historyBeforeUpdate(const QString &action, const QList<int> &deviceIds, bool byUser);
+    void     historyAfterUpdate();
+    QString  catalogChangeRefusal(const QList<int> &deviceIds, const QList<int> &catalogIds = {});
+    void     afterCatalogStructureChange();
+    QVariantMap historyEntryMap(const CatalogHistory::Entry &e, const CatalogHistory &history, int depth = 0) const;
+    QString  historyErrorText(CatalogHistory::Error error) const;
     void    holdOrDropMdiJob(const MdiData::PendingJob &job, const QString &error);
     QString startMdiJob(const MdiData::PendingJob &job, bool resumed);
     bool    mdiJobReachable(const MdiData::PendingJob &job);

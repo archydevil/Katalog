@@ -966,6 +966,7 @@ ColumnLayout {
                     icon.name: "folder-open"
                     Controls.ToolTip.text: qsTr("Select the path")
                     Controls.ToolTip.visible: hovered
+                    Accessible.name: qsTr("Select the path")   // icon only (WCAG 4.1.2)
                     onClicked: reinterpretFolderDialog.open()
                 }
             }

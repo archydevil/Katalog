@@ -133,7 +133,8 @@ public:
     // A split catalog's data follows its files: each file's data and indexed
     // texts move to the catalog that now holds the file. Data of files in none
     // of them, or that would replace a row of the new catalog, stays. Returns
-    // the data rows moved.
+    // the data rows moved, -1 when nothing could be moved (store busy past its
+    // timeout, unreadable): then nothing moved.
     static int moveToCatalogs(const QString &connectionName, int oldCatalogId,
                               const QHash<QString, int> &newCatalogByPath);
 

@@ -1568,6 +1568,11 @@ QList<Catalog*> Catalog::executeSplitBySubDirectory(const QString &databaseMode,
         }
     };
 
+    // The original's date when it has one: a catalog without a date is never
+    // current for the instant-search index, which then rebuilds it at every
+    // launch (MdiFts::isCurrent)
+    const QDateTime splitDate = dateUpdated.isValid() ? dateUpdated : QDateTime::currentDateTime();
+
     // Create and insert a new catalog inheriting all settings from this one
     auto createSplitCatalog = [&](const QString &newName,
                                    const QString &newSourcePath,
@@ -1584,7 +1589,7 @@ QList<Catalog*> Catalog::executeSplitBySubDirectory(const QString &databaseMode,
         c->includeMetadata  = includeMetadata;
         c->includeChecksum  = includeChecksum;
         c->appVersion       = appVersion;
-        c->dateUpdated      = dateUpdated;
+        c->dateUpdated      = splitDate;
         c->fileCount        = 0;
         c->totalFileSize    = 0;
         c->filePath         = collectionFolder + "/" + newName + ".idx";
@@ -1705,6 +1710,9 @@ QList<Catalog*> Catalog::executeSplitByFileType(const QString &databaseMode,
 
     QList<Catalog*> created;
 
+    // The original's date when it has one (see executeSplitBySubDirectory)
+    const QDateTime splitDate = dateUpdated.isValid() ? dateUpdated : QDateTime::currentDateTime();
+
     // Find a unique catalog name (append _2, _3, ... on collision)
     // Also unique within this split: the new devices are only inserted afterwards.
     QStringList usedNames;
@@ -1746,7 +1754,7 @@ QList<Catalog*> Catalog::executeSplitByFileType(const QString &databaseMode,
         c->includeMetadata  = includeMetadata;
         c->includeChecksum  = includeChecksum;
         c->appVersion       = appVersion;
-        c->dateUpdated      = dateUpdated;
+        c->dateUpdated      = splitDate;
         c->fileCount        = 0;
         c->totalFileSize    = 0;
         c->filePath         = collectionFolder + "/" + newName + ".idx";

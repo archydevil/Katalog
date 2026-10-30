@@ -1114,6 +1114,11 @@ Item {
                         icon.width:  Kirigami.Units.iconSizes.small
                         icon.height: Kirigami.Units.iconSizes.small
                         display: Controls.AbstractButton.IconOnly
+                        // Named for assistive technology (WCAG 4.1.2) with the
+                        // Explore tree's own words for the same control (CDT-F3),
+                        // so no new string; still no visible text (DVP-C12)
+                        Accessible.name: expanded ? qsTranslate("PageExploreFolders", "Collapse")
+                                                  : qsTranslate("PageExploreFolders", "Expand")
                         // Ahead of the row's own handler, so opening a branch
                         // does not also select the device.
                         onClicked: appManager1.toggleDeviceTableRow(row)

@@ -49,6 +49,10 @@ Controls.Button {
 
     // A tooltip is what tells the user what the icon does, so it is part of the
     // component rather than repeated at every call site. Set `text` for it.
+    // It shows on keyboard focus as well as on hover (WCAG 2.4.7).
     Controls.ToolTip.text: text
-    Controls.ToolTip.visible: hovered && text.length > 0
+    Controls.ToolTip.visible: (hovered || visualFocus) && text.length > 0
+    // The same words are the button's accessible name, also where a call site
+    // sets only the tooltip (WCAG 4.1.2)
+    Accessible.name: Controls.ToolTip.text
 }

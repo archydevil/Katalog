@@ -44,6 +44,7 @@ set(CORE_HEADERS
     mdivolumes.h
     mdicontext.h
     mdiknowledge.h
+    cataloghistory.h
 )
 
 set(CORE_SOURCES
@@ -92,6 +93,7 @@ set(CORE_SOURCES
     mdivolumes.cpp
     mdicontext.cpp
     mdiknowledge.cpp
+    cataloghistory.cpp
 )
 
 add_library(katalog-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

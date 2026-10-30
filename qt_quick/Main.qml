@@ -48,6 +48,14 @@ Kirigami.ApplicationWindow {
     palette.mid:             KTheme.line      // TecaStyle: frames and pressed states
     palette.midlight:        KTheme.hover     // TecaStyle: hover tint
     palette.brightText:      KTheme.onAccent  // text on the accent
+    palette.dark:            KTheme.controlLine   // TecaStyle: field and box edges, ≥3:1 (WCAG 1.4.11)
+    // Set as above, a role applies to every colour group, so a disabled control
+    // read as enabled: its text and frames are dimmed here (bug hunt 2026-10-30)
+    palette.disabled.windowText: KTheme.text3
+    palette.disabled.text:       KTheme.text3
+    palette.disabled.buttonText: KTheme.text3
+    palette.disabled.button:     KTheme.surface2
+    palette.disabled.highlight:  KTheme.neutralSoft
 
     // Global activity panel: running job progress plus the queue behind it.
     // Anchored to pageStack rather than used as the window footer: the window
@@ -58,9 +66,11 @@ Kirigami.ApplicationWindow {
         id: activityPanel
         anchors.left:   root.pageStack.left
         anchors.right:  root.pageStack.right
-        anchors.bottom: root.pageStack.bottom
+        anchors.top:    root.pageStack.bottom   // below the pages, never over them (WCAG 2.4.11)
         z: 1
     }
+    // The pages end where the panel begins: nothing on them hides under it
+    pageStack.anchors.bottomMargin: activityPanel.height
 
     // Re-probe device active status when the user comes back to Katalog, so a
     // drive connected or removed meanwhile shows correctly. Off by default and
@@ -175,7 +185,7 @@ Kirigami.ApplicationWindow {
     Instantiator {
         model: [pageHome, pageSelection, pageSearch, pageSearchResults, pageDevices, pageExplore,
                 pageActivity, pageContext, pageCreate, pageDeviceEdit, pageStatistics, pageTags,
-                pageBackup]
+                pageBackup, pageHistory]
         delegate: Connections {
             required property var modelData
             target: modelData
@@ -874,7 +884,14 @@ Kirigami.ApplicationWindow {
         root.showPage(pageActivity)
     }
 
+    // Shows a page and records it in the history (D36), unless the history
+    // itself is retracing its steps
     function showPage(page) {
+        root._showPage(page)
+        root.navRecord(page === pageExplore ? root.exploreNavEntry() : { page: page })
+    }
+
+    function _showPage(page) {
         // Close any open layer so main content is visible
         if (pageStack.layers.depth > 1)
             pageStack.layers.pop()
@@ -936,19 +953,205 @@ Kirigami.ApplicationWindow {
         // No feature page left → Selection must reappear so the window is not blank.
         syncSelectionVisibility()
         pageStack.currentIndex = Math.max(0, pageStack.depth - 1)
+        // The sidebar highlights what is on show (it kept the closed page)
+        openFeaturePage = featureOpen ? pageStack.lastItem : null
+        root.navRecord({ page: featureOpen ? pageStack.lastItem : pageSelection })
     }
 
-    // Esc goes back one step (SpecKeyboardShortcuts.md): it triggers the page's
-    // own Close/Cancel action (its escapeAction) on the open layer, else on the
-    // rightmost page. An open popup keeps its Esc: Qt does not deliver a window
-    // shortcut past it (KBS-F4).
+    // Esc goes back one step (SpecKeyboardShortcuts.md): on an open layer it
+    // triggers the layer's own Close/Cancel action (its escapeAction); on the
+    // pages it is Back in the history (D36). An open popup keeps its Esc: Qt
+    // does not deliver a window shortcut past it (KBS-F4).
     Shortcut {
         sequence: "Esc"
         onActivated: {
-            let page = pageStack.layers.depth > 1 ? pageStack.layers.currentItem
-                                                  : pageStack.lastItem
-            if (page && page.escapeAction && page.escapeAction.enabled)
-                page.escapeAction.trigger()
+            if (pageStack.layers.depth > 1) {
+                let layer = pageStack.layers.currentItem
+                if (layer && layer.escapeAction && layer.escapeAction.enabled)
+                    layer.escapeAction.trigger()
+                return
+            }
+            root.navGo(-1)
+        }
+    }
+    Shortcut {
+        sequences: [StandardKey.Back, "Alt+Left", "Ctrl+["]
+        enabled: pageStack.layers.depth <= 1
+        onActivated: root.navGo(-1)
+    }
+    Shortcut {
+        sequences: [StandardKey.Forward, "Alt+Right", "Ctrl+]"]
+        enabled: pageStack.layers.depth <= 1
+        onActivated: root.navGo(1)
+    }
+
+    // ── History (D36) ──────────────────────────────────────────────────────
+    // The pages visited, and the places inside Browse (catalog and folder), so
+    // Back and Forward retrace them as a browser does. Esc is Back.
+    property var  navEntries: []
+    property int  navIndex: -1
+    property bool navRestoring: false
+    readonly property bool navCanBack:    navIndex > 0
+    readonly property bool navCanForward: navIndex >= 0 && navIndex < navEntries.length - 1
+    function navSame(a, b) {
+        return a && b && a.page === b.page && (a.deviceId || 0) === (b.deviceId || 0)
+               && (a.folder || "") === (b.folder || "")
+    }
+    function navRecord(entry) {
+        if (root.navRestoring || !entry || !entry.page)
+            return
+        if (root.navSame(root.navEntries[root.navIndex], entry))
+            return
+        let list = root.navEntries.slice(0, root.navIndex + 1)
+        list.push(entry)
+        if (list.length > 200)
+            list.shift()
+        root.navEntries = list
+        root.navIndex = list.length - 1
+    }
+    function navGo(step) {
+        const target = root.navIndex + step
+        if (target < 0 || target >= root.navEntries.length)
+            return
+        root.navIndex = target
+        root.navApply(root.navEntries[target])
+    }
+    function navApply(entry) {
+        root.navRestoring = true
+        if (entry.page === pageExplore) {
+            if ((entry.deviceId || 0) > 0) {
+                root.exploreChooser = false
+                if (exploreFolders.openedDeviceId !== entry.deviceId) {
+                    root.explorePendingFolder = entry.folder || ""
+                    exploreFolders.openByDeviceId(entry.deviceId)
+                } else if (entry.folder) {
+                    root.exploreShowFolder(entry.folder)
+                }
+            } else {
+                root.exploreChooser = true
+            }
+            root._showPage(pageExplore)
+        } else if (entry.page === pageSearchResults && root.indexOfPage(pageSearchResults) < 0) {
+            root._showPage(pageSearch)
+        } else {
+            root._showPage(entry.page)
+        }
+        // A catalog may open later (Memory mode): its changes are not new steps
+        Qt.callLater(function() { root.navRestoring = false })
+    }
+
+    // Right after an action that changed catalogs: say it, and offer to undo it
+    // (D36, restore points)
+    Connections {
+        target: appManager1
+        function onUndoAvailable(entryId, message) {
+            showPassiveNotification(message, "long", qsTr("Undo"), function() {
+                const error = appManager1.restoreHistoryEntry(entryId)
+                if (error !== "")
+                    showPassiveNotification(error, 5000)
+            })
+        }
+    }
+
+    // F6 moves between the sidebar and the page (D37)
+    Shortcut {
+        sequence: "F6"
+        onActivated: {
+            let entry = null
+            for (let i = 0; i < sidebarColumn.children.length; ++i) {
+                const c = sidebarColumn.children[i]
+                if (c.active === true)
+                    entry = c
+            }
+            if (entry && !entry.activeFocus) {
+                if (sidebar.modal)
+                    sidebar.open()
+                entry.forceActiveFocus(Qt.TabFocusReason)
+            } else if (pageStack.currentItem) {
+                pageStack.currentItem.forceActiveFocus(Qt.TabFocusReason)
+            }
+        }
+    }
+
+    // The sidebar's destinations from the keyboard (D36): Ctrl/Cmd + 1…9
+    Repeater {
+        model: [ ["Home", pageHome], ["Selection", pageSelection], ["Explore", pageExplore],
+                 ["Search", pageSearch], ["Create", pageCreate], ["History", pageHistory],
+                 ["Context", pageContext], ["Activity", pageActivity], ["Devices", pageDevices] ]
+        delegate: Item {
+            required property var modelData
+            required property int index
+            Shortcut {
+                sequence: "Ctrl+" + (index + 1)
+                enabled: pageStack.layers.depth <= 1
+                onActivated: root.sidebarGo(modelData[0], modelData[1])
+            }
+        }
+    }
+
+    // The mouse's Back and Forward buttons
+    TapHandler {
+        acceptedButtons: Qt.BackButton | Qt.ForwardButton
+        onTapped: function(eventPoint, button) { root.navGo(button === Qt.BackButton ? -1 : 1) }
+    }
+
+    // What the choice in My drives covers, on the pages it decides (D36): they
+    // say it, and offer to change it or to take every drive
+    component ScopeChip: Flow {
+        property string label   // its %1 is the choice
+        spacing: 8
+        leftPadding:   KTheme.gap
+        rightPadding:  KTheme.gap
+        topPadding:    10
+        bottomPadding: 4
+        KInfoTag {
+            text: parent.label.arg(appManager1.selectedDeviceId > 0 ? appManager1.selectedDeviceName
+                                                                   : qsTr("All the drives"))
+            tone: "info"
+        }
+        KButton {
+            variant: "link"
+            text: qsTr("Change")
+            onClicked: root.sidebarGo("Selection", pageSelection)
+        }
+        KButton {
+            visible: appManager1.selectedDeviceId > 0
+            variant: "link"
+            text: qsTr("All the drives")
+            onClicked: appManager1.selectDeviceById(0)
+        }
+    }
+
+    // The page title with Back and Forward beside it (D36): every page says
+    // where it is and offers the way back
+    component NavTitle: RowLayout {
+        property string text
+        spacing: 2
+        Controls.ToolButton {
+            icon.name: "go-previous"
+            enabled: root.navCanBack
+            onClicked: root.navGo(-1)
+            Accessible.name: qsTr("Back")
+            Controls.ToolTip.text: qsTr("Back")
+            Controls.ToolTip.visible: hovered
+            Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+        }
+        Controls.ToolButton {
+            icon.name: "go-next"
+            enabled: root.navCanForward
+            onClicked: root.navGo(1)
+            Accessible.name: qsTr("Forward")
+            Controls.ToolTip.text: qsTr("Forward")
+            Controls.ToolTip.visible: hovered
+            Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+        }
+        Kirigami.Heading {
+            Layout.leftMargin: 6
+            Layout.fillWidth: true
+            level: 1
+            text: parent.text
+            elide: Text.ElideRight
+            Accessible.role: Accessible.Heading
         }
     }
 
@@ -959,10 +1162,67 @@ Kirigami.ApplicationWindow {
         if (name === "Explore")
             root.browseSelection()
         root.showPage(page)
+        // On a narrow window the sidebar slides over the page: out of the way
+        if (sidebar.modal)
+            sidebar.close()
     }
     // Browse shows what is chosen in My drives: a catalog opens. Anything else
     // (All, a drive, a group) keeps the catalog already open (EXP-F27 a); with
     // none open, Browse lists the catalogs the choice holds, ready to open
+    // Where Browse is (D36): its folder, the way back to it, each step recorded
+    property string explorePendingFolder: ""
+    readonly property string exploreCurrentFolder: root.exploreColumns
+        ? (exploreColumnBrowser.paths.length > 0
+           ? exploreColumnBrowser.paths[exploreColumnBrowser.paths.length - 1] : "")
+        : exploreFiles.currentFolderPath
+    function exploreNavEntry() {
+        return root.exploreChooser || exploreFolders.openedDeviceId <= 0
+               ? { page: pageExplore, deviceId: 0, folder: "" }
+               : { page: pageExplore, deviceId: exploreFolders.openedDeviceId, folder: root.exploreCurrentFolder }
+    }
+    // Shows a folder of the open catalog in both views, so a switch of view keeps it
+    function exploreShowFolder(folderPath) {
+        exploreFolders.selectedFolderPath = folderPath
+        exploreFiles.currentFolderPath    = folderPath
+        exploreColumnBrowser.showFolder(folderPath)
+    }
+    function exploreParentFolder() {
+        const current = root.exploreCurrentFolder
+        const cut = current.lastIndexOf("/")
+        return cut > 0 ? current.slice(0, cut) : current
+    }
+    // The catalog, then each folder down to the one on show
+    function exploreCrumbs() {
+        const top = exploreFiles.catalogPath
+        const current = root.exploreCurrentFolder
+        if (top === "")
+            return []
+        let crumbs = [{ label: exploreFiles.catalogName, path: top }]
+        if (current.length > top.length && current.startsWith(top)) {
+            let path = top
+            for (const part of current.slice(top.length).split("/").filter(x => x.length > 0)) {
+                path = path.endsWith("/") ? path + part : path + "/" + part
+                crumbs.push({ label: part, path: path })
+            }
+        }
+        return crumbs
+    }
+    function exploreLocationChanged() {
+        if (root.openFeaturePage === pageExplore && pageExplore.visible)
+            root.navRecord(root.exploreNavEntry())
+    }
+    onExploreCurrentFolderChanged: Qt.callLater(root.exploreLocationChanged)
+    onExploreChooserChanged:       Qt.callLater(root.exploreLocationChanged)
+    // A catalog that failed to open, or is gone (split, deleted): the cards
+    // to choose from, never a blank page (bug hunt 2026-10-30)
+    Connections {
+        target: exploreFolders
+        function onCatalogPathChanged() {
+            if (exploreFolders.catalogPath === "")
+                root.exploreChooser = true
+        }
+    }
+
     function browseSelection() {
         root.refreshCatalogPaths()
         if (appManager1.selectedDeviceType === "Catalog") {
@@ -975,28 +1235,48 @@ Kirigami.ApplicationWindow {
     }
     Connections {
         target: appManager1
+        // A catalog card opens there through followSelectionInExplore (EXP-F27,
+        // after the card is painted); here only the cards' state follows
         function onSelectedDeviceChanged() {
-            if (pageExplore.visible)
-                root.browseSelection()
+            if (!pageExplore.visible)
+                return
+            if (appManager1.selectedDeviceType === "Catalog")
+                root.exploreChooser = false
+            else if (exploreFolders.openedDeviceId <= 0)
+                root.exploreChooser = true
         }
         function onHomeOverviewChanged() {
             if (pageExplore.visible)
                 root.refreshCatalogPaths()
         }
+        function onDeviceListChanged() { root.refreshCatalogPaths() }
     }
     // The catalogs by their folder: after a split, a sub-folder shown in its
     // parent's catalog holds no files there; they are in its own catalog
     property var catalogPaths: ({})
     function refreshCatalogPaths() {
         const paths = {}
-        for (const d of (appManager1.homeOverview().drives || []))
-            if (d.isDrive)
-                paths[d.path] = d.deviceId
+        let open = false
+        for (const d of (appManager1.homeOverview().drives || [])) {
+            open = open || d.deviceId === exploreFolders.openedDeviceId
+            if (d.isDrive)   // two catalogs at one path (split by type): neither
+                paths[d.path] = paths[d.path] === undefined ? d.deviceId : -1
+        }
         root.catalogPaths = paths
+        // The catalog on show is gone (split, deleted): the cards instead
+        if (exploreFolders.openedDeviceId > 0 && !open) {
+            exploreFolders.openedDeviceId = -1
+            root.exploreChooser = true
+        }
     }
+    // Only a folder below the open catalog's own folder can be another catalog:
+    // the catalog's root, or a path two catalogs share, never redirects
     function otherCatalogForFolder(folderPath) {
+        const top = exploreFolders.catalogPath
+        if (top === "" || !folderPath.startsWith(top.endsWith("/") ? top : top + "/"))
+            return 0
         const deviceId = root.catalogPaths[folderPath] || 0
-        return deviceId !== exploreFolders.openedDeviceId ? deviceId : 0
+        return deviceId > 0 && deviceId !== exploreFolders.openedDeviceId ? deviceId : 0
     }
     // Opened in Browse only, like Explore's other direct opens: the choice in My
     // drives, and so what Search covers, stays as it is
@@ -1090,10 +1370,14 @@ Kirigami.ApplicationWindow {
 
         topContent: [
             ColumnLayout {
+                id: sidebarColumn
                 // The drawer stretches its top area: the column fills it and a
                 // spacer at its end keeps the entries at the top
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                // Room for the entries' focus rings, which the drawer would clip
+                Layout.leftMargin:  4
+                Layout.rightMargin: 4
                 spacing: 2
                 KSidebarItem {
                     iconName: "go-home"
@@ -1130,6 +1414,13 @@ Kirigami.ApplicationWindow {
                     description: qsTr("Catalogue a drive or a folder")
                     active: root.openFeaturePage === pageCreate
                     onClicked: root.sidebarGo("Create", pageCreate)
+                }
+                KSidebarItem {
+                    iconName: "view-history"
+                    title: qsTr("Action history")
+                    description: qsTr("Undo, earlier versions of the catalogs")
+                    active: root.openFeaturePage === pageHistory
+                    onClicked: root.sidebarGo("History", pageHistory)
                 }
                 Controls.Label { text: qsTr("Intelligence").toUpperCase(); font.pixelSize: KTheme.groupLabel; font.weight: Font.DemiBold; font.letterSpacing: KTheme.groupSpacing; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
                 KSidebarItem {
@@ -1223,6 +1514,9 @@ Kirigami.ApplicationWindow {
             target: appManager1
             function onDatabaseConnectionChanged(success, message) {
                 if (success) {
+                    // The history's places belong to the previous collection
+                    root.navEntries = []
+                    root.navIndex = -1
                     showPassiveNotification("✓ " + message, 5000)
                     root.showPage(pageHome)  // the new collection at a glance (D34)
                     pageSearchForm.restoreLastSearch()
@@ -2152,6 +2446,7 @@ Kirigami.ApplicationWindow {
             color: KTheme.ground
         }
         title: qsTr("My drives")
+        titleDelegate: Component { NavTitle { text: pageSelection.title } }   // Back, Forward, title (D36)
         property string deviceType: "Storage"
 
         header: ColumnLayout {
@@ -2370,6 +2665,7 @@ Kirigami.ApplicationWindow {
             // search history dialog.
             clip: true
             topMargin: Kirigami.Units.smallSpacing
+            bottomMargin: 6   // the last card's focus ring, which the list clips
             spacing: Kirigami.Units.largeSpacing
         }
     }
@@ -2384,6 +2680,8 @@ Kirigami.ApplicationWindow {
         visible: false
         property Kirigami.Action escapeAction: pageSearchEscapeAction  // Esc (KBS-F1)
         title: qsTr("Search the drives")
+        titleDelegate: Component { NavTitle { text: pageSearch.title } }   // Back, Forward, title (D36)
+        header: ScopeChip { label: qsTr("Search in: %1") }
 
         // Run the search and show the results page. Shared by the Search action button
         // and the Enter key in the search text field so both behave identically.
@@ -2474,6 +2772,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 id: pageSearchEscapeAction
                 text:        qsTr("Close")
+                visible: false   // a sidebar destination: Back replaces Close (D36)
                 icon.name:   "view-close"
                 displayHint: Kirigami.DisplayHint.KeepVisible
                 onTriggered: {
@@ -2500,6 +2799,7 @@ Kirigami.ApplicationWindow {
         background: Rectangle { color: KTheme.ground }   // design system ground (D34)
         property Kirigami.Action escapeAction: pageSearchResultsEscapeAction  // Esc (KBS-F1)
         visible: false
+        titleDelegate: Component { NavTitle { text: pageSearchResults.title } }   // Back, Forward, title (D36)
         title: {
             let n = Number(newSearch1.properties.filesFoundNumber ?? 0).toLocaleString(Qt.locale(), "f", 0)
             if (newSearch1.properties.searchOnDuplicates)
@@ -2567,6 +2867,7 @@ Kirigami.ApplicationWindow {
         visible: false
         padding: 0
         title: qsTr("Manage drives")
+        titleDelegate: Component { NavTitle { text: pageDevices.title } }   // Back, Forward, title (D36)
         actions: [
             Kirigami.Action {
                 text:        qsTr("All active")
@@ -2631,6 +2932,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 id: pageDevicesEscapeAction
                 text: qsTr("Close")
+                visible: false   // a sidebar destination: Back replaces Close (D36)
                 icon.name: "view-close"
                 onTriggered: root.closeFeaturePage(pageDevices)
             }
@@ -2665,6 +2967,7 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageExploreEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Browse the archive")
+        titleDelegate: Component { NavTitle { text: pageExplore.title } }   // Back, Forward, title (D36)
         padding: 0
 
         // What the page is for, and which catalog is open (D34, "Sfoglia mai vuota")
@@ -2680,28 +2983,54 @@ Kirigami.ApplicationWindow {
                 color: KTheme.text2
                 text: qsTr("The folders and files of a catalogued drive, even when it is not connected. A file tagged AI already has a preview, a description or a transcript: selecting it shows them in File details.")
             }
+            // Where Browse is: every drive, the catalog, then each folder;
+            // every step is a link back to it (D36)
             RowLayout {
-                visible: !root.exploreChooser && exploreFiles.catalogName !== ""
                 Layout.fillWidth: true
                 Layout.leftMargin:  KTheme.gap
                 Layout.rightMargin: KTheme.gap
-                spacing: 10
-                Kirigami.Icon {
-                    source: "drive-harddisk"
-                    implicitWidth: 20
-                    implicitHeight: 20
+                spacing: 6
+                Controls.ToolButton {
+                    visible: !root.exploreChooser && root.exploreCurrentFolder !== exploreFiles.catalogPath
+                    icon.name: "go-up"
+                    onClicked: root.exploreShowFolder(root.exploreParentFolder())
+                    Accessible.name: qsTr("Up one folder")
+                    Controls.ToolTip.text: qsTr("Up one folder")
+                    Controls.ToolTip.visible: hovered
+                    Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
                 }
-                Controls.Label {
+                Flow {
+                    id: exploreCrumbRow
                     Layout.fillWidth: true
-                    text: exploreFiles.catalogName
-                    font.weight: Font.DemiBold
-                    color: KTheme.text
-                    wrapMode: Text.Wrap
-                }
-                KButton {
-                    variant: "link"
-                    text: qsTr("Choose another drive")
-                    onClicked: root.exploreChooser = true
+                    spacing: 2
+                    Accessible.role: Accessible.ToolBar
+                    readonly property var crumbs: root.exploreChooser ? [] : root.exploreCrumbs()
+                    KButton {
+                        variant: root.exploreChooser ? "tonal" : "link"
+                        icon.name: "drive-multidisk"
+                        text: qsTr("All the drives")
+                        onClicked: root.exploreChooser = true
+                    }
+                    Repeater {
+                        model: exploreCrumbRow.crumbs
+                        delegate: Row {
+                            required property var modelData
+                            required property int index
+                            spacing: 2
+                            Controls.Label {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "›"
+                                color: KTheme.text3
+                                Accessible.ignored: true
+                            }
+                            KButton {
+                                // The folder on show is marked, the others lead back
+                                variant: index === exploreCrumbRow.crumbs.length - 1 ? "tonal" : "link"
+                                text: modelData.label
+                                onClicked: root.exploreShowFolder(modelData.path)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2744,6 +3073,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 id: pageExploreEscapeAction
                 text: qsTr("Close")
+                visible: false   // a sidebar destination: Back replaces Close (D36)
                 icon.name: "view-close"
                 // Opened from Results by "Explore folder": back to the same
                 // Results (SRS-F8, KBS-F1); otherwise back to Selection.
@@ -2822,6 +3152,12 @@ Kirigami.ApplicationWindow {
                 }
                 onCatalogOpenRequested: function(info) {
                     root.exploreChooser = false
+                    root.refreshCatalogPaths()
+                    if (root.explorePendingFolder !== "") {
+                        const folder = root.explorePendingFolder
+                        root.explorePendingFolder = ""
+                        Qt.callLater(function() { root.exploreShowFolder(folder) })
+                    }
                     exploreFiles.catalogName  = info.name  ?? ""
                     exploreFiles.catalogPath  = info.path  ?? ""
                     exploreFiles.catalogId    = info.externalId ?? 0
@@ -3026,6 +3362,18 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    //Pages - History (fork, D36): restore points, versions, joining split catalogs
+    ScrollablePageFitted {
+        id: pageHistory
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
+        visible: false
+        title: qsTr("Action history")
+        titleDelegate: Component { NavTitle { text: pageHistory.title } }   // Back, Forward, title (D36)
+        PageHistory {
+            id: pageHistory_form
+        }
+    }
+
     //Pages - Activity (fork, SpecMediaIntelligence.md MDI-F61..F75)
     ScrollablePageFitted {
         id: pageActivity
@@ -3033,12 +3381,14 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageActivityEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Work in progress")
+        titleDelegate: Component { NavTitle { text: pageActivity.title } }   // Back, Forward, title (D36)
         // The monitor samples only while the page is shown (or a job runs)
         onVisibleChanged: pageActivity_form.setShown(visible)
         actions: [
             Kirigami.Action {
                 id: pageActivityEscapeAction
                 text: qsTr("Close")
+                visible: false   // a sidebar destination: Back replaces Close (D36)
                 icon.name: "view-close"
                 onTriggered: root.closeFeaturePage(pageActivity)
             }
@@ -3054,6 +3404,7 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageHomeEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Home")
+        titleDelegate: Component { NavTitle { text: pageHome.title } }   // Back, Forward, title (D36)
         background: Rectangle { color: KTheme.ground }
         onVisibleChanged: pageHome_form.setShown(visible)
         actions: [
@@ -3083,6 +3434,7 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageContextEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Archive knowledge")
+        titleDelegate: Component { NavTitle { text: pageContext.title } }   // Back, Forward, title (D36)
         onVisibleChanged: pageContext_form.setShown(visible)
         actions: [
             Kirigami.Action {
@@ -3102,6 +3454,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 id: pageContextEscapeAction
                 text: qsTr("Close")
+                visible: false   // a sidebar destination: Back replaces Close (D36)
                 icon.name: "view-close"
                 onTriggered: root.closeFeaturePage(pageContext)
             }
@@ -3118,6 +3471,7 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageCreateEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Add a drive")
+        titleDelegate: Component { NavTitle { text: pageCreate.title } }   // Back, Forward, title (D36)
         Connections {
             target: appManager1
             function onCatalogCreationCompleted(success, report) {
@@ -3164,6 +3518,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 id: pageCreateEscapeAction
                 text: qsTr("Close")
+                visible: false   // a sidebar destination: Back replaces Close (D36)
                 icon.name: "view-close"
                 onTriggered: root.closeFeaturePage(pageCreate)
             }
@@ -3184,6 +3539,7 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageDeviceEditEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Edit Device")
+        titleDelegate: Component { NavTitle { text: pageDeviceEdit.title } }   // Back, Forward, title (D36)
         property bool fromDevicesPage: false
         Connections {
             target: pageDeviceEdit_form
@@ -3264,12 +3620,15 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageStatisticsEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Archive in numbers")
+        titleDelegate: Component { NavTitle { text: pageStatistics.title } }   // Back, Forward, title (D36)
+        header: ScopeChip { label: qsTr("Numbers of: %1") }
         padding: 0
 
         actions: [
             Kirigami.Action {
                 id: pageStatisticsEscapeAction
                 text: qsTr("Close")
+                visible: false   // a sidebar destination: Back replaces Close (D36)
                 icon.name: "view-close"
                 onTriggered: root.closeFeaturePage(pageStatistics)
             }
@@ -3287,10 +3646,12 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageTagsEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Labels")
+        titleDelegate: Component { NavTitle { text: pageTags.title } }   // Back, Forward, title (D36)
         actions: [
             Kirigami.Action {
                 id: pageTagsEscapeAction
                 text: qsTr("Close")
+                visible: root.tagsIsAfterExplore()   // a sidebar destination otherwise (D36)
                 icon.name: "view-close"
                 // Opened from Explore by "Tag this folder": back to the same
                 // Explore (EXP-F23, KBS-F1); otherwise back to Selection.
@@ -3309,6 +3670,8 @@ Kirigami.ApplicationWindow {
         property Kirigami.Action escapeAction: pageBackupEscapeAction  // Esc (KBS-F1)
         visible: false
         title: qsTr("Safety copies")
+        titleDelegate: Component { NavTitle { text: pageBackup.title } }   // Back, Forward, title (D36)
+        header: ScopeChip { label: qsTr("Links of: %1") }
 
         onVisibleChanged: {
             if (visible)
@@ -3334,6 +3697,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 id: pageBackupEscapeAction
                 text:      qsTr("Close")
+                visible: false   // a sidebar destination: Back replaces Close (D36)
                 icon.name: "view-close"
                 onTriggered: root.closeFeaturePage(pageBackup)
             }

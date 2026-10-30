@@ -107,10 +107,11 @@ Controls.ToolBar {
         }
     }
 
-    // Buttons of the panel: the design system's, kept low
+    // Buttons of the panel: the design system's, kept low — but never lower
+    // than an enlarged label needs (WCAG 1.4.4)
     component PanelButton: KButton {
         variant: "link"
-        implicitHeight: 32
+        implicitHeight: Math.max(32, implicitContentHeight + topPadding + bottomPadding)
         leftPadding: 10
         rightPadding: 10
     }
@@ -264,6 +265,7 @@ Controls.ToolBar {
                     implicitHeight: Kirigami.Units.iconSizes.small
                     isMask: true
                     color: KTheme.text3
+                    Accessible.ignored: true   // the label says Create or Update
                 }
                 Controls.Label {
                     text: (entryRow.modelData.isCreate ? qsTr("Create") : qsTr("Update"))

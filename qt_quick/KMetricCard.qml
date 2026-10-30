@@ -13,14 +13,20 @@ KCard {
 
     padding: 16
     spacing: 6
+    // Both wrap inside the card rather than run past it when the text is
+    // enlarged or the value is long (WCAG 1.4.4, 1.4.10)
     Controls.Label {
+        Layout.fillWidth: true
         text: metric.label
+        wrapMode: Text.Wrap
         color: KTheme.text3
         font.pixelSize: KTheme.note
         font.weight: Font.Medium
     }
     Controls.Label {
+        Layout.fillWidth: true
         text: metric.value
+        wrapMode: Text.Wrap
         color: KTheme.text
         font.pixelSize: KTheme.metric
         font.weight: Font.Bold

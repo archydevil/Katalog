@@ -77,6 +77,12 @@ AppManager::AppManager(QObject *parent) : QObject(parent)
     m_importSourceDeviceModel->setIncludeCollectionRoot(true);
 }
 //----------------------------------------------------------------------
+AppManager::~AppManager()
+{
+    // The Home count worker calls back into this object when it ends
+    waitForHomeCount();
+}
+//----------------------------------------------------------------------
 void AppManager::initiateApp()
 {
     currentVersion  = KATALOG_VERSION_STRING;
@@ -483,6 +489,9 @@ QString AppManager::startDatabase()
         qWarning() << "startDatabase: migrations failed (non-fatal):" << migErr.text();
 
     collection->insertPhysicalStorageGroup();
+    // Catalogs a split left without a date (fixed since): dated once, so the
+    // instant-search index stops rebuilding them at every launch
+    collection->repairUndatedCatalogs();
     initializeDeviceListModel();
     selectedDevice->loadDevice(conn);
     emit databaseModeChanged();
@@ -494,6 +503,7 @@ QString AppManager::startDatabase()
     QTimer::singleShot(2500, this, &AppManager::restoreMdiJobs);
     QTimer::singleShot(3000, this, &AppManager::scheduleFtsIndexing);
     connect(qApp, &QCoreApplication::aboutToQuit, this, &AppManager::stopFtsIndexing, Qt::UniqueConnection);
+    connect(qApp, &QCoreApplication::aboutToQuit, this, &AppManager::waitForHomeCount, Qt::UniqueConnection);
     return "startDatabase: No Error";
 }
 //----------------------------------------------------------------------
@@ -1279,11 +1289,15 @@ bool AppManager::reconnectToDatabase()
     }
     m_mdiHeld.clear();
     stopKnowledgeIndexing();   // its documents stay pending in the left collection
-    // Home counts belong to the collection being left
+    // Home counts belong to the collection being left; a count still running
+    // reports to a generation that is no longer current and is dropped
+    m_homeGeneration++;
     m_homeQueue.clear();
     m_homeCounting.clear();
     m_homeTypeCache.clear();
     m_homeAiCache.clear();
+    m_mdiCatalogRevision.clear();
+    m_historyUpdateEntry = 0;   // a restore point of the collection being left
     m_mdiStep.clear();
     m_mdiStepLog.clear();
     m_mdiStatusText.clear();
@@ -1319,6 +1333,7 @@ bool AppManager::reconnectToDatabase()
     collection->setConnectionName(conn);
     collection->loadImageFolderPath();
     collection->insertPhysicalStorageGroup();
+    collection->repairUndatedCatalogs();   // see startDatabase()
 
     // Opening a different collection: reset the selection to the default root
     // (Physical Group, guaranteed to exist by insertPhysicalStorageGroup above).
@@ -2970,6 +2985,7 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
     m_mdiJobStart    = QDateTime::currentDateTime();
     m_mdiSourcePath  = device.path;
     m_mdiRunning          = job;
+    m_mdiRunningCatalogId = device.externalID;
     m_mdiQuickHashOnly    = config.quickHashOnly;
     if (!config.quickHashOnly)
         m_mdiHeld.removeIf([&job](const MdiData::PendingJob &h) { return h.sameWork(job); });
@@ -3000,18 +3016,19 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
         emit mdiStatusTextChanged();
     });
     connect(m_mdiJob, &MdiEnrichmentJob::activity, this, &AppManager::onMdiActivity);
-    connect(m_mdiJob, &MdiEnrichmentJob::datumCommitted, this, [this](const QString &, const QString &) {
-        // Coalesced: Explore re-reads its previews at most once a second
+    const int jobCatalogId = device.externalID;
+    connect(m_mdiJob, &MdiEnrichmentJob::datumCommitted, this, [this, jobCatalogId](const QString &, const QString &) {
+        // Coalesced: Explore re-reads its previews at most once a second, and
+        // only when it shows this job's catalog
         if (!m_mdiRevisionPending) {
             m_mdiRevisionPending = true;
-            QTimer::singleShot(1000, this, [this]() {
+            QTimer::singleShot(1000, this, [this, jobCatalogId]() {
                 m_mdiRevisionPending = false;
-                m_mdiRevision++;
-                emit mdiRevisionChanged();
+                bumpMdiRevision(jobCatalogId);
             });
         }
     });
-    connect(m_mdiJob, &MdiEnrichmentJob::finished, this, [this, status](const QVariantMap &summary) {
+    connect(m_mdiJob, &MdiEnrichmentJob::finished, this, [this, status, jobCatalogId](const QVariantMap &summary) {
         const bool stopped = summary.value(QStringLiteral("stopped")).toBool();
         // Ended by quitting or by opening another collection: it stays pending
         // in its own collection and shows nothing here (MDI-F12, MDI-F93)
@@ -3027,6 +3044,7 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
         m_mdiJob = nullptr;           // deleted with its thread
         m_mdiIsPaused = false;
         m_mdiRunning          = MdiData::PendingJob{-1};
+        m_mdiRunningCatalogId = -1;
         m_mdiQuickHashOnly    = false;
         m_mdiWaitingForSource = false;
         m_mdiKeepPending      = false;
@@ -3035,8 +3053,7 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
             saveMdiJobs();
         m_mdiStep.clear();
         emit mdiStepChanged();
-        m_mdiRevision++;
-        emit mdiRevisionChanged();
+        bumpMdiRevision(jobCatalogId);
         emit mdiStateChanged();
         emit enrichmentFinished(summary);
         QTimer::singleShot(0, this, &AppManager::startNextEnrichment);
@@ -3294,12 +3311,34 @@ bool AppManager::saveCatalogNotes(int deviceId, const QString &notes)
 //----------------------------------------------------------------------
 QVariantList AppManager::contextCatalogs()
 {
-    // Every catalog: no pass is ever recorded under this name
+    // Every catalog once: no pass is ever recorded under this name. A catalog
+    // shown in a Virtual group has a device row there too; the row in the
+    // Physical group (parent not Virtual) stands for it.
+    QHash<int, int>     parentById;
+    QHash<int, QString> typeById;
+    for (const Device::DeviceTreeNode &node : Device::loadDeviceTree(m_connectionName)) {
+        parentById.insert(node.id, node.parentId);
+        typeById.insert(node.id, node.type);
+    }
+    auto isCopy = [&](int deviceId) {
+        return typeById.value(parentById.value(deviceId)) == QLatin1String("Virtual");
+    };
+    QHash<int, int> indexByCatalog;
     QVariantList list;
-    for (const QVariantMap &c : MdiFts::catalogsNeedingPass(m_connectionName, mdiDataPath(), QStringLiteral("context-list")))
-        list.append(QVariantMap{{QStringLiteral("deviceId"), c.value(QStringLiteral("deviceId"))},
-                                {QStringLiteral("name"),     c.value(QStringLiteral("name"))},
-                                {QStringLiteral("path"),     c.value(QStringLiteral("sourcePath"))}});
+    for (const QVariantMap &c : MdiFts::catalogsNeedingPass(m_connectionName, mdiDataPath(), QStringLiteral("context-list"))) {
+        const int deviceId  = c.value(QStringLiteral("deviceId")).toInt();
+        const int catalogId = c.value(QStringLiteral("catalogId")).toInt();
+        const QVariantMap item{{QStringLiteral("deviceId"), deviceId},
+                               {QStringLiteral("name"),     c.value(QStringLiteral("name"))},
+                               {QStringLiteral("path"),     c.value(QStringLiteral("sourcePath"))}};
+        const auto listed = indexByCatalog.constFind(catalogId);
+        if (listed == indexByCatalog.constEnd()) {
+            indexByCatalog.insert(catalogId, list.size());
+            list.append(item);
+        } else if (isCopy(list.at(*listed).toMap().value(QStringLiteral("deviceId")).toInt()) && !isCopy(deviceId)) {
+            list[*listed] = item;
+        }
+    }
     return list;
 }
 //----------------------------------------------------------------------
@@ -3396,7 +3435,8 @@ void AppManager::runNextHomeCount()
     const QString mode   = collection->databaseMode;
     const QString dbFile = collection->databaseFilePath;
     const QString mdiDb  = mdiDataPath();
-    QThread *worker = QThread::create([this, job, mode, dbFile, mdiDb]() {
+    const int generation = m_homeGeneration;
+    QThread *worker = QThread::create([this, job, mode, dbFile, mdiDb, generation]() {
         const QString name = QStringLiteral("home_count_%1").arg(job.deviceId);
         QVariantMap counts;
         if (job.types && mode != QLatin1String("Hosted")) {
@@ -3421,19 +3461,43 @@ void AppManager::runNextHomeCount()
                                         MdiData::catalogIndex(mdiName, job.catalogId)).size());
             MdiData::close(mdiName);
         }
-        QMetaObject::invokeMethod(this, [this, job, counts, aiFiles]() {
-            if (job.types)
-                m_homeTypeCache.insert(job.deviceId, {job.stamp, counts});
-            if (aiFiles >= 0)
-                m_homeAiCache.insert(job.deviceId, {QDateTime::currentSecsSinceEpoch(), aiFiles});
-            m_homeCounting.remove(job.deviceId);
+        QMetaObject::invokeMethod(this, [this, job, counts, aiFiles, generation]() {
             m_homeWorkerBusy = false;
-            emit homeOverviewChanged();
+            // Counted for a collection, or device numbers, no longer current
+            if (generation == m_homeGeneration) {
+                bool changed = false;
+                if (job.types) {
+                    const auto old = m_homeTypeCache.constFind(job.deviceId);
+                    changed = old == m_homeTypeCache.constEnd() || old->first != job.stamp || old->second != counts;
+                    m_homeTypeCache.insert(job.deviceId, {job.stamp, counts});
+                }
+                // No AI store (none yet, Hosted): no file with AI results. Cached
+                // all the same, or Home would ask for this count again at once.
+                const int ai = qMax(aiFiles, 0);
+                const auto oldAi = m_homeAiCache.constFind(job.deviceId);
+                changed = changed || oldAi == m_homeAiCache.constEnd() || oldAi->second != ai;
+                m_homeAiCache.insert(job.deviceId, {QDateTime::currentSecsSinceEpoch(), ai});
+                m_homeCounting.remove(job.deviceId);
+                // Home refreshes only for a count that changed: a refresh asks
+                // for the stale counts again
+                if (changed)
+                    emit homeOverviewChanged();
+            }
             runNextHomeCount();
         }, Qt::QueuedConnection);
     });
+    m_homeWorker = worker;
     connect(worker, &QThread::finished, worker, &QObject::deleteLater);
     worker->start();
+}
+//----------------------------------------------------------------------
+void AppManager::waitForHomeCount()
+{
+    // On quit (and destruction): the worker uses its own connections and
+    // calls back into this object
+    m_homeQueue.clear();
+    if (m_homeWorker)
+        m_homeWorker->wait(10000);
 }
 //----------------------------------------------------------------------
 void AppManager::draftContext(int deviceId)
@@ -3849,9 +3913,23 @@ void AppManager::stopFtsIndexing()
     m_ftsThread->wait(10000);   // rebuilds commit in batches and check the flag between them
 }
 //----------------------------------------------------------------------
+void AppManager::bumpMdiRevision(int catalogId)
+{
+    // catalogId < 0: every catalog's data may have changed
+    m_mdiRevision++;
+    if (catalogId < 0)
+        m_mdiAllRevision = m_mdiRevision;
+    else
+        m_mdiCatalogRevision.insert(catalogId, m_mdiRevision);
+    emit mdiRevisionChanged();
+}
+//----------------------------------------------------------------------
 void AppManager::refreshMdiIndex(int catalogId)
 {
-    if (catalogId == m_mdiIndexCatalogId && m_mdiIndexRevision == m_mdiRevision)
+    // Reloaded when another catalog is shown, or when this one's data changed
+    // since it was read: a job enriching another catalog leaves it alone
+    const int changedAt = qMax(m_mdiAllRevision, m_mdiCatalogRevision.value(catalogId, 0));
+    if (catalogId == m_mdiIndexCatalogId && m_mdiIndexRevision >= changedAt)
         return;
     m_mdiIndexCatalogId = catalogId;
     m_mdiIndexRevision  = m_mdiRevision;
@@ -4258,14 +4336,23 @@ QString AppManager::deleteDevice(int deviceId)
     dev.ID = deviceId;
     dev.loadDevice(conn);
 
+    // Restore point (fork): the device and, for a catalog, its files, folders
+    // and every row that shows it. Not for a device that cannot go.
+    dev.verifyHasSubDevice(conn);
+    const int historyEntry = dev.hasSubDevice ? 0
+                           : historyBefore(QStringLiteral("delete"), { deviceId }, false, dev.name);
+
     Device::DeleteOperationResult res = dev.deleteDevice(false);
 
     switch (res.result) {
     case Device::DeleteHasSubDevices:
+        historyDiscard(historyEntry);
         return tr("The selected device cannot be deleted as long as it has sub-devices.");
     case Device::DeleteError:
+        historyDiscard(historyEntry);
         return res.errorMessage;
     case Device::DeleteCancelled:
+        historyDiscard(historyEntry);
         return tr("Deletion cancelled.");
     case Device::DeleteSuccess:
         break;
@@ -4288,10 +4375,12 @@ QString AppManager::deleteDevice(int deviceId)
     if (dev.type == "Catalog") {
         Collection::DeleteCatalogResult fileResult = collection->deleteCatalogFile(&dev);
         if (fileResult == Collection::DeleteFailedToMoveToTrash) {
+            historyAfter(historyEntry, {}, QString());
             return tr("Deletion failed");
         }
     }
 
+    historyAfter(historyEntry, {}, tr("Deleted: %1.").arg(dev.name));
     emit deviceListChanged();
     refreshAllUI();
     return QString();
@@ -4740,6 +4829,8 @@ void AppManager::startNextDeviceUpdate()
         // Deferred so the panel paints before the work starts (OPQ-F11). The
         // replacement is near-instant, so without this it would never be seen.
         QTimer::singleShot(kStartDeferralMs, this, [this, dev, next]() {
+            // Restore point (fork): the storage and its catalogs' paths
+            historyBeforeUpdate(QStringLiteral("edit"), { dev->ID }, true);
             m_deviceUpdateManager->replaceStorageRoot(dev, next.previousPath, next.newPath,
                                                       collection->databaseMode, collection->folder);
         });
@@ -4792,6 +4883,8 @@ void AppManager::startNextDeviceUpdate()
     // progress signals. Leaving it here would set it before the deferred call
     // and the call would then clear it.
     QTimer::singleShot(kStartDeferralMs, this, [this, dev]() {
+        // Restore point (fork) of the catalogs this update rescans
+        historyBeforeUpdate(QStringLiteral("update"), { dev->ID }, true);
         m_deviceUpdateManager->updateDeviceHierarchy(dev, collection->databaseMode, collection->folder, "update");
         // Counted from the queue as it stands rather than from a total fixed when the
         // batch was requested: the queue can grow while it drains, and "3 of 5" has
@@ -4977,9 +5070,14 @@ void AppManager::updateAllActiveDevices(bool showEachReport)
         setupDeviceUpdateManagerForDevices();
 
         Device *dummy = m_deviceUpdateManager->createDummyDeviceFromList(activeCatalogs);
+        QList<int> catalogDeviceIds;
+        for (Device *d : std::as_const(activeCatalogs))
+            catalogDeviceIds << d->ID;
         // Deferred one event-loop turn so the activity panel paints before the
         // scan blocks the GUI thread — same reason as in createCatalog().
-        QTimer::singleShot(kStartDeferralMs, this, [this, dummy]() {
+        QTimer::singleShot(kStartDeferralMs, this, [this, dummy, catalogDeviceIds]() {
+            // Restore point (fork) of every catalog of the batch, in one entry
+            historyBeforeUpdate(QStringLiteral("update"), catalogDeviceIds, true);
             m_deviceUpdateManager->updateDeviceHierarchy(dummy, collection->databaseMode, collection->folder, "update");
         });
         // activeCatalogs intentionally not deleted here — createDummyDeviceFromList copies Device
@@ -5079,6 +5177,10 @@ QVariantMap AppManager::recordDevicesSnapshot()
 //----------------------------------------------------------------------
 QString AppManager::splitCatalogBySubDirectory(int deviceId)
 {
+    const QString refusal = catalogChangeRefusal({ deviceId });
+    if (!refusal.isEmpty())
+        return refusal;
+
     Device dev;
     dev.ID = deviceId;
     dev.loadDevice(m_connectionName);
@@ -5086,32 +5188,58 @@ QString AppManager::splitCatalogBySubDirectory(int deviceId)
     if (collection->databaseMode == "Memory")
         dev.catalog->loadFoldersToTable();
 
-    if (!collection->executeSplitBySubDirectory(&dev))
+    const int entry = historyBefore(QStringLiteral("split"), { deviceId }, false);
+    QList<int> newIds;
+    Collection::CatalogOperationError error = Collection::OperationOk;
+    if (!collection->executeSplitBySubDirectory(&dev, &newIds, &error)) {
+        historyDiscard(entry);
+        QTimer::singleShot(0, this, &AppManager::scheduleFtsIndexing);   // stopped for the split
+        if (error == Collection::OperationAiMoveFailed)
+            return tr("Split cancelled: the AI results could not be moved to the new catalogs. Nothing was changed.");
         return tr("Split failed: no catalogs were created.");
+    }
 
     collection->saveDeviceTableToFile();
-    emit deviceListChanged();
-    refreshDeviceList();
+    historyAfter(entry, newIds, tr("Catalog split into %1 catalogs.").arg(newIds.size()));
     // The new catalogs' instant index, as after a creation (MDI-F128)
-    scheduleFtsIndexing();
+    afterCatalogStructureChange();
     return QString();
 }
 //----------------------------------------------------------------------
 void AppManager::splitCatalogByFileType(int deviceId, bool verifyFirst)
 {
+    const QString refusal = catalogChangeRefusal({ deviceId });
+    if (!refusal.isEmpty()) {
+        emit splitCompleted(false, refusal);
+        return;
+    }
+
     Device *dev = new Device();
     dev->ID = deviceId;
     dev->loadDevice(m_connectionName);
 
-    auto performSplit = [this, dev]() {
-        if (!collection->executeSplitByFileType(dev)) {
-            emit splitCompleted(false, tr("Split failed: no catalogs were created."));
+    auto performSplit = [this, dev, deviceId]() {
+        // Checked again: the MIME verification ran in between
+        const QString lateRefusal = catalogChangeRefusal({ deviceId });
+        if (!lateRefusal.isEmpty()) {
+            emit splitCompleted(false, lateRefusal);
+            delete dev;
+            return;
+        }
+        const int entry = historyBefore(QStringLiteral("split"), { deviceId }, false);
+        QList<int> newIds;
+        Collection::CatalogOperationError error = Collection::OperationOk;
+        if (!collection->executeSplitByFileType(dev, &newIds, &error)) {
+            historyDiscard(entry);
+            QTimer::singleShot(0, this, &AppManager::scheduleFtsIndexing);   // stopped for the split
+            emit splitCompleted(false, error == Collection::OperationAiMoveFailed
+                                       ? tr("Split cancelled: the AI results could not be moved to the new catalogs. Nothing was changed.")
+                                       : tr("Split failed: no catalogs were created."));
         } else {
             collection->saveDeviceTableToFile();
-            emit deviceListChanged();
-            refreshDeviceList();
+            historyAfter(entry, newIds, tr("Catalog split into %1 catalogs.").arg(newIds.size()));
             // The new catalogs' instant index, as after a creation (MDI-F128)
-            scheduleFtsIndexing();
+            afterCatalogStructureChange();
             emit splitCompleted(true, QString());
         }
         delete dev;
@@ -5132,6 +5260,387 @@ void AppManager::splitCatalogByFileType(int deviceId, bool verifyFirst)
         }
         performSplit();
     });
+}
+//----------------------------------------------------------------------
+// History and restore points (fork, owner's decision 2026-10-30)
+//----------------------------------------------------------------------
+QString AppManager::catalogChangeRefusal(const QList<int> &deviceIds, const QList<int> &catalogIds)
+{
+    // A split, recompose or restore moves catalogs' rows and their AI data:
+    // never under a running update, creation, search, backup or import
+    if (m_deviceUpdateIsRunning || m_hasRunningOperation || !m_pendingDeviceUpdates.isEmpty()
+        || m_catalogIsCreating || m_catalogUpdateForBackupRunning || m_backupThread
+        || m_searchIsRunning || m_exploreLoadIsRunning || m_importIsRunning || m_exportIsRunning
+        || (m_deviceUpdateManager && m_deviceUpdateManager->operationRunning()))
+        return tr("A device operation is already running.");
+
+    // Nor under the enrichment of one of these catalogs: it would go on
+    // writing to a catalog that is no longer there
+    if (m_mdiJob && m_mdiRunningCatalogId > 0) {
+        CatalogHistory history(collection);
+        QList<int> catalogs = history.scopeOf(deviceIds, true).catalogIds;
+        catalogs += catalogIds;
+        if (catalogs.contains(m_mdiRunningCatalogId))
+            return tr("The enrichment is working on this catalog: it can be changed once the enrichment ends or is stopped.");
+    }
+
+    // The instant index pauses (it writes to the AI store the change moves
+    // data in); it is scheduled again once the change is done
+    stopFtsIndexing();
+    if (m_ftsThread && !m_ftsThread->isFinished()) {
+        QTimer::singleShot(2000, this, &AppManager::scheduleFtsIndexing);   // once it has stopped
+        return tr("A device operation is already running.");
+    }
+    return QString();
+}
+//----------------------------------------------------------------------
+int AppManager::historyBefore(const QString &action, const QList<int> &deviceIds, bool withDescendants,
+                              const QString &label)
+{
+    if (!historyAvailable())
+        return 0;
+    CatalogHistory history(collection);
+    const CatalogHistory::Scope scope = history.scopeOf(deviceIds, withDescendants);
+    if (scope.isEmpty())
+        return 0;
+    QJsonObject extra;
+    if (!label.isEmpty())
+        extra.insert(QStringLiteral("label"), label);
+    return history.createRestorePoint(action, scope, extra);
+}
+//----------------------------------------------------------------------
+void AppManager::historyAfter(int entryId, const QList<int> &resultDeviceIds, const QString &undoMessage,
+                              bool dropUnchanged, bool byUser)
+{
+    if (entryId <= 0)
+        return;
+    bool kept = false;
+    {
+        CatalogHistory history(collection);
+        kept = history.completeEntry(entryId, history.scopeOf(resultDeviceIds, false), dropUnchanged);
+    }
+    emit historyChanged();
+    if (kept && byUser && !undoMessage.isEmpty())
+        emit undoAvailable(entryId, undoMessage);
+}
+//----------------------------------------------------------------------
+void AppManager::historyDiscard(int entryId)
+{
+    if (entryId <= 0)
+        return;
+    CatalogHistory history(collection);
+    history.discardEntry(entryId);
+}
+//----------------------------------------------------------------------
+void AppManager::historyBeforeUpdate(const QString &action, const QList<int> &deviceIds, bool byUser)
+{
+    // Every catalog update goes through the device update manager: its end,
+    // whichever handler set is connected, closes the restore point
+    if (m_historyUpdateEntry > 0)
+        historyAfterUpdate();   // the previous one never reported its end
+    if (!m_historyHook)
+        m_historyHook = new QObject(this);
+    if (m_deviceUpdateManager && m_historyHookedManager != m_deviceUpdateManager) {
+        m_historyHookedManager = m_deviceUpdateManager;
+        connect(m_deviceUpdateManager, &DeviceUpdateManager::operationCompleted,
+                m_historyHook, [this]() { historyAfterUpdate(); });
+        connect(m_deviceUpdateManager, &DeviceUpdateManager::operationError,
+                m_historyHook, [this](const QString &) { historyAfterUpdate(); });
+        connect(m_deviceUpdateManager, &DeviceUpdateManager::operationCancelled,
+                m_historyHook, [this]() { historyAfterUpdate(); });
+    }
+    m_historyUpdateByUser = byUser;
+    m_historyUpdateEntry  = historyBefore(action, deviceIds, true);
+}
+//----------------------------------------------------------------------
+void AppManager::historyAfterUpdate()
+{
+    const int entryId = m_historyUpdateEntry;
+    m_historyUpdateEntry = 0;
+    if (entryId <= 0)
+        return;
+    bool kept = false;
+    QString names;
+    {
+        CatalogHistory history(collection);
+        const CatalogHistory::Entry e = history.entry(entryId);
+        // The same rows after the update; catalogs it did not change leave
+        // the entry, which goes when none changed
+        kept = history.completeEntry(entryId, e.before, true);
+        if (kept) {
+            QStringList list;
+            for (const CatalogHistory::CatalogFact &f : history.entry(entryId).afterCatalogs)
+                list << f.name;
+            names = list.join(QStringLiteral(", "));
+        }
+    }
+    emit historyChanged();
+    if (kept && m_historyUpdateByUser)
+        emit undoAvailable(entryId, tr("Updated: %1.").arg(names));
+}
+//----------------------------------------------------------------------
+void AppManager::afterCatalogStructureChange()
+{
+    // Catalogs came or went: lists, Home and Explore caches keyed by device or
+    // catalog number, AI data moved by path, instant index of new catalogs
+    collection->saveDeviceTableToFile();
+    emit deviceListChanged();
+    refreshDeviceList();
+    m_homeGeneration++;
+    m_homeQueue.clear();
+    m_homeCounting.clear();
+    m_homeTypeCache.clear();
+    m_homeAiCache.clear();
+    m_mdiIndexCatalogId = -1;
+    bumpMdiRevision(-1);
+    emit homeOverviewChanged();
+    // Deferred: the index pass stopped for the change must be over first
+    QTimer::singleShot(0, this, &AppManager::scheduleFtsIndexing);
+}
+//----------------------------------------------------------------------
+bool AppManager::historyAvailable()
+{
+    return CatalogHistory::isAvailable(collection->databaseMode, collection->folder);
+}
+//----------------------------------------------------------------------
+QString AppManager::historyErrorText(CatalogHistory::Error error) const
+{
+    switch (error) {
+    case CatalogHistory::NoError:
+        return QString();
+    case CatalogHistory::Disabled:
+        return tr("History is not available for this collection.");
+    case CatalogHistory::NotFound:
+    case CatalogHistory::NotRestorable:
+        return tr("This version can no longer be restored.");
+    case CatalogHistory::IdConflict:
+        return tr("This version cannot be restored in place: a number it used now belongs to another catalog or device. It can still be opened as a separate catalog.");
+    case CatalogHistory::AiMoveFailed:
+        return tr("The AI results could not be moved back. Nothing was changed.");
+    case CatalogHistory::NoSuchCatalog:
+        return tr("This catalog is not part of this version.");
+    case CatalogHistory::NoParent:
+        return tr("The storage or group this version was in no longer exists.");
+    case CatalogHistory::DatabaseFailed:
+        break;
+    }
+    return tr("The collection could not be changed. Nothing was changed.");
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::historyEntryMap(const CatalogHistory::Entry &e, const CatalogHistory &history, int depth) const
+{
+    auto catalogsOf = [](const QList<CatalogHistory::CatalogFact> &facts) {
+        QVariantList list;
+        for (const CatalogHistory::CatalogFact &f : facts)
+            list << QVariantMap{ { QStringLiteral("deviceId"),  f.deviceId },
+                                 { QStringLiteral("catalogId"), f.catalogId },
+                                 { QStringLiteral("name"),      f.name },
+                                 { QStringLiteral("files"),     f.files } };
+        return list;
+    };
+    auto namesOf = [&](const QList<CatalogHistory::CatalogFact> &facts) {
+        QStringList names;
+        for (const CatalogHistory::CatalogFact &f : facts)
+            names << f.name;
+        if (names.isEmpty())
+            names << e.extra.value(QStringLiteral("label")).toString();
+        if (names.size() > 3)
+            return names.mid(0, 3).join(QStringLiteral(", ")) + QStringLiteral(", …");
+        return names.join(QStringLiteral(", "));
+    };
+    auto sideOf = [](const QList<CatalogHistory::CatalogFact> &facts) {
+        qint64 files = 0;
+        for (const CatalogHistory::CatalogFact &f : facts)
+            files += f.files;
+        return tr("%1 catalog(s), %2 file(s)").arg(QLocale().toString(qlonglong(facts.size())),
+                                                     QLocale().toString(files));
+    };
+
+    const QString before = namesOf(e.beforeCatalogs);
+    const QString after  = namesOf(e.afterCatalogs);
+    QString title;
+    if (e.action == QLatin1String("update"))
+        title = tr("Update of %1").arg(before);
+    else if (e.action == QLatin1String("split"))
+        title = tr("Split of %1 into %2 catalogs").arg(before, QString::number(e.afterCatalogs.size()));
+    else if (e.action == QLatin1String("recompose"))
+        title = tr("%1 catalogs recomposed into %2").arg(QString::number(e.beforeCatalogs.size()), after);
+    else if (e.action == QLatin1String("delete"))
+        title = tr("Deletion of %1").arg(before);
+    else if (e.action == QLatin1String("edit"))
+        title = tr("Change to %1").arg(before);
+    else if (e.action == QLatin1String("open"))
+        title = tr("Version of %1 opened as %2")
+                    .arg(e.extra.value(QStringLiteral("sourceName")).toString(), after);
+    else if (e.action == QLatin1String("restore")) {
+        const CatalogHistory::Entry undone = history.entry(e.extra.value(QStringLiteral("restoredEntryId")).toInt());
+        const QString what = undone.id > 0 && depth < 3
+                             ? historyEntryMap(undone, history, depth + 1).value(QStringLiteral("title")).toString()
+                             : QString();
+        title = what.isEmpty() ? tr("Restored as it was before")
+                               : tr("Restored as it was before: %1").arg(what);
+    } else
+        title = e.action;
+
+    QString details;
+    if (e.beforeCatalogs.isEmpty())
+        details = tr("After: %1").arg(sideOf(e.afterCatalogs));
+    else if (e.afterCatalogs.isEmpty())
+        details = tr("Before: %1").arg(sideOf(e.beforeCatalogs));
+    else
+        details = tr("Before: %1 · After: %2").arg(sideOf(e.beforeCatalogs), sideOf(e.afterCatalogs));
+
+    QVariantMap map;
+    if (depth > 0) {
+        map[QStringLiteral("title")] = title;
+        return map;
+    }
+    const CatalogHistory::Error restorable = history.checkRestorable(e);
+    const QDateTime date = QDateTime::fromString(e.date, Qt::ISODate);
+    map[QStringLiteral("id")]             = e.id;
+    map[QStringLiteral("date")]           = e.date;
+    map[QStringLiteral("dateText")]       = QLocale().toString(date, QLocale::ShortFormat);
+    map[QStringLiteral("action")]         = e.action;
+    map[QStringLiteral("title")]          = title;
+    map[QStringLiteral("details")]        = details;
+    map[QStringLiteral("catalogs")]       = e.hasSnapshot ? catalogsOf(e.beforeCatalogs) : QVariantList();
+    map[QStringLiteral("resultCatalogs")] = catalogsOf(e.afterCatalogs);
+    map[QStringLiteral("canRestore")]     = restorable == CatalogHistory::NoError;
+    map[QStringLiteral("restoreProblem")] = e.state == QLatin1String("undone") ? QString() : historyErrorText(restorable);
+    map[QStringLiteral("undone")]         = e.state == QLatin1String("undone");
+    map[QStringLiteral("kept")]           = e.hasSnapshot;
+    return map;
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::historyEntries()
+{
+    return historyForDevice(0);
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::historyForDevice(int deviceId)
+{
+    QVariantList list;
+    if (!historyAvailable())
+        return list;
+    CatalogHistory history(collection);
+    for (const CatalogHistory::Entry &e : history.entries(deviceId))
+        list << historyEntryMap(e, history);
+    return list;
+}
+//----------------------------------------------------------------------
+QString AppManager::restoreHistoryEntry(int entryId)
+{
+    if (!historyAvailable())
+        return historyErrorText(CatalogHistory::Disabled);
+    int restorePoint = 0;
+    CatalogHistory::Error error = CatalogHistory::NoError;
+    {
+        CatalogHistory history(collection);
+        const CatalogHistory::Entry e = history.entry(entryId);
+        if (e.id == 0)
+            return historyErrorText(CatalogHistory::NotFound);
+        const QString refusal = catalogChangeRefusal(e.before.united(e.after).deviceIds,
+                                                     e.before.united(e.after).catalogIds);
+        if (!refusal.isEmpty())
+            return refusal;
+        error = history.restore(entryId, &restorePoint);
+    }
+    if (error != CatalogHistory::NoError) {
+        // Nothing changed; the index pass stopped for it starts again
+        QTimer::singleShot(0, this, &AppManager::scheduleFtsIndexing);
+        return historyErrorText(error);
+    }
+    emit historyChanged();
+    afterCatalogStructureChange();
+    emit undoAvailable(restorePoint, tr("Restored as it was before."));
+    return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::openHistoryVersion(int entryId, int catalogId, const QString &nameSuffix)
+{
+    if (!historyAvailable())
+        return historyErrorText(CatalogHistory::Disabled);
+    const QString refusal = catalogChangeRefusal({});
+    if (!refusal.isEmpty())
+        return refusal;
+    int newDevice = 0, openEntry = 0;
+    CatalogHistory::Error error = CatalogHistory::NoError;
+    {
+        CatalogHistory history(collection);
+        error = history.openAsCatalog(entryId, catalogId, nameSuffix, &newDevice, &openEntry);
+    }
+    if (error != CatalogHistory::NoError) {
+        QTimer::singleShot(0, this, &AppManager::scheduleFtsIndexing);
+        return historyErrorText(error);
+    }
+    Device opened;
+    opened.ID = newDevice;
+    opened.loadDevice(m_connectionName);
+    emit historyChanged();
+    afterCatalogStructureChange();
+    emit undoAvailable(openEntry, tr("Version opened as a separate catalog: %1.").arg(opened.name));
+    return QString();
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::recomposeProposal(int deviceId)
+{
+    const Collection::RecomposeProposal proposal = collection->proposeRecompose(deviceId);
+    QVariantList catalogs;
+    for (int id : proposal.deviceIds) {
+        Device part;
+        part.ID = id;
+        part.loadDevice(m_connectionName);
+        catalogs << QVariantMap{ { QStringLiteral("deviceId"), id },
+                                 { QStringLiteral("name"),     part.name },
+                                 { QStringLiteral("files"),    part.totalFileCount } };
+    }
+    QString reason;
+    if (proposal.problem == QLatin1String("type"))
+        reason = tr("Only the catalogs of a storage, of a group, or of a split can be recomposed.");
+    else if (proposal.problem == QLatin1String("few"))
+        reason = tr("At least two catalogs are needed to recompose.");
+    else if (proposal.problem == QLatin1String("nocommon"))
+        reason = tr("These catalogs have no folder in common.");
+    return QVariantMap{ { QStringLiteral("name"),     proposal.name },
+                        { QStringLiteral("path"),     proposal.path },
+                        { QStringLiteral("catalogs"), catalogs },
+                        { QStringLiteral("possible"), proposal.problem.isEmpty() },
+                        { QStringLiteral("reason"),   reason } };
+}
+//----------------------------------------------------------------------
+QString AppManager::recomposeCatalogs(const QVariantList &deviceIds, const QString &name)
+{
+    QList<int> ids;
+    for (const QVariant &v : deviceIds)
+        ids << v.toInt();
+    if (name.trimmed().isEmpty())
+        return tr("Provide a name for this new catalog.");
+    const QString refusal = catalogChangeRefusal(ids);
+    if (!refusal.isEmpty())
+        return refusal;
+
+    const int entry = historyBefore(QStringLiteral("recompose"), ids, false);
+    int newDevice = 0;
+    const Collection::CatalogOperationError error = collection->executeRecompose(ids, name, &newDevice);
+    if (error != Collection::OperationOk) {
+        historyDiscard(entry);
+        QTimer::singleShot(0, this, &AppManager::scheduleFtsIndexing);
+        switch (error) {
+        case Collection::OperationTooFew:
+            return tr("At least two catalogs are needed to recompose.");
+        case Collection::OperationNoCommonFolder:
+            return tr("These catalogs have no folder in common.");
+        case Collection::OperationNameTaken:
+            return tr("There is already a catalog with this name: %1\nChoose a different name.").arg(name.trimmed());
+        case Collection::OperationAiMoveFailed:
+            return tr("Recomposition cancelled: the AI results could not be moved to the new catalog. Nothing was changed.");
+        default:
+            return tr("The collection could not be changed. Nothing was changed.");
+        }
+    }
+    historyAfter(entry, { newDevice }, tr("%1 catalogs recomposed into %2.").arg(QString::number(ids.size()), name.trimmed()));
+    afterCatalogStructureChange();
+    return QString();
 }
 //----------------------------------------------------------------------
 void AppManager::verifyMimeTypes(int deviceId)
@@ -5466,13 +5975,6 @@ QString AppManager::saveDeviceBasicFields(int deviceId, const QString &name, int
             return tr("There is already a catalog with this name: %1\nChoose a different name.").arg(name);
     }
 
-    dev.name = name;
-    // loadDevice() above populated the comment, so the full-row UPDATE in
-    // saveDevice() cannot blank it (SpecDeviceComment.md DCM-C2).
-    dev.comment = comment;
-    dev.path = Catalog::normalizeSourcePath(path);
-    dev.catalog->sourcePath = dev.path;
-
     // Parent + groupId cascade
     Device newParent;
     newParent.ID = parentId;
@@ -5483,6 +5985,19 @@ QString AppManager::saveDeviceBasicFields(int deviceId, const QString &name, int
         && newParent.type != "Storage") {
         return tr("A Catalog in the Physical group can only be set under a Storage device.");
     }
+
+    // Restore point (fork) of a change that is really one: name, place, path
+    // or note. A catalog brings its files (their catalog name changes too).
+    const bool edited = name != previousName || parentId != previousParentId
+                     || Catalog::normalizeSourcePath(path) != dev.path || comment != dev.comment;
+    const int historyEntry = edited ? historyBefore(QStringLiteral("edit"), { deviceId }, false, previousName) : 0;
+
+    dev.name = name;
+    // loadDevice() above populated the comment, so the full-row UPDATE in
+    // saveDevice() cannot blank it (SpecDeviceComment.md DCM-C2).
+    dev.comment = comment;
+    dev.path = Catalog::normalizeSourcePath(path);
+    dev.catalog->sourcePath = dev.path;
 
     // At root (parentId 0) keep the device's current group. K2 forced group 1
     // here ("root == Virtual"), but the seeded " Physical Group" (device id 1)
@@ -5532,6 +6047,7 @@ QString AppManager::saveDeviceBasicFields(int deviceId, const QString &name, int
     }
 
     collection->saveDeviceTableToFile();
+    historyAfter(historyEntry, { deviceId }, tr("Changes saved: %1.").arg(name));
     return {};
 }
 //----------------------------------------------------------------------
@@ -5600,6 +6116,13 @@ QString AppManager::saveCatalogOptions(int deviceId, const QString &fileType, bo
 
     const QString prevMetadata = dev.catalog->includeMetadata;
 
+    // Restore point (fork) when an option really changes: the metadata
+    // transition below can clear fields of every file
+    const bool changed = fileType != dev.catalog->fileType || includeSubDir != dev.catalog->includeSubDir
+                      || includeHidden != dev.catalog->includeHidden || includeMetadata != prevMetadata
+                      || includeChecksum != dev.catalog->includeChecksum || isFullDevice != dev.catalog->isFullDevice;
+    const int historyEntry = changed ? historyBefore(QStringLiteral("edit"), { deviceId }, false, dev.name) : 0;
+
     dev.catalog->fileType        = fileType;
     dev.catalog->includeSubDir   = includeSubDir;
     dev.catalog->includeHidden   = includeHidden;
@@ -5614,6 +6137,7 @@ QString AppManager::saveCatalogOptions(int deviceId, const QString &fileType, bo
     if (prevMetadata != includeMetadata)
         dev.catalog->handleMetadataTransition(prevMetadata, includeMetadata);
 
+    historyAfter(historyEntry, { deviceId }, tr("Changes saved: %1.").arg(dev.name));
     return {};
 }
 //----------------------------------------------------------------------
@@ -7208,6 +7732,7 @@ void AppManager::runNextPostBackupUpdate()
     Device *dev = new Device();
     dev->ID = id;
     dev->loadDevice(m_connectionName);
+    historyBeforeUpdate(QStringLiteral("update"), { id }, false);   // restore point (fork)
     m_deviceUpdateManager->updateDeviceHierarchy(dev, collection->databaseMode, collection->folder, "update");
 }
 //----------------------------------------------------------------------
@@ -7349,6 +7874,7 @@ void AppManager::prepareCatalogsForMapping(int mappingId)
 
     Device *dev = new Device();
     *dev = m_pendingCatalogUpdateSourceDevice;
+    historyBeforeUpdate(QStringLiteral("update"), { dev->ID }, false);   // restore point (fork)
     m_deviceUpdateManager->updateDeviceHierarchy(dev, collection->databaseMode, collection->folder, "update");
 }
 //----------------------------------------------------------------------
@@ -7411,6 +7937,7 @@ void AppManager::onCatalogUpdateForBackupStep()
         QTimer::singleShot(50, this, [this]() {
             Device *dev = new Device();
             *dev = m_pendingCatalogUpdateTargetDevice;
+            historyBeforeUpdate(QStringLiteral("update"), { dev->ID }, false);   // restore point (fork)
             m_deviceUpdateManager->updateDeviceHierarchy(dev, collection->databaseMode, collection->folder, "update");
         });
         return;

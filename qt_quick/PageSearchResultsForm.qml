@@ -1223,6 +1223,7 @@ ColumnLayout {
         title: qsTr("Confirmation")
         subtitle: qsTr("Move this file to the trash?") + "\n" + path
         standardButtons: Kirigami.Dialog.NoButton
+        padding: Kirigami.Units.largeSpacing * 2   // room inside the design-system surface
         customFooterActions: [
             Kirigami.Action {
                 text: qsTr("Move to Trash")
@@ -1474,6 +1475,8 @@ ColumnLayout {
             // generated rather than translatable text (SRF-F10 / SRF-C3).
             readonly property string labelText:
                 qsTr("Catalogs with results") + " (" + appManager1.searchCatalogFilters.length + ")"
+            // Without `text`, the button's name is set here (WCAG 4.1.2)
+            Accessible.name: labelText
             onClicked: catalogFilterPopup.visible ? catalogFilterPopup.close()
                                                   : catalogFilterPopup.open()
 

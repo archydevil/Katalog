@@ -4,15 +4,15 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../qt_quick/appmanager.cpp" line="+170"/>
+        <location filename="../qt_quick/appmanager.cpp" line="+176"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+6464"/>
+        <location line="+6982"/>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6588"/>
+        <location line="-7106"/>
         <source>Stopped</source>
         <translation type="unfinished"></translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+4897"/>
+        <location line="+5400"/>
         <source>Evaluated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5019"/>
+        <location line="-5522"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -45,16 +45,16 @@
         <location line="+9"/>
         <location line="+7"/>
         <location line="+83"/>
-        <location line="+2334"/>
-        <location line="+380"/>
-        <location line="+152"/>
-        <location line="+435"/>
-        <location line="+1151"/>
-        <location line="+26"/>
+        <location line="+2343"/>
+        <location line="+381"/>
+        <location line="+153"/>
+        <location line="+482"/>
+        <location line="+1176"/>
+        <location line="+28"/>
         <location line="+20"/>
-        <location line="+384"/>
+        <location line="+802"/>
         <location line="+33"/>
-        <location line="+596"/>
+        <location line="+611"/>
         <location line="+37"/>
         <location line="+315"/>
         <location line="+11"/>
@@ -70,12 +70,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6465"/>
-        <location line="+2724"/>
+        <location line="-6983"/>
+        <location line="+2735"/>
         <location line="+1"/>
-        <location line="+566"/>
+        <location line="+613"/>
         <location line="+1"/>
-        <location line="+2265"/>
+        <location line="+2725"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -85,7 +85,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6052"/>
+        <location line="-6566"/>
         <source>Empty database path provided</source>
         <translation type="unfinished"></translation>
     </message>
@@ -125,7 +125,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+510"/>
+        <location line="+515"/>
         <source>search_results</source>
         <translation type="unfinished"></translation>
     </message>
@@ -171,12 +171,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+4441"/>
+        <location line="+4950"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-4440"/>
+        <location line="-4949"/>
         <source>Date</source>
         <translation type="unfinished"></translation>
     </message>
@@ -237,18 +237,21 @@
     </message>
     <message>
         <location line="+236"/>
-        <location line="+2627"/>
-        <location line="+607"/>
+        <location line="+2730"/>
+        <location line="+17"/>
+        <location line="+374"/>
+        <location line="+622"/>
         <source>A device operation is already running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3230"/>
+        <location line="-3739"/>
+        <location line="+3068"/>
         <source>Provide a name for this new catalog.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-3066"/>
         <source>Provide a path for this new catalog.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -273,12 +276,12 @@ Choose a different name and try again.</source>
     </message>
     <message>
         <location line="+66"/>
-        <location line="+2143"/>
+        <location line="+2219"/>
         <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1938"/>
+        <location line="-2014"/>
         <source>Thumbnail</source>
         <translation type="unfinished"></translation>
     </message>
@@ -389,14 +392,14 @@ Choose a different name and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+94"/>
-        <location line="+157"/>
+        <location line="+95"/>
+        <location line="+158"/>
         <source>Enrichment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-146"/>
-        <location line="+148"/>
+        <location line="-147"/>
+        <location line="+149"/>
         <source>Paused</source>
         <translation type="unfinished"></translation>
     </message>
@@ -406,28 +409,33 @@ Choose a different name and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1066"/>
+        <location line="+1127"/>
         <source>Catalog creation was stopped.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+34"/>
-        <location line="+19"/>
+        <location line="+26"/>
         <source>The selected device cannot be deleted as long as it has sub-devices.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+6"/>
         <source>Deletion cancelled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>Deletion failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+135"/>
+        <location line="+4"/>
+        <source>Deleted: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+132"/>
         <source>Virtual</source>
         <translation type="unfinished"></translation>
     </message>
@@ -443,12 +451,12 @@ Choose a different name and try again.</source>
     </message>
     <message>
         <location line="+242"/>
-        <location line="+46"/>
+        <location line="+48"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+243"/>
+        <location line="+250"/>
         <source>The selected device is not a catalog.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -463,13 +471,168 @@ Choose a different name and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+58"/>
-        <location line="+18"/>
+        <location line="+68"/>
+        <location line="+38"/>
+        <source>Split cancelled: the AI results could not be moved to the new catalogs. Nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-37"/>
+        <location line="+38"/>
         <source>Split failed: no catalogs were created.</source>
         <translation>Split failed: no catalogs were created.</translation>
     </message>
     <message>
-        <location line="+114"/>
+        <location line="-34"/>
+        <location line="+37"/>
+        <source>Catalog split into %1 catalogs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+44"/>
+        <source>The enrichment is working on this catalog: it can be changed once the enrichment ends or is stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+95"/>
+        <source>Updated: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>History is not available for this collection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This version can no longer be restored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This version cannot be restored in place: a number it used now belongs to another catalog or device. It can still be opened as a separate catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The AI results could not be moved back. Nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This catalog is not part of this version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The storage or group this version was in no longer exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+211"/>
+        <source>The collection could not be changed. Nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-183"/>
+        <source>%1 catalog(s), %2 file(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Update of %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Split of %1 into %2 catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1 catalogs recomposed into %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Deletion of %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Change to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Version of %1 opened as %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Restored as it was before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Restored as it was before: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>After: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Before: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Before: %1 · After: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+64"/>
+        <source>Restored as it was before.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Version opened as a separate catalog: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Only the catalogs of a storage, of a group, or of a split can be recomposed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+29"/>
+        <source>At least two catalogs are needed to recompose.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-27"/>
+        <location line="+29"/>
+        <source>These catalogs have no folder in common.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Recomposition cancelled: the AI results could not be moved to the new catalog. Nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>%1 catalogs recomposed into %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+90"/>
         <source>Device has no catalog.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -504,18 +667,19 @@ Choose a different name and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+113"/>
+        <location line="-228"/>
+        <location line="+341"/>
         <source>There is already a catalog with this name: %1
 Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+11"/>
         <source>A Catalog in the Physical group can only be set under a Storage device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="+82"/>
         <source>File type: %1 → %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -565,18 +729,18 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-451"/>
+        <location line="-839"/>
         <source>MIME verification failed:&lt;br/&gt;%1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+415"/>
         <location line="+33"/>
         <source>Verify MIME types</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+361"/>
+        <location line="+368"/>
         <location line="+1"/>
         <location line="+21"/>
         <location line="+1"/>
@@ -584,9 +748,9 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2699"/>
+        <location line="-3200"/>
         <location line="+61"/>
-        <location line="+2837"/>
+        <location line="+3346"/>
         <source>Selected device is not a catalog</source>
         <translation type="unfinished"></translation>
     </message>
@@ -643,9 +807,9 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3322"/>
-        <location line="+567"/>
-        <location line="+2263"/>
+        <location line="-3829"/>
+        <location line="+614"/>
+        <location line="+2723"/>
         <location line="+411"/>
         <location line="+26"/>
         <location line="+17"/>
@@ -662,15 +826,21 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2238"/>
-        <location line="+2240"/>
+        <location line="-2698"/>
+        <location line="+2700"/>
         <location line="+450"/>
         <location line="+10"/>
         <source>Loaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="-757"/>
+        <location line="+90"/>
+        <source>Changes saved: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+712"/>
         <source>The export folder must be empty.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -730,20 +900,20 @@ Choose a different name.</source>
     <message>
         <location line="+109"/>
         <location line="+2"/>
-        <location line="+421"/>
+        <location line="+422"/>
         <source>Link not found.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-408"/>
+        <location line="-409"/>
         <location line="+2"/>
         <location line="+162"/>
-        <location line="+256"/>
+        <location line="+257"/>
         <source>Both source and target must be Catalog devices.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-380"/>
+        <location line="-381"/>
         <location line="+7"/>
         <source>Move</source>
         <translation type="unfinished"></translation>
@@ -763,18 +933,18 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="-142"/>
-        <location line="+254"/>
+        <location line="+255"/>
         <source>Source not available: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-249"/>
-        <location line="+253"/>
+        <location line="-250"/>
+        <location line="+254"/>
         <source>Target not available: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-203"/>
+        <location line="-204"/>
         <source>Archive</source>
         <translation type="unfinished"></translation>
     </message>
@@ -821,7 +991,7 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+130"/>
+        <location line="+131"/>
         <source>No preview data to export.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -879,7 +1049,7 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1522"/>
+        <location line="+1527"/>
         <source>root</source>
         <translation type="unfinished"></translation>
     </message>
@@ -948,17 +1118,19 @@ Choose a different name.</source>
 <context>
     <name>ColumnBrowser</name>
     <message>
-        <location filename="../qt_quick/ColumnBrowser.qml" line="+72"/>
+        <location filename="../qt_quick/ColumnBrowser.qml" line="+89"/>
         <source>No folder selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+153"/>
+        <location line="+104"/>
+        <location line="+63"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-64"/>
+        <location line="+64"/>
         <source>Catalog</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1412,7 +1584,7 @@ Choose a different name.</source>
 <context>
     <name>Inspector</name>
     <message>
-        <location filename="../qt_quick/Inspector.qml" line="+90"/>
+        <location filename="../qt_quick/Inspector.qml" line="+91"/>
         <source>No file selected.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1432,7 +1604,7 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+62"/>
+        <location line="+67"/>
         <source>Online</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1495,7 +1667,7 @@ Choose a different name.</source>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1511"/>
+        <location filename="../qt_quick/Main.qml" line="+1805"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1513,13 +1685,13 @@ Choose a different name.</source>
         <location line="-581"/>
         <location line="+72"/>
         <location line="+270"/>
-        <location line="+1378"/>
-        <location line="+128"/>
+        <location line="+1440"/>
+        <location line="+136"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2015"/>
+        <location line="-2085"/>
         <location line="+126"/>
         <location line="+81"/>
         <location line="+195"/>
@@ -1528,13 +1700,13 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-787"/>
-        <location line="+237"/>
+        <location line="-790"/>
+        <location line="+240"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-376"/>
+        <location line="-390"/>
         <source>Open...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1565,7 +1737,47 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="-296"/>
+        <source>Undo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+61"/>
+        <location line="+11"/>
+        <location line="+1891"/>
+        <source>All the drives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1897"/>
+        <source>Change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <location line="+1"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <location line="+1"/>
+        <source>Forward</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+276"/>
+        <location line="+1950"/>
+        <source>Action history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-1949"/>
+        <source>Undo, earlier versions of the catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1580,7 +1792,7 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+144"/>
+        <location line="+147"/>
         <source>Do not show again</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1878,24 +2090,29 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+21"/>
-        <location line="+673"/>
+        <location line="+708"/>
         <source>Analyse with AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-630"/>
+        <location line="-665"/>
         <source>The source folder does not contain any file.
 This could mean that the source is empty or the device is not mounted to this folder.
 Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+71"/>
+        <location line="+72"/>
         <source>The drive or folder chosen here is the one searched, browsed and counted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+268"/>
+        <location line="+220"/>
+        <source>Search in: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+51"/>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1911,13 +2128,13 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+7"/>
-        <location line="+126"/>
-        <location line="+579"/>
+        <location line="+129"/>
+        <location line="+632"/>
         <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-698"/>
+        <location line="-754"/>
         <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1927,23 +2144,23 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-331"/>
-        <location line="+339"/>
-        <location line="+48"/>
-        <location line="+109"/>
-        <location line="+113"/>
-        <location line="+295"/>
-        <location line="+21"/>
-        <location line="+42"/>
-        <location line="+62"/>
-        <location line="+106"/>
-        <location line="+21"/>
+        <location line="-335"/>
+        <location line="+343"/>
+        <location line="+50"/>
+        <location line="+110"/>
+        <location line="+141"/>
+        <location line="+315"/>
+        <location line="+23"/>
         <location line="+43"/>
+        <location line="+64"/>
+        <location line="+110"/>
+        <location line="+23"/>
+        <location line="+46"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1209"/>
+        <location line="-1278"/>
         <source>Copy version and system information</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1953,7 +2170,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+83"/>
         <source>All</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1978,7 +2195,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+155"/>
+        <location line="+160"/>
         <source>Duplicates (%1)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1993,7 +2210,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+64"/>
         <source>All active</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2013,7 +2230,13 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+101"/>
+        <location line="+85"/>
+        <location line="+1"/>
+        <source>Up one folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+43"/>
         <source>Columns</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2023,27 +2246,27 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+361"/>
+        <location line="+384"/>
         <source>Re-interpret with the context</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+41"/>
         <source>Catalog creation failed: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-901"/>
+        <location line="-960"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+951"/>
+        <location line="+1011"/>
         <source>Edit Device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>Save changes to the catalog definition?
 
 %1
@@ -2052,19 +2275,19 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-104"/>
-        <location line="+129"/>
+        <location line="-108"/>
+        <location line="+133"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2119"/>
-        <location line="+1956"/>
+        <location line="-2191"/>
+        <location line="+2022"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1955"/>
+        <location line="-2021"/>
         <source>Archive overview</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2075,74 +2298,74 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1046"/>
+        <location line="+1056"/>
         <source>My drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1045"/>
+        <location line="-1055"/>
         <source>Catalogued drives and folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1552"/>
+        <location line="+1570"/>
         <source>Browse the archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1551"/>
+        <location line="-1569"/>
         <source>Folders, previews, details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1264"/>
+        <location line="+1276"/>
         <source>Search the drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1263"/>
+        <location line="-1275"/>
         <source>By name, content or meaning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1795"/>
-        <location line="+196"/>
+        <location line="+1847"/>
+        <location line="+213"/>
         <source>Add a drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1990"/>
+        <location line="-2059"/>
         <source>Catalogue a drive or a folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+11"/>
         <source>Intelligence</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1948"/>
+        <location line="+2008"/>
         <source>Archive knowledge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1947"/>
+        <location line="-2007"/>
         <source>Context, glossary, documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+26"/>
-        <location line="+1865"/>
+        <location line="+1922"/>
         <source>Work in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1890"/>
+        <location line="-1947"/>
         <source>Analysis, resources, history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2153,30 +2376,30 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+2116"/>
+        <location line="+2181"/>
         <source>Archive in numbers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2115"/>
-        <location line="+2138"/>
+        <location line="-2180"/>
+        <location line="+2206"/>
         <source>Labels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2137"/>
-        <location line="+2159"/>
+        <location line="-2205"/>
+        <location line="+2229"/>
         <source>Safety copies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2158"/>
-        <location line="+1416"/>
+        <location line="-2228"/>
+        <location line="+1425"/>
         <source>Manage drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1393"/>
+        <location line="-1402"/>
         <source>AI analysis</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2196,28 +2419,23 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+145"/>
+        <location line="+148"/>
         <source>Welcome to Teca. Teca is based on Katalog: news, questions and feedback are shared on the Katalog project discussions:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1192"/>
-        <location line="+204"/>
+        <location line="+1198"/>
+        <location line="+233"/>
         <source>File details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-39"/>
+        <location line="-65"/>
         <source>The folders and files of a catalogued drive, even when it is not connected. A file tagged AI already has a preview, a description or a transcript: selecting it shows them in File details.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+22"/>
-        <source>Choose another drive</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location line="+210"/>
+        <location line="+265"/>
         <source>Choose what to browse</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2262,17 +2480,27 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+164"/>
+        <location line="+182"/>
         <source>Catalogue the drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+72"/>
+        <location line="+74"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+96"/>
+        <location line="+44"/>
+        <source>Numbers of: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>Links of: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2287,7 +2515,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="+103"/>
         <source>Select Collection Folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6682,7 +6910,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
 <context>
     <name>OperationQueueView</name>
     <message>
-        <location filename="../qt_quick/OperationQueueView.qml" line="+153"/>
+        <location filename="../qt_quick/OperationQueueView.qml" line="+154"/>
         <location line="+58"/>
         <source>Stop</source>
         <translation type="unfinished"></translation>
@@ -6733,7 +6961,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+30"/>
         <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8061,11 +8289,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+8"/>
+        <location line="+2"/>
         <source>Select the path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+6"/>
         <source>File type</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8108,7 +8337,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
 <context>
     <name>PageCreateForm</name>
     <message>
-        <location filename="../qt_quick/PageCreateForm.qml" line="+127"/>
+        <location filename="../qt_quick/PageCreateForm.qml" line="+148"/>
         <source>Provide a name for this new catalog.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8858,12 +9087,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+9"/>
-        <location line="+706"/>
+        <location line="+711"/>
         <source>Yes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-680"/>
+        <location line="-685"/>
         <source>MIME Verification Complete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9148,7 +9377,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+423"/>
+        <location line="+431"/>
         <location line="+11"/>
         <source>Open folder</source>
         <translation type="unfinished"></translation>
@@ -9180,12 +9409,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+144"/>
+        <location line="+197"/>
         <source>Checksum</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-201"/>
+        <location line="-254"/>
         <source>Copy folder name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9210,14 +9439,14 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-632"/>
-        <location line="+661"/>
+        <location line="-640"/>
+        <location line="+669"/>
         <location line="+40"/>
         <source>File not found or could not be read</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-690"/>
+        <location line="-698"/>
         <source>Folder not found.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9237,7 +9466,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+143"/>
+        <location line="+151"/>
         <source>Show analysis</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9252,17 +9481,17 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+8"/>
         <source>Move folder to Trash</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+8"/>
         <source>Delete file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+77"/>
         <source>Delete File</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9272,13 +9501,41 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+5"/>
-        <location line="+103"/>
+        <location line="-48"/>
+        <location line="+53"/>
+        <location line="+107"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-96"/>
+        <location line="-171"/>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Move to Trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Moved to trash:&lt;br/&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Move to trash failed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Move
+%1
+to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+41"/>
         <source>File deleted</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9295,7 +9552,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+42"/>
         <source>Checksum saved to database.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9348,12 +9605,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
 <context>
     <name>PageExploreFolders</name>
     <message>
-        <location filename="../qt_quick/PageExploreFolders.qml" line="+27"/>
+        <location filename="../qt_quick/PageExploreFolders.qml" line="+31"/>
         <source>Tag this folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+355"/>
+        <location line="+390"/>
         <source>Folders</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9378,13 +9635,137 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+92"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="+160"/>
+        <location filename="../qt_quick/PageExploreFolders.qml" line="+142"/>
         <source>Expand</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-1"/>
+        <location filename="../qt_quick/PageExploreFolders.qml" line="+0"/>
         <source>Collapse</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PageHistory</name>
+    <message>
+        <location filename="../qt_quick/PageHistory.qml" line="+58"/>
+        <source>Every change to a catalog leaves a restore point: here you see what happened and can go back to how it was before. The last 10 versions of each catalog are kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The history needs the collection&apos;s folder on this computer, so it is not kept for this collection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Split catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>These drives hold several catalogs, one per folder. Joining them makes one catalog again, with every file, folder and AI result; a restore point is saved first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>%1 catalogs, in %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <location line="+140"/>
+        <source>Join into one catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-131"/>
+        <source>Actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Newest first. Restoring saves the current state too, so it can be undone in turn.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing has changed yet. When a catalog is updated, split, joined, edited or deleted, it shows here and can be undone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Undone</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>%1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Open as a separate catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>(version of %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The earlier version is now a catalog of its own, in My drives.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+18"/>
+        <source>Restore how it was before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The catalogs go back to how they were before «%1». The files on the drives are not touched, the AI results follow, and the current state is saved first, so this can be undone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Restored.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+53"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-30"/>
+        <source>%1 catalogs become one, with every file, folder and AI result. Nothing on the drive is touched, and a restore point is saved first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+6"/>
+        <source>Name of the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Join</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>The catalogs are one again: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -9401,7 +9782,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+10"/>
         <source>Add a drive</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9466,7 +9847,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+66"/>
         <source>Connected</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9522,23 +9903,24 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+9"/>
-        <location line="+136"/>
+        <location line="+153"/>
         <source>Re-interpret with the context</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-121"/>
-        <location line="+17"/>
+        <location line="-138"/>
+        <location line="+33"/>
         <source>Add a drive or a folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-32"/>
+        <location line="+37"/>
         <source>Teca reads the drive, NTFS too, without changing it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+20"/>
         <source>Work in progress</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9841,7 +10223,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-5387"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-5897"/>
         <source>Exact Phrase</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10161,13 +10543,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1250"/>
+        <location line="+1285"/>
         <location line="+63"/>
         <source>Verify Checksums</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-466"/>
+        <location line="-501"/>
         <location line="+53"/>
         <source>Calculate Checksum</source>
         <translation type="unfinished"></translation>
@@ -10178,7 +10560,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+78"/>
+        <location line="+111"/>
         <source>Checksum</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10188,20 +10570,21 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+84"/>
         <location line="+62"/>
         <source>Include Metadata</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1311"/>
+        <location line="-1346"/>
         <location line="+914"/>
-        <location line="+332"/>
+        <location line="+38"/>
+        <location line="+329"/>
         <source>Move to Trash</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1329"/>
+        <location line="-1364"/>
         <location line="+11"/>
         <source>The device is not active. It may be disconnected, or its path may have changed.</source>
         <translation type="unfinished"></translation>
@@ -10213,12 +10596,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+2"/>
-        <location line="+1071"/>
+        <location line="+1104"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1020"/>
+        <location line="-1053"/>
         <source>Run process on all results</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10464,17 +10847,27 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+6"/>
-        <location line="+108"/>
+        <location line="+141"/>
         <source>Checksum copied to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-87"/>
+        <location line="-120"/>
         <source>Error: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+53"/>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Move this file to the trash?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>File moved to trash</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10484,12 +10877,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-34"/>
         <source>Delete file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+79"/>
         <source>Checksum saved to database.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10514,7 +10907,8 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-79"/>
+        <location line="+84"/>
         <location line="+63"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
@@ -10562,7 +10956,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+108"/>
+        <location line="+110"/>
         <source>All</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10625,7 +11019,7 @@ Errors: %3</source>
 <context>
     <name>PageSelectionDelegate</name>
     <message>
-        <location filename="../qt_quick/PageSelectionDelegate.qml" line="+85"/>
+        <location filename="../qt_quick/PageSelectionDelegate.qml" line="+142"/>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10650,7 +11044,7 @@ Errors: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+68"/>
+        <location line="-144"/>
         <source>Virtual</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10665,7 +11059,7 @@ Errors: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+2"/>
         <source>Connected</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10675,7 +11069,7 @@ Errors: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+245"/>
         <source>Expand</source>
         <translation type="unfinished"></translation>
     </message>

@@ -14,8 +14,10 @@ F.TextArea {
         implicitHeight: 40
         radius: 10
         color: control.palette.base
+        // Unfocused, the edge is the controls' line, 3:1 on every surface
+        // (palette.dark, set from KTheme.controlLine; WCAG 1.4.11)
         border.width: control.activeFocus ? 2 : 1
-        border.color: control.activeFocus ? control.palette.highlight : control.palette.mid
+        border.color: control.activeFocus ? control.palette.highlight : control.palette.dark
         opacity: control.enabled ? 1 : 0.6
     }
 }

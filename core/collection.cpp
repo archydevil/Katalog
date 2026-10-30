@@ -2802,7 +2802,8 @@ QString Collection::getValidationMessage(CollectionFolderStatus status) const
     }
 }
 //--------------------------------------------------------------------------
-bool Collection::executeSplitBySubDirectory(Device *activeDevice)
+bool Collection::executeSplitBySubDirectory(Device *activeDevice, QList<int> *newDeviceIds,
+                                            CatalogOperationError *error)
 {
     Device primaryBuffer;
     Device *device = resolvePhysicalDevice(activeDevice, primaryBuffer);
@@ -2816,16 +2817,18 @@ bool Collection::executeSplitBySubDirectory(Device *activeDevice)
 
     QList<Catalog*> newCatalogs = device->catalog->executeSplitBySubDirectory(databaseMode, folder);
     if (newCatalogs.isEmpty()) {
-        qDeleteAll(newCatalogs);
+        if (error)
+            *error = OperationNothingToDo;
         return false;
     }
 
-    applySplitResult(device, newCatalogs);
+    const bool ok = applySplitResult(device, newCatalogs, newDeviceIds, error);
     qDeleteAll(newCatalogs);
-    return true;
+    return ok;
 }
 //--------------------------------------------------------------------------
-bool Collection::executeSplitByFileType(Device *activeDevice)
+bool Collection::executeSplitByFileType(Device *activeDevice, QList<int> *newDeviceIds,
+                                        CatalogOperationError *error)
 {
     Device primaryBuffer;
     Device *device = resolvePhysicalDevice(activeDevice, primaryBuffer);
@@ -2839,13 +2842,14 @@ bool Collection::executeSplitByFileType(Device *activeDevice)
 
     QList<Catalog*> newCatalogs = device->catalog->executeSplitByFileType(databaseMode, folder);
     if (newCatalogs.isEmpty()) {
-        qDeleteAll(newCatalogs);
+        if (error)
+            *error = OperationNothingToDo;
         return false;
     }
 
-    applySplitResult(device, newCatalogs);
+    const bool ok = applySplitResult(device, newCatalogs, newDeviceIds, error);
     qDeleteAll(newCatalogs);
-    return true;
+    return ok;
 }
 //--------------------------------------------------------------------------
 Device* Collection::resolvePhysicalDevice(Device *activeDevice, Device &buffer)
@@ -2882,8 +2886,42 @@ Device* Collection::resolvePhysicalDevice(Device *activeDevice, Device &buffer)
     return &buffer;
 }
 //--------------------------------------------------------------------------
-void Collection::applySplitResult(Device *activeDevice, const QList<Catalog*> &newCatalogs)
+bool Collection::applySplitResult(Device *activeDevice, const QList<Catalog*> &newCatalogs,
+                                  QList<int> *newDeviceIds, CatalogOperationError *error)
 {
+    // Fork (SpecMediaIntelligence.md): the AI data follows the files into the
+    // new catalogs; left on the original catalog, every preview, description
+    // and transcript would vanish with it. Moved first, while the original is
+    // still whole: when mdi_data.db cannot be written (busy past its timeout),
+    // the split is undone and nothing changes. The new catalogs' file rows are
+    // in the file table now, in Memory mode too.
+    const QString mdiPath = MdiData::filePath(folder);
+    if (databaseMode != QLatin1String("Hosted") && QFile::exists(mdiPath)) {
+        QHash<QString, int> newCatalogByPath;
+        QSqlQuery files(QSqlDatabase::database(m_connectionName));
+        files.prepare(QLatin1String("SELECT file_full_path FROM file WHERE file_catalog_id = :catalogID"));
+        for (Catalog *c : std::as_const(newCatalogs)) {
+            files.bindValue(":catalogID", c->ID);
+            if (files.exec())
+                while (files.next())
+                    newCatalogByPath.insert(files.value(0).toString(), c->ID);
+        }
+        const QString mdiConnection = QStringLiteral("mdi_split_%1").arg(activeDevice->externalID);
+        int moved = -1;
+        if (MdiData::open(mdiConnection, mdiPath)) {
+            moved = MdiData::moveToCatalogs(mdiConnection, activeDevice->externalID, newCatalogByPath);
+            if (moved < 0)   // busy past the timeout: once more
+                moved = MdiData::moveToCatalogs(mdiConnection, activeDevice->externalID, newCatalogByPath);
+        }
+        MdiData::close(mdiConnection);
+        if (moved < 0) {
+            undoSplitCatalogs(activeDevice, newCatalogs);
+            if (error)
+                *error = OperationAiMoveFailed;
+            return false;
+        }
+    }
+
     // Insert new device rows under the same parent as the original
     Device parentDevice;
     parentDevice.ID = activeDevice->parentID;
@@ -2907,33 +2945,18 @@ void Collection::applySplitResult(Device *activeDevice, const QList<Catalog*> &n
         newDev.insertDevice();
         newDeviceIDs << newDev.ID;
     }
+    if (newDeviceIds)
+        *newDeviceIds = newDeviceIDs;
 
-    // Fork (SpecMediaIntelligence.md): the AI data and the enrichment profile
-    // follow the files into the new catalogs; left on the original catalog,
-    // every preview, description and transcript would vanish with it. The new
-    // catalogs' file rows are in the file table now, in Memory mode too.
-    const QString mdiPath = MdiData::filePath(folder);
-    if (databaseMode != QLatin1String("Hosted") && QFile::exists(mdiPath)) {
-        QHash<QString, int> newCatalogByPath;
-        QSqlQuery files(QSqlDatabase::database(m_connectionName));
-        files.prepare(QLatin1String("SELECT file_full_path FROM file WHERE file_catalog_id = :catalogID"));
-        for (Catalog *c : std::as_const(newCatalogs)) {
-            files.bindValue(":catalogID", c->ID);
-            if (files.exec())
-                while (files.next())
-                    newCatalogByPath.insert(files.value(0).toString(), c->ID);
-        }
-        const QString mdiConnection = QStringLiteral("mdi_split_%1").arg(activeDevice->externalID);
-        if (MdiData::open(mdiConnection, mdiPath))
-            MdiData::moveToCatalogs(mdiConnection, activeDevice->externalID, newCatalogByPath);
-        MdiData::close(mdiConnection);
-    }
+    // The enrichment profile follows the files too; the original's row goes
+    // with the original (a restore point keeps it)
     MdiProfile profile;
     if (profile.load(m_connectionName, activeDevice->ID)) {
         for (int newDeviceID : std::as_const(newDeviceIDs)) {
             profile.deviceId = newDeviceID;
             profile.save(m_connectionName);
         }
+        MdiProfile::remove(m_connectionName, activeDevice->ID);
         if (databaseMode == "Memory")
             MdiProfile::saveTableToFile(m_connectionName, folder);
     }
@@ -2993,5 +3016,550 @@ void Collection::applySplitResult(Device *activeDevice, const QList<Catalog*> &n
         QFile::remove(origFilePath);
         QFile::remove(origFoldersFilePath);
     }
+    if (error)
+        *error = OperationOk;
+    return true;
+}
+//----------------------------------------------------------------------
+void Collection::undoSplitCatalogs(Device *activeDevice, const QList<Catalog*> &newCatalogs)
+{
+    // Back to the original catalog: its files (with its name), the folders it
+    // gave away (a split by type copied them, so only missing ones come back),
+    // then the new catalogs and, in Memory mode, the .idx files written for them.
+    // No device row was inserted yet.
+    const int originalId = activeDevice->externalID;
+    QSqlDatabase db = QSqlDatabase::database(m_connectionName);
+    QSet<QString> originalFolders;
+    {
+        QSqlQuery q(db);
+        q.prepare(QLatin1String("SELECT folder_path FROM folder WHERE folder_catalog_id = :id"));
+        q.bindValue(":id", originalId);
+        if (q.exec())
+            while (q.next())
+                originalFolders.insert(q.value(0).toString());
+    }
+    for (Catalog *c : newCatalogs) {
+        QSqlQuery files(db);
+        files.prepare(QLatin1String(R"(
+            UPDATE file SET file_catalog_id = :originalId, file_catalog = :originalName
+            WHERE file_catalog_id = :id
+        )"));
+        files.bindValue(":originalId",   originalId);
+        files.bindValue(":originalName", activeDevice->name);
+        files.bindValue(":id",           c->ID);
+        files.exec();
+
+        QStringList given;
+        {
+            QSqlQuery q(db);
+            q.prepare(QLatin1String("SELECT folder_path FROM folder WHERE folder_catalog_id = :id"));
+            q.bindValue(":id", c->ID);
+            if (q.exec())
+                while (q.next())
+                    given << q.value(0).toString();
+        }
+        QSqlQuery insert(db);
+        insert.prepare(QLatin1String("INSERT INTO folder (folder_catalog_id, folder_path) VALUES (:id, :path)"));
+        for (const QString &path : std::as_const(given)) {
+            if (originalFolders.contains(path))
+                continue;
+            insert.bindValue(":id",   originalId);
+            insert.bindValue(":path", path);
+            insert.exec();
+            originalFolders.insert(path);
+        }
+
+        c->setConnectionName(m_connectionName);
+        c->deleteCatalog();   // its row and the folder rows it still has
+        if (databaseMode == "Memory" && c->filePath != activeDevice->catalog->filePath) {
+            QFile::remove(c->filePath);
+            QString foldersFile = c->filePath;
+            foldersFile.replace(foldersFile.lastIndexOf(".idx"), 4, ".folders.idx");
+            QFile::remove(foldersFile);
+        }
+    }
+}
+//----------------------------------------------------------------------
+namespace {
+
+// The folder a set of catalog paths shares, "" when none ("/" and "X:/" are
+// shared roots)
+QString commonFolder(const QStringList &paths)
+{
+    if (paths.isEmpty())
+        return QString();
+    QStringList common = paths.first().split(QLatin1Char('/'));
+    for (const QString &path : paths) {
+        const QStringList parts = path.split(QLatin1Char('/'));
+        int i = 0;
+        while (i < common.size() && i < parts.size() && common.at(i) == parts.at(i))
+            ++i;
+        common = common.mid(0, i);
+    }
+    while (!common.isEmpty() && common.last().isEmpty() && common.size() > 1)
+        common.removeLast();
+    if (common.isEmpty())
+        return QString();
+    if (common.size() == 1 && common.first().isEmpty())
+        return QStringLiteral("/");   // absolute paths sharing only the root
+    QString folder = common.join(QLatin1Char('/'));
+    if (folder.size() == 2 && folder.at(1) == QLatin1Char(':'))
+        folder += QLatin1Char('/');   // Windows drive root
+    return Catalog::normalizeSourcePath(folder);
+}
+
+} // namespace
+//----------------------------------------------------------------------
+Collection::RecomposeProposal Collection::proposeRecompose(int deviceId)
+{
+    RecomposeProposal proposal;
+    QSqlDatabase db = QSqlDatabase::database(m_connectionName);
+
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+
+    // The catalog devices under a parent, each catalog once, in the Physical
+    // group when it is there (a group's children are Virtual copies)
+    struct Part { int deviceId; int catalogId; QString name; QString path; };
+    auto catalogsUnder = [&](int parentId) {
+        QList<Part> parts;
+        QSqlQuery q(db);
+        q.prepare(QLatin1String(R"(
+            SELECT device_id, device_external_id, device_name, device_path
+            FROM device
+            WHERE device_parent_id = :parent AND device_type = 'Catalog'
+            ORDER BY device_name
+        )"));
+        q.bindValue(":parent", parentId);
+        if (q.exec())
+            while (q.next())
+                parts.append({ q.value(0).toInt(), q.value(1).toInt(), q.value(2).toString(), q.value(3).toString() });
+        return parts;
+    };
+
+    QList<Part> members;
+    if (device.type == QLatin1String("Storage") || device.type == QLatin1String("Virtual")) {
+        members = catalogsUnder(device.ID);
+    } else if (device.type == QLatin1String("Catalog")) {
+        // A split names its catalogs "<base>_<folder>" and "<base>_(<word>)":
+        // the base is the longest prefix ending before a "_" that two siblings
+        // share, preferring one with a "<base>_(...)" sibling (the root or a
+        // file type), so a folder name with "_" does not cut the base short
+        const QList<Part> siblings = catalogsUnder(device.parentID);
+        QString bestBase;
+        int bestCount = 0;
+        bool bestMarked = false;
+        for (int i = device.name.indexOf(QLatin1Char('_')); i > 0; i = device.name.indexOf(QLatin1Char('_'), i + 1)) {
+            const QString base = device.name.left(i);
+            int count = 0;
+            bool marked = false;
+            for (const Part &p : siblings)
+                if (p.name.startsWith(base + QLatin1Char('_'))) {
+                    ++count;
+                    if (p.name.startsWith(base + QStringLiteral("_(")) && p.name.endsWith(QLatin1Char(')')))
+                        marked = true;
+                }
+            if (count < 2)
+                continue;
+            if (bestCount == 0 || (marked && !bestMarked) || (marked == bestMarked)) {
+                bestBase   = base;
+                bestCount  = count;
+                bestMarked = marked;
+            }
+        }
+        if (!bestBase.isEmpty()) {
+            for (const Part &p : siblings)
+                if (p.name.startsWith(bestBase + QLatin1Char('_')))
+                    members.append(p);
+            proposal.name = bestBase;
+        }
+    } else {
+        proposal.problem = QStringLiteral("type");
+        return proposal;
+    }
+
+    // In the Physical group, each catalog once
+    QSet<int> seen;
+    QStringList paths;
+    QStringList names;
+    for (const Part &p : std::as_const(members)) {
+        if (seen.contains(p.catalogId))
+            continue;
+        seen.insert(p.catalogId);
+        Device part;
+        part.ID = p.deviceId;
+        part.loadDevice(m_connectionName);
+        Device buffer;
+        Device *physical = resolvePhysicalDevice(&part, buffer);
+        proposal.deviceIds << physical->ID;
+        paths << p.path;
+        names << p.name;
+    }
+    if (proposal.deviceIds.size() < 2) {
+        proposal.problem = QStringLiteral("few");
+        return proposal;
+    }
+    proposal.path = commonFolder(paths);
+    if (proposal.path.isEmpty()) {
+        proposal.problem = QStringLiteral("nocommon");
+        return proposal;
+    }
+
+    // Name: the split's base; for a storage or a group, the base its catalogs
+    // share, else its own name. Made free of other catalogs' names.
+    if (proposal.name.isEmpty()) {
+        QString shared = names.first();
+        for (const QString &n : std::as_const(names))
+            while (!shared.isEmpty() && !n.startsWith(shared))
+                shared.chop(1);
+        const int cut = shared.lastIndexOf(QLatin1Char('_'));
+        proposal.name = cut > 0 ? shared.left(cut) : device.name.trimmed();
+    }
+    const QString base = proposal.name;
+    QSqlQuery chk(db);
+    chk.prepare(QLatin1String("SELECT device_name FROM device WHERE device_type = 'Catalog' AND device_name = :n"));
+    for (int suffix = 2; ; ++suffix) {
+        chk.bindValue(":n", proposal.name);
+        if (!chk.exec() || !chk.next() || names.contains(proposal.name))
+            break;
+        proposal.name = base + QStringLiteral("_") + QString::number(suffix);
+    }
+    return proposal;
+}
+//----------------------------------------------------------------------
+Collection::CatalogOperationError Collection::executeRecompose(const QList<int> &deviceIds,
+                                                               const QString &newName, int *newDeviceId)
+{
+    QSqlDatabase db = QSqlDatabase::database(m_connectionName);
+
+    // The parts: one device per catalog, the one in the Physical group
+    QList<Device*> parts;
+    QSet<int> seen;
+    for (int id : deviceIds) {
+        Device loaded;
+        loaded.ID = id;
+        loaded.loadDevice(m_connectionName);
+        if (loaded.type != QLatin1String("Catalog"))
+            continue;
+        Device buffer;
+        Device *physical = resolvePhysicalDevice(&loaded, buffer);
+        if (seen.contains(physical->externalID))
+            continue;
+        seen.insert(physical->externalID);
+        Device *part = new Device();
+        part->ID = physical->ID;
+        part->loadDevice(m_connectionName);
+        parts.append(part);
+    }
+    struct PartsGuard { QList<Device*> &list; ~PartsGuard() { qDeleteAll(list); } } guard{ parts };
+    if (parts.size() < 2)
+        return OperationTooFew;
+
+    const QString name = newName.trimmed();
+    QList<int> partCatalogIds;
+    for (Device *p : std::as_const(parts))
+        partCatalogIds << p->externalID;
+    QStringList partIdText;
+    for (int id : std::as_const(partCatalogIds))
+        partIdText << QString::number(id);
+    const QString partList = partIdText.join(QLatin1Char(','));
+    {
+        // Another catalog's name; a part's own name is free (the part goes)
+        QSqlQuery chk(db);
+        chk.prepare(QStringLiteral("SELECT COUNT(*) FROM device WHERE device_type = 'Catalog' "
+                                   "AND device_name = :n AND device_external_id NOT IN (%1)").arg(partList));
+        chk.bindValue(":n", name);
+        if (name.isEmpty() || !chk.exec() || !chk.next() || chk.value(0).toInt() > 0)
+            return OperationNameTaken;
+    }
+
+    if (databaseMode == "Memory")
+        for (Device *p : std::as_const(parts)) {
+            p->catalog->loadFoldersToTable();
+            QMutex mutex;
+            bool stop = false;
+            p->catalog->loadCatalogFileListToTable(mutex, stop);
+        }
+
+    QStringList paths;
+    for (Device *p : std::as_const(parts))
+        paths << p->path;
+    const QString sharedFolder = commonFolder(paths);
+    if (sharedFolder.isEmpty())
+        return OperationNoCommonFolder;
+
+    // Options of the split's root catalog (the one at the shared folder), else
+    // of the first; one file type when all share it
+    Device *root = parts.first();
+    for (Device *p : std::as_const(parts))
+        if (p->path == sharedFolder) {
+            root = p;
+            break;
+        }
+    QString fileType = root->catalog->fileType;
+    QDateTime latest;
+    for (Device *p : std::as_const(parts)) {
+        if (p->catalog->fileType != fileType)
+            fileType = QStringLiteral("All");
+        if (p->catalog->dateUpdated.isValid() && (!latest.isValid() || p->catalog->dateUpdated > latest))
+            latest = p->catalog->dateUpdated;
+    }
+
+    Catalog merged;
+    merged.setConnectionName(m_connectionName);
+    merged.name             = name;
+    merged.sourcePath       = sharedFolder;
+    merged.includeSubDir    = true;
+    merged.includeHidden    = root->catalog->includeHidden;
+    merged.includeSymblinks = root->catalog->includeSymblinks;
+    merged.fileType         = fileType;
+    merged.isFullDevice     = root->catalog->isFullDevice;
+    merged.includeMetadata  = root->catalog->includeMetadata;
+    merged.includeChecksum  = root->catalog->includeChecksum;
+    merged.appVersion       = root->catalog->appVersion;
+    // A valid date: without one the instant-search index rebuilds it at every launch
+    merged.dateUpdated      = latest.isValid() ? latest : QDateTime::currentDateTime();
+    merged.filePath         = folder + "/" + name + ".idx";
+    merged.generateID();
+
+    // AI results first, while nothing else has changed: every file's data
+    // goes to the new catalog by full path (a duplicate path keeps the first)
+    QHash<QString, int> toMerged;
+    QHash<int, QHash<QString, int>> backByPart;
+    {
+        QSqlQuery q(db);
+        q.prepare(QLatin1String("SELECT file_full_path FROM file WHERE file_catalog_id = :id"));
+        for (Device *p : std::as_const(parts)) {
+            q.bindValue(":id", p->externalID);
+            if (q.exec())
+                while (q.next()) {
+                    const QString path = q.value(0).toString();
+                    toMerged.insert(path, merged.ID);
+                    backByPart[p->externalID].insert(path, p->externalID);
+                }
+        }
+    }
+    const QString mdiPath = MdiData::filePath(folder);
+    const bool hasMdi = databaseMode != QLatin1String("Hosted") && QFile::exists(mdiPath);
+    const QString mdiConnection = QStringLiteral("mdi_recompose_%1").arg(merged.ID);
+    QList<int> aiMovedFrom;
+    auto moveAiBack = [&]() {
+        if (!hasMdi || aiMovedFrom.isEmpty() || !MdiData::open(mdiConnection, mdiPath))
+            return;
+        for (int partId : std::as_const(aiMovedFrom))
+            MdiData::moveToCatalogs(mdiConnection, merged.ID, backByPart.value(partId));
+        MdiData::close(mdiConnection);
+    };
+    if (hasMdi) {
+        bool ok = MdiData::open(mdiConnection, mdiPath);
+        for (Device *p : std::as_const(parts)) {
+            if (!ok)
+                break;
+            int moved = MdiData::moveToCatalogs(mdiConnection, p->externalID, toMerged);
+            if (moved < 0)   // busy past the timeout: once more
+                moved = MdiData::moveToCatalogs(mdiConnection, p->externalID, toMerged);
+            ok = moved >= 0;
+            if (ok)
+                aiMovedFrom << p->externalID;
+        }
+        MdiData::close(mdiConnection);
+        if (!ok) {
+            moveAiBack();
+            return OperationAiMoveFailed;
+        }
+    }
+
+    // The enrichment profile of the root part, else of the first that has one,
+    // read now: MdiProfile::save() opens a transaction of its own, so it is
+    // written after the commit
+    MdiProfile mergedProfile;
+    bool hasProfile = false;
+    {
+        QList<Device*> byPreference{ root };
+        for (Device *p : std::as_const(parts))
+            if (p != root)
+                byPreference << p;
+        for (Device *p : std::as_const(byPreference))
+            if (mergedProfile.load(m_connectionName, p->ID)) {
+                hasProfile = true;
+                break;
+            }
+    }
+
+    // The collection, in one transaction
+    const bool transaction = db.transaction();
+    bool ok = true;
+    merged.insertCatalog();
+    {
+        // Files: each path once, the first part's row when two parts list it
+        QSqlQuery q(db);
+        q.prepare(QLatin1String(R"(
+            UPDATE file SET file_catalog_id = :newId, file_catalog = :newName
+            WHERE file_catalog_id = :partId
+              AND file_full_path NOT IN (SELECT p FROM (SELECT file_full_path AS p FROM file
+                                                        WHERE file_catalog_id = :newId2) AS taken)
+        )"));
+        for (Device *p : std::as_const(parts)) {
+            q.bindValue(":newId",   merged.ID);
+            q.bindValue(":newName", name);
+            q.bindValue(":partId",  p->externalID);
+            q.bindValue(":newId2",  merged.ID);
+            if (ok && !q.exec()) {
+                qWarning() << "Collection::executeRecompose: files:" << q.lastError().text();
+                ok = false;
+            }
+        }
+    }
+    if (ok) {
+        // Folders and exclude filters of every part, each once, and the shared
+        // folder itself
+        QSqlQuery q(db);
+        ok = q.exec(QStringLiteral("INSERT INTO folder (folder_catalog_id, folder_path) "
+                                   "SELECT DISTINCT %1, folder_path FROM folder WHERE folder_catalog_id IN (%2)")
+                        .arg(merged.ID).arg(partList));
+        if (!ok)
+            qWarning() << "Collection::executeRecompose: folders:" << q.lastError().text();
+        QSqlQuery root(db);
+        root.prepare(QLatin1String("SELECT COUNT(*) FROM folder WHERE folder_catalog_id = :id AND folder_path = :path"));
+        root.bindValue(":id",   merged.ID);
+        root.bindValue(":path", sharedFolder);
+        if (ok && root.exec() && root.next() && root.value(0).toInt() == 0) {
+            QSqlQuery add(db);
+            add.prepare(QLatin1String("INSERT INTO folder (folder_catalog_id, folder_path) VALUES (:id, :path)"));
+            add.bindValue(":id",   merged.ID);
+            add.bindValue(":path", sharedFolder);
+            add.exec();
+        }
+        QSqlQuery filters(db);
+        filters.exec(QStringLiteral("INSERT INTO catalog_filter (filter_catalog_id, filter_type, filter_value) "
+                                    "SELECT DISTINCT %1, filter_type, filter_value FROM catalog_filter "
+                                    "WHERE filter_catalog_id IN (%2)").arg(merged.ID).arg(partList));
+        filters.exec(QStringLiteral("DELETE FROM catalog_filter WHERE filter_catalog_id IN (%1)").arg(partList));
+    }
+
+    Device parentDevice;
+    parentDevice.ID = parts.first()->parentID;
+    parentDevice.loadDevice(m_connectionName);
+    Device newDev;
+    if (ok) {
+        merged.updateFileCount();
+        merged.updateTotalFileSize();
+
+        newDev.setConnectionName(m_connectionName);
+        newDev.ID             = Device::generateNextDeviceID(m_connectionName);
+        newDev.parentID       = parentDevice.ID;
+        newDev.name           = name;
+        newDev.type           = "Catalog";
+        newDev.externalID     = merged.ID;
+        newDev.path           = sharedFolder;
+        newDev.totalFileSize  = merged.totalFileSize;
+        newDev.totalFileCount = merged.fileCount;
+        newDev.groupID        = parentDevice.groupID;
+        newDev.active         = parts.first()->active;
+        newDev.order          = 0;
+        newDev.insertDevice();
+
+        // The Virtual groups the parts were shown in show the new catalog
+        QList<int> virtualParentIDs;
+        QSqlQuery assignments(db);
+        assignments.exec(QStringLiteral(R"(
+            SELECT DISTINCT d.device_parent_id
+            FROM device d
+            JOIN device p ON p.device_id = d.device_parent_id
+            WHERE d.device_type = 'Catalog' AND d.device_external_id IN (%1)
+              AND p.device_type = 'Virtual'
+        )").arg(partList));
+        while (assignments.next())
+            virtualParentIDs << assignments.value(0).toInt();
+        for (int virtualParentID : std::as_const(virtualParentIDs)) {
+            Device virtualParent;
+            virtualParent.ID = virtualParentID;
+            virtualParent.loadDevice(m_connectionName);
+            Device copy;
+            copy.setConnectionName(m_connectionName);
+            copy.ID             = Device::generateNextDeviceID(m_connectionName);
+            copy.parentID       = virtualParentID;
+            copy.name           = name;
+            copy.type           = "Catalog";
+            copy.externalID     = merged.ID;
+            copy.path           = sharedFolder;
+            copy.totalFileSize  = merged.totalFileSize;
+            copy.totalFileCount = merged.fileCount;
+            copy.groupID        = virtualParent.groupID;
+            copy.active         = newDev.active;
+            copy.order          = 0;
+            copy.insertDevice();
+        }
+
+        // The parts go through the core delete path: device rows (Virtual
+        // copies too), catalog rows, the duplicate files and folders left.
+        // Nothing on disk.
+        for (Device *p : std::as_const(parts)) {
+            QSqlQuery rows(db);
+            rows.prepare(QLatin1String("SELECT device_id FROM device WHERE device_type = 'Catalog' AND device_external_id = :id"));
+            rows.bindValue(":id", p->externalID);
+            if (rows.exec())
+                while (rows.next())
+                    MdiProfile::remove(m_connectionName, rows.value(0).toInt());
+            if (p->deleteDevice(false).result != Device::DeleteSuccess)
+                ok = false;
+        }
+    }
+
+    if (transaction) {
+        if (ok)
+            ok = db.commit();
+        if (!ok)
+            db.rollback();
+    }
+    if (!ok) {
+        moveAiBack();
+        return OperationFailed;
+    }
+
+    if (hasProfile) {
+        mergedProfile.deviceId = newDev.ID;
+        mergedProfile.save(m_connectionName);
+    }
+
+    // Totals of the storage and groups that hold it
+    parentDevice.updateNumbersFromChildren();
+    parentDevice.updateParentsNumbers();
+
+    if (databaseMode == "Memory") {
+        merged.saveCatalogToFile(databaseMode, folder);
+        merged.saveFoldersToFile(databaseMode, folder);
+        for (Device *p : std::as_const(parts)) {
+            if (p->catalog->filePath.isEmpty() || p->catalog->filePath == merged.filePath)
+                continue;
+            QFile::remove(p->catalog->filePath);
+            QString foldersFile = p->catalog->filePath;
+            foldersFile.replace(foldersFile.lastIndexOf(".idx"), 4, ".folders.idx");
+            QFile::remove(foldersFile);
+        }
+        saveDeviceTableToFile();
+        saveCatalogFilterTableToFile();
+        MdiProfile::saveTableToFile(m_connectionName, folder);
+    }
+
+    if (newDeviceId)
+        *newDeviceId = newDev.ID;
+    return OperationOk;
+}
+//----------------------------------------------------------------------
+int Collection::repairUndatedCatalogs()
+{
+    if (databaseMode != QLatin1String("File") && databaseMode != QLatin1String("Memory"))
+        return 0;
+    QSqlQuery q(QSqlDatabase::database(m_connectionName));
+    q.prepare(QLatin1String(R"(
+        UPDATE catalog SET catalog_date_updated = :now
+        WHERE catalog_date_updated IS NULL OR catalog_date_updated = ''
+    )"));
+    q.bindValue(":now", QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+    if (!q.exec())
+        return 0;
+    return q.numRowsAffected();
 }
 //----------------------------------------------------------------------

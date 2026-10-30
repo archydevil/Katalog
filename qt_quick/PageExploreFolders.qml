@@ -16,9 +16,13 @@ Item {
 
     // Folder the context menu was opened on; the selection is left as it is (EXP-F21)
     property string contextFolderPath: ""
-    function openFolderContextMenu(folderPath) {
+    // From the keyboard it opens under the row (atItem), not at the pointer
+    function openFolderContextMenu(folderPath, atItem) {
         root.contextFolderPath = folderPath
-        folderContextMenu.popup()
+        if (atItem)
+            folderContextMenu.popup(atItem, 0, atItem.height)
+        else
+            folderContextMenu.popup()
     }
 
     Controls.Menu {
@@ -251,6 +255,28 @@ Item {
         _rebuild()
     }
 
+    // Keyboard focus on a row (or on its disclosure button) by index. The tree
+    // is rebuilt on every open and close, which destroys the row that had the
+    // focus, so the caller hands it back to the row of the same folder.
+    function focusRow(index, onDisclosure) {
+        if (index < 0 || index >= folderListModel.count)
+            return
+        folderListView.positionViewAtIndex(index, ListView.Contain)
+        var row = folderListView.itemAtIndex(index)
+        if (row)
+            (onDisclosure ? row.disclosure : row).forceActiveFocus(Qt.TabFocusReason)
+    }
+    function focusFolder(folderPath, onDisclosure) {
+        for (var i = 0; i < folderListModel.count; i++)
+            if (folderListModel.get(i).fullPath === folderPath)
+                return focusRow(i, onDisclosure)
+    }
+    // Open or close a branch from the keyboard, the focus staying on it
+    function toggleFromKeyboard(folderPath, onDisclosure) {
+        root.toggleCollapsed(folderPath)
+        root.focusFolder(folderPath, onDisclosure)
+    }
+
     function collapseAll() {
         var collapsed = ({})
         for (var i = 0; i < root.allFolders.length; i++)
@@ -346,10 +372,22 @@ Item {
         icon.color: KTheme.text2
         hoverEnabled: true
         Controls.ToolTip.text: text
-        Controls.ToolTip.visible: hovered
+        // On keyboard focus too: the name of an icon (WCAG 2.4.7)
+        Controls.ToolTip.visible: hovered || visualFocus
         background: Rectangle {
             radius: KTheme.radiusItem
             color: depthButton.hovered && depthButton.enabled ? KTheme.hover : "transparent"
+
+            // Keyboard focus: a ring outside the button (WCAG 2.4.7)
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -KTheme.focusOffset
+                radius: parent.radius + KTheme.focusOffset
+                color: "transparent"
+                border.width: KTheme.focusWidth
+                border.color: KTheme.accent
+                visible: depthButton.visualFocus
+            }
         }
     }
 
@@ -374,7 +412,8 @@ Item {
                 Layout.fillWidth: true
                 Layout.leftMargin:  8
                 Layout.rightMargin: 8
-                Layout.preferredHeight: applicationWindow().headerRowHeight
+                // ...unless an enlarged title needs more (WCAG 1.4.4)
+                Layout.preferredHeight: Math.max(applicationWindow().headerRowHeight, implicitHeight)
                 spacing: 6
                 clip: true
 
@@ -459,14 +498,46 @@ Item {
                         width: folderListView.width
                         highlighted: model.fullPath === root.selectedFolderPath
 
+                        // The folder's name, for assistive technology only: the
+                        // row draws its own content below (WCAG 4.1.2)
+                        text: model.name
+                        Accessible.name: model.name
+                        Accessible.selectable: true
+                        Accessible.selected: folderDelegate.highlighted
+                        // For focusRow(): the row's disclosure button
+                        readonly property alias disclosure: disclosureButton
+
+                        // From the keyboard (WCAG 2.1.1): Tab reaches the rows,
+                        // Up and Down move between them, Return, Enter or Space
+                        // opens the folder, Right and Left open and close its
+                        // branch, the Menu key or Shift+F10 opens its menu. A
+                        // click does not take the focus.
+                        focusPolicy: Qt.TabFocus
+                        Keys.onReturnPressed: folderDelegate.clicked()
+                        Keys.onEnterPressed: folderDelegate.clicked()
+                        Keys.onUpPressed: root.focusRow(index - 1, false)
+                        Keys.onDownPressed: root.focusRow(index + 1, false)
+                        Keys.onRightPressed: if (model.hasChildren && model.isCollapsed)
+                                                 root.toggleFromKeyboard(model.fullPath, false)
+                        Keys.onLeftPressed: if (model.hasChildren && !model.isCollapsed)
+                                                root.toggleFromKeyboard(model.fullPath, false)
+                        Keys.onMenuPressed: root.openFolderContextMenu(model.fullPath, folderDelegate)
+                        Keys.onPressed: function(event) {
+                            if (event.key === Qt.Key_F10 && (event.modifiers & Qt.ShiftModifier)) {
+                                root.openFolderContextMenu(model.fullPath, folderDelegate)
+                                event.accepted = true
+                            }
+                        }
+
                         // One fixed height for every row, the same as a Devices tree
                         // row (CDT-F3). Left to itself an ItemDelegate takes its
                         // height from the content plus whatever vertical padding the
                         // active style applies, which made the rows both taller than
                         // the Devices table and uneven between themselves. The
                         // disclosure button is exactly this tall, so it sets the
-                        // floor and nothing else can push a row higher.
-                        implicitHeight: root.rowButton
+                        // floor; only a name enlarged by the text size setting
+                        // pushes a row higher (WCAG 1.4.4).
+                        implicitHeight: Math.max(root.rowButton, implicitContentHeight)
                         topPadding:    0
                         bottomPadding: 0
                         leftPadding:   4
@@ -486,6 +557,11 @@ Item {
                                 radius: KTheme.radiusItem
                                 color: folderDelegate.highlighted ? KTheme.accentSoft
                                      : folderDelegate.hovered ? KTheme.hover : "transparent"
+                                // Keyboard focus: the accent line round the row,
+                                // inside the list so it is never clipped (WCAG
+                                // 2.4.7); 4:1 or more on the selected tint
+                                border.width: folderDelegate.visualFocus ? KTheme.focusWidth : 0
+                                border.color: KTheme.accent
                             }
                         }
 
@@ -503,13 +579,26 @@ Item {
                             // whether a branch can be opened is a property of the
                             // tree, not of where the pointer happens to be.
                             Controls.ToolButton {
+                                id: disclosureButton
                                 padding: 0
                                 implicitWidth:  root.rowButton
                                 implicitHeight: root.rowButton
                                 icon.width:  Kirigami.Units.iconSizes.small
                                 icon.height: Kirigami.Units.iconSizes.small
                                 icon.color:  folderDelegate.highlighted ? KTheme.accentText : KTheme.text3
-                                background: Item {}
+                                // No surface of its own; keyboard focus is a ring
+                                // outside the button (WCAG 2.4.7)
+                                background: Item {
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        anchors.margins: -KTheme.focusOffset
+                                        radius: KTheme.radiusItem + KTheme.focusOffset
+                                        color: "transparent"
+                                        border.width: KTheme.focusWidth
+                                        border.color: KTheme.accent
+                                        visible: disclosureButton.visualFocus
+                                    }
+                                }
                                 opacity: model.hasChildren ? 1.0 : 0.0
                                 enabled: model.hasChildren
                                 // Breeze's -symbolic pair are its tree disclosure
@@ -523,13 +612,21 @@ Item {
                                 // which keep theirs (EXP-F9), are not.
                                 text: model.isCollapsed ? qsTr("Expand") : qsTr("Collapse")
                                 display: Controls.AbstractButton.IconOnly
-                                onClicked: root.toggleCollapsed(model.fullPath)
+                                // From the keyboard, the focus follows the folder
+                                // into the rebuilt tree
+                                onClicked: {
+                                    if (disclosureButton.visualFocus)
+                                        root.toggleFromKeyboard(model.fullPath, true)
+                                    else
+                                        root.toggleCollapsed(model.fullPath)
+                                }
                             }
 
                             Kirigami.Icon {
                                 source: "folder"
                                 implicitWidth:  root.rowIconSize
                                 implicitHeight: root.rowIconSize
+                                Accessible.ignored: true   // every row is a folder
                             }
 
                             Controls.Label {
@@ -539,6 +636,7 @@ Item {
                                 color: folderDelegate.highlighted ? KTheme.accentText : KTheme.text
                                 font.pixelSize: KTheme.body
                                 font.weight: folderDelegate.highlighted ? Font.DemiBold : Font.Normal
+                                Accessible.ignored: true   // read as the row's own name
                             }
                         }
 

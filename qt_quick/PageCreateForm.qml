@@ -115,24 +115,45 @@ ColumnLayout {
         appManager1.setCreateSetting("Mode", newMode)   // restored on next open (MDI-F1)
     }
 
-    function showValidationMessage(message) {
+    // The message is brought into view and, when it is about one field, that
+    // field takes the focus, so the problem is found by eye, by keyboard and
+    // by screen reader (WCAG 3.3.1)
+    function showValidationMessage(message, field) {
         createValidationMessage.text = message
         createValidationMessage.visible = true
+        if (field)
+            field.forceActiveFocus(Qt.OtherFocusReason)
+        // Said by the screen reader too: the focus lands on the field, not on
+        // the message (Accessible.announce, Qt 6.8 and later)
+        try { createValidationMessage.Accessible.announce(message) } catch (e) {}
+        // After the layout has made room for the message
+        Qt.callLater(_revealValidationMessage)
+    }
+    function _revealValidationMessage() {
+        // The page's Flickable, found up the parent chain
+        for (var p = pageCreateForm.parent; p; p = p.parent) {
+            if (p.contentY !== undefined && p.contentItem !== undefined && typeof p.returnToBounds === "function") {
+                var top = createValidationMessage.mapToItem(p.contentItem, 0, 0).y - KTheme.gap
+                if (top < p.contentY)
+                    p.contentY = Math.max(p.originY - p.topMargin, top)
+                return
+            }
+        }
     }
 
     // Called from Main.qml Create action
     function triggerCreate() {
         createValidationMessage.visible = false
         if (create_lineEdit_NewCatalogName.text.trim() === "") {
-            showValidationMessage(qsTr("Provide a name for this new catalog."))
+            showValidationMessage(qsTr("Provide a name for this new catalog."), create_lineEdit_NewCatalogName)
             return
         }
         if (create_lineEdit_NewCatalogPath.text.trim() === "") {
-            showValidationMessage(qsTr("Provide a path for this new catalog."))
+            showValidationMessage(qsTr("Provide a path for this new catalog."), create_lineEdit_NewCatalogPath)
             return
         }
         if (create_storageComboBox.selectedDeviceId <= 0) {
-            showValidationMessage(qsTr("Select a Storage for this new catalog.\n(Selection panel on the left and dropdown list)"))
+            showValidationMessage(qsTr("Select a Storage for this new catalog.\n(Selection panel on the left and dropdown list)"), create_storageComboBox)
             return
         }
         if (wizardMode && !validateWizard())
