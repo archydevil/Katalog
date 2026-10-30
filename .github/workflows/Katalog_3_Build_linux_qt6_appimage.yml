@@ -638,6 +638,10 @@ jobs:
           if [ -d "$DEST/org/kde/kirigami" ]; then
             mkdir -p "$DEST/org/kde/kirigami/styles/Fusion"
             cp "$GITHUB_WORKSPACE/packaging/Theme.qml" "$DEST/org/kde/kirigami/styles/Fusion/Theme.qml"
+            # Kirigami picks its theme by the Qt Quick Controls style name, and
+            # the fork's K3 runs TecaStyle (D34, MDI-C42)
+            mkdir -p "$DEST/org/kde/kirigami/styles/TecaStyle"
+            cp "$GITHUB_WORKSPACE/packaging/Theme.qml" "$DEST/org/kde/kirigami/styles/TecaStyle/Theme.qml"
             echo "  Bundled: Kirigami Fusion Theme.qml"
           fi
 

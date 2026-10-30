@@ -4,7 +4,8 @@ import org.kde.kirigami as Kirigami
 
 // A button that carries an icon and no text.
 //
-// Fusion — the style forced on Windows and macOS (main.cpp) — sizes every button
+// Fusion — the style forced on Windows and macOS before the fork's TecaStyle,
+// which derives from it (main.cpp, D34) — sizes every button
 // to a minimum meant for a text label, so an icon-only button comes out as wide
 // as one saying "Cancel". Breeze on Linux does not, which is why this only shows
 // on the other two platforms. Sizing to the icon plus its padding gives the same

@@ -216,7 +216,7 @@ jobs:
         echo "=== Build output ==="
         find . -name "Katalog*" -o -name "*.app" | sort
 
-        if [ -f "qt_quick/Katalog.app/Contents/MacOS/Katalog" ]; then
+        if [ -f "qt_quick/Teca.app/Contents/MacOS/Teca" ]; then
           echo "✅ Katalog3 app bundle found"
         else
           echo "❌ Katalog3 app bundle not found"
@@ -228,7 +228,7 @@ jobs:
         # the runner (macos-15 = Apple Silicon) and will NOT start on an Intel
         # Mac. When a user reports "it does not start", this line says in one
         # glance whether that build could ever have run on their machine.
-        ARCHS=$(lipo -archs qt_quick/Katalog.app/Contents/MacOS/Katalog 2>/dev/null || echo "unknown")
+        ARCHS=$(lipo -archs qt_quick/Teca.app/Contents/MacOS/Teca 2>/dev/null || echo "unknown")
         echo "=== Binary architecture: ${ARCHS} ==="
         echo "### macOS build" >> $GITHUB_STEP_SUMMARY
         echo "- **Architecture**: ${ARCHS}" >> $GITHUB_STEP_SUMMARY
@@ -247,7 +247,7 @@ jobs:
           # "qtquickcontrols2plugin" not found. The libraries and the platform
           # plugin are all present in that state, which is why the earlier
           # checks passed while the app could not start at all.
-          "$QT_DEPLOY_TOOL" qt_quick/Katalog.app -qmldir=../qt_quick -verbose=1 \
+          "$QT_DEPLOY_TOOL" qt_quick/Teca.app -qmldir=../qt_quick -verbose=1 \
             || echo "macdeployqt completed with warnings"
         else
           echo "macdeployqt not found"
@@ -255,7 +255,7 @@ jobs:
 
         # The QML modules land here. Their absence is what made the app
         # unstartable, so it is checked rather than assumed.
-        QML_DIR="qt_quick/Katalog.app/Contents/Resources/qml"
+        QML_DIR="qt_quick/Teca.app/Contents/Resources/qml"
         if [ -d "$QML_DIR" ]; then
           echo "✅ QML modules bundled: $(find "$QML_DIR" -name '*.dylib' | wc -l | tr -d ' ') plugin(s)"
           echo "- **QML modules**: bundled" >> $GITHUB_STEP_SUMMARY
@@ -272,6 +272,10 @@ jobs:
         if [ -d "$KIRIGAMI_DIR" ]; then
           mkdir -p "$KIRIGAMI_DIR/styles/Fusion"
           cp "$GITHUB_WORKSPACE/packaging/Theme.qml" "$KIRIGAMI_DIR/styles/Fusion/Theme.qml"
+          # Kirigami picks its theme by the Qt Quick Controls style name, and
+          # the fork's K3 runs TecaStyle (D34, MDI-C42)
+          mkdir -p "$KIRIGAMI_DIR/styles/TecaStyle"
+          cp "$GITHUB_WORKSPACE/packaging/Theme.qml" "$KIRIGAMI_DIR/styles/TecaStyle/Theme.qml"
           echo "✅ Kirigami Fusion Theme.qml bundled"
           echo "- **Kirigami colour theme**: bundled" >> $GITHUB_STEP_SUMMARY
         else
@@ -287,14 +291,14 @@ jobs:
         # found anyway; only the bundle's own copy matters on a user's Mac.
         # macdeployqt is allowed to fail softly above (|| echo), so this is the
         # check that decides whether the bundle is shippable.
-        COCOA_PLUGIN="qt_quick/Katalog.app/Contents/PlugIns/platforms/libqcocoa.dylib"
+        COCOA_PLUGIN="qt_quick/Teca.app/Contents/PlugIns/platforms/libqcocoa.dylib"
         echo "=== Bundled Qt plugins ==="
-        ls -R qt_quick/Katalog.app/Contents/PlugIns 2>/dev/null || echo "(no PlugIns directory)"
+        ls -R qt_quick/Teca.app/Contents/PlugIns 2>/dev/null || echo "(no PlugIns directory)"
         # Katalog cannot open any collection without the SQLite driver. Unlike
         # the platform plugin, its absence does not stop the app starting - it
         # would launch and then fail on every database operation, which a user
         # reports as "it does not work" rather than "it does not start".
-        SQLITE_PLUGIN="qt_quick/Katalog.app/Contents/PlugIns/sqldrivers/libqsqlite.dylib"
+        SQLITE_PLUGIN="qt_quick/Teca.app/Contents/PlugIns/sqldrivers/libqsqlite.dylib"
         if [ -f "$SQLITE_PLUGIN" ]; then
           echo "✅ SQLite driver bundled"
           echo "- **SQLite driver**: bundled" >> $GITHUB_STEP_SUMMARY
@@ -316,7 +320,7 @@ jobs:
     - name: Verify the bundle is self-contained
       run: |
         cd build
-        APP="qt_quick/Katalog.app"
+        APP="qt_quick/Teca.app"
 
         # Every Mach-O file in the bundle is asked what it links against. A
         # dependency under /opt/homebrew, /usr/local or a home directory exists
@@ -373,7 +377,7 @@ jobs:
     - name: Sign the bundle (ad-hoc) and verify it
       run: |
         cd build
-        APP="qt_quick/Katalog.app"
+        APP="qt_quick/Teca.app"
 
         # An ad-hoc signature - "-" means no identity, no Apple account needed.
         # Two reasons it matters, neither of them notarization:
@@ -409,7 +413,7 @@ jobs:
     - name: Smoke test - start the app without Homebrew
       run: |
         cd build
-        APP="qt_quick/Katalog.app"
+        APP="qt_quick/Teca.app"
 
         # The previous step reads what the binaries declare; this one actually
         # runs the app. Homebrew is moved aside first, because otherwise a
@@ -421,7 +425,7 @@ jobs:
         echo "=== Homebrew hidden, starting the app ==="
 
         set +e
-        "$APP/Contents/MacOS/Katalog" > launch.log 2>&1 &
+        "$APP/Contents/MacOS/Teca" > launch.log 2>&1 &
         APP_PID=$!
         sleep 20
         if kill -0 "$APP_PID" 2>/dev/null; then
@@ -486,7 +490,7 @@ jobs:
         cd build
         DMG_NAME="${ARTIFACT_BASE}.dmg"
         mkdir dmg_temp
-        cp -R qt_quick/Katalog.app dmg_temp/
+        cp -R qt_quick/Teca.app dmg_temp/
 
         if command -v create-dmg >/dev/null 2>&1; then
           create-dmg \
@@ -494,8 +498,8 @@ jobs:
             --window-pos 200 120 \
             --window-size 600 300 \
             --icon-size 100 \
-            --icon "Katalog.app" 175 120 \
-            --hide-extension "Katalog.app" \
+            --icon "Teca.app" 175 120 \
+            --hide-extension "Teca.app" \
             --app-drop-link 425 120 \
             "$DMG_NAME" \
             "dmg_temp/" || true
@@ -503,7 +507,7 @@ jobs:
 
         # Fallback if create-dmg failed or not installed
         if [ ! -f "$DMG_NAME" ]; then
-          hdiutil create -srcfolder qt_quick/Katalog.app -format UDZO -o "$DMG_NAME"
+          hdiutil create -srcfolder qt_quick/Teca.app -format UDZO -o "$DMG_NAME"
         fi
 
         echo "DMG created: $DMG_NAME"
@@ -520,7 +524,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.ARTIFACT_BASE }}_bundle
-        path: build/qt_quick/Katalog.app
+        path: build/qt_quick/Teca.app
         retention-days: 7
 
     - name: Summary

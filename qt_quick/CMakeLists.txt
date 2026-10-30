@@ -112,7 +112,7 @@ set_target_properties(Katalog3 PROPERTIES
     # it at release (AppManager). Only the cmake target keeps the suffix, because
     # qt_widgets already declares a target named Katalog and two targets cannot share a
     # name if both variants are ever enabled in one tree.
-    OUTPUT_NAME "Teca"   # the fork's visible name (D34); settings and data keep their Katalog paths
+    OUTPUT_NAME "Katalog"
     MACOSX_BUNDLE_BUNDLE_NAME "Teca"
 #    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.Katalog3
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
@@ -122,6 +122,12 @@ set_target_properties(Katalog3 PROPERTIES
 )
 
 if(APPLE)
+    # The fork's visible name (D34): on macOS the bundle is what the user sees in
+    # Finder and the Dock, so it is Teca.app. Elsewhere the program file keeps
+    # its name (the window title, About and desktop entry carry the name), so
+    # packaging and the settings and data paths are unchanged.
+    set_target_properties(Katalog3 PROPERTIES OUTPUT_NAME "Teca")
+
     # The bundle icon must be an .icns and must also be copied into
     # Contents/Resources: naming it alone leaves Finder with no icon at all.
     # It is deliberately NOT a qrc resource — it is a bundle file, and listing

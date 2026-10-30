@@ -1188,7 +1188,7 @@ Wählen Sie einen anderen Namen.</translation>
     <message>
         <location line="+11"/>
         <source>Used Space: </source>
-        <translation>Espace utilisé: </translation>
+        <translation>Belegter Speicherplatz: </translation>
     </message>
     <message>
         <location line="+138"/>
@@ -1922,7 +1922,7 @@ Wählen Sie einen anderen Namen.</translation>
         <location line="+21"/>
         <location line="+20"/>
         <source>Used Space: </source>
-        <translation>Espace utilisé: </translation>
+        <translation>Belegter Speicherplatz: </translation>
     </message>
     <message>
         <location line="-53"/>
@@ -5868,7 +5868,7 @@ in den Papierkorb?</translation>
         <location line="+21"/>
         <location line="+66"/>
         <source>Used Space: </source>
-        <translation>Espace utilisé: </translation>
+        <translation>Belegter Speicherplatz: </translation>
     </message>
     <message>
         <location line="-151"/>

@@ -8,7 +8,7 @@ import QtQuick.Controls as Controls
 // makes the box as wide as its widest entry, so a long French entry pushed the
 // Search column past the page edge; its list follows the widest entry too, so it
 // came out narrower than a stretched box. Fusion — forced on Windows and macOS
-// (main.cpp) — keeps the box small and makes the list exactly as wide as the
+// before the fork's TecaStyle, which derives from it (main.cpp, D34) — keeps the box small and makes the list exactly as wide as the
 // box, so long entries were cut in both. One definition gives the same result
 // on both:
 //
