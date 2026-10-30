@@ -169,6 +169,12 @@ class AppManager : public QObject
     Q_PROPERTY(QVariantList semanticResults READ getSemanticResults NOTIFY semanticResultsChanged)
     Q_PROPERTY(bool         semanticActive  READ getSemanticActive  NOTIFY semanticResultsChanged)
     Q_PROPERTY(bool         semanticOnly    READ getSemanticOnly    NOTIFY semanticResultsChanged)
+    // Search "In the information" (fork, MDI-F183): its own list too, filled
+    // by a worker thread; infoSearchRunning until the list arrives
+    Q_PROPERTY(QVariantList infoResults       READ getInfoResults       NOTIFY infoResultsChanged)
+    Q_PROPERTY(bool         infoActive        READ getInfoActive        NOTIFY infoResultsChanged)
+    Q_PROPERTY(bool         infoOnly          READ getInfoOnly          NOTIFY infoResultsChanged)
+    Q_PROPERTY(bool         infoSearchRunning READ getInfoSearchRunning NOTIFY infoResultsChanged)
     Q_PROPERTY(bool    searchIsPaused    READ getSearchIsPaused    NOTIFY searchStateChanged)
     Q_PROPERTY(QString searchStatusText  READ getSearchStatusText  NOTIFY searchStatusTextChanged)
     // Search results footer filters (SpecSearchResultsFilters.md). Both narrow
@@ -515,6 +521,22 @@ public slots:
     // Empty on success, else the reason; onlyMeaning: no other criterion was set
     Q_INVOKABLE QString      runSemanticSearch(const QString &query, bool onlyMeaning);
     Q_INVOKABLE void         clearSemanticResults();
+    // "In the information" (fork, MDI-F183): the files whose information or
+    // people contain every word, in the catalogs of the choice in My drives,
+    // found on a worker thread. Empty when started, else the reason (Hosted).
+    QVariantList getInfoResults()       const { return m_infoResults; }
+    bool         getInfoActive()        const { return m_infoActive; }
+    bool         getInfoOnly()          const { return m_infoOnly; }
+    bool         getInfoSearchRunning() const { return m_infoSearchBusy; }
+    Q_INVOKABLE QString      runInfoSearch(const QString &text, bool onlyInfo);
+    Q_INVOKABLE void         clearInfoResults();
+    // Asks the local model whether it answers and has the embedding model,
+    // without waiting: localModelChecked follows (MDI-F187)
+    Q_INVOKABLE void         checkLocalModel();
+    // Home's "To review" (fork, MDI-F184), read only: {faces, proposals,
+    // proposalsDeviceId, proposalsFolder} — the catalog with the most
+    // proposals waiting and its top folder; all 0 in a Hosted collection
+    Q_INVOKABLE QVariantMap  reviewCounts();
     Q_INVOKABLE QString      localFileUrl(const QString &path) const;
 
     // Transcripts (fork, owner's request 2026-10-30): the stored ones filtered
@@ -837,6 +859,8 @@ signals:
     void homeOverviewChanged();   // a Home count computed in the background is ready
     void knowledgeStateChanged();
     void semanticResultsChanged();
+    void infoResultsChanged();
+    void localModelChecked(bool reachable);
     void fileInfoChanged();
     void peopleChanged();
     void facesChanged();
@@ -1090,6 +1114,13 @@ private:
     QVariantList m_semanticResults;
     bool         m_semanticActive = false;
     bool         m_semanticOnly   = false;
+    // "In the information" (MDI-F183): only the latest search's list is kept
+    QVariantList     m_infoResults;
+    bool             m_infoActive       = false;
+    bool             m_infoOnly         = false;
+    bool             m_infoSearchBusy   = false;
+    int              m_infoSearchSerial = 0;
+    QList<QThread *> m_infoSearchThreads;
     // File information, people, faces, transcript cleaning (fork, 2026-10-30)
     QThread          *m_transcriptCleanThread = nullptr;
     std::atomic<bool> m_transcriptCleanStop{false};

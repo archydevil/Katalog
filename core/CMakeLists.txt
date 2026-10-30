@@ -53,6 +53,8 @@ set(CORE_HEADERS
     mdiwebsearch.h
     mdidocument.h
     mdihtmlexport.h
+    mdidiskspace.h
+    mdiarchivecopy.h
 )
 
 set(CORE_SOURCES
@@ -110,6 +112,8 @@ set(CORE_SOURCES
     mdiwebsearch.cpp
     mdidocument.cpp
     mdihtmlexport.cpp
+    mdidiskspace.cpp
+    mdiarchivecopy.cpp
 )
 
 add_library(katalog-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})

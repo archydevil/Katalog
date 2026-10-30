@@ -31,8 +31,11 @@
 #include "core/mdipeople.h"
 #include "core/mdiproposals.h"
 #include "core/mdidocument.h"
+#include "core/mdienrichmentjob.h"
 
 #include <QDir>
+#include <QLocale>
+#include <QSet>
 #include <QFile>
 #include <QFileInfo>
 #include <QSaveFile>
@@ -575,6 +578,84 @@ QVariantMap MdiHtmlExport::fileRecord(const QString &mdiConnection, int catalogI
     if (!ai.isEmpty())
         r["ai"] = ai;
     return r;
+}
+
+QVariantList MdiHtmlExport::scopeRecords(const QString &collectionConnection, const QString &mdiConnection,
+                                         const Scope &scope, const std::function<bool(int, int)> &progress,
+                                         bool *stopped)
+{
+    if (stopped)
+        *stopped = false;
+    QString root = scope.catalogRoot;
+    while (root.size() > 1 && root.endsWith(QLatin1Char('/')))
+        root.chop(1);
+    QString folder = scope.path;
+    while (folder.size() > 1 && folder.endsWith(QLatin1Char('/')))
+        folder.chop(1);
+
+    // The files of the scope that have something to tell: information,
+    // people, proposals, AI results or a study (every file for one file)
+    const bool single = scope.scope == QLatin1String("file");
+    QSet<QString> worth;
+    if (!single) {
+        worth = MdiProposals::filesWithProposals(mdiConnection, scope.catalogId);
+        if (scope.withInformation) {
+            const QHash<QString, QString> info = MdiPeople::searchTextByFile(mdiConnection, scope.catalogId);
+            for (auto it = info.cbegin(); it != info.cend(); ++it)
+                worth.insert(it.key());
+        }
+        for (const QString &a : {QStringLiteral("caption"), QStringLiteral("summary"),
+                                 QStringLiteral("classification"), QStringLiteral("document")})
+            for (const MdiData::Datum &d : MdiData::forCatalog(mdiConnection, scope.catalogId, a))
+                worth.insert(d.fullPath);
+    }
+    QList<MdiEnrichmentJob::FileItem> files;
+    for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(collectionConnection, scope.catalogId,
+                                                                                    scope.databaseMode,
+                                                                                    scope.catalogFilePath)) {
+        if (single ? f.fullPath == scope.path
+                   : (scope.scope == QLatin1String("catalog") || f.fullPath.startsWith(folder + QLatin1Char('/')))
+                     && worth.contains(f.fullPath))
+            files.append(f);
+    }
+    if (single && files.isEmpty()) {
+        MdiEnrichmentJob::FileItem f;
+        f.fullPath = scope.path;
+        files.append(f);
+    }
+    std::sort(files.begin(), files.end(), [](const MdiEnrichmentJob::FileItem &a, const MdiEnrichmentJob::FileItem &b) {
+        const QString fa = QFileInfo(a.fullPath).path(), fb = QFileInfo(b.fullPath).path();
+        return fa == fb ? a.fullPath.compare(b.fullPath, Qt::CaseInsensitive) < 0
+                        : fa.compare(fb, Qt::CaseInsensitive) < 0;
+    });
+
+    QVariantList records;
+    const int total = int(files.size());
+    for (int k = 0; k < total; ++k) {
+        if (progress && !progress(k, total)) {
+            if (stopped)
+                *stopped = true;
+            return records;
+        }
+        const MdiEnrichmentJob::FileItem &f = files.at(k);
+        QString relative = QFileInfo(f.fullPath).path();
+        if (!root.isEmpty() && relative.startsWith(root))
+            relative = relative.mid(root.size());
+        QVariantMap facts{ { QStringLiteral("folder"),   relative.isEmpty() ? QStringLiteral("/") : relative },
+                           { QStringLiteral("type"),     scope.typeLabels.value(f.fileType, f.fileType) },
+                           { QStringLiteral("size"),     f.size > 0 ? QLocale().formattedDataSize(f.size) : QString() },
+                           { QStringLiteral("modified"), f.dateUpdated } };
+        QVariantMap record = fileRecord(mdiConnection, scope.catalogId, f.fullPath, facts);
+        if (record.contains(QStringLiteral("study")) && scope.documentTypeLabel) {
+            QVariantMap study = record.value(QStringLiteral("study")).toMap();
+            study[QStringLiteral("typeLabel")] = scope.documentTypeLabel(study.value(QStringLiteral("type")).toString());
+            record[QStringLiteral("study")] = study;
+        }
+        records.append(record);
+    }
+    if (progress)
+        progress(total, total);
+    return records;
 }
 
 QString MdiHtmlExport::build(const QVariantList &records, const Options &options, const Labels &labels)

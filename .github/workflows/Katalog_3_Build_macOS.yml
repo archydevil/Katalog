@@ -171,6 +171,7 @@ jobs:
         done
 
     - name: Set version information
+      id: version
       run: |
         # Read the full release string (it carries any beta/alpha suffix); project()
         # holds only major.minor, which would silently drop the pre-release marker.
@@ -180,6 +181,8 @@ jobs:
           KATALOG_VERSION="3.x"
         fi
         echo "ARTIFACT_BASE=Katalog_macos_v${KATALOG_VERSION}" >> $GITHUB_ENV
+        echo "artifact_base=Katalog_macos_v${KATALOG_VERSION}" >> $GITHUB_OUTPUT
+        echo "version=${KATALOG_VERSION}" >> $GITHUB_OUTPUT
         echo "KATALOG_VERSION=${KATALOG_VERSION}" >> $GITHUB_ENV
         echo "Building artifact: Katalog_macos_v${KATALOG_VERSION}.dmg"
 
@@ -522,20 +525,20 @@ jobs:
     - name: Upload DMG as Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.ARTIFACT_BASE }}_dmg
-        path: build/${{ env.ARTIFACT_BASE }}.dmg
+        name: ${{ steps.version.outputs.artifact_base }}_dmg
+        path: build/${{ steps.version.outputs.artifact_base }}.dmg
         retention-days: 30
 
     - name: Upload App Bundle as Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.ARTIFACT_BASE }}_bundle
+        name: ${{ steps.version.outputs.artifact_base }}_bundle
         path: build/qt_quick/Teca.app
         retention-days: 7
 
     - name: Summary
       run: |
         echo "## Katalog 3 macOS Build" >> $GITHUB_STEP_SUMMARY
-        echo "- **Version**: ${{ env.KATALOG_VERSION }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **File**: ${{ env.ARTIFACT_BASE }}.dmg" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **File**: ${{ steps.version.outputs.artifact_base }}.dmg" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: 📦 Available as build artifact" >> $GITHUB_STEP_SUMMARY

@@ -1287,7 +1287,7 @@ listed in `Q73`.
 | MDI-C5 | **Memory mode.** The in-memory collection database is never shared with the runner's thread. Derived data lives in `mdi_data.db` exactly as in File mode (`MDI-C4`), so no derived table is loaded into the in-memory database. The enrichment profile (`mdi_profile`) stays in the in-memory database, is persisted to `mdi_profile.csv` in the collection folder and is loaded when the collection is opened, before any query on it (Memory Mode Caveat in `CLAUDE.md`). | [Implemented — Phase A] |
 | MDI-C6 | **Hosted mode.** The runner opens its own connection with the collection's already validated host settings. Derived-file locations are stored relative to the destination path, which is recorded per catalog, so a second machine can point to its own copy. Whether several machines share one destination path or use one each is `Q11` (deferred). | [Planned] |
 | MDI-C7 | External tools are started with `QProcess` using a program path and an argument list — never through a shell or a command string. Standard output and error are captured; the process is terminated on Stop, on time limit and on application exit. Tool paths are application settings (machine-specific); per-collection choices (profile, provider enablement) are stored with the collection. New settings keys only add to `katalog3_prerelease_settings.ini`; existing keys keep their meaning, so a beta settings file stays readable. | [Implemented — Phase A] |
-| MDI-C8 | No new linked library and no new Qt or KF6 module: `ffmpeg`, `whisper.cpp` and poppler are external programs; HTTP uses `Qt6::Network`; no vector-index library, no keychain library, no Qt Multimedia. Adding any of these needs explicit user approval and an amendment here first. **Exception (D25, 2026-10-29):** KArchive (`KF6::Archive`), optional, under `MDI-C25`; this exception covers that library only. **Addition (D32, 2026-10-29):** on macOS only, the system program `/usr/bin/textutil` (`-convert txt -stdout`) is an approved external program, for the text of `.doc` files when KFileMetaData returns none; it is started as `MDI-C7` requires, under the time limit of `MDI-F22`, is not detected or configurable (`MDI-F20`), and is a platform-specific program, not a platform-specific API (`MDI-C19`). **Exception (D39, 2026-10-30, built):** OpenCV, optional, under `MDI-C50`; this exception covers that library only. **Addition (D41, 2026-10-30, built):** `tesseract`, an approved external program, under `MDI-C54`. **Addition (D41, owner, 2026-10-30, second round):** `exiv2`, an approved external program, started by *dating* when KFileMetaData gives no date; installed by the user (D9), its path configurable (`MediaIntelligence/Exiv2Path`), started as `MDI-C7` requires. | [Implemented — Phase A; D39 and D41 additions built] |
+| MDI-C8 | No new linked library and no new Qt or KF6 module: `ffmpeg`, `whisper.cpp` and poppler are external programs; HTTP uses `Qt6::Network`; no vector-index library, no keychain library, no Qt Multimedia. Adding any of these needs explicit user approval and an amendment here first. **Exception (D25, 2026-10-29):** KArchive (`KF6::Archive`), optional, under `MDI-C25`; this exception covers that library only. **Addition (D32, 2026-10-29):** on macOS only, the system program `/usr/bin/textutil` (`-convert txt -stdout`) is an approved external program, for the text of `.doc` files when KFileMetaData returns none; it is started as `MDI-C7` requires, under the time limit of `MDI-F22`, is not detected or configurable (`MDI-F20`), and is a platform-specific program, not a platform-specific API (`MDI-C19`). **Exception (D39, 2026-10-30, built):** OpenCV, optional, under `MDI-C50`; this exception covers that library only. **Addition (D41, 2026-10-30, built):** `tesseract`, an approved external program, under `MDI-C54`. **Addition (D41, owner, 2026-10-30, second round):** `exiv2`, an approved external program, started by *dating* when KFileMetaData gives no date; installed by the user (D9) — in the owner's macOS DMG it travels in the app (D42, `MDI-C61`) —, its path configurable (`MediaIntelligence/Exiv2Path`), started as `MDI-C7` requires. | [Implemented — Phase A; D39 and D41 additions built] |
 | MDI-C9 | Embeddings are stored in the database with the model name, model version and dimension. Similarity (cosine) is computed in `core/` by scanning stored vectors in batches; the scan is stoppable between batches and reports progress. A performance target is `Q14`, decided in Phase D. | [Planned — part implemented in Phase D] |
 | MDI-C10 | The runner MUST NOT write, modify, rename or delete anything on the cataloged source. It reads source files only, and only while their device is connected. All derived files go under the destination path, which is validated as outside the source (`MDI-F6`). | [Implemented — Phase A] |
 | MDI-C11 | Katalog MUST NOT send any content, query or metadata off the machine except to a provider enabled and confirmed under `MDI-F23`/`MDI-F24`/`MDI-F50`. With default settings the only network destination is `localhost`. No telemetry is added. **Exception (D41, owner, 2026-10-30, built):** web search, enabled per collection and confirmed per run, under `MDI-C56`, to DuckDuckGo and to Wikipedia (`it`, `en`; owner, second round); this exception covers that use only. | [Implemented — Phase A; D41 exception built] |
@@ -1329,14 +1329,18 @@ listed in `Q73`.
 | MDI-C47 | **Bounds of navigation and accessibility (D37).** K3 only (`MDI-C1`); no `core/` change; no new file. Back, Forward and the breadcrumb reach pages and Browse locations through the existing open paths: no second way of opening a catalog (`EXP-C21`), and `Esc` reuses an existing handler (`KBS-C1`'s rule, applied to Back). The history of `MDI-F144` is held in memory, with no settings key. New tokens are defined in `KTheme.qml` (`MDI-C37`): `controlLine`, light `#7D8799`, dark `#6B7590`, which `Main.qml` passes to `TecaStyle` as `palette.dark` (`MDI-C42`). Accessible names reuse existing strings; other new strings follow `MDI-C39`. Accessibility uses Qt Quick's own `Accessible` attached properties: no new Qt or KF6 module (`MDI-C8`). Message channels and the progress builder are unchanged (`MDI-C38`). | [Implemented — D37] |
 | MDI-C48 | **Store of information, people and faces (D38, D39; D17, D5).** The information of files (`mdi_annotation`), the people (`mdi_person`), the links of people to files (`mdi_file_person`) and the faces (`mdi_face`) are tables of `mdi_data.db`, created when absent by the `mdi_` migration (`MDI-C15`). A row of `mdi_annotation`, `mdi_file_person` or `mdi_face` names its file by catalog ID and full path, as `mdi_datum` does; `mdi_person` belongs to the collection. A face row holds its box in the image, its recognition feature with the model's name and version (as `MDI-C9` for embeddings), its state, its person, and the suggested person with the similarity. The *faces* option is part of the enrichment profile (`MDI-F8`). No core table or column, no settings key and no new Memory-mode file is added, so K2 and upstream K3 3.0 are unaffected (`MDI-C1`). A face image shown in the UI is never a database BLOB: it is drawn from the image's preview or written as a derived file under the destination path (`MDI-F34`, `MDI-F78`). Every read and write is in `core/`; `qt_quick/` holds no raw `QSqlQuery` (`MDI-C14`). **Hosted mode** has no `mdi_data.db` (`Q11`): information, people and faces are unavailable there, and K3 says so. **Memory mode** works as File mode, through `mdi_data.db`; a catalog's file list that a step needs is loaded first (Memory Mode Caveat, `CLAUDE.md`). | [Implemented — D38, D39; Memory mode not tested] |
 | MDI-C49 | **Attributions are user data and follow their files (D38, D39).** Information, people, links of people to files, and the user's confirmations and rejections of faces are user data, as the context is (`MDI-C31`). *Clear derived data* (`MDI-F59`), a re-run (`MDI-F53`), a quick-hash pass (`MDI-F84`), the cleaning of transcripts (`MDI-F173`) and a new run of the *faces* analysis MUST NOT delete or change them; a new faces run keeps every confirmed and rejected face (the specifications agent's reading, `Q69`). Deleting a catalog: `Q69`. A split (`MDI-F126`), a recomposition (`MDI-F142`) and a restore (`MDI-F139`) move the rows of `mdi_annotation`, `mdi_file_person` and `mdi_face` with their files, by full path, with the rule of `MDI-F126`: a colliding row stays where it is, and nothing is overwritten or deleted. This extends `MdiData::moveToCatalogs` (`MDI-C43`), an existing core method; the change was ratified by the owner on 2026-10-30 (`Q69` (h)). Only *Delete all face data* (`MDI-F182`), at the user's request, removes faces' confirmations and rejections and the links made through faces. | [Implemented — D38; not tested] |
-| MDI-C50 | **OpenCV, optional (D39; exception to `MDI-C8`).** OpenCV is linked to `katalog-core` only when CMake finds it, with the modules the faces analysis needs, and then defines a compile flag, as KArchive does (`MDI-C25`). Without it the build succeeds and the faces features are off with a clear message (`facesAvailable`, `facesUnavailableReason`). On macOS the library comes from Homebrew (`opencv`). The models — YuNet for detection and SFace for recognition, free files of about 40 MB together — are looked for in `~/teca-models`; a missing model turns the features off with its reason. Katalog does not ship them (D9), and does not download them: with default settings the only network destination stays `localhost` (`MDI-C11`); a download action is `Q66`. A K2 build links OpenCV too when CMake finds it, as with KArchive (finding *KArchive and K2*), with no K2 file changed (`MDI-C1`). Packaging of the portable builds: `Q66`. No other library or module is added. | [Implemented — D39 (OpenCV 5.0.0, Homebrew); packaging open (`Q66`)] |
+| MDI-C50 | **OpenCV, optional (D39; exception to `MDI-C8`).** OpenCV is linked to `katalog-core` only when CMake finds it, with the modules the faces analysis needs, and then defines a compile flag, as KArchive does (`MDI-C25`). Without it the build succeeds and the faces features are off with a clear message (`facesAvailable`, `facesUnavailableReason`). On macOS the library comes from Homebrew (`opencv`). The models — YuNet for detection and SFace for recognition, free files of about 40 MB together — are looked for in `~/teca-models`; a missing model turns the features off with its reason. Katalog does not ship them (D9), and does not download them: with default settings the only network destination stays `localhost` (`MDI-C11`); a download action is `Q66`. A K2 build links OpenCV too when CMake finds it, as with KArchive (finding *KArchive and K2*), with no K2 file changed (`MDI-C1`). Packaging of the portable builds: `Q66`. No other library or module is added. **Amended (D42, owner, 2026-10-30):** in the owner's macOS DMG, OpenCV's libraries and the YuNet and SFace models travel in the app (`Teca.app/Contents/Resources/models`), found after the Settings path and `~/teca-models` (`MDI-C61`). Windows and Linux: `Q66`. | [Implemented — D39 (OpenCV 5.0.0, Homebrew); macOS DMG — D42; Windows and Linux packaging open (`Q66`)] |
 | MDI-C51 | **Face data stays on this computer (D39; GDPR art. 9).** Face detection and recognition run in-process, with no network (`MDI-C11`). What the *faces* analysis produces — features, boxes, face images — and the link of a face to a person MUST NOT be sent to any provider, local-network or remote, or to any other destination, whatever providers are enabled (D3). It MUST NOT be written outside `mdi_data.db` and the destination path. The thumbnails sent for captions keep their own rules (`MDI-F39`, `MDI-F24`). A file's information and its people's names, roles and organisations are an input of an AI request only as the *info* vectors of `MDI-F163`, sent to the collection's embedding model under its provider's rules (`MDI-F23`, `MDI-F24`) (owner, 2026-10-30, `Q67` (a)); any other use needs its own row first. Legal basis: the owner's decision (`Q65` (a)). Deleting all face data: `MDI-F182`. Retention: `Q65` (b). | [Implemented — D39; the *info* vectors of `Q67` (a) built; people named through a confirmed face are in the *info* text (finding *Face links in the info text*)] |
-| MDI-C52 | **Transcripts in core (D40; `MDI-C14`, D4).** The new `whisper.cpp` options, the filter with its phrase list, and the cleaning of stored transcripts are in `core/`. The cleaning runs off the UI thread; the recomputation runs in the runner (D2, `MDI-C3`). The VAD model is a model file of `whisper.cpp`, an approved tool (D4): no new tool and no new library. It is found as the whisper model is (`MDI-F20`) and installed by the user (D9). The filter has a version, recorded with each transcript (`MDI-F52`). **Amended (owner, 2026-10-30, "Rifai tutte"):** the new options and the filter's version are parameters of the transcript for `MDI-F13`, so every transcript made before D40, cleaned or not, is out of date, and the runner transcribes it again in the background, with Pause and Stop (`MDI-F16`, `MDI-F17`). The cleaning's results (`MDI-F173`) stand until each file is transcribed again. This replaces the earlier reading that stored transcripts are cleaned, not transcribed again (`Q68` (f)). The phrase list is not user-visible text. | [Implemented — D40; the re-transcription of the owner's collection started 2026-10-30, not finished] |
-| MDI-C53 | **Bounds of D38–D40.** K2 is not changed (`MDI-C1`). New K3 file: `qt_quick/PagePeople.qml` (`MDI-C18`, fifth exception). New core files and classes are approved in principle by "Approvo" (`MDI-C14`). Their names and methods, and the changes to existing core classes that the steps need (the runner for the faces analysis and the transcript options, the `mdi_` migration, the carry-over of `MDI-C49`), are listed in this spec before they are written. **Ratified after they were written (owner, 2026-10-30, "Approvo tutto"):** those listed under *D38 to D41 — reported*, and `MdiPeople::clearAllFaces` (`MDI-F182`). No other new file is approved. K3 API in `AppManager` (contract): `fileInfo`, `setFileInfo`, `people`, `person`, `savePerson`, `deletePerson`, `addPeopleToFiles`, `removePersonFromFile`, `filesOfPerson`, `facesAvailable`, `facesUnavailableReason`, `facesInFile`, `confirmFaces`, `rejectFaces`, `clearFace`, `similarFaces`, `pendingFaces`, `unnamedFaceGroups`, `startFaceAnalysis`, `cleanTranscripts`, `clearFaceData` (`MDI-F182`, added 2026-10-30); signals `fileInfoChanged`, `peopleChanged`, `facesChanged`, `transcriptsCleaned`. Similarity is a cosine scan in `core/`, stoppable between batches (`MDI-C9`); no vector-index library (D4). Multi-selection in Browse opens nothing in a new way (`EXP-C21`). Message channels: validation in an inline message, decisions (deleting a person, deleting all face data, cleaning transcripts) in modal dialogs, results in passive notifications (`MDI-C17`); progress through the builder (`MDI-C16`). New strings follow `MDI-C39` and D16. | [Planned — part implemented in D38–D40: core design ratified 2026-10-30 after it was written; no confirmation before the cleaning (`MDI-F173`); `findFilesByInfo` and `ignoreFaces` beyond the contract, kept unused (open)] |
-| MDI-C54 | **Tesseract, an approved external program (D41; D4, `MDI-C8`).** `tesseract` is started as `MDI-C7` requires, under the time limit of `MDI-F22`, with the Italian language data. The program and its data are installed by the user (Homebrew `tesseract` on macOS) and not shipped (D9); they are detected and configurable like the other tools (`MDI-F20`). No library is linked. It reads only the pages that `pdftoppm` rendered under the destination path or a temporary folder, never writes on a catalogued drive (`MDI-C10`), and uses no network. | [Implemented — D41 (`MediaIntelligence/TesseractPath`, `TessdataPath`); not tested in the app] |
+| MDI-C52 | **Transcripts in core (D40; `MDI-C14`, D4).** The new `whisper.cpp` options, the filter with its phrase list, and the cleaning of stored transcripts are in `core/`. The cleaning runs off the UI thread; the recomputation runs in the runner (D2, `MDI-C3`). The VAD model is a model file of `whisper.cpp`, an approved tool (D4): no new tool and no new library. It is found as the whisper model is (`MDI-F20`) and installed by the user (D9). The filter has a version, recorded with each transcript (`MDI-F52`). **Amended (owner, 2026-10-30, "Rifai tutte"):** the new options and the filter's version are parameters of the transcript for `MDI-F13`, so every transcript made before D40, cleaned or not, is out of date, and the runner transcribes it again in the background, with Pause and Stop (`MDI-F16`, `MDI-F17`). The cleaning's results (`MDI-F173`) stand until each file is transcribed again. This replaces the earlier reading that stored transcripts are cleaned, not transcribed again (`Q68` (f)). The phrase list is not user-visible text. **Amended (D42, owner, 2026-10-30):** in the owner's macOS DMG the VAD model travels in the app with the whisper speech model (`MDI-C61`). | [Implemented — D40; the re-transcription of the owner's collection started 2026-10-30, not finished] |
+| MDI-C53 | **Bounds of D38–D40.** K2 is not changed (`MDI-C1`). New K3 file: `qt_quick/PagePeople.qml` (`MDI-C18`, fifth exception). New core files and classes are approved in principle by "Approvo" (`MDI-C14`). Their names and methods, and the changes to existing core classes that the steps need (the runner for the faces analysis and the transcript options, the `mdi_` migration, the carry-over of `MDI-C49`), are listed in this spec before they are written. **Ratified after they were written (owner, 2026-10-30, "Approvo tutto"):** those listed under *D38 to D41 — reported*, and `MdiPeople::clearAllFaces` (`MDI-F182`). No other new file is approved. K3 API in `AppManager` (contract): `fileInfo`, `setFileInfo`, `people`, `person`, `savePerson`, `deletePerson`, `addPeopleToFiles`, `removePersonFromFile`, `filesOfPerson`, `facesAvailable`, `facesUnavailableReason`, `facesInFile`, `confirmFaces`, `rejectFaces`, `clearFace`, `similarFaces`, `pendingFaces`, `unnamedFaceGroups`, `startFaceAnalysis`, `cleanTranscripts`, `clearFaceData` (`MDI-F182`, added 2026-10-30); signals `fileInfoChanged`, `peopleChanged`, `facesChanged`, `transcriptsCleaned`. Similarity is a cosine scan in `core/`, stoppable between batches (`MDI-C9`); no vector-index library (D4). Multi-selection in Browse opens nothing in a new way (`EXP-C21`). Message channels: validation in an inline message, decisions (deleting a person, deleting all face data, cleaning transcripts) in modal dialogs, results in passive notifications (`MDI-C17`); progress through the builder (`MDI-C16`). New strings follow `MDI-C39` and D16. **Amended (owner, 2026-10-30, late):** `findFilesByInfo` (`MDI-F183`) and `ignoreFaces` (`MDI-F185`) join the contract; `similarFaces` and `unnamedFaceGroups` may become requests answered by signals (`MDI-C58`), their names listed here when built. | [Planned — part implemented in D38–D40: core design ratified 2026-10-30 after it was written; no confirmation before the cleaning (`MDI-F173`); `findFilesByInfo` and `ignoreFaces` in the contract since 2026-10-30, not yet used] |
+| MDI-C54 | **Tesseract, an approved external program (D41; D4, `MDI-C8`).** `tesseract` is started as `MDI-C7` requires, under the time limit of `MDI-F22`, with the Italian language data. The program and its data are installed by the user (Homebrew `tesseract` on macOS) and not shipped (D9); they are detected and configurable like the other tools (`MDI-F20`). No library is linked. It reads only the pages that `pdftoppm` rendered under the destination path or a temporary folder, never writes on a catalogued drive (`MDI-C10`), and uses no network. **Amended (D42, owner, 2026-10-30):** in the owner's macOS DMG, `tesseract` and its data (`ita`, `eng`, `osd`) travel in the app (`MDI-C61`). | [Implemented — D41 (`MediaIntelligence/TesseractPath`, `TessdataPath`); not tested in the app] |
 | MDI-C55 | **Store of proposals, fragments and metadata read (D41; D17, D5).** Proposals, fragments and the metadata read for dating are in new tables of `mdi_data.db`, created when absent by the `mdi_` migration (`MDI-C15`); their names come with the design (`MDI-C57`). Their rows name their file by catalog ID and full path, as `mdi_datum` does, and follow a split, a recomposition and a restore as `MDI-C49` states. The core `file` table's metadata columns and its `metadata_extraction_date` are never written: the catalog's *Include metadata* level and its data are unchanged (`MDI-F58`, `SpecCatalogMetadata.md`). Proposals and fragments are derived data: *Clear derived data* (`MDI-F59`) and a re-run (`MDI-F53`) may remove them. An approved value is the user's information (`mdi_annotation`, `MDI-C48`), user data under `MDI-C49`. No core table or column and no new Memory-mode file is added. The web-search switch is a per-collection choice, stored with the collection as `MDI-C7` states for provider enablement. Hosted mode: unavailable (`MDI-C48`). | [Implemented — D41, with the caches `mdi_folder_reading` and `mdi_web_result` (ratified 2026-10-30); the switch is `MediaIntelligence/WebSearch` in the collection `.ini`; not tested in the app] |
 | MDI-C56 | **Web search egress (D41; exception to `MDI-C11`).** **Amended (owner, 2026-10-30, "Web: DuckDuckGo + Wikipedia"):** the network destinations added are DuckDuckGo's Instant Answer API (`api.duckduckgo.com`) and the MediaWiki API of `it.wikipedia.org` and `en.wikipedia.org`, over HTTPS with `Qt6::Network`, with no key. A query is sent only when web search is enabled for the collection and its list was confirmed (`MDI-F177`). A query holds search words only: never a file, an image, a thumbnail, a text passage, an API key, an identifier of the user or of the collection, or any data of the *faces* analysis (`MDI-C51`). Requests have a time limit and stop on Stop (`MDI-C20`). Results are parsed in `core/`; a response that cannot be parsed is recorded as failed, never stored as a result. With default settings the only network destination stays `localhost`. Whether a query may hold people's names (D38): `Q71` (b). | [Implemented — D41; not tested in the app] |
 | MDI-C57 | **Bounds of D41.** K2 is not changed (`MDI-C1`). The two analyses, the tables of `MDI-C55`, web search, the HTML export and the EXIF reading are approved in principle by "Approvo" (`MDI-C14`); their core files, classes and methods, and the changes to existing core classes they need, are listed in this spec before they are written. No other new file is approved; the one new K3 file is `qt_quick/DocumentReader.qml` (`MDI-C18`, ratified 2026-10-30). **Ratified after they were written (owner, 2026-10-30, "Approvo tutto"):** the core files, classes and changes listed under *D38 to D41 — reported*. No new library and no new Qt or KF6 module (`MDI-C8`): EXIF is read with what is already linked (KFileMetaData, Qt's image reader), with `ffprobe` (D4), or with the `exiv2` program (`MDI-C8`, owner, 2026-10-30), and the HTML is written with QtCore. The page's visible text is user-visible text, translated as `CLAUDE.md` requires (`Q72`). `qt_quick/` holds no raw `QSqlQuery`. Message channels: the query list is confirmed in a modal dialog; results show in passive notifications (`MDI-C17`); progress through the builder (`MDI-C16`). New strings follow `MDI-C39` and D16. | [Implemented — D41; core design ratified 2026-10-30 after it was written; not tested in the app] |
+| MDI-C58 | **Face groups and similar faces off the UI thread (owner, 2026-10-30, "Volti simili in background"; `MDI-C14`).** *Similar faces* (`MDI-F168`) and the groups of unnamed faces (`MDI-F169`) are computed on a worker thread with its own connection to `mdi_data.db` (`MDI-C4`), never on the UI thread; *Persone* shows them when they are ready. The results are kept in memory until the faces or the people change — a job writes faces; a confirmation, rejection, *Clear* or ignore; *Delete all face data*; another collection is opened — and no longer. No table is added. What is kept is face data: it stays on this computer and is never sent or written elsewhere (`MDI-C51`), and *Delete all face data* drops it (`MDI-F182`). If a stored table turns out to be needed, it is an `mdi_` table of `mdi_data.db` under `MDI-C15` and `MDI-C48`, face data under `MDI-C51` and `MDI-F182`, and it is listed here before it is written. Similarity stays a cosine scan in `core/`, stoppable between batches (`MDI-C9`). | [Planned] |
+| MDI-C59 | **The archive copy (owner, 2026-10-30, "Copia dei dati dell'archivio"; `MDI-C14`).** The copy of `MDI-F188` is made in `core/`, on a worker thread with its own connections. Each SQLite file — the collection database in File mode, `mdi_data.db`, `teca_history.db` — is copied consistently while Teca may be writing it, with SQLite's `VACUUM INTO` or an equivalent online copy, never by copying the open file. The Memory-mode files and the settings file are copied as files. Nothing is written outside the new folder, and no file copied is changed, moved or deleted (`CLAUDE.md` file safety). The date of the last copy is kept in **one new settings key**, in the settings file (`katalog3_prerelease_settings.ini` for the betas), per collection. It only adds a key (`MDI-C7`): a beta1 settings file stays readable, and with no key Home reads "no copy yet" (`MDI-F189`). No core table or column changes (`MDI-C15`). | [Planned] |
+| MDI-C60 | **Bounds of the rows of 2026-10-30, late.** K2 is not changed (`MDI-C1`). The owner approved in principle the core changes of `MDI-F188`/`MDI-C59`, `MDI-C58`, `MDI-F190` and `MDI-F191` (`MDI-C14`); their files, classes and methods, and the changes to existing core classes, are listed in this spec before they are written. `MDI-F183` and `MDI-F185` use the existing `MdiPeople::findFiles` and `MdiPeople::ignoreFaces` (written with D38, ratified with `MdiPeople`). `MDI-F184`, `MDI-F186` and `MDI-F187` use existing core methods only: a new core method they need is not covered by these answers and needs the owner's approval first. No new K3 file (`MDI-C18`); a new core file is listed here before it is written. `qt_quick/` holds no raw `QSqlQuery`. Message channels: decisions in modal dialogs, results in passive notifications (`MDI-C17`); progress through the builder (`MDI-C16`). New strings follow `MDI-C39` and D16. | [Planned] |
+| MDI-C61 | **The owner's macOS DMG (D42).** Made by `packaging/macos/Teca_macos_create_portable.sh` with `packaging/macos/bundle_tools.py`, apart from the CI package of `SpecK3Deployment.md` (`DPL-F6`, `DPL-C7`: macOS 15, unchanged). It carries `ffmpeg`, `ffprobe`, `whisper-cli` with its `ggml` backends, `pdftotext`, `pdftoppm`, `tesseract` and `exiv2` in `Teca.app/Contents/Helpers`, their libraries in `Contents/Frameworks`, OpenCV through `macdeployqt`, and in `Contents/Resources/models` the whisper speech model, the Silero VAD model, YuNet, SFace and `tessdata` (`ita`, `eng`, `osd`). The programs stay external programs started with `QProcess`, never linked (D4, `MDI-C7`, `MDI-C8`). A tool or a model is taken from the app only when neither the Settings path nor the computer has it (`MDI-F20`); nothing is written to a settings file, so a beta settings file is unaffected (`MDI-C7`, `MDI-C41`). Limits: Apple Silicon only; macOS 26 at least; an ad-hoc signature, not notarised; Ollama installed separately. **Not distributed:** the DMG is for the owner's own Macs; it is given to no one else until each carried program's licence notice and the GPL source offer are in the bundle (open condition of D42). Windows, Linux and the CI macOS package carry no tool and no model (D9). | [Implemented — 2026-10-30 (`7fc239df`, `8889479b`); licence notices and source offer missing (not distributed)] |
 
 ---
 
@@ -1371,6 +1375,8 @@ listed in `Q73`.
 | **Faces** | The *faces* analysis with OpenCV, suggestions, confirmations, similar faces, unnamed groups (D39, 2026-10-30). Needs the people of *Information and people*. Built 2026-10-30; tested on sample portraits only. *Delete all face data* added, and the analysis started on the UITS catalog, the same day. | `MDI-O14`, `MDI-F165`–`F170`, `MDI-F182`, `MDI-C50`, `MDI-C51`; `MDI-C8` amended; `Q65`, `Q66`, `Q69`; `SpecK3Deployment.md` |
 | **Real transcripts** | Voice activity detection and the filter for new transcripts; cleaning of the stored ones and recomputation of what was built from them (D40, 2026-10-30). Built 2026-10-30; the cleaning ran on the owner's collection, then the full re-transcription the owner approved (`MDI-C52`) started the same day. | `MDI-O15`, `MDI-F171`–`F173`, `MDI-C52`; `MDI-F35` amended; `Q68` |
 | **Dating and document study** | The *dating* analysis and its proposals, EXIF read for dating, web search on request, Tesseract OCR, *document study*, "Read the document", the HTML export (D41, 2026-10-30). Proposals fill the information of *Information and people*. Built 2026-10-30; its deviations were ratified by the owner the same day; not tested in the app. | `MDI-O16`, `MDI-O17`, `MDI-F174`–`F181`, `MDI-C54`–`C57`; `MDI-F41`, `MDI-C8`, `MDI-C11` amended; `Q70`–`Q72`; `SpecCatalogMetadata.md`, `SpecSettingsPage.md` |
+| **Owner's macOS DMG** | The portable DMG for the owner's Macs, carrying the tools and the models (D42, 2026-10-30). Built before the decision; not distributed until the licence notices and the source offer are in it. | `MDI-C61`; `MDI-F20`, `MDI-C8`, `MDI-C50`, `MDI-C52`, `MDI-C54`, D9 amended; `Q15`, `Q66`; `SpecK3Deployment.md` |
+| **Review answers** | Search *In the information*, "To review" on Home, ignoring faces and showing a face's photo, a search with no results; the archive copy, face groups off the UI thread, a catalog's HTML export in the background, free space for the AI data (owner, 2026-10-30, late). Core changes approved in principle; design listed before it is written (`MDI-C60`). | `MDI-F183`–`F191`, `MDI-C58`–`C60`; `MDI-F19`, `MDI-F112`, `MDI-F163`, `MDI-F166`, `MDI-F181`, `MDI-C53` amended; `Q67`, `Q73` |
 
 A phase starts only when the previous one is implemented, and each phase starts
 with the core design approval required by `MDI-C14` and the string approvals of
@@ -1814,6 +1820,27 @@ reasons from core ("no speech found", "tesseract not found") are core English
 text, as before (*Known gaps*). The examples of proposal sources ("EXIF
 12/07/2015", "cartella Munich 2015", "documento X") are the main session's
 illustrations, not strings.
+
+### Approved 2026-10-30 — review fixes and UX step
+
+The owner approved, on 2026-10-30, in the app's question dialog ("Approvo
+tutte", relayed by the main agent; the specifications agent did not see the
+reply): the step's 29 new strings, and the retirement of nine K2 strings that
+K3 no longer shows (both counts are the main agent's). Recorded 2026-10-31.
+
+- **Retired from K3:** "All active"; "Do you want the summary of updates for
+  each catalog?" with its "Yes" and "No"; the "In Progress" tag; "Online" and
+  "Offline", replaced by "Connected" and "Not connected"; the two old texts of
+  the Split dialog; "Yes" in the delete dialogs, replaced by "Delete".
+- K2 is unchanged (`MDI-C1`). A string that K3 no longer uses anywhere stays
+  in the translation files, marked vanished (`MDI-C39`). The new strings
+  follow `MDI-C39` (English source, Italian translation).
+- The approval covers the behaviour the strings carry on *Gestisci i dischi*:
+  "Update the connected drives" asks first, and "Nothing to update: no catalog
+  of this choice has its drive connected." says when nothing would start
+  (`MDI-F121`). This answers `Q61`, and the rewording part of `Q57`.
+
+The full list is in the translation files.
 
 ### No longer used (D15)
 
@@ -2807,12 +2834,37 @@ step.
   (`MDI-C40`, `Q45`).
 - Plural-aware forms of counts already approved: `Q64`, open.
 
+**Answered by the owner later on 2026-10-30:** see *Recorded 2026-10-31 —
+the owner's answers on the review*.
+
 **Portable macOS build.** Within the rows: the clean `qt.conf`, written by the
 script and by the workflow so that the app reads its QML modules from its own
 folders (`DPL-O1`, `DPL-F2`); Kirigami's `Theme.qml` copied for `TecaStyle` as
 for Fusion (`DPL-C6`, *Specs to amend*); Qt and KF6 through `macdeployqt`
 (`DPL-O1`). Not within them: the programs and models carried in the app
 (finding *Portable macOS build carries the tools and models*).
+
+### Recorded 2026-10-31 — the owner's answers on the review
+
+The owner's answers of 2026-10-30, late, relayed by the main agent (see
+*Authority and decisions*).
+
+- **Portable macOS build:** D42 and `MDI-C61`, for the owner's Macs only. The
+  finding *Portable macOS build carries the tools and models* is closed;
+  what stays open is listed there.
+- **"Use this value instead":** removed from the code before the answers.
+  *Dettagli del file* shows "Yours: %1" and the message `acceptProposals`
+  returns. `MDI-F175` stays as amended. Finding updated.
+- **Behaviours of the list *Not authorised by any row*:** now authorised by
+  rows, all `[Planned]`. *In the information* and the chips: `MDI-F183`.
+  "To review": `MDI-F184`. "Ignore these faces": `MDI-F185`. "Show the
+  photo": `MDI-F186`. A search with no result: `MDI-F187`. Plural forms stay
+  `Q64`.
+- **Core changes approved in principle:** `MDI-F188`–`F191`,
+  `MDI-C58`–`C60`. The design is listed here before it is written.
+- **Strings:** approved (*User-visible text*). The notification "Nothing to
+  update: no catalog of this choice has its drive connected." (`dbddec60`),
+  made without a verdict, is approved with them (`MDI-F121`).
 
 ### Known gaps
 
@@ -2822,7 +2874,7 @@ for Fusion (`DPL-C6`, *Specs to amend*); Qt and KF6 through `macdeployqt`
   data and files.
 - `MDI-F56`: collection export does not carry the `mdi_` data.
 - `MDI-F59`: no *Clear derived data* action.
-- `MDI-F19`: no free-space check.
+- `MDI-F19` and `MDI-F191`: no free-space check.
 - `MDI-F18`: no failure *Report* action.
 - D31: on Linux a destination under a user-owned fixed mount point is not
   waited for (see the D31 section). A held pending job (`MDI-F12`) is listed
@@ -2858,8 +2910,8 @@ for Fusion (`DPL-C6`, *Specs to amend*); Qt and KF6 through `macdeployqt`
 - "%1 catalog(s), %2 file(s)" is not plural-aware (`Q64`).
 - D38: Browse multi-selection works in the list view with the mouse only, with
   no keyboard selection and nothing in the column view (`MDI-F160`). A bulk
-  edit cannot clear a field. Finding files by information waits for `Q67`
-  (`MDI-F163`).
+  edit cannot clear a field. A text search by information is `MDI-F183`,
+  planned (`Q67` (b), decided 2026-10-30).
 - D39: retention of face data is open (`Q65` (b)). *Delete all face data* is
   offered only in a build that can find faces (`MDI-F182`).
 - D40: no confirmation before the transcript cleaning, and its recomputation
@@ -2868,7 +2920,8 @@ for Fusion (`DPL-C6`, *Specs to amend*); Qt and KF6 through `macdeployqt`
   2026-10-30.
 - D41: web queries are not counted in *Data sent* (`MDI-F177`). An HTML
   export to a catalogued drive is not refused, and the export runs on the UI
-  thread (`MDI-F181`). Documents already *skipped (no text)* are not studied
+  thread (`MDI-F181`; a whole catalog in the background is `MDI-F190`,
+  planned). Documents already *skipped (no text)* are not studied
   again once `tesseract` is installed.
 - D38–D41: not yet used through the app's interface (*D38 to D41 —
   reported*), except the transcript cleaning and the runs started on
@@ -2877,46 +2930,35 @@ for Fusion (`DPL-C6`, *Specs to amend*); Qt and KF6 through `macdeployqt`
 ### Findings for the fork owner (not authorised by any row)
 
 Findings of the review and the portable macOS build (2026-10-30, late;
-*Review fixes and the portable macOS build*). Open; each needs the owner's
-decision.
+*Review fixes and the portable macOS build*). Both were answered by the owner
+on 2026-10-30 (*Recorded 2026-10-31 — the owner's answers on the review*);
+what each leaves open is stated.
 
 - **Portable macOS build carries the tools and models (D9; `7fc239df`,
-  `8889479b`).** `packaging/macos/Teca_macos_create_portable.sh` and
-  `packaging/macos/bundle_tools.py` copy `ffmpeg`, `ffprobe`, `whisper-cli`
-  with the `ggml` backends, `pdftotext`, `pdftoppm`, `tesseract` and `exiv2`
-  into `Teca.app/Contents/Helpers` and their Homebrew libraries into
-  `Contents/Frameworks`; the Silero VAD, YuNet and SFace models, `tessdata`
-  (`ita`, `eng`, `osd`) and, unless `--no-speech-model`, the whisper model
-  (about 550 MB) into `Contents/Resources/models`; then an ad-hoc signature
-  and a DMG. `AppManager::getEnrichmentTools` takes the copy in the app after
-  the setting and the computer. D9 says Katalog does not bundle the tools or
-  the models, and defers bundling and its licence review; `MDI-F20`,
-  `MDI-C50`, `MDI-C52`, `MDI-C54`, `MDI-C8` (`exiv2`) and *Scope* (non-goals)
-  say the same. The owner's request for a portable Mac version, relayed by the
-  main agent, does not settle that review. **What holds:** the programs stay
-  external programs started with `QProcess`, never linked (D4, `MDI-C7`,
-  `MDI-C8`); the setting and the computer still come first and nothing is
-  written to a settings file, so a beta settings file is unaffected
-  (`MDI-C7`, `MDI-C41`). **Open:** (a) lift D9 for the macOS portable build,
-  or remove the copy; (b) a DMG for the owner's Macs, or one that is
-  distributed: a distributed DMG carries GPL programs (`ffmpeg` built with
-  x264 and x265, poppler, `exiv2`), and the bundle has no licence notices and
-  no source offer today; (c) its limits: Apple Silicon only, macOS 26 at
-  least — not `DPL-F6`'s macOS 15, so this DMG is not the workflow's package
-  —, an ad-hoc signature that Gatekeeper questions, Ollama installed apart;
-  (d) `Q66` (b) and (d). **Also:** `MdiFaces::findModel` already looked in
-  folders of the app (`models`, `../Resources/models`,
-  `../share/teca/models`), beyond `MDI-C50`'s `~/teca-models` (drift,
-  harmless until a model is put there); and
-  `packaging/macos/__pycache__/bundle_tools.cpython-315.pyc`, a build
-  artefact, is committed (removing it needs the owner's word).
-- **Replacing the user's own value (`MDI-F175`; `47e5d77b` and the working
-  tree).** In *Dettagli del file*, a proposal for a field the user filled
-  offers "Use this value instead", and a dialog "Replace your value?" calls
-  `acceptProposals(…, true)`. `MDI-F175`, as the owner amended it ("Approvo
-  tutto", `Q70` (c)), says no approval replaces a value the user wrote; that
-  value changes only when the user edits it. Remove the replacement, or amend
-  `MDI-F175`?
+  `8889479b`).** Resolved 2026-10-30 ("Includili, solo per i miei Mac"): D42
+  and `MDI-C61` authorise the DMG for the owner's own Macs, with its limits;
+  `MDI-F20`, `MDI-C8` (`exiv2`), `MDI-C50`, `MDI-C52`, `MDI-C54`, *Scope*,
+  D9, `Q15` and `Q66` amended. **Still open:** (a) giving the DMG to anyone
+  else waits for each carried program's licence notice and the GPL source
+  offer in the bundle (`ffmpeg` built with x264 and x265, poppler, `exiv2`);
+  (b) `packaging/macos/__pycache__/bundle_tools.cpython-315.pyc`, a build
+  artefact committed in `7fc239df`, is the owner's item: removing it from the
+  repository needs his word (`CLAUDE.md` file safety). At this recording the
+  working tree has it staged for removal from the index, with a `.gitignore`
+  entry, the file kept on disk; that change is not the specifications
+  agent's, and committing it still needs the owner's word; (c)
+  `MdiFaces::findModel` also reads `models` and `../share/teca/models` beside
+  the executable: no Windows or Linux package may put a model there (D9);
+  harmless while none does.
+- **Replacing the user's own value (`MDI-F175`; `47e5d77b`).** Resolved
+  2026-10-30: "Use this value instead" and its dialog were removed from the
+  code. *Dettagli del file* now shows "Yours: %1" and the message that
+  `acceptProposals` returns. `MDI-F175` stays as amended: no approval replaces
+  a value the user wrote. **Left:** `AppManager::acceptProposals`, callable
+  from QML, still takes `replaceOwnValues` and passes it to
+  `MdiProposals::acceptAndApply`; no QML file passes `true`. Dropping the
+  parameter from `AppManager` is a fix within `MDI-F175`; from core it needs
+  the owner's approval (`MDI-C14`).
 
 Findings of D38–D41 (2026-10-30). Most were decided by the owner in the
 second round (*D38–D41 — the owner's answers of 2026-10-30, second round*);
@@ -2956,7 +2998,10 @@ each says so. Open ones need the owner's decision.
   2026-10-30: ratified.
 - **Core design listed after it was written (`MDI-C53`, `MDI-C57`).**
   Resolved 2026-10-30: ratified, with `MdiPeople::clearAllFaces`.
-- **API beyond the contract (`MDI-C53`).** Not asked, open. `findFilesByInfo`
+- **API beyond the contract (`MDI-C53`).** Resolved 2026-10-30 (owner,
+  "Cerca nelle informazioni", "Volti: Ignora e Mostra la foto"):
+  `findFilesByInfo` serves `MDI-F183` and `ignoreFaces` `MDI-F185`; both
+  join the contract of `MDI-C53`. Before: `findFilesByInfo`
   is a text search on information (`Q67` (b)), and `ignoreFaces` adds a face
   state, *ignored*, that `MDI-F166` does not define. No QML file uses either;
   kept for now.

@@ -4268,6 +4268,186 @@ void AppManager::clearSemanticResults()
     emit semanticResultsChanged();
 }
 //----------------------------------------------------------------------
+QString AppManager::runInfoSearch(const QString &text, bool onlyInfo)
+{
+    // A search started before is not stopped: its list is dropped on arrival
+    const int serial = ++m_infoSearchSerial;
+    m_infoResults.clear();
+    m_infoActive     = true;
+    m_infoOnly       = onlyInfo;
+    m_infoSearchBusy = false;
+
+    // Hosted: not available (MDI-C48). No AI data yet: nothing to find, and
+    // the store is not created for a search.
+    const QString refusal = collection->databaseMode == QLatin1String("Hosted") ? peopleStoreRefusal() : QString();
+    const QString mdiPath = mdiDataPath();
+    if (text.trimmed().isEmpty() || !refusal.isEmpty() || !QFileInfo::exists(mdiPath)) {
+        emit infoResultsChanged();
+        return refusal;
+    }
+
+    // The catalogs of the tree, with their device: a row opens in Browse
+    QHash<int, int> deviceByCatalog;
+    for (const Device::DeviceTreeNode &n : Device::loadDeviceTree(m_connectionName))
+        if (n.type == QLatin1String("Catalog") && n.externalId > 0)
+            deviceByCatalog.insert(n.externalId, n.id);
+
+    // The choice in My drives, as the table search and the search by meaning
+    // read it: the active catalogs under it. All: every catalog of the tree.
+    QList<int> catalogIds;
+    if (selectedDevice && selectedDevice->type != QLatin1String("All")) {
+        Device scope;
+        scope.ID = selectedDevice->ID;
+        scope.loadDevice(m_connectionName);
+        if (scope.type == QLatin1String("Catalog"))
+            catalogIds.append(scope.externalID);
+        const QList<Device*> catalogs = Device::getActiveCatalogList(m_connectionName, scope.ID);
+        for (Device *catalogDevice : catalogs) {
+            if (!catalogIds.contains(catalogDevice->externalID))
+                catalogIds.append(catalogDevice->externalID);
+            delete catalogDevice;
+        }
+    } else {
+        catalogIds = deviceByCatalog.keys();
+    }
+    if (catalogIds.isEmpty())
+        catalogIds.append(-1);   // a choice without catalogs matches nothing
+
+    // Every annotated file's text is read and compared: on a worker thread,
+    // with its own connection; it never touches this object
+    m_infoSearchBusy = true;
+    emit infoResultsChanged();
+    auto found = std::make_shared<QVariantList>();
+    QThread *worker = QThread::create([found, text, catalogIds, deviceByCatalog, mdiPath]() {
+        const QString connection = QStringLiteral("mdi_find_%1").arg(reinterpret_cast<quintptr>(QThread::currentThread()));
+        if (MdiData::open(connection, mdiPath)) {
+            for (const MdiPeople::FileRef &f : MdiPeople::findFiles(connection, text, catalogIds, 500)) {
+                // The preview as Browse shows it: thumbnail, else a video's poster frame
+                QString thumb, poster;
+                for (const MdiData::Datum &d : MdiData::forFile(connection, f.catalogId, f.fullPath)) {
+                    if (d.outcome != QLatin1String("completed") || d.derivedFiles.isEmpty())
+                        continue;
+                    if (d.analysis == QLatin1String("thumbnail"))
+                        thumb = QDir(d.derivedRoot).filePath(d.derivedFiles.first());
+                    else if (d.analysis == QLatin1String("poster"))
+                        poster = QDir(d.derivedRoot).filePath(d.derivedFiles.first());
+                }
+                const QString preview = !thumb.isEmpty() ? thumb : poster;
+                const QFileInfo info(f.fullPath);
+                found->append(QVariantMap{
+                    { QStringLiteral("catalogId"),  f.catalogId },
+                    { QStringLiteral("deviceId"),   deviceByCatalog.value(f.catalogId, 0) },
+                    { QStringLiteral("fullPath"),   f.fullPath },
+                    { QStringLiteral("name"),       info.fileName() },
+                    { QStringLiteral("folderPath"), info.path() },
+                    { QStringLiteral("thumbUrl"),   !preview.isEmpty() && QFileInfo::exists(preview)
+                                                        ? QUrl::fromLocalFile(preview).toString() : QString() },
+                });
+            }
+        }
+        MdiData::close(connection);
+    });
+    m_infoSearchThreads.append(worker);
+    connect(qApp, &QCoreApplication::aboutToQuit, worker, [worker]() { worker->wait(10000); });
+    connect(worker, &QThread::finished, this, [this, worker, found, serial, mdiPath]() {
+        m_infoSearchThreads.removeOne(worker);
+        worker->deleteLater();
+        // A newer search, or another collection opened meanwhile
+        if (serial != m_infoSearchSerial || mdiPath != mdiDataPath())
+            return;
+        m_infoResults    = *found;
+        m_infoSearchBusy = false;
+        emit infoResultsChanged();
+    });
+    worker->start(QThread::LowPriority);
+    return QString();
+}
+//----------------------------------------------------------------------
+void AppManager::clearInfoResults()
+{
+    ++m_infoSearchSerial;   // a list still on its way is dropped
+    if (!m_infoActive && m_infoResults.isEmpty() && !m_infoSearchBusy)
+        return;
+    m_infoResults.clear();
+    m_infoActive     = false;
+    m_infoOnly       = false;
+    m_infoSearchBusy = false;
+    emit infoResultsChanged();
+}
+//----------------------------------------------------------------------
+void AppManager::checkLocalModel()
+{
+    // The search by meaning embeds the text with the local model only
+    // (runSemanticSearch): offered again only when that model answers
+    const QVariantMap tools = getEnrichmentTools();
+    const QString url   = tools.value(QStringLiteral("ollamaUrl")).toString();
+    const QString model = tools.value(QStringLiteral("embedModel")).toString();
+    if (url.isEmpty() || model.isEmpty()) {
+        emit localModelChecked(false);
+        return;
+    }
+    QNetworkRequest request(QUrl(url + QStringLiteral("/api/tags")));
+    request.setTransferTimeout(3000);
+    auto *manager = new QNetworkAccessManager(this);
+    QNetworkReply *reply = manager->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, manager, reply, model]() {
+        reply->deleteLater();
+        manager->deleteLater();
+        bool reachable = false;
+        if (reply->error() == QNetworkReply::NoError) {
+            const QJsonArray models = QJsonDocument::fromJson(reply->readAll()).object()
+                                          .value(QStringLiteral("models")).toArray();
+            for (const QJsonValue &m : models) {
+                const QString name = m.toObject().value(QStringLiteral("name")).toString();
+                if (name == model || name.startsWith(model + QLatin1Char(':')))
+                    reachable = true;
+            }
+        }
+        emit localModelChecked(reachable);
+    });
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::reviewCounts()
+{
+    QVariantMap counts{ { QStringLiteral("faces"),             0 },
+                        { QStringLiteral("proposals"),         0 },
+                        { QStringLiteral("proposalsDeviceId"), 0 },
+                        { QStringLiteral("proposalsFolder"),   QString() } };
+    // Read only: a collection without AI data has nothing waiting, and its
+    // store is not created for a count. Hosted: not shown (MDI-C48).
+    if (collection->databaseMode == QLatin1String("Hosted") || !QFileInfo::exists(mdiDataPath())
+        || !openMdiMainConnection())
+        return counts;
+
+    // The faces the People page lists to approve; only where it shows them
+    int faces = MdiPeople::pendingFaceCount(kMdiMainConnection);
+    if (faces > 0 && !facesAvailable())
+        faces = 0;
+    counts[QStringLiteral("faces")] = faces;
+
+    // Proposals waiting, per catalog of the tree (indexed counts); Browse
+    // opens on the catalog with the most of them
+    int total = 0, most = 0;
+    QSet<int> seen;
+    for (const Device::DeviceTreeNode &n : Device::loadDeviceTree(m_connectionName)) {
+        if (n.type != QLatin1String("Catalog") || n.externalId <= 0 || seen.contains(n.externalId))
+            continue;
+        seen.insert(n.externalId);
+        int pending = 0;
+        const QVariantMap byField = MdiProposals::pendingCounts(kMdiMainConnection, n.externalId);
+        for (auto it = byField.cbegin(); it != byField.cend(); ++it)
+            pending += it.value().toInt();
+        total += pending;
+        if (pending > most) {
+            most = pending;
+            counts[QStringLiteral("proposalsDeviceId")] = n.id;
+            counts[QStringLiteral("proposalsFolder")]   = n.path;
+        }
+    }
+    counts[QStringLiteral("proposals")] = total;
+    return counts;
+}
+//----------------------------------------------------------------------
 QString AppManager::localFileUrl(const QString &path) const
 {
     return QUrl::fromLocalFile(path).toString();

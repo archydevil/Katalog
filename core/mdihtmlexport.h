@@ -45,6 +45,7 @@
 #include <QVariantMap>
 #include <QVariantList>
 #include <QHash>
+#include <functional>
 
 class MdiHtmlExport
 {
@@ -72,6 +73,29 @@ public:
     // value with its fragments) and preview (absolute path of the thumbnail)
     static QVariantMap fileRecord(const QString &mdiConnection, int catalogId, const QString &fullPath,
                                   const QVariantMap &facts);
+
+    // The files of a scope, as records (fork, 2026-10-30): the one file; for
+    // a folder or a catalog, the files that have something to tell —
+    // information, people, proposals, AI results or a study — sorted by
+    // folder. Runs on any thread with the connections given: the
+    // collection's (the file list; unused in Memory mode, which reads the
+    // catalog's .idx) and mdi_data.db's.
+    struct Scope {
+        QString scope = QStringLiteral("file");   // "file", "folder", "catalog"
+        int     catalogId = 0;
+        QString path;                 // the file, or the folder
+        QString catalogRoot;          // the catalog's source path: folders are shown from it
+        QString databaseMode;         // of the collection
+        QString catalogFilePath;      // Memory: the catalog's .idx
+        bool    withInformation = true;              // the owner's information (not for hosted collections)
+        QHash<QString, QString> typeLabels;          // file type -> its name
+        std::function<QString(const QString &)> documentTypeLabel;   // study type -> its name
+    };
+    // progress(done, total) returning false stops: *stopped is set and the
+    // records gathered so far are returned
+    static QVariantList scopeRecords(const QString &collectionConnection, const QString &mdiConnection,
+                                     const Scope &scope, const std::function<bool(int, int)> &progress = nullptr,
+                                     bool *stopped = nullptr);
 
     // The page. Records are grouped by their "folder", in the order given.
     static QString build(const QVariantList &records, const Options &options, const Labels &labels);

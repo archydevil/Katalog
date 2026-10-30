@@ -78,10 +78,11 @@ ColumnLayout {
         onTriggered: people.refreshNow()
     }
     // A face search or a dating job in the background writes for hours: the
-    // page follows it, at most every 10 seconds
+    // page follows it, at most every 30 seconds (each look regroups every
+    // unnamed face on a worker, beside the job itself)
     Timer {
         id: jobTimer
-        interval: 10000
+        interval: 30000
         onTriggered: people.refresh()
     }
     function choose(personId) {
