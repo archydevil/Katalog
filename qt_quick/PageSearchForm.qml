@@ -270,6 +270,8 @@ ColumnLayout {
         search_checkBox_FileNameCriteria.checked = true
         search_checkBox_MeaningCriteria.checked = false
         search_TextField_Meaning.text = ""
+        search_checkBox_InfoCriteria.checked = false
+        search_TextField_Info.text = ""
         search_TextField_FileNameText.clearAll()
         search_ComboBox_TextCriteriaWith.currentIndex = 0
         search_ComboBox_TextCriteriaIn.currentIndex = 0
@@ -354,14 +356,24 @@ ColumnLayout {
         return yyyy + '/' + mm + '/' + dd + ' ' + hh + ':' + min + ':' + ss;
     }
 
+    // Set by searchInformationOnly(): the next search is "In the information"
+    // alone, whatever else the form holds (a chip of File details, MDI-F183)
+    property bool _informationOnlyOnce: false
+
     function executeSearch() {
-        // By meaning (fork, MDI-F47): its own list on the Results page. The
-        // table search runs too when any other criterion is set.
-        var meaning = search_checkBox_MeaningCriteria.checked
+        var informationOnly = pageSearchForm._informationOnlyOnce
+        pageSearchForm._informationOnlyOnce = false
+        // By meaning (fork, MDI-F47) and In the information (MDI-F183): each
+        // its own list on the Results page. The table search runs too when
+        // any other criterion is set.
+        var meaning = !informationOnly && search_checkBox_MeaningCriteria.checked
                       && search_TextField_Meaning.text.trim() !== ""
-        var others  = search_checkBox_FileNameCriteria.checked || checkBoxFileAttributesCriteria.checked
-                      || search_checkBox_FileMetadata.checked || search_checkBox_FolderCriteria.checked
-                      || search_checkBox_Duplicates.checked   || search_checkBox_Differences.checked
+        var information = search_checkBox_InfoCriteria.checked
+                          && search_TextField_Info.text.trim() !== ""
+        var others  = !informationOnly
+                      && (search_checkBox_FileNameCriteria.checked || checkBoxFileAttributesCriteria.checked
+                          || search_checkBox_FileMetadata.checked || search_checkBox_FolderCriteria.checked
+                          || search_checkBox_Duplicates.checked   || search_checkBox_Differences.checked)
         if (meaning) {
             var error = appManager1.runSemanticSearch(search_TextField_Meaning.text, !others)
             if (error !== "")
@@ -369,10 +381,64 @@ ColumnLayout {
         } else {
             appManager1.clearSemanticResults()
         }
-        if (!meaning || others) {
+        if (information) {
+            var refusal = appManager1.runInfoSearch(search_TextField_Info.text.trim(), !others)
+            if (refusal !== "")
+                applicationWindow().showPassiveNotification(refusal, "long")
+        } else {
+            appManager1.clearInfoResults()
+        }
+        if (!(meaning || information) || others) {
             getCriteria()
             appManager1.executeSearch()
         }
+    }
+
+    // A value of File details searched in the information, alone (MDI-F183):
+    // the form shows the search; the other ways and filters stay as they were
+    function searchInformationOnly(text) {
+        search_checkBox_InfoCriteria.checked = true
+        search_TextField_Info.text = text
+        pageSearchForm._informationOnlyOnce = true
+    }
+
+    // The words of the search: by name, else by meaning, else in the information
+    function searchWords() {
+        if (search_checkBox_FileNameCriteria.checked && search_TextField_FileNameText.text.trim() !== "")
+            return search_TextField_FileNameText.text.split("\n").join(" ").trim()
+        if (search_checkBox_MeaningCriteria.checked && search_TextField_Meaning.text.trim() !== "")
+            return search_TextField_Meaning.text.trim()
+        if (search_checkBox_InfoCriteria.checked && search_TextField_Info.text.trim() !== "")
+            return search_TextField_Info.text.trim()
+        return ""
+    }
+
+    // A search that found nothing, run again with one change (MDI-F187):
+    // "folders" in the folder paths too, "meaning" or "information" the same
+    // words that way too, "all" in all the drives
+    function searchAgainWith(change) {
+        var words = pageSearchForm.searchWords()
+        if (change === "folders") {
+            var idx = search_ComboBox_TextCriteriaIn.indexOfValue("FilesAndFolders")
+            if (idx < 0)
+                return
+            search_ComboBox_TextCriteriaIn.currentIndex = idx
+        } else if (change === "meaning") {
+            if (words === "")
+                return
+            search_checkBox_MeaningCriteria.checked = true
+            search_TextField_Meaning.text = words
+        } else if (change === "information") {
+            if (words === "")
+                return
+            search_checkBox_InfoCriteria.checked = true
+            search_TextField_Info.text = words
+        } else if (change === "all") {
+            appManager1.selectDeviceById(0)
+        } else {
+            return
+        }
+        pageSearchForm.searchRequested()
     }
 
     function openHistorySheet() {
