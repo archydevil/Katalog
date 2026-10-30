@@ -9313,17 +9313,30 @@ QString AppManager::startDocumentStudy(int deviceId)
     return startMdiJob(job, false);
 }
 //----------------------------------------------------------------------
+QString AppManager::collectionSettingsKey(const QString &key) const
+{
+    // The settings file is shared by every collection: a setting of one
+    // collection carries its identity (mode and where its database is)
+    const QString where = collection->databaseMode == QLatin1String("Hosted")
+                        ? collection->databaseHostName + QLatin1Char('/') + collection->databaseName
+                        : collection->databaseMode == QLatin1String("Memory") ? collection->folder
+                                                                             : collection->databaseFilePath;
+    const QByteArray id = QCryptographicHash::hash((collection->databaseMode + QLatin1Char(':') + where).toUtf8(),
+                                                   QCryptographicHash::Sha1).toHex().left(16);
+    return key + QLatin1Char('/') + QString::fromLatin1(id);
+}
+//----------------------------------------------------------------------
 bool AppManager::webSearchEnabled()
 {
     // Per collection, off by default (owner's decision 2026-10-30)
     QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
-    return settings.value(QStringLiteral("MediaIntelligence/WebSearch"), false).toBool();
+    return settings.value(collectionSettingsKey(QStringLiteral("MediaIntelligence/WebSearch")), false).toBool();
 }
 //----------------------------------------------------------------------
 void AppManager::setWebSearchEnabled(bool enabled)
 {
     QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
-    settings.setValue(QStringLiteral("MediaIntelligence/WebSearch"), enabled);
+    settings.setValue(collectionSettingsKey(QStringLiteral("MediaIntelligence/WebSearch")), enabled);
     settings.sync();
 }
 //----------------------------------------------------------------------
@@ -9512,12 +9525,15 @@ QVariantMap AppManager::documentStudy(int catalogId, const QString &fullPath)
     return out;
 }
 //----------------------------------------------------------------------
-QString AppManager::exportHtml(const QString &scope, int catalogId, const QString &path, const QString &targetFile)
+QString AppManager::prepareHtmlExport(const QString &scope, int catalogId, const QString &path, const QString &targetFile,
+                                      MdiHtmlExport::Scope *request, MdiHtmlExport::Options *options, QString *target)
 {
+    // What the page covers and how it reads, on this thread (one catalog
+    // row); the files themselves are gathered by MdiHtmlExport::scopeRecords
     if (!openMdiMainConnection())
         return tr("The change could not be saved.");
-    const QString target = QUrl(targetFile).isLocalFile() ? QUrl(targetFile).toLocalFile() : targetFile;
-    if (target.isEmpty())
+    *target = QUrl(targetFile).isLocalFile() ? QUrl(targetFile).toLocalFile() : targetFile;
+    if (target->isEmpty())
         return tr("Select a file to save the report to.");
 
     Catalog catalog;
@@ -9531,79 +9547,269 @@ QString AppManager::exportHtml(const QString &scope, int catalogId, const QStrin
     while (folder.size() > 1 && folder.endsWith(QLatin1Char('/')))
         folder.chop(1);
 
-    // The files of the scope that have something to tell: information,
-    // people, proposals, AI results or a study (every file for one file)
+    request->scope           = scope;
+    request->catalogId       = catalogId;
+    request->path            = path;
+    request->catalogRoot     = catalog.sourcePath;
+    request->databaseMode    = collection->databaseMode;
+    request->catalogFilePath = catalog.filePath;
+    request->withInformation = collection->databaseMode != QLatin1String("Hosted");
+    request->typeLabels = { { QStringLiteral("image"), tr("Image") }, { QStringLiteral("video"), tr("Video") },
+                            { QStringLiteral("audio"), tr("Audio") }, { QStringLiteral("text"),  tr("Text") },
+                            { QStringLiteral("other"), tr("Other") } };
+    // Translated words only: safe on a worker thread
+    request->documentTypeLabel = [](const QString &key) { return documentTypeLabel(key); };
+
     const bool single = scope == QLatin1String("file");
-    QSet<QString> worth;
-    if (!single) {
-        worth = MdiProposals::filesWithProposals(kMdiMainConnection, catalogId);
-        if (collection->databaseMode != QLatin1String("Hosted")) {
-            const QHash<QString, QString> info = MdiPeople::searchTextByFile(kMdiMainConnection, catalogId);
-            for (auto it = info.cbegin(); it != info.cend(); ++it)
-                worth.insert(it.key());
-        }
-        for (const QString &a : {QStringLiteral("caption"), QStringLiteral("summary"),
-                                 QStringLiteral("classification"), QStringLiteral("document")})
-            for (const MdiData::Datum &d : MdiData::forCatalog(kMdiMainConnection, catalogId, a))
-                worth.insert(d.fullPath);
-    }
-    QList<MdiEnrichmentJob::FileItem> files;
-    for (const MdiEnrichmentJob::FileItem &f : MdiEnrichmentJob::listCatalogFiles(m_connectionName, catalogId,
-                                                                                    collection->databaseMode,
-                                                                                    catalog.filePath)) {
-        if (single ? f.fullPath == path
-                   : (scope == QLatin1String("catalog") || f.fullPath.startsWith(folder + QLatin1Char('/')))
-                     && worth.contains(f.fullPath))
-            files.append(f);
-    }
-    if (single && files.isEmpty()) {
-        MdiEnrichmentJob::FileItem f;
-        f.fullPath = path;
-        files.append(f);
-    }
-    std::sort(files.begin(), files.end(), [](const MdiEnrichmentJob::FileItem &a, const MdiEnrichmentJob::FileItem &b) {
-        const QString fa = QFileInfo(a.fullPath).path(), fb = QFileInfo(b.fullPath).path();
-        return fa == fb ? a.fullPath.compare(b.fullPath, Qt::CaseInsensitive) < 0
-                        : fa.compare(fb, Qt::CaseInsensitive) < 0;
-    });
-
-    const QHash<QString, QString> typeLabels{ { QStringLiteral("image"), tr("Image") }, { QStringLiteral("video"), tr("Video") },
-                                              { QStringLiteral("audio"), tr("Audio") }, { QStringLiteral("text"),  tr("Text") },
-                                              { QStringLiteral("other"), tr("Other") } };
-    QVariantList records;
-    for (const MdiEnrichmentJob::FileItem &f : std::as_const(files)) {
-        QString relative = QFileInfo(f.fullPath).path();
-        if (!root.isEmpty() && relative.startsWith(root))
-            relative = relative.mid(root.size());
-        QVariantMap facts{ { QStringLiteral("folder"),   relative.isEmpty() ? QStringLiteral("/") : relative },
-                           { QStringLiteral("type"),     typeLabels.value(f.fileType, f.fileType) },
-                           { QStringLiteral("size"),     f.size > 0 ? QLocale().formattedDataSize(f.size) : QString() },
-                           { QStringLiteral("modified"), f.dateUpdated } };
-        QVariantMap record = MdiHtmlExport::fileRecord(kMdiMainConnection, catalogId, f.fullPath, facts);
-        if (record.contains(QStringLiteral("study"))) {
-            QVariantMap study = record.value(QStringLiteral("study")).toMap();
-            study[QStringLiteral("typeLabel")] = documentTypeLabel(study.value(QStringLiteral("type")).toString());
-            record[QStringLiteral("study")] = study;
-        }
-        records.append(record);
-    }
-
-    MdiHtmlExport::Options options;
-    options.scope    = scope;
-    options.language = QLocale(getCurrentLanguage()).bcp47Name();
+    options->scope    = scope;
+    options->language = QLocale(getCurrentLanguage()).bcp47Name();
     if (single)
-        options.title = QFileInfo(path).fileName();
+        options->title = QFileInfo(path).fileName();
     else if (scope == QLatin1String("folder"))
-        options.title = QFileInfo(folder).fileName().isEmpty() ? folder : QFileInfo(folder).fileName();
+        options->title = QFileInfo(folder).fileName().isEmpty() ? folder : QFileInfo(folder).fileName();
     else
-        options.title = QFileInfo(root).fileName().isEmpty() ? root : QFileInfo(root).fileName();
-    options.subtitle = single ? QFileInfo(path).path() : (scope == QLatin1String("folder") ? folder : root);
-    options.generatedText = tr("Generated by Teca on %1").arg(QLocale().toString(QDate::currentDate(), QLocale::ShortFormat));
-    options.includeFragmentText = true;
+        options->title = QFileInfo(root).fileName().isEmpty() ? root : QFileInfo(root).fileName();
+    options->subtitle = single ? QFileInfo(path).path() : (scope == QLatin1String("folder") ? folder : root);
+    options->generatedText = tr("Generated by Teca on %1").arg(QLocale().toString(QDate::currentDate(), QLocale::ShortFormat));
+    options->includeFragmentText = true;
+    return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::exportHtml(const QString &scope, int catalogId, const QString &path, const QString &targetFile)
+{
+    // On this thread: meant for one file, which is quick. A folder or a
+    // catalog goes through startHtmlExport.
+    MdiHtmlExport::Scope request;
+    MdiHtmlExport::Options options;
+    QString target;
+    const QString refusal = prepareHtmlExport(scope, catalogId, path, targetFile, &request, &options, &target);
+    if (!refusal.isEmpty())
+        return refusal;
+    const QVariantList records = MdiHtmlExport::scopeRecords(m_connectionName, kMdiMainConnection, request);
     const QString html = MdiHtmlExport::build(records, options,
                                               htmlLabels([this](const QString &k) { return proposalKindLabel(k); }));
     QString error;
     if (!MdiHtmlExport::write(target, html, &error))
         return tr("The report could not be saved: %1").arg(error);
     return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::startHtmlExport(const QString &scope, int catalogId, const QString &path, const QString &targetFile)
+{
+    // A whole catalog embeds a preview per file: minutes of work, on a worker
+    // with its own connections; the AI runner and the UI go on meanwhile
+    if (m_htmlExportThread)
+        return tr("An HTML export is already running.");
+    MdiHtmlExport::Scope request;
+    MdiHtmlExport::Options options;
+    QString target;
+    const QString refusal = prepareHtmlExport(scope, catalogId, path, targetFile, &request, &options, &target);
+    if (!refusal.isEmpty())
+        return refusal;
+    const MdiHtmlExport::Labels labels = htmlLabels([this](const QString &k) { return proposalKindLabel(k); });
+    const QString mode     = collection->databaseMode;
+    const QString dbFile   = collection->databaseFilePath;
+    const QString mdiDb    = mdiDataPath();
+    const QString mainConn = m_connectionName;
+
+    m_htmlExportStop = false;
+    m_htmlExportThread = QThread::create([this, request, options, labels, target, mode, dbFile, mdiDb, mainConn]() {
+        const QString conn    = QStringLiteral("html_export_%1").arg(quintptr(QThread::currentThreadId()));
+        const QString mdiConn = conn + QStringLiteral("_mdi");
+        QString error;
+        bool stopped = false;
+        {
+            // The file list: the collection's own connection on this thread
+            // (Memory reads the catalog's .idx and needs none)
+            if (mode == QLatin1String("File")) {
+                QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), conn);
+                db.setDatabaseName(dbFile);
+                db.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY;QSQLITE_BUSY_TIMEOUT=5000"));
+                db.open();
+            } else if (mode == QLatin1String("Hosted")) {
+                QSqlDatabase db = QSqlDatabase::cloneDatabase(mainConn, conn);
+                db.open();
+            }
+            if (MdiData::open(mdiConn, mdiDb)) {
+                QElapsedTimer shown;
+                shown.start();
+                const QVariantList records = MdiHtmlExport::scopeRecords(conn, mdiConn, request,
+                    [this, &shown, target](int done, int total) {
+                        // At most four updates a second reach the UI
+                        if (done == 0 || done == total || shown.elapsed() >= 250) {
+                            shown.restart();
+                            QMetaObject::invokeMethod(this, [this, target, done, total]() {
+                                setHtmlExportProgress(target, done, total);
+                            }, Qt::QueuedConnection);
+                        }
+                        return !m_htmlExportStop.load();
+                    }, &stopped);
+                MdiData::close(mdiConn);
+                if (!stopped && !m_htmlExportStop.load()) {
+                    const QString html = MdiHtmlExport::build(records, options, labels);
+                    if (m_htmlExportStop.load())
+                        stopped = true;
+                    else
+                        MdiHtmlExport::write(target, html, &error);
+                } else {
+                    stopped = true;
+                }
+            } else {
+                error = mdiDb;
+            }
+        }
+        if (QSqlDatabase::contains(conn))
+            QSqlDatabase::removeDatabase(conn);
+        QMetaObject::invokeMethod(this, [this, target, error, stopped]() {
+            finishHtmlExport(target, error, stopped);
+        }, Qt::QueuedConnection);
+    });
+    connect(qApp, &QCoreApplication::aboutToQuit, m_htmlExportThread, [this]() {
+        m_htmlExportStop = true;
+        if (m_htmlExportThread)
+            m_htmlExportThread->wait();
+    });
+    connect(m_htmlExportThread, &QThread::finished, this, [this]() {
+        m_htmlExportThread->deleteLater();
+        m_htmlExportThread = nullptr;
+        emit htmlExportStateChanged();
+    });
+    m_htmlExportStatusText = StatusBarMessageBuilder().setOperation(tr("Export")).setStatus(tr("In Progress"))
+                                                      .setCurrentItem(target).build();
+    m_htmlExportThread->start(QThread::LowPriority);
+    emit htmlExportStateChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+void AppManager::stopHtmlExport()
+{
+    m_htmlExportStop = true;
+}
+//----------------------------------------------------------------------
+void AppManager::setHtmlExportProgress(const QString &target, int done, int total)
+{
+    if (!m_htmlExportThread)
+        return;
+    m_htmlExportStatusText = StatusBarMessageBuilder().setOperation(tr("Export"))
+                                 .setStatus(m_htmlExportStop.load() ? tr("Cancelled") : tr("In Progress"))
+                                 .setProcess(tr("Files"), done, total).setCurrentItem(target).build();
+    emit htmlExportStateChanged();
+}
+//----------------------------------------------------------------------
+void AppManager::finishHtmlExport(const QString &target, const QString &error, bool stopped)
+{
+    StatusBarMessageBuilder builder;
+    builder.setOperation(tr("Export"));
+    QString message;
+    if (stopped) {
+        builder.setStatus(tr("Cancelled"));
+    } else if (!error.isEmpty()) {
+        message = tr("The report could not be saved: %1").arg(error);
+        builder.setStatus(tr("Error")).setCurrentItem(message);
+    } else {
+        builder.setStatus(tr("Completed")).setCurrentItem(target);
+    }
+    m_htmlExportStatusText = builder.build();
+    emit htmlExportStateChanged();
+    emit htmlExportFinished(target, message, stopped);
+}
+//----------------------------------------------------------------------
+QString AppManager::saveArchiveCopy(const QString &destination)
+{
+    // Titles, events, people and approved faces live only in mdi_data.db: a
+    // dated copy of it, of the collection and of its settings, on a worker
+    // with its own connections; a running AI job keeps running (VACUUM INTO
+    // reads one snapshot of a database in WAL mode)
+    if (m_archiveCopyThread)
+        return tr("A copy of the archive data is already being saved.");
+    const QString dest = QUrl(destination).isLocalFile() ? QUrl(destination).toLocalFile() : destination;
+    MdiArchiveCopy::Sources sources;
+    sources.collectionFolder = collection->folder;
+    sources.databaseMode     = collection->databaseMode;
+    sources.databaseFilePath = collection->databaseFilePath;
+    sources.settingsFilePath = collection->settingsFilePath;
+    sources.withHistory      = CatalogHistory::isAvailable(collection->databaseMode, collection->folder);
+    const QDateTime when = QDateTime::currentDateTime();
+    // The settings file is shared by every collection: the date goes under
+    // the key of the collection copied, even if another one is opened meanwhile
+    const QString lastCopyKey  = collectionSettingsKey(QStringLiteral("MediaIntelligence/LastArchiveCopy"));
+    const QString settingsFile = collection->settingsFilePath;
+    const QString operation    = tr("Copy of the archive data");
+
+    m_archiveCopyThread = QThread::create([this, sources, dest, when, lastCopyKey, settingsFile, operation]() {
+        const MdiArchiveCopy::Result result = MdiArchiveCopy::run(sources, dest, when,
+            [this, operation](int done, int total, const QString &item) {
+                QMetaObject::invokeMethod(this, [this, operation, done, total, item]() {
+                    m_archiveCopyStatusText = StatusBarMessageBuilder().setOperation(operation).setStatus(tr("In Progress"))
+                                                  .setProcess(tr("Files"), done, total).setCurrentItem(item).build();
+                    emit archiveCopyStateChanged();
+                }, Qt::QueuedConnection);
+                return true;
+            });
+        QMetaObject::invokeMethod(this, [this, result, when, lastCopyKey, settingsFile, operation]() {
+            StatusBarMessageBuilder builder;
+            builder.setOperation(operation);
+            QString message;
+            if (result.ok()) {
+                QSettings settings(settingsFile, QSettings::IniFormat);
+                settings.setValue(lastCopyKey, when.toString(Qt::ISODate));
+                settings.sync();
+                // Hosted: the database is not in it; Home says so beside the button
+                message = tr("Copy saved in %1.").arg(result.folder);
+                builder.setStatus(tr("Completed")).setCurrentItem(result.folder);
+            } else {
+                switch (result.error) {
+                case MdiArchiveCopy::Error::NoDestination:
+                    message = tr("The copy needs a folder that exists.");
+                    break;
+                case MdiArchiveCopy::Error::InsideCollection:
+                    message = tr("The copy needs a folder outside the collection folder.");
+                    break;
+                case MdiArchiveCopy::Error::NotEnoughSpace:
+                    message = tr("The copy needs %1 of free space at the destination, which has %2 left.")
+                                  .arg(QLocale().formattedDataSize(result.needed),
+                                       QLocale().formattedDataSize(result.available));
+                    break;
+                default:
+                    message = tr("The copy could not be saved: %1").arg(result.detail);
+                    qWarning() << "Archive copy failed:" << result.detail;
+                    break;
+                }
+                builder.setStatus(tr("Error")).setCurrentItem(message);
+            }
+            m_archiveCopyStatusText = builder.build();
+            emit archiveCopyStateChanged();
+            emit archiveCopyFinished(result.ok(), message);
+        }, Qt::QueuedConnection);
+    });
+    // Never cut half-way by quitting: the copy is waited for
+    connect(qApp, &QCoreApplication::aboutToQuit, m_archiveCopyThread, [this]() {
+        if (m_archiveCopyThread)
+            m_archiveCopyThread->wait();
+    });
+    connect(m_archiveCopyThread, &QThread::finished, this, [this]() {
+        m_archiveCopyThread->deleteLater();
+        m_archiveCopyThread = nullptr;
+        emit archiveCopyStateChanged();
+    });
+    m_archiveCopyStatusText = StatusBarMessageBuilder().setOperation(operation).setStatus(tr("In Progress"))
+                                                       .setCurrentItem(dest).build();
+    m_archiveCopyThread->start(QThread::LowPriority);
+    emit archiveCopyStateChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::archiveCopyState()
+{
+    // The date is kept under the key of the collection it belongs to
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    const QDateTime last = QDateTime::fromString(
+        settings.value(collectionSettingsKey(QStringLiteral("MediaIntelligence/LastArchiveCopy"))).toString(), Qt::ISODate);
+    const int days = last.isValid() ? int(last.daysTo(QDateTime::currentDateTime())) : -1;
+    return QVariantMap{
+        { QStringLiteral("lastCopy"),     last.isValid() ? last.toString(Qt::ISODate) : QString() },
+        { QStringLiteral("lastCopyText"), last.isValid() ? QLocale().toString(last, QLocale::ShortFormat) : QString() },
+        { QStringLiteral("days"),         days },
+        { QStringLiteral("due"),          !last.isValid() || days > 30 },
+        { QStringLiteral("hosted"),       collection->databaseMode == QLatin1String("Hosted") } };
 }

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
+import QtQuick.Dialogs as Dialogs
 
 // Home page (fork, D34): the archive at a glance — its drives as cards with
 // their state and contents, the work in progress, the archive's knowledge.
@@ -14,6 +15,8 @@ ColumnLayout {
     // A drive card's "Re-interpret with the context": Archive knowledge opens
     // on that catalog, not on the first one of its list
     signal reinterpretDrive(int deviceId)
+    // "To review": Browse on that catalog's folder, with its proposals (MDI-F184)
+    signal reviewProposals(int deviceId, string folder)
     property var ov: ({})
     readonly property var job: appManager1.mdiJobInfo
 
@@ -22,10 +25,13 @@ ColumnLayout {
     readonly property var egress: job.egress || []
     readonly property int webSearches: applicationWindow().webSearchesSent
     property bool webAllowed: false
+    // Copy of the archive data: see AppManager::archiveCopyState
+    property var copy: ({})
 
     function refresh() {
         ov = appManager1.homeOverview()
         webAllowed = appManager1.webSearchEnabled()
+        copy = appManager1.archiveCopyState()
     }
     // Called by Main.qml when the page is shown
     function setShown(shown) { if (shown) refresh() }
@@ -68,6 +74,25 @@ ColumnLayout {
         }
     }
 
+    // A reminder to save a copy of the archive data (fork, 2026-10-30): none
+    // saved yet, or the last one more than 30 days old
+    Kirigami.InlineMessage {
+        Layout.fillWidth: true
+        visible: home.copy.due === true && !appManager1.archiveCopyRunning
+                 && (home.ov.drives || []).length > 0
+        type: Kirigami.MessageType.Information
+        text: home.copy.lastCopy
+              ? qsTr("The last copy of the archive data is more than 30 days old (%1). Titles, events, people and approved faces live only in this collection.").arg(home.copy.lastCopyText)
+              : qsTr("No copy of the archive data has been saved yet. Titles, events, people and approved faces live only in this collection.")
+        actions: [
+            Kirigami.Action {
+                text: qsTr("Save a copy…")
+                icon.name: "document-save-as"
+                onTriggered: home.saveCopy()
+            }
+        ]
+    }
+
     // ── Key numbers ────────────────────────────────────────────────────────
     GridLayout {
         Layout.fillWidth: true
@@ -106,6 +131,85 @@ ColumnLayout {
                      : home.webAllowed ? qsTranslate("Main", "Web searches allowed for this collection")
                      : qsTr("On this computer")
             tagTone: home.egress.length > 0 || home.webSearches > 0 ? "warn" : home.webAllowed ? "info" : "ok"
+        }
+    }
+
+    // ── To review (fork, MDI-F184) ─────────────────────────────────────────
+    // What waits for the owner, each item opening the place where that work
+    // is done. Read when Home is shown, from indexed counts (no file list,
+    // MDI-C38); hidden when nothing waits, and in a Hosted collection. The
+    // documents not studied yet are not counted: no cheap read gives them.
+    KCard {
+        id: reviewCard
+        property var counts: ({})
+        readonly property int faces: counts.faces || 0
+        readonly property int proposals: counts.proposals || 0
+        function reload() { reviewCard.counts = appManager1.reviewCounts() }
+        visible: faces > 0 || proposals > 0
+        Layout.fillWidth: true
+
+        Component.onCompleted: if (home.visible) reviewCard.reload()
+        Connections {
+            target: home
+            function onVisibleChanged() { if (home.visible) reviewCard.reload() }
+        }
+        // While Home is shown: an approval, a job's new faces or proposals,
+        // another collection — read again at most every 10 seconds
+        Connections {
+            target: appManager1
+            function onFacesChanged()              { reviewCard.reloadSoon() }
+            function onProposalsChanged()          { reviewCard.reloadSoon() }
+            function onMdiRevisionChanged()        { reviewCard.reloadSoon() }
+            function onRecentCollectionsChanged()  { if (home.visible) reviewCard.reload() }
+        }
+        function reloadSoon() { if (home.visible && !reviewTimer.running) reviewTimer.start() }
+        Timer {
+            id: reviewTimer
+            interval: 10000
+            onTriggered: if (home.visible) reviewCard.reload()
+        }
+
+        KSectionHeader {
+            level: 3
+            title: qsTr("To review")
+            description: qsTr("What waits for your approval.")
+        }
+        RowLayout {
+            visible: reviewCard.faces > 0
+            Layout.fillWidth: true
+            spacing: 10
+            Controls.Label {
+                Layout.fillWidth: true
+                text: qsTranslate("PagePeople", "Faces to approve")
+                color: KTheme.text
+                wrapMode: Text.WordWrap
+            }
+            KInfoTag { text: home.count(reviewCard.faces); tone: "ai" }
+            KButton {
+                variant: "link"
+                text: qsTranslate("Main", "People")
+                Accessible.description: qsTranslate("PagePeople", "Faces to approve") + " · " + home.count(reviewCard.faces)
+                onClicked: home.openPage("People")
+            }
+        }
+        RowLayout {
+            visible: reviewCard.proposals > 0
+            Layout.fillWidth: true
+            spacing: 10
+            Controls.Label {
+                Layout.fillWidth: true
+                text: qsTr("Proposals to approve")
+                color: KTheme.text
+                wrapMode: Text.WordWrap
+            }
+            KInfoTag { text: home.count(reviewCard.proposals); tone: "ai" }
+            KButton {
+                variant: "link"
+                text: qsTr("Browse")
+                Accessible.description: qsTr("Proposals to approve") + " · " + home.count(reviewCard.proposals)
+                enabled: (reviewCard.counts.proposalsDeviceId || 0) > 0
+                onClicked: home.reviewProposals(reviewCard.counts.proposalsDeviceId, reviewCard.counts.proposalsFolder || "")
+            }
         }
     }
 
@@ -414,6 +518,94 @@ ColumnLayout {
                     text: home.ov.hasContext ? qsTr("Edit the context") : qsTr("Describe the archive")
                     onClicked: home.openPage("Context")
                 }
+            }
+        }
+    }
+
+    // ── Copy of the archive data (fork, 2026-10-30) ────────────────────────
+    // Titles, events, people and approved faces live only in this
+    // collection's AI data: a dated copy of it, of the collection and of the
+    // settings, in a folder the owner picks; written on a worker
+    function saveCopy() {
+        applicationWindow().openFreshDialog(copyFolderDialogComponent, "")
+    }
+    function startCopy(folder) {
+        copyFailure.visible = false
+        const refusal = appManager1.saveArchiveCopy(folder)
+        if (refusal !== "") {
+            copyFailure.text = refusal
+            copyFailure.visible = true
+        }
+    }
+    Component {   // a fresh dialog per open (openFreshDialog)
+        id: copyFolderDialogComponent
+        Dialogs.FolderDialog {
+            title: qsTr("Save a copy…")
+            onAccepted: home.startCopy(appManager1.pathFromFileUrl(selectedFolder.toString()))
+        }
+    }
+    Connections {
+        target: appManager1
+        function onArchiveCopyFinished(ok, message) {
+            home.copy = appManager1.archiveCopyState()
+            if (ok) {
+                applicationWindow().showPassiveNotification(message)
+            } else {
+                copyFailure.text = message
+                copyFailure.visible = true
+            }
+        }
+    }
+    KCard {
+        Layout.fillWidth: true
+        RowLayout {
+            Layout.fillWidth: true
+            KSectionHeader {
+                level: 3
+                title: qsTr("Copy of the archive data")
+                description: qsTr("The collection, its AI data, the action history and the settings, in a dated folder. The AI analysis keeps running meanwhile.")
+            }
+            KInfoTag {
+                text: home.copy.lastCopy ? qsTr("Last copy: %1").arg(home.copy.lastCopyText) : qsTr("No copy yet")
+                tone: home.copy.due === true ? "warn" : "ok"
+            }
+        }
+        // Why the last try did not save a copy; closed by hand or by a new try
+        Kirigami.InlineMessage {
+            id: copyFailure
+            Layout.fillWidth: true
+            visible: false
+            type: Kirigami.MessageType.Warning
+            showCloseButton: true
+        }
+        Controls.Label {
+            Layout.fillWidth: true
+            visible: home.copy.hosted === true
+            wrapMode: Text.WordWrap
+            color: KTheme.text2
+            text: qsTr("The hosted database is not part of the copy: it is kept on its server.")
+        }
+        Controls.Label {
+            Layout.fillWidth: true
+            visible: appManager1.archiveCopyRunning
+            text: appManager1.archiveCopyStatusText.replace(/^(&nbsp;)+/, "")
+            textFormat: Text.StyledText
+            wrapMode: Text.WordWrap
+            color: KTheme.text
+        }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            KButton {
+                id: saveCopyButton
+                // Not primary: "Add a drive" is this page's one primary action
+                variant: home.copy.due === true ? "tonal" : "secondary"
+                icon.name: "document-save-as"
+                text: qsTr("Save a copy…")
+                enabled: !appManager1.archiveCopyRunning
+                onClicked: home.saveCopy()
+                Keys.onReturnPressed: saveCopyButton.clicked()
+                Keys.onEnterPressed: saveCopyButton.clicked()
             }
         }
     }

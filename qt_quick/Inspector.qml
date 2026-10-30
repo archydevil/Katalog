@@ -54,10 +54,63 @@ Rectangle {
     }
     readonly property var factRows: [
         [qsTr("Title"), fileFacts.title], [qsTr("Description"), fileFacts.description],
-        [qsTr("Event"), fileFacts.event], [qsTr("Place"), fileFacts.place], [qsTr("Date"), fileFacts.date],
+        [qsTr("Event"), fileFacts.event, true], [qsTr("Place"), fileFacts.place, true], [qsTr("Date"), fileFacts.date],
         [qsTr("Author"), fileFacts.author], [qsTr("Notes"), fileFacts.notes]
     ].filter(r => (r[1] || "") !== "")
     function thisFile() { return [{ catalogId: inspector.catalogId, fullPath: inspector.fullPath }] }
+
+    // A person, event, place or tag of the file as a chip: activating it
+    // (click, Enter, Space) searches that value in the information of the
+    // files and shows the results (MDI-F183)
+    component SearchChip: Controls.AbstractButton {
+        id: chip
+        property string tone: "neutral"
+        property string value: text
+        // At most the width of the row it sits in, as an info tag
+        property real maximumWidth: parent ? parent.width : 100000
+        hoverEnabled: true
+        focusPolicy: Qt.StrongFocus
+        leftPadding: 9
+        rightPadding: 9
+        topPadding: 3
+        bottomPadding: 3
+        implicitWidth: Math.min(implicitContentWidth + leftPadding + rightPadding, maximumWidth)
+        implicitHeight: implicitContentHeight + topPadding + bottomPadding
+        Accessible.role: Accessible.Button
+        Accessible.name: text
+        Accessible.description: qsTr("Find the files with this in their information")
+        Controls.ToolTip.text: qsTr("Find the files with this in their information")
+        Controls.ToolTip.visible: hovered
+        Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+        onClicked: applicationWindow().searchInInformation(chip.value)
+        Keys.onReturnPressed: chip.clicked()
+        Keys.onEnterPressed:  chip.clicked()
+        HoverHandler { cursorShape: Qt.PointingHandCursor }
+        background: Rectangle {
+            radius: Math.min(height / 2, 12)
+            color: KTheme.toneSoft(chip.tone)
+            border.width: chip.hovered ? 1 : 0
+            border.color: KTheme.accent
+            // Keyboard focus: a ring outside the chip (WCAG 2.4.7)
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: -KTheme.focusOffset
+                radius: parent.radius + KTheme.focusOffset
+                color: "transparent"
+                border.width: KTheme.focusWidth
+                border.color: KTheme.accent
+                visible: chip.visualFocus
+            }
+        }
+        contentItem: Controls.Label {
+            text: chip.text
+            color: KTheme.toneText(chip.tone)
+            font.pixelSize: KTheme.note
+            font.weight: Font.Medium
+            wrapMode: Text.Wrap
+            Accessible.ignored: true   // read as the chip's own name
+        }
+    }
     // What the analysis deduces (date, event, place…) waiting for approval, and
     // the study of a document (D39)
     property var proposals: []
@@ -377,10 +430,18 @@ Rectangle {
                                 font.pixelSize: KTheme.note
                             }
                             Controls.Label {
+                                visible: !modelData[2]
                                 Layout.fillWidth: true
                                 text: modelData[1]
                                 color: KTheme.text
                                 wrapMode: Text.Wrap
+                            }
+                            // Event and place: a chip that searches them (MDI-F183)
+                            SearchChip {
+                                visible: !!modelData[2]
+                                Layout.alignment: Qt.AlignLeft
+                                text: modelData[1]
+                                tone: "info"
                             }
                         }
                     }
@@ -390,7 +451,7 @@ Rectangle {
                         visible: (inspector.fileFacts.tags || []).length > 0
                         Repeater {
                             model: inspector.fileFacts.tags || []
-                            delegate: KInfoTag { required property var modelData; text: modelData }
+                            delegate: SearchChip { required property var modelData; text: modelData }
                         }
                     }
                     // The people in it, with or without a face
@@ -400,9 +461,10 @@ Rectangle {
                         visible: (inspector.fileFacts.people || []).length > 0
                         Repeater {
                             model: inspector.fileFacts.people || []
-                            delegate: KInfoTag {
+                            delegate: SearchChip {
                                 required property var modelData
                                 text: modelData.name + (modelData.role ? " · " + modelData.role : "")
+                                value: modelData.name
                                 tone: "ok"
                             }
                         }

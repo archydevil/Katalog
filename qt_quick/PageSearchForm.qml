@@ -356,24 +356,33 @@ ColumnLayout {
         return yyyy + '/' + mm + '/' + dd + ' ' + hh + ':' + min + ':' + ss;
     }
 
-    // Set by searchInformationOnly(): the next search is "In the information"
-    // alone, whatever else the form holds (a chip of File details, MDI-F183)
-    property bool _informationOnlyOnce: false
+    // The next search fills only the lists (by meaning, in the information),
+    // never the table: set by a chip of File details (MDI-F183) and kept by
+    // "search again" after such a search (MDI-F187)
+    property bool _listsOnlyOnce: false
+    property bool _lastListsOnly: false
 
     function executeSearch() {
-        var informationOnly = pageSearchForm._informationOnlyOnce
-        pageSearchForm._informationOnlyOnce = false
+        var listsOnly = pageSearchForm._listsOnlyOnce
+        pageSearchForm._listsOnlyOnce = false
+        pageSearchForm._lastListsOnly = listsOnly
         // By meaning (fork, MDI-F47) and In the information (MDI-F183): each
         // its own list on the Results page. The table search runs too when
         // any other criterion is set.
-        var meaning = !informationOnly && search_checkBox_MeaningCriteria.checked
+        var meaning = search_checkBox_MeaningCriteria.checked
                       && search_TextField_Meaning.text.trim() !== ""
         var information = search_checkBox_InfoCriteria.checked
                           && search_TextField_Info.text.trim() !== ""
-        var others  = !informationOnly
+        var others  = !listsOnly
                       && (search_checkBox_FileNameCriteria.checked || checkBoxFileAttributesCriteria.checked
                           || search_checkBox_FileMetadata.checked || search_checkBox_FolderCriteria.checked
                           || search_checkBox_Duplicates.checked   || search_checkBox_Differences.checked)
+        // The words this search used, for searching them again another way
+        var nameWords = !listsOnly && search_checkBox_FileNameCriteria.checked
+                        ? search_TextField_FileNameText.text.split("\n").join(" ").trim() : ""
+        pageSearchForm._lastWords = nameWords !== "" ? nameWords
+                                  : meaning ? search_TextField_Meaning.text.trim()
+                                  : information ? search_TextField_Info.text.trim() : ""
         if (meaning) {
             var error = appManager1.runSemanticSearch(search_TextField_Meaning.text, !others)
             if (error !== "")
@@ -394,30 +403,28 @@ ColumnLayout {
         }
     }
 
-    // A value of File details searched in the information, alone (MDI-F183):
-    // the form shows the search; the other ways and filters stay as they were
+    // A value of File details searched in the information, alone (MDI-F183).
+    // The ways show the search; the words by name stay in their field, and
+    // the filters, which only narrow the table, stay as they were.
     function searchInformationOnly(text) {
+        search_checkBox_FileNameCriteria.checked = false
+        search_checkBox_MeaningCriteria.checked = false
         search_checkBox_InfoCriteria.checked = true
         search_TextField_Info.text = text
-        pageSearchForm._informationOnlyOnce = true
+        pageSearchForm._listsOnlyOnce = true
     }
 
-    // The words of the search: by name, else by meaning, else in the information
-    function searchWords() {
-        if (search_checkBox_FileNameCriteria.checked && search_TextField_FileNameText.text.trim() !== "")
-            return search_TextField_FileNameText.text.split("\n").join(" ").trim()
-        if (search_checkBox_MeaningCriteria.checked && search_TextField_Meaning.text.trim() !== "")
-            return search_TextField_Meaning.text.trim()
-        if (search_checkBox_InfoCriteria.checked && search_TextField_Info.text.trim() !== "")
-            return search_TextField_Info.text.trim()
-        return ""
-    }
+    // The words of the last search: by name, else by meaning, else in the information
+    property string _lastWords: ""
 
     // A search that found nothing, run again with one change (MDI-F187):
     // "folders" in the folder paths too, "meaning" or "information" the same
     // words that way too, "all" in all the drives
     function searchAgainWith(change) {
-        var words = pageSearchForm.searchWords()
+        // Refused as the Search action is: nothing changes then
+        if (appManager1.searchIsRunning || appManager1.deviceUpdateIsRunning || appManager1.catalogIsCreating)
+            return
+        var words = pageSearchForm._lastWords
         if (change === "folders") {
             var idx = search_ComboBox_TextCriteriaIn.indexOfValue("FilesAndFolders")
             if (idx < 0)
@@ -438,6 +445,7 @@ ColumnLayout {
         } else {
             return
         }
+        pageSearchForm._listsOnlyOnce = pageSearchForm._lastListsOnly
         pageSearchForm.searchRequested()
     }
 

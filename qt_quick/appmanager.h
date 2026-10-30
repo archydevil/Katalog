@@ -611,6 +611,9 @@ public slots:
     // before anything is sent ([{query, reason, folder, fileCount}])
     Q_INVOKABLE bool         webSearchEnabled();
     Q_INVOKABLE void         setWebSearchEnabled(bool enabled);
+    // A settings key of the collection open: the settings file is shared by
+    // every collection ("key/<collection id>")
+    QString                  collectionSettingsKey(const QString &key) const;
     Q_INVOKABLE QVariantList pendingWebQueries(int deviceId);
     // Runs on a worker, then proposals are derived again: webQueriesFinished
     // and proposalsChanged follow

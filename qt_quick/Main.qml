@@ -1117,6 +1117,48 @@ Kirigami.ApplicationWindow {
         }
         root.showPage(pageExplore)
     }
+    // A value of File details searched in the information, alone (MDI-F183):
+    // the Search page shows the search, the Results page its list
+    function searchInInformation(text) {
+        if (!text || appManager1.searchIsRunning || appManager1.deviceUpdateIsRunning || appManager1.catalogIsCreating)
+            return
+        appManager1.setLastPage("Search")
+        if (root.indexOfPage(pageSearch) < 0)
+            root.showPage(pageSearch)
+        pageSearchForm.searchInformationOnly(text)
+        pageSearch.runSearch()
+    }
+    // A search that found nothing, run again with one change (MDI-F187)
+    function searchAgainWith(change) {
+        pageSearchForm.searchAgainWith(change)
+    }
+    // Home's "To review" (MDI-F184): Browse on the catalog at its top folder,
+    // with the proposals waiting there, as its Proposals action shows them
+    property int proposalsAfterOpen: -1
+    function showProposalsInBrowse(deviceId, folder) {
+        appManager1.setLastPage("Explore")
+        root.exploreChooser = false
+        if (exploreFolders.openedDeviceId !== deviceId) {
+            root.proposalsAfterOpen = deviceId
+            root.explorePendingFolder = folder
+            exploreFolders.openByDeviceId(deviceId)
+        } else {
+            root.exploreShowFolder(folder)
+            Qt.callLater(folderProposalsDialog.openFor)
+        }
+        root.showPage(pageExplore)
+    }
+    Connections {
+        target: exploreFiles
+        enabled: root.proposalsAfterOpen > 0
+        function onCatalogIdChanged() {
+            const wanted = root.proposalsAfterOpen
+            root.proposalsAfterOpen = -1
+            // Queued after the folder asked for is shown (onCatalogOpenRequested)
+            if (exploreFolders.openedDeviceId === wanted)
+                Qt.callLater(folderProposalsDialog.openFor)
+        }
+    }
     function pickPerson(onPicked) {
         personPickerDialog.onPicked = onPicked
         personPickerDialog.openPicker()
@@ -1464,8 +1506,23 @@ Kirigami.ApplicationWindow {
             const target = appManager1.pathFromFileUrl(selectedFile.toString())
             const path = scope === "file" ? (root.exploreColumns ? exploreColumnBrowser.selectedFullPath : exploreFiles.selectedFullPath)
                        : scope === "folder" ? root.exploreCurrentFolder : exploreFiles.catalogPath
-            const error = appManager1.exportHtml(scope, exploreFiles.catalogId, path, target)
-            showPassiveNotification(error !== "" ? error : qsTr("Exported: %1").arg(target))
+            // One file at once; a folder or a catalog on a worker, with its
+            // progress in the activity panel and a notification at the end
+            if (scope === "file") {
+                const error = appManager1.exportHtml(scope, exploreFiles.catalogId, path, target)
+                showPassiveNotification(error !== "" ? error : qsTr("Exported: %1").arg(target))
+            } else {
+                const refusal = appManager1.startHtmlExport(scope, exploreFiles.catalogId, path, target)
+                if (refusal !== "")
+                    showPassiveNotification(refusal)
+            }
+        }
+    }
+    Connections {
+        target: appManager1
+        function onHtmlExportFinished(target, error, stopped) {
+            if (!stopped)
+                showPassiveNotification(error !== "" ? error : qsTr("Exported: %1").arg(target))
         }
     }
 
@@ -4080,9 +4137,12 @@ Kirigami.ApplicationWindow {
             onOpenPage: (name) => {
                 var pages = { "Search": pageSearch, "Create": pageCreate, "Explore": pageExplore,
                               "Context": pageContext, "Activity": pageActivity, "Selection": pageSelection }
+                pages["People"] = pagePeople   // "To review": the faces to approve (MDI-F184)
                 if (pages[name])
                     root.sidebarGo(name, pages[name])
             }
+            // "To review": the proposals waiting, where they are approved (MDI-F184)
+            onReviewProposals: (deviceId, folder) => root.showProposalsInBrowse(deviceId, folder)
             // A drive card: Archive knowledge on that catalog, its
             // re-interpretation asked for straight away
             onReinterpretDrive: (deviceId) => {

@@ -67,6 +67,44 @@ Controls.ToolBar {
     visible: busy || (lingering && root.statusText.length > 0)
              || appManager1.operationQueue.length > 0
              || appManager1.mdiIsRunning || root.mdiLingering
+             || appManager1.htmlExportRunning || root.htmlExportLingering
+             || appManager1.archiveCopyRunning || root.archiveCopyLingering
+
+    // An HTML export and a copy of the archive data run on workers of their
+    // own (fork, 2026-10-30): a row each, with the same tail
+    property bool htmlExportLingering: false
+    property bool archiveCopyLingering: false
+    Timer {
+        id: htmlExportLingerTimer
+        interval: root.completionLinger
+        onTriggered: root.htmlExportLingering = false
+    }
+    Timer {
+        id: archiveCopyLingerTimer
+        interval: root.completionLinger
+        onTriggered: root.archiveCopyLingering = false
+    }
+    Connections {
+        target: appManager1
+        function onHtmlExportStateChanged() {
+            if (appManager1.htmlExportRunning) {
+                root.htmlExportLingering = false
+                htmlExportLingerTimer.stop()
+            } else if (!root.htmlExportLingering) {
+                root.htmlExportLingering = true
+                htmlExportLingerTimer.restart()
+            }
+        }
+        function onArchiveCopyStateChanged() {
+            if (appManager1.archiveCopyRunning) {
+                root.archiveCopyLingering = false
+                archiveCopyLingerTimer.stop()
+            } else if (!root.archiveCopyLingering) {
+                root.archiveCopyLingering = true
+                archiveCopyLingerTimer.restart()
+            }
+        }
+    }
 
     // The enrichment runner is not a queue operation (MDI-C3): it has its own
     // row, shown alongside whatever the queue runs (MDI-F17), with the same tail.
@@ -114,6 +152,45 @@ Controls.ToolBar {
         implicitHeight: Math.max(32, implicitContentHeight + topPadding + bottomPadding)
         leftPadding: 10
         rightPadding: 10
+    }
+
+    // A worker's row: its line, its indicator while it runs, its Stop button
+    component WorkerRow: RowLayout {
+        id: workerRow
+        property bool running: false
+        property bool lingering: false
+        property string status: ""
+        property bool canStop: false
+        signal stopRequested()
+        Layout.fillWidth: true
+        spacing: Kirigami.Units.smallSpacing
+        visible: (running || lingering) && status.length > 0
+
+        Controls.BusyIndicator {
+            running: workerRow.running
+            opacity: workerRow.running ? 1 : 0
+            Layout.leftMargin: Kirigami.Units.largeSpacing
+            implicitWidth:  Kirigami.Units.gridUnit * 1.2
+            implicitHeight: Kirigami.Units.gridUnit * 1.2
+        }
+        Controls.Label {
+            id: workerStatusLabel
+            Layout.fillWidth: true
+            text: workerRow.status.replace(/^(&nbsp;)+/, "")
+            textFormat: Text.StyledText
+            elide: Text.ElideMiddle
+            color: KTheme.text
+            HoverHandler { id: workerStatusHover }
+            Controls.ToolTip.text: workerStatusLabel.text
+            Controls.ToolTip.visible: workerStatusHover.hovered && workerStatusLabel.truncated
+            Controls.ToolTip.delay: Kirigami.Units.toolTipDelay
+        }
+        PanelButton {
+            visible: workerRow.canStop && workerRow.running
+            text: qsTr("Stop")
+            icon.name: "process-stop"
+            onClicked: workerRow.stopRequested()
+        }
     }
 
     contentItem: ColumnLayout {
@@ -227,6 +304,20 @@ Controls.ToolBar {
                 icon.name: "process-stop"
                 onClicked: appManager1.stopEnrichment()
             }
+        }
+
+        // ── HTML export and copy of the archive data (fork, 2026-10-30) ──
+        WorkerRow {
+            running: appManager1.htmlExportRunning
+            lingering: root.htmlExportLingering
+            status: appManager1.htmlExportStatusText
+            canStop: true
+            onStopRequested: appManager1.stopHtmlExport()
+        }
+        WorkerRow {
+            running: appManager1.archiveCopyRunning
+            lingering: root.archiveCopyLingering
+            status: appManager1.archiveCopyStatusText
         }
 
         Rectangle {

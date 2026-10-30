@@ -185,7 +185,7 @@ MdiArchiveCopy::Result MdiArchiveCopy::run(const Sources &sources, const QString
     }
 
     // The final name, unique; written under a hidden name first
-    const QDir parent(dest.absoluteFilePath());
+    QDir parent(dest.absoluteFilePath());
     const QString base = folderName(when);
     QString name = base;
     for (int n = 2; parent.exists(name); ++n)
