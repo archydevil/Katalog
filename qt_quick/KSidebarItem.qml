@@ -35,6 +35,9 @@ Controls.AbstractButton {
     Accessible.description: description
     Accessible.selectable: true
     Accessible.selected: active
+    // A page tab is not pressed by the assistive technologies the way a
+    // button is: VoiceOver's press (AXPress) did nothing until this
+    Accessible.onPressAction: item.clicked()
 
     background: Rectangle {
         radius: KTheme.radiusItem

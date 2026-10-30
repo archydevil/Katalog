@@ -854,7 +854,7 @@ ColumnLayout {
     KSectionHeader {
         level: 1
         title: qsTr("Search the drives")
-        description: qsTr("Teca searches its catalogs, so the drives can stay disconnected. By meaning, it also searches the descriptions and transcripts made by the AI.")
+        description: qsTr("Teca searches its catalogs, so the drives can stay disconnected. By meaning, it also searches the descriptions and transcripts made by the AI; in the information, what was written about the files.")
     }
 
     // ── What to look for: the ways to search (MDI-F117) ──────────────────────
@@ -868,7 +868,7 @@ ColumnLayout {
         KSectionHeader {
             level: 3
             title: qsTr("What are you looking for")
-            description: qsTr("By name, by meaning, or both at once.")
+            description: qsTr("By name, by meaning, in the information, or several at once.")
         }
 
         Flow {
