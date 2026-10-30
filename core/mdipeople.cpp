@@ -259,6 +259,29 @@ QString MdiPeople::Person::displayName() const
     return (firstName.trimmed() + QLatin1Char(' ') + lastName.trimmed()).trimmed();
 }
 
+bool MdiPeople::clearAllFaces(const QString &connectionName, QList<QPair<int, QString>> *files,
+                              QStringList *crops)
+{
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
+    QSqlQuery q(db);
+    if (files && q.exec(QStringLiteral("SELECT DISTINCT fp_catalog_id, fp_full_path FROM mdi_file_person WHERE fp_source = 'face'")))
+        while (q.next())
+            files->append({q.value(0).toInt(), q.value(1).toString()});
+    if (crops && q.exec(QStringLiteral("SELECT face_crop_root, face_crop_file FROM mdi_face WHERE face_crop_file IS NOT NULL AND face_crop_file <> ''")))
+        while (q.next())
+            crops->append(QDir(q.value(0).toString()).filePath(q.value(1).toString()));
+    db.transaction();
+    const bool ok = q.exec(QStringLiteral("DELETE FROM mdi_file_person WHERE fp_source = 'face'"))
+                 && q.exec(QStringLiteral("DELETE FROM mdi_face"))
+                 && q.exec(QStringLiteral("DELETE FROM mdi_datum WHERE datum_analysis = 'faces'"));
+    if (!ok) {
+        qWarning() << "MdiPeople::clearAllFaces failed:" << q.lastError().text();
+        db.rollback();
+        return false;
+    }
+    return db.commit();
+}
+
 QString MdiPeople::Face::cropPath() const
 {
     return cropRoot.isEmpty() || cropFile.isEmpty() ? QString() : QDir(cropRoot).filePath(cropFile);

@@ -501,4 +501,46 @@ ColumnLayout {
             }
         }
     }
+
+    // ── Face data (GDPR) ──────────────────────────────────────────────────
+    // Recognisable faces are personal data: they can be forgotten all at once
+    KCard {
+        visible: people.facesOn
+        Layout.fillWidth: true
+        KSectionHeader {
+            level: 3
+            title: qsTr("Face data")
+            description: qsTr("The faces found, their crops and the names given through them stay on this computer. Deleting them forgets every face of this collection; people and the names added by hand stay.")
+        }
+        KButton {
+            variant: "secondary"
+            icon.name: "edit-delete"
+            text: qsTr("Delete all face data")
+            onClicked: clearFacesDialog.open()
+        }
+    }
+    Kirigami.PromptDialog {
+        id: clearFacesDialog
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Delete all face data?")
+        subtitle: qsTr("Every face found in this collection, its crop and the names given through faces are deleted. People, the names added by hand and the photos stay. A new face search can be run later.")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Delete")
+                icon.name: "edit-delete"
+                onTriggered: {
+                    const error = appManager1.clearFaceData()
+                    clearFacesDialog.close()
+                    people.notify(error, qsTr("Face data deleted."))
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: clearFacesDialog.close()
+            }
+        ]
+    }
 }

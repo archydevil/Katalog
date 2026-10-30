@@ -8569,6 +8569,29 @@ QString AppManager::rejectFaces(const QVariantList &faceIds)
     return QString();
 }
 //----------------------------------------------------------------------
+QString AppManager::clearFaceData()
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    // Not while the analysis may be writing faces
+    if (m_mdiThread)
+        return tr("A device operation is already running.");
+    QList<QPair<int, QString>> files;
+    QStringList crops;
+    if (!MdiPeople::clearAllFaces(kMdiMainConnection, &files, &crops))
+        return tr("The change could not be saved.");
+    // The crops are files the analysis made under its own folder: only those go
+    for (const QString &crop : std::as_const(crops))
+        if (crop.contains(QStringLiteral("/katalog_mdi/")))
+            QFile::remove(crop);
+    reindexFileInfo(files);
+    emit facesChanged();
+    emit peopleChanged();
+    emit fileInfoChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
 QString AppManager::ignoreFaces(const QVariantList &faceIds)
 {
     const QString refusal = peopleStoreRefusal();

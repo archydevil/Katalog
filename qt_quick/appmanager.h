@@ -545,6 +545,8 @@ public slots:
     Q_INVOKABLE QVariantList facesInFile(int catalogId, const QString &fullPath);
     Q_INVOKABLE QString      confirmFaces(const QVariantList &faceIds, int personId);
     Q_INVOKABLE QString      rejectFaces(const QVariantList &faceIds);
+    // Forgets every face of the collection; people and names added by hand stay
+    Q_INVOKABLE QString clearFaceData();
     Q_INVOKABLE QString      ignoreFaces(const QVariantList &faceIds);
     Q_INVOKABLE QString      clearFace(int faceId);
     Q_INVOKABLE QVariantList similarFaces(int personId, int limit, double minScore);

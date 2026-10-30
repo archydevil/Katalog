@@ -172,19 +172,19 @@
     <message>
         <location line="+1"/>
         <location line="+4986"/>
-        <location line="+1740"/>
+        <location line="+1763"/>
         <source>Size</source>
         <translation>Grootte</translation>
     </message>
     <message>
-        <location line="-6725"/>
-        <location line="+6733"/>
+        <location line="-6748"/>
+        <location line="+6756"/>
         <location line="+72"/>
         <source>Date</source>
         <translation>Datum</translation>
     </message>
     <message>
-        <location line="-6804"/>
+        <location line="-6827"/>
         <source>Checksum</source>
         <translation>Controlesom</translation>
     </message>
@@ -278,11 +278,12 @@ Kies een andere naam en probeer het opnieuw.</translation>
         <location line="+17"/>
         <location line="+374"/>
         <location line="+622"/>
+        <location line="+2247"/>
         <source>A device operation is already running.</source>
         <translation>Een apparaatoperatie is al actief.</translation>
     </message>
     <message>
-        <location line="-3693"/>
+        <location line="-5940"/>
         <location line="+2255"/>
         <source>Create</source>
         <translation>Maken</translation>
@@ -479,12 +480,12 @@ Kies een andere naam.</translation>
         <location line="-3222"/>
         <location line="+73"/>
         <location line="+3356"/>
-        <location line="+2617"/>
+        <location line="+2640"/>
         <source>Selected device is not a catalog</source>
         <translation>Geselecteerd apparaat is geen catalogus</translation>
     </message>
     <message>
-        <location line="-2287"/>
+        <location line="-2310"/>
         <source>Error: could not open collection</source>
         <translation>Fout: kan verzameling niet openen</translation>
     </message>
@@ -565,24 +566,24 @@ Kies een andere naam.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+6308"/>
+        <location line="+6331"/>
         <source>Video</source>
         <translation>Video</translation>
     </message>
     <message>
-        <location line="-6308"/>
+        <location line="-6331"/>
         <location line="+1"/>
         <source>Clip</source>
         <translation>Clip</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+6308"/>
+        <location line="+6331"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
     <message>
-        <location line="-6307"/>
+        <location line="-6330"/>
         <source>Waveform</source>
         <translation>Golfvorm</translation>
     </message>
@@ -684,12 +685,12 @@ Kies een andere naam.</translation>
     </message>
     <message>
         <location line="-3980"/>
-        <location line="+5935"/>
+        <location line="+5958"/>
         <source>Classification</source>
         <translation>Classificatie</translation>
     </message>
     <message>
-        <location line="-5934"/>
+        <location line="-5957"/>
         <source>Reference documents</source>
         <translation>Referentiedocumenten</translation>
     </message>
@@ -705,13 +706,13 @@ Kies een andere naam.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+5898"/>
+        <location line="+5921"/>
         <location line="+38"/>
         <source>Document study</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-5935"/>
+        <location line="-5958"/>
         <source>Proposals to approve</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1019,12 +1020,12 @@ Kies een andere naam.</translation>
     </message>
     <message>
         <location line="+7"/>
-        <location line="+1006"/>
+        <location line="+1029"/>
         <source>Report</source>
         <translation>Rapport</translation>
     </message>
     <message>
-        <location line="-1002"/>
+        <location line="-1025"/>
         <source>Conflicts</source>
         <translation>Conflicten</translation>
     </message>
@@ -1076,7 +1077,8 @@ Kies een andere naam.</translation>
         <location line="+13"/>
         <location line="+102"/>
         <location line="+23"/>
-        <location line="+22"/>
+        <location line="+20"/>
+        <location line="+25"/>
         <location line="+16"/>
         <location line="+283"/>
         <location line="+13"/>
@@ -1085,7 +1087,7 @@ Kies een andere naam.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-905"/>
+        <location line="-928"/>
         <source>The enrichment is running: the transcripts can be cleaned once it ends or is stopped.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1121,7 +1123,7 @@ Kies een andere naam.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+186"/>
+        <location line="+209"/>
         <source>Letter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11978,6 +11980,46 @@ naar de prullenbak verplaatsen?</translation>
         <source>The faces are looked for in the background: Work in progress shows how it goes.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location line="+12"/>
+        <source>Face data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The faces found, their crops and the names given through them stay on this computer. Deleting them forgets every face of this collection; people and the names added by hand stay.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Delete all face data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Delete all face data?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every face found in this collection, its crop and the names given through faces are deleted. People, the names added by hand and the photos stay. A new face search can be run later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Delete</source>
+        <translation>Verwijderen</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Face data deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Cancel</source>
+        <translation>Annuleren</translation>
+    </message>
 </context>
 <context>
     <name>PageSearchForm</name>
@@ -12191,7 +12233,7 @@ naar de prullenbak verplaatsen?</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-7236"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-7259"/>
         <source>Exact Phrase</source>
         <translation>Exacte zin</translation>
     </message>

@@ -173,6 +173,13 @@ public:
     static bool ignoreFaces(const QString &connectionName, const QList<int> &faceIds);
     // Back to unknown, with no person and no suggestion
     static bool clearFace(const QString &connectionName, int faceId);
+    // Every face of the collection forgotten (owner, 2026-10-30, GDPR): the
+    // faces, the names given through them and the "faces" analysis of every
+    // file, so a new search starts afresh. People and the names added by hand
+    // stay. The files given a name through a face are returned in *files and
+    // the face crops (derived files the analysis made) in *crops.
+    static bool clearAllFaces(const QString &connectionName, QList<QPair<int, QString>> *files,
+                              QStringList *crops);
 
     // Suggestions (never a confirmation): the best person whose confirmed
     // faces match at least `threshold`, by the best match over those faces
