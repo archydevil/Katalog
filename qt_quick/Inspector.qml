@@ -495,10 +495,7 @@ Rectangle {
                                         id: sourceTag
                                         required property var modelData
                                         readonly property bool metadata: modelData.kind === "exif" || modelData.kind === "video"
-                                        text: (modelData.kindLabel || modelData.label) + ": "
-                                              + (metadata ? (modelData.detail || modelData.label)
-                                                          : modelData.label + (modelData.detail && modelData.detail !== modelData.label
-                                                                               ? " — " + modelData.detail : ""))
+                                        text: applicationWindow().proposalSourceText(modelData)
                                         tone: "info"
                                         HoverHandler { id: sourceHover }
                                         Controls.ToolTip.text: modelData.label + (modelData.detail ? ": " + modelData.detail : "")
@@ -860,5 +857,35 @@ Rectangle {
             icon.name: "edit-clear"
             onTriggered: appManager1.clearFace(faceMenu.face.faceId)
         }
+    }
+
+    // A value written by hand is replaced only when asked, and after a question
+    Kirigami.PromptDialog {
+        id: replaceOwnDialog
+        property var proposal: ({})
+        function ask(p) { proposal = p; open() }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Replace your value?")
+        subtitle: qsTr("«%1» takes the place of «%2», written by hand. The other information of the file stays.")
+                  .arg(replaceOwnDialog.proposal.value || "").arg(replaceOwnDialog.proposal.ownValue || "")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Use this value instead")
+                icon.name: "dialog-ok-apply"
+                onTriggered: {
+                    replaceOwnDialog.close()
+                    const message = appManager1.acceptProposals([replaceOwnDialog.proposal.proposalId], true)
+                    if (message !== "")
+                        applicationWindow().showPassiveNotification(message)
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: replaceOwnDialog.close()
+            }
+        ]
     }
 }

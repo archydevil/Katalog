@@ -1059,6 +1059,9 @@ Kirigami.ApplicationWindow {
         }
         function onWebQueriesFinished(asked, found, error) {
             root.webSearchesSent += asked
+            // The owner asked for these searches: how they went
+            showPassiveNotification(error !== "" ? error
+                : qsTr("Web searches done: %1 sent, %2 with an answer.").arg(asked).arg(found))
         }
     }
 
@@ -1432,6 +1435,14 @@ Kirigami.ApplicationWindow {
     }
 
     // ── Deductions, documents, export (D39) ───────────────────────────────
+    // A source of a proposal in words: the kind of source, then what it says;
+    // the technical name of a metadata field only in the tooltip (D39)
+    function proposalSourceText(source) {
+        const metadata = source.kind === "exif" || source.kind === "video"
+        return (source.kindLabel || source.label) + ": "
+             + (metadata ? (source.detail || source.label)
+                         : source.label + (source.detail && source.detail !== source.label ? " — " + source.detail : ""))
+    }
     function readDocument(catalogId, fullPath) {
         root.showLayer(documentReaderComponent, { catalogId: catalogId, fullPath: fullPath })
     }
@@ -1480,11 +1491,27 @@ Kirigami.ApplicationWindow {
         preferredHeight: Math.min(root.height - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 36)
         padding: Kirigami.Units.largeSpacing * 2
         standardButtons: Kirigami.Dialog.Close
+        function reload() {
+            const groups = appManager1.proposalsForFolder(exploreFiles.catalogId, root.exploreCurrentFolder, true)
+            if (JSON.stringify(groups) !== JSON.stringify(folderProposalsDialog.groups))
+                folderProposalsDialog.groups = groups
+        }
+        // The deduction runs in the background and writes as it goes: the
+        // dialog follows it, at most every 5 seconds
+        Timer {
+            id: folderProposalsTimer
+            interval: 5000
+            onTriggered: if (folderProposalsDialog.opened) folderProposalsDialog.reload()
+        }
         Connections {
             target: appManager1
             function onProposalsChanged() {
                 if (folderProposalsDialog.opened)
-                    folderProposalsDialog.groups = appManager1.proposalsForFolder(exploreFiles.catalogId, root.exploreCurrentFolder, true)
+                    folderProposalsDialog.reload()
+            }
+            function onMdiRevisionChanged() {
+                if (folderProposalsDialog.opened && !folderProposalsTimer.running)
+                    folderProposalsTimer.start()
             }
         }
         ColumnLayout {
@@ -1507,7 +1534,7 @@ Kirigami.ApplicationWindow {
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 8
-                        Controls.Label { text: folderProposalsDialog.fieldName(group.modelData.field); color: KTheme.text3 }
+                        Controls.Label { text: group.modelData.fieldLabel || folderProposalsDialog.fieldName(group.modelData.field); color: KTheme.text3 }
                         Controls.Label {
                             Layout.fillWidth: true
                             text: group.modelData.value
@@ -1528,7 +1555,7 @@ Kirigami.ApplicationWindow {
                             model: group.modelData.sources || []
                             delegate: KInfoTag {
                                 required property var modelData
-                                text: modelData.label + (modelData.detail ? ": " + modelData.detail : "")
+                                text: root.proposalSourceText(modelData)
                                 tone: "info"
                             }
                         }
