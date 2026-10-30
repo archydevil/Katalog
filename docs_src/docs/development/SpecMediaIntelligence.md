@@ -2197,6 +2197,46 @@ new failure path, `moveToCatalogs`). History in Memory mode was not reported.
 
 ### Findings for the fork owner (not authorised by any row)
 
+- **Core changes beyond `MDI-C46` (D36, `fd76dd09`).** `CLAUDE.md` asks for
+  the owner's approval before a core method is added or changed (`MDI-C14`).
+  These are not in the approved design: (a) `MdiData::moveToCatalogs` now
+  returns -1 when nothing could be moved, where `MDI-C43` says it returns the
+  rows moved. Its signature is unchanged and no method was added. (b) The
+  split's own steps changed beyond the date fix that `MDI-C43` allows.
+  `Collection::executeSplitBySubDirectory` and `executeSplitByFileType` gained
+  two optional out-parameters and the enum `CatalogOperationError`.
+  `applySplitResult` now moves the AI data before any device change, and undoes
+  the new catalogs with a new private `undoSplitCatalogs` when the move fails.
+  The user then reads "Split cancelled: the AI results could not be moved to the
+  new catalogs. Nothing was changed." (c) `Collection::proposeRecompose`, with
+  `RecomposeProposal`. It backs `AppManager::recomposeProposal` and reads as
+  part of `MDI-C46` (2), but is not named there. (d)
+  `Collection::repairUndatedCatalogs` (next finding). Ratify them, as fixes of
+  `MDI-F126` and parts of `MDI-F142` / `MDI-F143`, or revert?
+- **Repair of undated catalogs (`Q54` (b)).** `repairUndatedCatalogs` runs at
+  every collection opening in File mode. It gives every catalog with an empty
+  update date the date of that opening. That covers split catalogs and any
+  other undated catalog, and the date then reads as the catalog's last update.
+  In Memory mode the dates come from the `.idx` files' times, so nothing is
+  undated; Hosted mode is skipped. Keep it as is, limit it to split catalogs,
+  or date them from the split catalog's own date?
+- **Refusals while other work runs (D36).** A split, a recompose and a restore
+  are refused while the enrichment works on one of the catalogs concerned,
+  with "The enrichment is working on this catalog: it can be changed once the
+  enrichment ends or is stopped." (a new string, approved with the step). They
+  are also refused with the existing "A device operation is already running."
+  while an update, creation, search, Explore load, backup, import or export
+  runs, or while the instant index cannot stop. No row states these refusals.
+  Add them to `MDI-F126`, `MDI-F139` and `MDI-F142`, or remove?
+- **Drift — `MDI-F147`.** The scope chip's "All the drives" link sets the
+  choice in *I miei dischi* to *All*. `MDI-F147` says the chip only shows the
+  choice and never changes it. Amend `MDI-F147` to allow that link, or remove
+  it?
+- **Undo without confirmation (`Q52` (c)).** *Undo* in the notification
+  restores at once. Each restore first saves the current state, so it can be
+  undone in turn. `CLAUDE.md` asks a confirmation for destructive actions.
+  Accept, as the restore is reversible, or confirm first?
+
 - **Office and OpenDocument summaries.** The summary also extracts text from
   Office/OpenDocument files with KFileMetaData, and reads plain-text formats
   (`txt`, `md`, `srt`, `vtt`, `csv`, `log`, `rtf`, `html`). Those formats are
