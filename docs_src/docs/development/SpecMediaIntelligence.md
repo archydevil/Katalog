@@ -2943,10 +2943,11 @@ what each leaves open is stated.
   offer in the bundle (`ffmpeg` built with x264 and x265, poppler, `exiv2`);
   (b) `packaging/macos/__pycache__/bundle_tools.cpython-315.pyc`, a build
   artefact committed in `7fc239df`, is the owner's item: removing it from the
-  repository needs his word (`CLAUDE.md` file safety). At this recording the
-  working tree has it staged for removal from the index, with a `.gitignore`
-  entry, the file kept on disk; that change is not the specifications
-  agent's, and committing it still needs the owner's word; (c)
+  repository needs his word (`CLAUDE.md` file safety). While this was being
+  recorded, commit `49d12fbf` removed it from the repository, with a
+  `.gitignore` entry for the folder; the file is still on disk. That commit
+  is not the specifications agent's, and no answer of the owner naming it was
+  relayed: his word on it is still needed; (c)
   `MdiFaces::findModel` also reads `models` and `../share/teca/models` beside
   the executable: no Windows or Linux package may put a model there (D9);
   harmless while none does.

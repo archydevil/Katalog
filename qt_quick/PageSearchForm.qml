@@ -819,6 +819,15 @@ ColumnLayout {
                 hint: qsTr("With other words too, in the descriptions, summaries and transcripts made by the AI")
                 iconName: "tools-wizard"
             }
+            // The information written about the files, word for word (MDI-F183)
+            WayChoice {
+                id: search_checkBox_InfoCriteria
+                width: Math.min(implicitWidth, search_flow_Ways.width)
+                checked: false
+                text: qsTr("In the information")
+                hint: qsTr("In the title, event, place, date, author, notes, tags and people written for the files")
+                iconName: "document-edit"
+            }
         }
 
         // By name: the text criteria (SpecSearchList.md)
@@ -829,7 +838,7 @@ ColumnLayout {
 
             // Says which field is which when both ways are on
             Controls.Label {
-                visible: search_checkBox_MeaningCriteria.checked
+                visible: search_checkBox_MeaningCriteria.checked || search_checkBox_InfoCriteria.checked
                 text: qsTr("By name")
                 color: KTheme.text3
                 font.pixelSize: KTheme.note
@@ -950,7 +959,7 @@ ColumnLayout {
             spacing: pageSearchForm.rowSpacing
 
             Controls.Label {
-                visible: search_checkBox_FileNameCriteria.checked
+                visible: search_checkBox_FileNameCriteria.checked || search_checkBox_InfoCriteria.checked
                 text: qsTr("By meaning")
                 color: KTheme.text3
                 font.pixelSize: KTheme.note
@@ -963,6 +972,31 @@ ColumnLayout {
                     id: search_TextField_Meaning
                     Layout.fillWidth: true
                     placeholderText: qsTr("Describe what you are looking for")
+                    onAccepted: pageSearchForm.searchRequested()
+                }
+            }
+        }
+
+        // In the information (fork, SpecMediaIntelligence.md MDI-F183)
+        ColumnLayout {
+            visible: search_checkBox_InfoCriteria.checked
+            Layout.fillWidth: true
+            spacing: pageSearchForm.rowSpacing
+
+            Controls.Label {
+                visible: search_checkBox_FileNameCriteria.checked || search_checkBox_MeaningCriteria.checked
+                text: qsTr("In the information")
+                color: KTheme.text3
+                font.pixelSize: KTheme.note
+                font.weight: Font.DemiBold
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Controls.Label { text: qsTr("text"); color: KTheme.text2; Layout.preferredWidth: pageSearchForm.labelW; leftPadding: pageSearchForm.labelInset; wrapMode: Text.Wrap }
+                Controls.TextField {
+                    id: search_TextField_Info
+                    Layout.fillWidth: true
+                    placeholderText: qsTr("A name, an event, a place, a tag…")
                     onAccepted: pageSearchForm.searchRequested()
                 }
             }

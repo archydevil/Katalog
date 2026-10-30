@@ -2958,6 +2958,20 @@ QString AppManager::startMdiJob(const MdiData::PendingJob &job, bool resumed)
     if (!reinterpret && !isPathWritable(profile.destinationPath)
         && (!resumed || QFileInfo::exists(profile.destinationPath)))
         return tr("Select a destination path that can be written to.");
+    // Room for the AI data before anything starts (MDI-F19): the volume of
+    // mdi_data.db, and the one of the derived files unless the job writes
+    // none or that drive is away (the job waits for it, D31). A queued or
+    // resumed job refused here is held, not tried again in a loop (MDI-F12).
+    {
+        QStringList volumes{ collection->folder };
+        if (!reinterpret && (!resumed || QFileInfo::exists(profile.destinationPath)))
+            volumes << profile.destinationPath;
+        const MdiDiskSpace::Shortage shortage = MdiDiskSpace::firstShortage(volumes, MdiDiskSpace::kJobMinimumFree);
+        if (shortage.isShort())
+            return tr("The AI analysis needs at least %1 of free space on %2, which has %3 left.")
+                .arg(QLocale().formattedDataSize(shortage.needed), shortage.path,
+                     QLocale().formattedDataSize(shortage.available));
+    }
 
     const QVariantMap tools = getEnrichmentTools();
     MdiEnrichmentJob::Config config;
