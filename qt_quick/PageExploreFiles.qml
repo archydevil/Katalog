@@ -92,6 +92,36 @@ Item {
     // the device ID of that catalog, 0 otherwise (D34, "Sfoglia mai vuota")
     property var catalogForFolder: function(folderPath) { return 0 }
 
+    // Several files chosen at once (D38): Cmd/Ctrl + click adds or removes one,
+    // Shift + click takes the range from the last one clicked. Their information
+    // and people are then edited together.
+    property var pickedPaths: ({})
+    readonly property int pickedCount: Object.keys(pickedPaths).length
+    signal infoRequested(var files)
+    function pickRow(rowIndex, toggle, range) {
+        let next = (toggle || range) ? Object.assign({}, root.pickedPaths) : ({})
+        const from = range && exploreTableView.selectedRow >= 0 ? Math.min(exploreTableView.selectedRow, rowIndex) : rowIndex
+        const to   = range && exploreTableView.selectedRow >= 0 ? Math.max(exploreTableView.selectedRow, rowIndex) : rowIndex
+        for (let r = from; r <= to; ++r) {
+            const info = appManager1.exploreRowInfo(r)
+            if (info.entryType !== "file")
+                continue
+            if (toggle && !range && next[info.fullPath])
+                delete next[info.fullPath]
+            else
+                next[info.fullPath] = true
+        }
+        root.pickedPaths = next
+    }
+    // The files the information applies to: the ones chosen, else the one selected
+    function infoFiles() {
+        const paths = Object.keys(root.pickedPaths)
+        if (paths.length === 0 && root.selectedFullPath !== "")
+            paths.push(root.selectedFullPath)
+        return paths.map(p => ({ catalogId: root.catalogId, fullPath: p }))
+    }
+    onCurrentFolderPathChanged: pickedPaths = ({})
+
     function loadEntries() {
         if (currentFolderPath === "") return
         exploreTableView.selectedRow = -1
@@ -484,6 +514,7 @@ Item {
                         // in the accent's soft tone, the others alternating the
                         // card's two surfaces.
                         readonly property bool selected: exploreTableView.selectedRow === row
+                                                         || (entryType === "file" && root.pickedPaths[fullPath] === true)
                         color: selected ? KTheme.accentSoft
                                         : (row % 2 === 0 ? KTheme.surface : KTheme.surface2)
 
@@ -619,6 +650,13 @@ Item {
                             // 2026-10-30; K2 opens it on the click). A folder opens on
                             // the click, as before.
                             onClicked: function(mouse) {
+                                // Cmd/Ctrl adds or removes the file, Shift takes a range (D38)
+                                const toggle = (mouse.modifiers & Qt.ControlModifier) !== 0
+                                const range  = (mouse.modifiers & Qt.ShiftModifier) !== 0
+                                if (mouse.button === Qt.LeftButton && entryType === "file" && (toggle || range))
+                                    root.pickRow(row, toggle, range)
+                                else if (mouse.button === Qt.LeftButton)
+                                    root.pickedPaths = ({})
                                 exploreTableView.selectedRow = row
                                 exploreTableView.forceActiveFocus()   // keyboard follows the click (CDT-F5)
                                 if (mouse.button === Qt.LeftButton && entryType === "folder")
@@ -649,6 +687,17 @@ Item {
     // ── Context menu ─────────────────────────────────────────────────────
     Controls.Menu {
         id: exploreContextMenu
+
+        // Information and people of the file, or of every file chosen (D38)
+        Controls.MenuItem {
+            visible: root._activeEntryType === "file"
+            height: visible ? implicitHeight : 0
+            text: root.pickedCount > 1 ? qsTr("Add information to %1 files…").arg(root.pickedCount)
+                                       : qsTr("Add information…")
+            icon.name: "document-edit"
+            onTriggered: root.infoRequested(root.pickedCount > 1 ? root.infoFiles()
+                                                                 : [{ catalogId: root.catalogId, fullPath: root._activeFilePath }])
+        }
 
         Controls.MenuItem {
             text: root._activeEntryType === "folder" ? qsTr("Open folder") : qsTr("Open file")

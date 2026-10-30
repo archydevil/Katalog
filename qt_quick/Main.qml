@@ -188,7 +188,7 @@ Kirigami.ApplicationWindow {
     Instantiator {
         model: [pageHome, pageSelection, pageSearch, pageSearchResults, pageDevices, pageExplore,
                 pageActivity, pageContext, pageCreate, pageDeviceEdit, pageStatistics, pageTags,
-                pageBackup, pageHistory]
+                pageBackup, pageHistory, pagePeople]
         delegate: Connections {
             required property var modelData
             target: modelData
@@ -1092,6 +1092,339 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    // ── People and file information (D38) ─────────────────────────────────
+    // Shared by People, File details and Browse: who is it, a person's card,
+    // and the information of one file or many at once
+
+    // Opens Browse on the folder of a file (from People's photos)
+    function showFileInBrowse(deviceId, fullPath) {
+        const folder = fullPath.slice(0, Math.max(0, fullPath.lastIndexOf("/")))
+        root.exploreChooser = false
+        if (exploreFolders.openedDeviceId !== deviceId) {
+            root.explorePendingFolder = folder
+            exploreFolders.openByDeviceId(deviceId)
+        } else {
+            root.exploreShowFolder(folder)
+        }
+        root.showPage(pageExplore)
+    }
+    function pickPerson(onPicked) {
+        personPickerDialog.onPicked = onPicked
+        personPickerDialog.openPicker()
+    }
+    function editPerson(personId, onSaved) {
+        personEditDialog.openFor(personId, onSaved)
+    }
+    function editFileInfo(files) {
+        if (files && files.length > 0)
+            fileInfoDialog.openFor(files)
+    }
+
+    // "Who is it?": an existing person, or a new one made on the spot
+    Kirigami.Dialog {
+        id: personPickerDialog
+        property var onPicked: null
+        property var found: []
+        function openPicker() {
+            pickerSearch.text = ""
+            pickerFirst.text = ""
+            pickerLast.text = ""
+            pickerRole.text = ""
+            found = appManager1.people("")
+            open()
+            pickerSearch.forceActiveFocus()
+        }
+        function choose(personId) {
+            const callback = onPicked
+            onPicked = null
+            close()
+            if (callback)
+                callback(personId)
+        }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        title: qsTr("Who is it?")
+        preferredWidth: Kirigami.Units.gridUnit * 26
+        padding: Kirigami.Units.largeSpacing * 2
+        standardButtons: Kirigami.Dialog.Cancel
+        ColumnLayout {
+            spacing: 8
+            Controls.TextField {
+                id: pickerSearch
+                Layout.fillWidth: true
+                placeholderText: qsTr("Name, role or organisation…")
+                Accessible.name: placeholderText
+                onTextChanged: personPickerDialog.found = appManager1.people(text)
+            }
+            Repeater {
+                model: personPickerDialog.found.slice(0, 12)
+                delegate: KButton {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    variant: "secondary"
+                    text: modelData.name + (modelData.role ? "  ·  " + modelData.role : "")
+                    onClicked: personPickerDialog.choose(modelData.id)
+                }
+            }
+            KSectionHeader {
+                level: 3
+                title: qsTr("New person")
+            }
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: 8
+                rowSpacing: 6
+                Controls.TextField { id: pickerFirst; Layout.fillWidth: true; placeholderText: qsTr("First name"); Accessible.name: placeholderText }
+                Controls.TextField { id: pickerLast;  Layout.fillWidth: true; placeholderText: qsTr("Last name");  Accessible.name: placeholderText }
+                Controls.TextField { id: pickerRole;  Layout.fillWidth: true; Layout.columnSpan: 2; placeholderText: qsTr("Role"); Accessible.name: placeholderText }
+            }
+            KButton {
+                variant: "primary"
+                icon.name: "list-add"
+                enabled: (pickerFirst.text + pickerLast.text).trim() !== ""
+                text: qsTr("Add and choose")
+                onClicked: {
+                    const id = appManager1.savePerson({ firstName: pickerFirst.text.trim(),
+                                                        lastName: pickerLast.text.trim(),
+                                                        role: pickerRole.text.trim() })
+                    if (id > 0)
+                        personPickerDialog.choose(id)
+                }
+            }
+        }
+    }
+
+    // A person's card: name, role, organisation, notes
+    Kirigami.Dialog {
+        id: personEditDialog
+        property int personId: -1
+        property var onSaved: null
+        function openFor(id, callback) {
+            personId = id
+            onSaved = callback
+            const p = id > 0 ? appManager1.person(id) : ({})
+            peFirst.text = p.firstName || ""
+            peLast.text  = p.lastName || ""
+            peRole.text  = p.role || ""
+            peOrg.text   = p.organisation || ""
+            peNotes.text = p.notes || ""
+            open()
+            peFirst.forceActiveFocus()
+        }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        title: personId > 0 ? qsTr("Person") : qsTr("New person")
+        preferredWidth: Kirigami.Units.gridUnit * 26
+        padding: Kirigami.Units.largeSpacing * 2
+        standardButtons: Kirigami.Dialog.NoButton
+        GridLayout {
+            columns: 2
+            columnSpacing: 10
+            rowSpacing: 8
+            Controls.Label { text: qsTr("First name"); color: KTheme.text2 }
+            Controls.TextField { id: peFirst; Layout.fillWidth: true; Accessible.name: qsTr("First name") }
+            Controls.Label { text: qsTr("Last name"); color: KTheme.text2 }
+            Controls.TextField { id: peLast; Layout.fillWidth: true; Accessible.name: qsTr("Last name") }
+            Controls.Label { text: qsTr("Role"); color: KTheme.text2 }
+            Controls.TextField { id: peRole; Layout.fillWidth: true; Accessible.name: qsTr("Role") }
+            Controls.Label { text: qsTr("Organisation"); color: KTheme.text2 }
+            Controls.TextField { id: peOrg; Layout.fillWidth: true; Accessible.name: qsTr("Organisation") }
+            Controls.Label { text: qsTr("Notes"); color: KTheme.text2; Layout.alignment: Qt.AlignTop }
+            Controls.TextArea { id: peNotes; Layout.fillWidth: true; Layout.preferredHeight: 70; wrapMode: TextEdit.Wrap; Accessible.name: qsTr("Notes") }
+        }
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Save")
+                icon.name: "document-save"
+                enabled: (peFirst.text + peLast.text).trim() !== ""
+                onTriggered: {
+                    let p = { firstName: peFirst.text.trim(), lastName: peLast.text.trim(), role: peRole.text.trim(),
+                              organisation: peOrg.text.trim(), notes: peNotes.text.trim() }
+                    if (personEditDialog.personId > 0)
+                        p.id = personEditDialog.personId
+                    const id = appManager1.savePerson(p)
+                    const callback = personEditDialog.onSaved
+                    personEditDialog.close()
+                    if (callback)
+                        callback(id)
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Delete")
+                icon.name: "edit-delete"
+                visible: personEditDialog.personId > 0
+                onTriggered: personDeleteDialog.open()
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: personEditDialog.close()
+            }
+        ]
+    }
+    // Deleting a person asks first, and says what stays
+    Kirigami.PromptDialog {
+        id: personDeleteDialog
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Delete this person?")
+        subtitle: qsTr("%1 is removed from the people and from the photos they were in. The photos and the files stay as they are; their faces go back to having no name.")
+                  .arg((peFirst.text + " " + peLast.text).trim())
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Delete")
+                icon.name: "edit-delete"
+                onTriggered: {
+                    const error = appManager1.deletePerson(personEditDialog.personId)
+                    personDeleteDialog.close()
+                    personEditDialog.close()
+                    showPassiveNotification(error !== "" ? error : qsTr("Deleted."))
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: personDeleteDialog.close()
+            }
+        ]
+    }
+
+    // The information of one file, or of many at once: for many, only the
+    // fields filled in are applied, the others stay as each file has them
+    Kirigami.Dialog {
+        id: fileInfoDialog
+        property var files: []
+        property var peopleNow: []     // single file: the people it has
+        property var peopleAdd: []     // to add (single or many)
+        property var peopleDrop: []    // single file: to remove
+        readonly property bool many: files.length > 1
+        function openFor(list) {
+            files = list
+            const info = list.length === 1 ? appManager1.fileInfo(list[0].catalogId, list[0].fullPath) : ({})
+            fiTitle.text  = info.title || ""
+            fiDesc.text   = info.description || ""
+            fiEvent.text  = info.event || ""
+            fiPlace.text  = info.place || ""
+            fiDate.text   = info.date || ""
+            fiAuthor.text = info.author || ""
+            fiNotes.text  = info.notes || ""
+            fiTags.text   = (info.tags || []).join(", ")
+            peopleNow  = list.length === 1 ? (info.people || []) : []
+            peopleAdd  = []
+            peopleDrop = []
+            open()
+            fiTitle.forceActiveFocus()
+        }
+        function save() {
+            const tags = fiTags.text.split(",").map(t => t.trim()).filter(t => t.length > 0)
+            let fields = {}
+            const values = { title: fiTitle.text, description: fiDesc.text, event: fiEvent.text, place: fiPlace.text,
+                             date: fiDate.text, author: fiAuthor.text, notes: fiNotes.text }
+            for (const key in values)
+                if (!many || values[key].trim() !== "")
+                    fields[key] = values[key].trim()
+            if (many) {
+                if (tags.length > 0) fields.tagsAdd = tags
+            } else {
+                fields.tags = tags
+            }
+            let error = appManager1.setFileInfo(files, fields)
+            if (peopleAdd.length > 0)
+                error = appManager1.addPeopleToFiles(files, peopleAdd.map(p => p.personId)) || error
+            for (const p of peopleDrop)
+                error = appManager1.removePersonFromFile(p.personId, files[0].catalogId, files[0].fullPath) || error
+            close()
+            showPassiveNotification(error !== "" ? error
+                : many ? qsTr("Information saved for %1 files.").arg(files.length) : qsTr("Information saved."))
+        }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        title: many ? qsTr("Information for %1 files").arg(files.length) : qsTr("Information")
+        preferredWidth: Math.min(root.width - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 36)
+        padding: Kirigami.Units.largeSpacing * 2
+        standardButtons: Kirigami.Dialog.NoButton
+        ColumnLayout {
+            spacing: 10
+            Controls.Label {
+                Layout.fillWidth: true
+                visible: fileInfoDialog.many
+                wrapMode: Text.WordWrap
+                color: KTheme.text2
+                text: qsTr("Only the fields filled in are applied to the %1 files; the others stay as each file has them. Tags and people are added.")
+                          .arg(fileInfoDialog.files.length)
+            }
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 2
+                columnSpacing: 10
+                rowSpacing: 8
+                Controls.Label { text: qsTr("Title"); color: KTheme.text2 }
+                Controls.TextField { id: fiTitle; Layout.fillWidth: true; Accessible.name: qsTr("Title") }
+                Controls.Label { text: qsTr("Description"); color: KTheme.text2; Layout.alignment: Qt.AlignTop }
+                Controls.TextArea { id: fiDesc; Layout.fillWidth: true; Layout.preferredHeight: 64; wrapMode: TextEdit.Wrap; Accessible.name: qsTr("Description") }
+                Controls.Label { text: qsTr("Event"); color: KTheme.text2 }
+                Controls.TextField { id: fiEvent; Layout.fillWidth: true; Accessible.name: qsTr("Event") }
+                Controls.Label { text: qsTr("Place"); color: KTheme.text2 }
+                Controls.TextField { id: fiPlace; Layout.fillWidth: true; Accessible.name: qsTr("Place") }
+                Controls.Label { text: qsTr("Date"); color: KTheme.text2 }
+                Controls.TextField { id: fiDate; Layout.fillWidth: true; placeholderText: qsTr("e.g. 2015-07-12 or July 2015"); Accessible.name: qsTr("Date") }
+                Controls.Label { text: qsTr("Author"); color: KTheme.text2 }
+                Controls.TextField { id: fiAuthor; Layout.fillWidth: true; placeholderText: qsTr("Who took the photo"); Accessible.name: qsTr("Author") }
+                Controls.Label { text: qsTr("Tags"); color: KTheme.text2 }
+                Controls.TextField { id: fiTags; Layout.fillWidth: true; placeholderText: qsTr("Separated by commas"); Accessible.name: qsTr("Tags") }
+                Controls.Label { text: qsTr("Notes"); color: KTheme.text2; Layout.alignment: Qt.AlignTop }
+                Controls.TextArea { id: fiNotes; Layout.fillWidth: true; Layout.preferredHeight: 56; wrapMode: TextEdit.Wrap; Accessible.name: qsTr("Notes") }
+            }
+            KSectionHeader {
+                level: 3
+                title: qsTr("People")
+                description: fileInfoDialog.many ? qsTr("Added to every file.") : ""
+            }
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+                Repeater {
+                    model: fileInfoDialog.peopleNow.filter(p => fileInfoDialog.peopleDrop.indexOf(p) < 0)
+                                                   .concat(fileInfoDialog.peopleAdd)
+                    delegate: KButton {
+                        required property var modelData
+                        variant: "tonal"
+                        icon.name: "edit-delete"
+                        text: modelData.name + (modelData.role ? " · " + modelData.role : "")
+                        Accessible.description: qsTr("Remove")
+                        onClicked: {
+                            if (fileInfoDialog.peopleAdd.indexOf(modelData) >= 0)
+                                fileInfoDialog.peopleAdd = fileInfoDialog.peopleAdd.filter(p => p !== modelData)
+                            else
+                                fileInfoDialog.peopleDrop = fileInfoDialog.peopleDrop.concat([modelData])
+                        }
+                    }
+                }
+                KButton {
+                    variant: "secondary"
+                    icon.name: "list-add"
+                    text: qsTr("Add a person")
+                    onClicked: root.pickPerson(function(personId) {
+                        if (personId <= 0) return
+                        const p = appManager1.person(personId)
+                        fileInfoDialog.peopleAdd = fileInfoDialog.peopleAdd.concat([{ personId: personId, name: p.name, role: p.role }])
+                    })
+                }
+            }
+        }
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Save")
+                icon.name: "document-save"
+                onTriggered: fileInfoDialog.save()
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: fileInfoDialog.close()
+            }
+        ]
+    }
+
     // The mouse's Back and Forward buttons
     TapHandler {
         acceptedButtons: Qt.BackButton | Qt.ForwardButton
@@ -1426,6 +1759,13 @@ Kirigami.ApplicationWindow {
                     onClicked: root.sidebarGo("History", pageHistory)
                 }
                 Controls.Label { text: qsTr("Intelligence").toUpperCase(); font.pixelSize: KTheme.groupLabel; font.weight: Font.DemiBold; font.letterSpacing: KTheme.groupSpacing; color: KTheme.text3; leftPadding: 10; topPadding: 14; bottomPadding: 4 }
+                KSidebarItem {
+                    iconName: "address-book-new"
+                    title: qsTr("People")
+                    description: qsTr("Names, roles, faces to approve")
+                    active: root.openFeaturePage === pagePeople
+                    onClicked: root.sidebarGo("People", pagePeople)
+                }
                 KSidebarItem {
                     iconName: "document-properties"
                     title: qsTr("Archive knowledge")
@@ -3055,6 +3395,17 @@ Kirigami.ApplicationWindow {
                 checked: root.inspectorVisible
                 onTriggered: root.inspectorVisible = !root.inspectorVisible
             },
+            // Information and people of the chosen files (D38)
+            Kirigami.Action {
+                text: exploreFiles.pickedCount > 1 && !root.exploreColumns
+                      ? qsTr("Information (%1)").arg(exploreFiles.pickedCount) : qsTr("Information")
+                icon.name: "document-edit"
+                enabled: !root.exploreChooser && (root.exploreColumns ? exploreColumnBrowser.selectedFullPath !== ""
+                                                                      : exploreFiles.infoFiles().length > 0)
+                onTriggered: root.editFileInfo(root.exploreColumns
+                    ? [{ catalogId: exploreFiles.catalogId, fullPath: exploreColumnBrowser.selectedFullPath }]
+                    : exploreFiles.infoFiles())
+            },
             // Enrich the catalog shown (fork, SpecMediaIntelligence.md MDI-F8, Q9)
             Kirigami.Action {
                 text: qsTr("Analyse with AI")
@@ -3175,6 +3526,7 @@ Kirigami.ApplicationWindow {
                 id: exploreFiles
                 visible: !root.exploreColumns
                 catalogForFolder: root.otherCatalogForFolder
+                onInfoRequested: function(files) { root.editFileInfo(files) }
                 Controls.SplitView.fillWidth:    true
                 Controls.SplitView.minimumWidth: exploreSplit.filesMinimum
 
@@ -3362,6 +3714,18 @@ Kirigami.ApplicationWindow {
                     Math.min(exploreSplit.width - exploreSplit.filesMinimum - 1, treeWidth))
             }
             onReleased: exploreSplit.saveDivision()
+        }
+    }
+
+    //Pages - People (fork, D38): names, roles, faces to approve, similar faces
+    ScrollablePageFitted {
+        id: pagePeople
+        background: Rectangle { color: KTheme.ground }   // design system ground (D34)
+        visible: false
+        title: qsTr("People")
+        titleDelegate: Component { NavTitle { text: pagePeople.title } }   // Back, Forward, title (D36)
+        PagePeople {
+            id: pagePeople_form
         }
     }
 

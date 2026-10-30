@@ -47,6 +47,7 @@ ColumnLayout {
     property bool aiTranscript: true       // audio and video, local whisper.cpp
     property bool aiSegments:   true       // timecoded topic segments; needs the transcript
     property bool aiClassification: true   // in the collection's context, when it has one (D33)
+    property bool aiFaces: false           // faces in photos, local OpenCV; off by default (D38: biometric data)
 
     readonly property var clipModel: [
         { text: qsTr("Off"),     value: "off"     },
@@ -96,7 +97,7 @@ ColumnLayout {
                 },
                 ai: { caption: aiCaption, summary: aiSummary,
                       transcript: aiTranscript || aiSegments, segments: aiSegments,
-                      classification: aiClassification }
+                      classification: aiClassification, faces: aiFaces }
             }
         }
     }
@@ -129,6 +130,7 @@ ColumnLayout {
         aiTranscript       = ai.transcript !== false
         aiSegments         = ai.segments !== false
         aiClassification   = ai.classification !== false
+        aiFaces            = ai.faces === true
     }
 
     function restoreSettings() {
@@ -486,6 +488,24 @@ ColumnLayout {
             if (checked) createWizard.aiTranscript = true
             createWizard.choiceEdited()
         }
+    }
+    // Faces (D38): off unless chosen, because recognisable faces are biometric data
+    Controls.Switch {
+        id: facesSwitch
+        enabled: createWizard.typeImage && appManager1.facesAvailable()
+        text: qsTr("Faces of the people")
+        checked: createWizard.aiFaces
+        onToggled: { createWizard.aiFaces = checked; createWizard.choiceEdited() }
+    }
+    Controls.Label {
+        Layout.fillWidth: true
+        Layout.leftMargin: 8
+        wrapMode: Text.WordWrap
+        color: KTheme.text3
+        font.pixelSize: KTheme.note
+        text: facesSwitch.enabled
+              ? qsTr("Finds the faces in the photos and proposes who they are; nothing is attributed without your approval, in People. Faces are personal data: they stay on this computer.")
+              : appManager1.facesUnavailableReason()
     }
     Controls.Label {
         Layout.fillWidth: true
