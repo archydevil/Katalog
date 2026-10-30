@@ -102,6 +102,20 @@ public:
                           const QString &analysis, qint64 fileSize, const QString &fileDate,
                           const QJsonObject &params);
 
+    // A transcript skipped as "no speech found" for the same file state and
+    // parameters: settled, not run again by every job (owner's request 2026-10-30)
+    static bool isSettledSkip(const QString &connectionName, int catalogId, const QString &fullPath,
+                              const QString &analysis, qint64 fileSize, const QString &fileDate,
+                              const QJsonObject &params, const QString &reason);
+
+    // Removes one datum of a file (its derived files stay; the caller removes
+    // the ones the app made). Used to invalidate what a changed input built.
+    static bool removeDatum(const QString &connectionName, int catalogId, const QString &fullPath,
+                            const QString &analysis);
+    // Removes a file's indexed texts of these kinds (all kinds when empty)
+    static bool removeEmbeddings(const QString &connectionName, int catalogId, const QString &fullPath,
+                                 const QStringList &kinds);
+
     // Per file: {thumbnail: absolute path, hasData: true, caption: text}, keyed by full path
     static QHash<QString, QVariantMap> catalogIndex(const QString &connectionName, int catalogId);
 
@@ -110,6 +124,11 @@ public:
 
     // Completed data of one analysis across a catalog (e.g. every "segments")
     static QList<Datum> forCatalog(const QString &connectionName, int catalogId, const QString &analysis);
+
+    // Replaces the file's indexed texts of one kind only (e.g. "info", what the
+    // owner wrote about the file, rewritten when it changes)
+    static bool replaceEmbeddingKind(const QString &connectionName, int catalogId, const QString &fullPath,
+                                     const QString &model, const QString &kind, const QList<EmbeddingRow> &rows);
 
     // Replaces the file's indexed texts (one model at a time per file)
     static bool replaceEmbeddings(const QString &connectionName, int catalogId, const QString &fullPath,

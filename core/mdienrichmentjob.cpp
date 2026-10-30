@@ -30,6 +30,8 @@
 #include "core/mdicontext.h"
 #include "core/mdidata.h"
 #include "core/mdifts.h"
+#include "core/mdipeople.h"
+#include "core/mditranscriptfilter.h"
 #include "core/filechecksum.h"
 
 #include <QSqlDatabase>
@@ -94,6 +96,14 @@ const QString kClustersPrompt = QStringLiteral("clusters-v1");
 // changed context never re-runs an analysis by itself (MDI-F99, D33)
 const QString kClassificationPrompt = QStringLiteral("classification-v1");
 const QString kEmbedVersion   = QStringLiteral("embed-v1");
+// Faces: detection, embedding and crop settings (MdiFaces)
+const QString kFacesVersion   = QStringLiteral("faces-v1");
+// whisper.cpp decoding: no non-speech tokens (-sns); no text carried between
+// windows (-mc 0), or, with a glossary hint, a small context that keeps the
+// hint in every window (-mc 64 --carry-initial-prompt); --vad when the Silero
+// model is there. One policy, one version: the hint being switched on or off
+// never re-runs transcripts (MDI-F99).
+const QString kTranscriptDecoder = QStringLiteral("sns-mc0-hint-mc64carry-v1");
 
 // Transcript windows indexed for search: about this long, in seconds or words
 constexpr double kWindowSeconds = 45.0;
@@ -189,15 +199,6 @@ QString formatTimecode(double seconds)
     return QStringLiteral("%1:%2:%3").arg(s / 3600)
         .arg((s / 60) % 60, 2, 10, QLatin1Char('0'))
         .arg(s % 60, 2, 10, QLatin1Char('0'));
-}
-
-QString srtTime(double seconds)
-{
-    const qint64 ms = qint64(seconds * 1000.0);
-    return QStringLiteral("%1:%2:%3,%4").arg(ms / 3600000, 2, 10, QLatin1Char('0'))
-        .arg((ms / 60000) % 60, 2, 10, QLatin1Char('0'))
-        .arg((ms / 1000) % 60, 2, 10, QLatin1Char('0'))
-        .arg(ms % 1000, 3, 10, QLatin1Char('0'));
 }
 
 QJsonArray stringArray(const QJsonValue &value)
@@ -315,10 +316,33 @@ QString MdiEnrichmentJob::findWhisperModel(const QString &configuredPath)
     };
     QFileInfo best;
     for (const QString &d : dirs)
-        for (const QFileInfo &f : QDir(d).entryInfoList({QStringLiteral("ggml-*.bin")}, QDir::Files))
+        for (const QFileInfo &f : QDir(d).entryInfoList({QStringLiteral("ggml-*.bin")}, QDir::Files)) {
+            // The voice-activity model sits in the same folder: not a speech model
+            if (f.fileName().startsWith(QLatin1String("ggml-silero"), Qt::CaseInsensitive))
+                continue;
             if (!best.exists() || f.size() > best.size())
                 best = f;
+        }
     return best.exists() ? best.absoluteFilePath() : QString();
+}
+
+QString MdiEnrichmentJob::findWhisperVadModel(const QString &configuredPath)
+{
+    if (!configuredPath.isEmpty() && QFileInfo::exists(configuredPath))
+        return configuredPath;
+    const QStringList dirs = {
+        QDir::homePath() + QStringLiteral("/whisper-models"),
+        QStringLiteral("/opt/homebrew/share/whisper-cpp"),
+        QStringLiteral("/usr/local/share/whisper-cpp"),
+    };
+    for (const QString &d : dirs) {
+        // The most recent version first (names carry it: ggml-silero-v5.1.2.bin)
+        const QFileInfoList found = QDir(d).entryInfoList({QStringLiteral("ggml-silero-*.bin")}, QDir::Files,
+                                                          QDir::Name | QDir::Reversed);
+        if (!found.isEmpty())
+            return found.first().absoluteFilePath();
+    }
+    return QString();
 }
 
 //----------------------------------------------------------------------
@@ -427,8 +451,12 @@ void MdiEnrichmentJob::run()
 
     // Clusters are computed when segments changed, or when segments exist
     // without clusters (first run after an upgrade, or a stopped run)
-    const bool hasClusters = !MdiData::forCatalog(m_connectionName, m_config.catalogId,
-                                                  QStringLiteral("clusters")).isEmpty();
+    // Clusters marked stale (a cleaned transcript removed some of their
+    // segments) are grouped again
+    const QList<MdiData::Datum> clusterData = MdiData::forCatalog(m_connectionName, m_config.catalogId,
+                                                                  QStringLiteral("clusters"));
+    const bool staleClusters = !clusterData.isEmpty() && clusterData.first().value.value("stale").toBool();
+    const bool hasClusters = !clusterData.isEmpty() && !staleClusters;
     m_segmentsChanged = !hasClusters && !MdiData::forCatalog(m_connectionName, m_config.catalogId,
                                                              QStringLiteral("segments")).isEmpty();
 
@@ -470,6 +498,9 @@ void MdiEnrichmentJob::run()
         // Embeddings index the file's other data: redone whenever one of them
         // was produced in this run
         bool fileChanged = false;
+        // Topic segments, and a summary made from whisper's transcript, are
+        // redone when the transcript changed in this run
+        bool transcriptChanged = false;
         // An analysis run classifies a new or changed file only; the files
         // done before are re-interpreted on request (MDI-F100, MDI-F103)
         bool newOrChanged = true;
@@ -508,8 +539,24 @@ void MdiEnrichmentJob::run()
             const QJsonObject params = analysisParams(analysis);
             // Incremental (MDI-F13): same file state and parameters, and the
             // derived file still present, means nothing to do.
+            bool builtOnTranscript = false;
+            if (transcriptChanged && analysis == QLatin1String("segments"))
+                builtOnTranscript = true;
+            if (transcriptChanged && analysis == QLatin1String("summary"))
+                for (const MdiData::Datum &d : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath))
+                    builtOnTranscript = builtOnTranscript
+                        || (d.analysis == analysis && d.value.value("source").toString() == QLatin1String("whisper"));
             const bool forced = (analysis == QLatin1String("embeddings") && fileChanged)
-                             || (analysis == QLatin1String("classification") && m_config.reinterpret);
+                             || (analysis == QLatin1String("classification") && m_config.reinterpret)
+                             || builtOnTranscript;
+            // A recording found without speech stays so until it changes (no
+            // whisper run on every job for the same silence)
+            if (!forced && analysis == QLatin1String("transcript")
+                && MdiData::isSettledSkip(m_connectionName, m_config.catalogId, file.fullPath, analysis,
+                                          file.size, file.dateUpdated, params, QStringLiteral("no speech found"))) {
+                ++unchanged;
+                continue;
+            }
             if (!forced && MdiData::isCurrent(m_connectionName, m_config.catalogId, file.fullPath, analysis,
                                               file.size, file.dateUpdated, params)) {
                 bool filesPresent = true;
@@ -567,11 +614,17 @@ void MdiEnrichmentJob::run()
             // becoming WebP): removed once the new datum is committed
             QStringList previousFiles;
             QString previousRoot;
+            QString previousOutcome;
+            QJsonValue previousPassages;
             for (const MdiData::Datum &old : MdiData::forFile(m_connectionName, m_config.catalogId, file.fullPath))
                 if (old.analysis == analysis) {
-                    previousFiles = old.derivedFiles;
-                    previousRoot  = old.derivedRoot;
+                    previousFiles    = old.derivedFiles;
+                    previousRoot     = old.derivedRoot;
+                    previousOutcome  = old.outcome;
+                    previousPassages = old.value.value("passages");
                 }
+            if (analysis == QLatin1String("transcript"))
+                transcriptChanged = previousOutcome != r.outcome || previousPassages != r.value.value("passages");
 
             MdiData::Datum d;
             d.catalogId     = m_config.catalogId;
@@ -621,7 +674,7 @@ void MdiEnrichmentJob::run()
     // Catalog-level clusters, when this run produced new topic segments or
     // none exist yet (MDI-F37; scope per catalog, D-Q3). Never in a quick-hash
     // pass: it computes the quick hash only and asks no AI (MDI-F84).
-    if (!m_stop.load() && !m_config.quickHashOnly && m_segmentsChanged) {
+    if (!m_stop.load() && !m_config.quickHashOnly && !m_config.facesOnly && m_segmentsChanged) {
         emit progress(fileCount, fileCount, QStringLiteral("clusters"), m_config.catalogName);
         QVariantMap step = stepInfo(QStringLiteral("clusters"));
         step[QStringLiteral("analysis")]  = QStringLiteral("clusters");
@@ -644,6 +697,9 @@ void MdiEnrichmentJob::run()
         if (m_lastTokensPerSecond > 0)
             ended[QStringLiteral("tokensPerSecond")] = m_lastTokensPerSecond;
         emit activity(ended);
+        // Stale clusters with nothing left to group: removed
+        if (!m_stop.load() && r.outcome == QLatin1String("none") && staleClusters)
+            MdiData::removeDatum(m_connectionName, m_config.catalogId, QString(""), QStringLiteral("clusters"));
         if (!m_stop.load() && r.outcome != QLatin1String("none")) {
             MdiData::Datum d;
             d.catalogId    = m_config.catalogId;
@@ -671,7 +727,8 @@ void MdiEnrichmentJob::run()
     // was reached (a disconnected drive leaves it pending for next time)
     const bool hashesWanted = m_config.quickHashOnly
                               || m_config.settings.value("checksum").toObject().value("quick").toBool(true);
-    if (!m_stop.load() && m_unreachable == 0 && hashesWanted && !m_config.catalogStamp.isEmpty())
+    if (!m_stop.load() && m_unreachable == 0 && hashesWanted && !m_config.facesOnly
+        && !m_config.catalogStamp.isEmpty())
         MdiData::setPassStamp(m_connectionName, m_config.catalogId, QStringLiteral("quickhash"), m_config.catalogStamp);
 
     MdiData::close(m_connectionName);
@@ -706,6 +763,10 @@ QVariantMap MdiEnrichmentJob::stepInfo(const QString &analysis) const
         info[QStringLiteral("tool")]  = QStringLiteral("whisper.cpp");
         info[QStringLiteral("model")] = QFileInfo(m_config.whisperModelPath).fileName();
         info[QStringLiteral("where")] = QStringLiteral("local");
+    } else if (analysis == QLatin1String("faces")) {
+        info[QStringLiteral("tool")]  = QStringLiteral("opencv");
+        info[QStringLiteral("model")] = QStringLiteral("YuNet + SFace");
+        info[QStringLiteral("where")] = QStringLiteral("local");
     } else if (analysis == QLatin1String("mediainfo")) {
         info[QStringLiteral("tool")]  = QStringLiteral("ffprobe");
         info[QStringLiteral("where")] = QStringLiteral("local");
@@ -737,6 +798,10 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
             list << QStringLiteral("embeddings");
         return list;
     }
+
+    // Faces only (asked for from the People page): every image of the catalog
+    if (m_config.facesOnly)
+        return file.fileType == QLatin1String("image") ? QStringList{QStringLiteral("faces")} : QStringList();
 
     // Quick hash: every file, whatever its type (duplicates across disks)
     QStringList hashes;
@@ -775,6 +840,8 @@ QStringList MdiEnrichmentJob::plannedAnalyses(const FileItem &file) const
     if (file.fileType == QLatin1String("image")) {
         if (image.value("thumbnail").toBool()) list << QStringLiteral("thumbnail");
         if (caption)                           list << QStringLiteral("caption");
+        // Faces: off unless chosen (owner's request 2026-10-30)
+        if (ai.value("faces").toBool(false))   list << QStringLiteral("faces");
     } else if (file.fileType == QLatin1String("video")) {
         list << QStringLiteral("mediainfo");
         if (video.value("posterFrame").toBool())   list << QStringLiteral("poster");
@@ -849,6 +916,16 @@ QJsonObject MdiEnrichmentJob::analysisParams(const QString &analysis) const
     } else if (analysis == QLatin1String("transcript")) {
         p["model"]    = QFileInfo(m_config.whisperModelPath).fileName();
         p["language"] = QStringLiteral("auto");
+        p["decoder"]  = kTranscriptDecoder;
+        p["vad"]      = m_config.whisperVadModelPath.isEmpty() ? QStringLiteral("off")
+                                                               : QFileInfo(m_config.whisperVadModelPath).fileName();
+        p["filter"]   = MdiTranscriptFilter::kVersion;
+    } else if (analysis == QLatin1String("faces")) {
+        p["detector"]   = QFileInfo(m_config.faceDetectorModelPath).fileName();
+        p["recognizer"] = QFileInfo(m_config.faceRecognizerModelPath).fileName();
+        p["maxSide"]    = MdiFaces::kMaxSide;
+        p["minFace"]    = MdiFaces::kMinFaceSide;
+        p["version"]    = kFacesVersion;
     } else if (analysis == QLatin1String("segments")) {
         p["model"]  = m_config.textModel;
         p["prompt"] = kSegmentsPrompt;
@@ -869,7 +946,8 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
                         && analysis != QLatin1String("segments") && analysis != QLatin1String("embeddings")
                         && analysis != QLatin1String("snippet") && analysis != QLatin1String("quickhash")
                         && analysis != QLatin1String("mediainfo") && analysis != QLatin1String("thumbnail")
-                        && analysis != QLatin1String("archive") && analysis != QLatin1String("classification");
+                        && analysis != QLatin1String("archive") && analysis != QLatin1String("classification")
+                        && analysis != QLatin1String("faces");
     if (isPreview && m_config.ffmpegPath.isEmpty()) {
         Result r;
         r.outcome = QStringLiteral("skipped");
@@ -892,6 +970,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::runAnalysis(const QString &analysis, 
     if (analysis == QLatin1String("quickhash"))  return makeQuickHash(file);
     if (analysis == QLatin1String("mediainfo"))  return makeMediaInfo(file);
     if (analysis == QLatin1String("archive"))    return makeArchiveListing(file);
+    if (analysis == QLatin1String("faces"))      return makeFaces(file);
     Result r;
     r.outcome = QStringLiteral("skipped");
     r.reason  = QStringLiteral("unknown analysis");
@@ -1672,11 +1751,27 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
         emit activity(step);
     };
     QStringList whisperArgs = {"-m", m_config.whisperModelPath, "-f", wav, "-l", "auto",
-                               "-t", threads, "-oj", "-of", outBase, "-np", "-pp"};
+                               "-t", threads, "-oj", "-of", outBase, "-np", "-pp",
+                               // No "[music]", "(applause)" tokens
+                               "-sns"};
+    // Only the stretches with a voice are transcribed (Silero VAD): silence,
+    // music and noise are never given to the model to imagine words in
+    if (!m_config.whisperVadModelPath.isEmpty())
+        whisperArgs << "--vad" << "-vm" << m_config.whisperVadModelPath;
     // The glossary's terms as a vocabulary hint, when the context enables it (MDI-F98)
     const QString hint = MdiContext::whisperHint(m_config.context);
-    if (!hint.isEmpty())
-        whisperArgs << "--prompt" << hint;
+    if (hint.isEmpty()) {
+        // No text carried from one window to the next: a line heard (or
+        // imagined) once is not repeated for minutes
+        whisperArgs << "-mc" << "0";
+    } else {
+        // whisper.cpp 1.9.5 drops --prompt entirely with -mc 0 (even with
+        // --carry-initial-prompt), and with -mc 64 alone the hint is pushed
+        // out after the first 30 s window; -mc 64 with --carry-initial-prompt
+        // keeps it in every window and carries little past text. Loops left
+        // are caught by the VAD and the filter below (tested 2026-10-30).
+        whisperArgs << "-mc" << "64" << "--carry-initial-prompt" << "--prompt" << hint;
+    }
     if (!runTool(m_config.whisperPath, whisperArgs, nullptr, &err, limit, onLine)) {
         r.outcome = QStringLiteral("failed");
         r.reason  = err;
@@ -1690,9 +1785,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
         return r;
     }
     const QJsonObject doc = QJsonDocument::fromJson(json.readAll()).object();
-    QJsonArray passages;
-    QString srt;
-    int n = 0;
+    QJsonArray heard;
     for (const QJsonValue &v : doc.value("transcription").toArray()) {
         const QJsonObject o = v.toObject();
         const QString text = o.value("text").toString().trimmed();
@@ -1700,14 +1793,19 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
             continue;
         const double start = o.value("offsets").toObject().value("from").toDouble() / 1000.0;
         const double end   = o.value("offsets").toObject().value("to").toDouble() / 1000.0;
-        passages.append(QJsonObject{{"start", start}, {"end", end}, {"text", text}});
-        srt += QStringLiteral("%1\n%2 --> %3\n%4\n\n").arg(++n).arg(srtTime(start), srtTime(end), text);
+        heard.append(QJsonObject{{"start", start}, {"end", end}, {"text", text}});
     }
-    if (passages.isEmpty()) {
+    // Real speech only: what whisper writes on silence, music or noise is
+    // dropped, and too little left is no transcript at all (owner's request
+    // 2026-10-30: "Se non ci sta parlato non mettere nulla")
+    const MdiTranscriptFilter::Outcome kept = MdiTranscriptFilter::filter(heard, duration, hint, file.fullPath);
+    if (kept.noSpeech) {
         r.outcome = QStringLiteral("skipped");
         r.reason  = QStringLiteral("no speech found");
         return r;
     }
+    const QJsonArray passages = kept.passages;
+    const QString srt = MdiTranscriptFilter::srt(passages);
 
     // Subtitles file, so the transcript opens in any player at its timecodes
     const QString rel = derivedRelative(file, QStringLiteral("transcript"), QStringLiteral(".srt"));
@@ -1720,6 +1818,8 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
     r.value["language"] = doc.value("result").toObject().value("language").toString();
     r.value["passages"] = passages;
     r.value["duration"] = duration;
+    r.value["filter"]   = MdiTranscriptFilter::kVersion;
+    r.value["dropped"]  = kept.dropped;
     return r;
 }
 
@@ -2063,6 +2163,9 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeEmbeddings(const FileItem &file)
                 add(QStringLiteral("passage"), k, start, end, text);
         }
     }
+    // What the owner wrote about the file and who is in it (kind "info"):
+    // kept in the file's index, which this replaces whole
+    add(QStringLiteral("info"), 0, -1, -1, MdiPeople::infoText(m_connectionName, m_config.catalogId, file.fullPath));
     if (rows.isEmpty()) {
         r.outcome = QStringLiteral("skipped");
         r.reason  = QStringLiteral("nothing to index");
@@ -2427,4 +2530,96 @@ void MdiEnrichmentJob::indexKnowledge(int &completed, int &skipped, int &failed)
         ended[QStringLiteral("durationMs")] = clock.elapsed();
         emit activity(ended);
     }
+}
+
+//----------------------------------------------------------------------
+// Faces (owner's request 2026-10-30): found and embedded locally (OpenCV
+// YuNet + SFace), a small crop kept as a derived file, a person suggested
+// when the face matches that person's confirmed faces. Never confirmed here:
+// the owner approves each association. Reads the source image, so it runs
+// while the drive is connected; the stored 256 px thumbnail is too small for
+// a reliable face vector, so nothing is done offline.
+MdiEnrichmentJob::Result MdiEnrichmentJob::makeFaces(const FileItem &file)
+{
+    Result r;
+    r.tool = QStringLiteral("opencv ") + MdiFaces::openCvVersion();
+    if (!MdiFaces::compiledIn()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("opencv not available");
+        return r;
+    }
+    if (m_config.faceDetectorModelPath.isEmpty() || m_config.faceRecognizerModelPath.isEmpty()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = QStringLiteral("face models not found");
+        return r;
+    }
+    if (!m_faceEngine) {
+        m_faceEngine = std::make_unique<MdiFaces::Engine>();
+        m_faceEngine->load(m_config.faceDetectorModelPath, m_config.faceRecognizerModelPath, &m_faceEngineError);
+    }
+    if (!m_faceEngine->isLoaded()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = m_faceEngineError.isEmpty() ? QStringLiteral("face models not loaded") : m_faceEngineError;
+        return r;
+    }
+
+    QString error;
+    const QImage image = MdiFaces::readImage(file.fullPath, &error);
+    if (image.isNull()) {
+        r.outcome = QStringLiteral("skipped");
+        r.reason  = error.isEmpty() ? QStringLiteral("image not readable") : error;
+        return r;
+    }
+    const QList<MdiFaces::Detection> found = m_faceEngine->analyse(image, &error);
+    if (!error.isEmpty()) {
+        r.outcome = QStringLiteral("failed");
+        r.reason  = error;
+        return r;
+    }
+
+    // Crops named after the face's place in the image: a face found again
+    // keeps its name, and a crop kept for a confirmed face is never overwritten
+    const QString derivedRoot = QDir(m_config.destinationPath).filePath(QStringLiteral("katalog_mdi"));
+    const bool webp = thumbnailSuffix() == QLatin1String(".webp");
+    QList<MdiPeople::Face> faces;
+    for (const MdiFaces::Detection &d : found) {
+        MdiPeople::Face f;
+        f.x = d.x;
+        f.y = d.y;
+        f.w = d.w;
+        f.h = d.h;
+        f.score     = d.score;
+        f.embedding = d.embedding;
+        f.cropRoot  = derivedRoot;
+        const QString rel = derivedRelative(file, QStringLiteral("faces"),
+                                            QStringLiteral("_%1_%2_%3%4").arg(qRound(d.x * 10000)).arg(qRound(d.y * 10000))
+                                                .arg(qRound(d.w * 10000)).arg(thumbnailSuffix()));
+        QImageWriter writer(absoluteDerived(rel), webp ? "webp" : "jpeg");
+        writer.setQuality(80);
+        if (writer.write(d.crop)) {
+            f.cropFile = rel;
+            r.derivedFiles << rel;
+        }
+        faces.append(f);
+    }
+    QList<int> ids;
+    if (!MdiPeople::replaceFileFaces(m_connectionName, m_config.catalogId, file.fullPath, faces, &ids)) {
+        for (const QString &rel : std::as_const(r.derivedFiles))
+            QFile::remove(QDir(derivedRoot).filePath(rel));
+        r.derivedFiles.clear();
+        r.outcome = QStringLiteral("failed");
+        r.reason  = QStringLiteral("faces not stored");
+        return r;
+    }
+    // A confirmed face not found again stays, with its crop
+    for (const MdiPeople::Face &f : MdiPeople::facesOfFile(m_connectionName, m_config.catalogId, file.fullPath))
+        if (!f.cropFile.isEmpty() && f.cropRoot == derivedRoot && !r.derivedFiles.contains(f.cropFile))
+            r.derivedFiles << f.cropFile;
+
+    const int suggested = MdiPeople::suggestForFaces(m_connectionName, ids, m_config.faceMatchThreshold);
+    r.value["count"]     = int(faces.size());
+    r.value["suggested"] = suggested;
+    r.value["width"]     = image.width();
+    r.value["height"]    = image.height();
+    return r;
 }

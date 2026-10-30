@@ -105,6 +105,7 @@ set(K3_QML_FILES
     ${CMAKE_SOURCE_DIR}/qt_quick/PageHome.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/PageHistory.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/PagePeople.qml
+    ${CMAKE_SOURCE_DIR}/qt_quick/DocumentReader.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/KTheme.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/KCard.qml
     ${CMAKE_SOURCE_DIR}/qt_quick/KInfoTag.qml

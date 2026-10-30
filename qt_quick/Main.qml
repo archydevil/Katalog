@@ -1425,6 +1425,184 @@ Kirigami.ApplicationWindow {
         ]
     }
 
+    // ── Deductions, documents, export (D39) ───────────────────────────────
+    function readDocument(catalogId, fullPath) {
+        root.showLayer(documentReaderComponent, { catalogId: catalogId, fullPath: fullPath })
+    }
+    Component {
+        id: documentReaderComponent
+        DocumentReader {}
+    }
+    // Exports an HTML page: one file, the folder on show, or the whole catalog
+    function exportHtml(scope) {
+        htmlExportDialog.scope = scope
+        htmlExportDialog.open()
+    }
+    Dialogs.FileDialog {
+        id: htmlExportDialog
+        property string scope: "folder"
+        fileMode: Dialogs.FileDialog.SaveFile
+        nameFilters: [qsTr("HTML page (*.html)")]
+        onAccepted: {
+            const target = appManager1.pathFromFileUrl(selectedFile.toString())
+            const path = scope === "file" ? (root.exploreColumns ? exploreColumnBrowser.selectedFullPath : exploreFiles.selectedFullPath)
+                       : scope === "folder" ? root.exploreCurrentFolder : exploreFiles.catalogPath
+            const error = appManager1.exportHtml(scope, exploreFiles.catalogId, path, target)
+            showPassiveNotification(error !== "" ? error : qsTr("Exported: %1").arg(target))
+        }
+    }
+
+    // What the analysis deduces for a folder, grouped: approved for every file
+    // at once (D39); and, only on request, a look on the web for the events
+    Kirigami.Dialog {
+        id: folderProposalsDialog
+        property var groups: []
+        property var queries: []
+        property bool askingWeb: false
+        function openFor() {
+            groups = appManager1.proposalsForFolder(exploreFiles.catalogId, root.exploreCurrentFolder, true)
+            askingWeb = false
+            open()
+        }
+        function fieldName(field) {
+            return field === "date" ? qsTr("Date") : field === "event" ? qsTr("Event") : field === "place" ? qsTr("Place")
+                 : field === "title" ? qsTr("Title") : field
+        }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        title: qsTr("Proposals for this folder")
+        preferredWidth: Math.min(root.width - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 42)
+        preferredHeight: Math.min(root.height - Kirigami.Units.gridUnit * 4, Kirigami.Units.gridUnit * 36)
+        padding: Kirigami.Units.largeSpacing * 2
+        standardButtons: Kirigami.Dialog.Close
+        Connections {
+            target: appManager1
+            function onProposalsChanged() {
+                if (folderProposalsDialog.opened)
+                    folderProposalsDialog.groups = appManager1.proposalsForFolder(exploreFiles.catalogId, root.exploreCurrentFolder, true)
+            }
+        }
+        ColumnLayout {
+            spacing: 10
+            Controls.Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: KTheme.text2
+                text: folderProposalsDialog.groups.length > 0
+                      ? qsTr("Deduced for the files of %1 and its sub-folders. Approving writes the value into each file's information; your own information is never replaced without you.")
+                            .arg(root.exploreCurrentFolder)
+                      : qsTr("Nothing to approve here. Proposals appear after the AI analysis of the drive (Dates and context).")
+            }
+            Repeater {
+                model: folderProposalsDialog.groups
+                delegate: KCard {
+                    id: group
+                    required property var modelData
+                    Layout.fillWidth: true
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Controls.Label { text: folderProposalsDialog.fieldName(group.modelData.field); color: KTheme.text3 }
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: group.modelData.value
+                            font.weight: Font.DemiBold
+                            color: KTheme.text
+                            wrapMode: Text.Wrap
+                        }
+                        KInfoTag { text: qsTr("%1 files").arg(group.modelData.fileCount) }
+                        KInfoTag {
+                            text: qsTr("%1% sure").arg(Math.round((group.modelData.confidence || 0) * 100))
+                            tone: (group.modelData.confidence || 0) >= 0.8 ? "ok" : (group.modelData.confidence || 0) >= 0.5 ? "warn" : "neutral"
+                        }
+                    }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 4
+                        Repeater {
+                            model: group.modelData.sources || []
+                            delegate: KInfoTag {
+                                required property var modelData
+                                text: modelData.label + (modelData.detail ? ": " + modelData.detail : "")
+                                tone: "info"
+                            }
+                        }
+                    }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        KButton {
+                            variant: "primary"
+                            icon.name: "dialog-ok-apply"
+                            text: qsTr("Approve for %1 files").arg(group.modelData.fileCount)
+                            onClicked: showPassiveNotification(appManager1.acceptProposals(group.modelData.proposalIds) || qsTr("Approved."))
+                        }
+                        KButton {
+                            variant: "link"
+                            text: qsTr("Discard")
+                            onClicked: appManager1.rejectProposals(group.modelData.proposalIds)
+                        }
+                    }
+                }
+            }
+            // The web, only when asked, after showing what would be searched
+            KCard {
+                Layout.fillWidth: true
+                KSectionHeader {
+                    level: 3
+                    title: qsTr("Look on the web")
+                    description: qsTr("Searches DuckDuckGo for the events, places and years found in the names, to date them better. Only the search words leave this computer, never the files.")
+                }
+                Controls.Switch {
+                    text: qsTr("Web searches allowed for this collection")
+                    checked: appManager1.webSearchEnabled()
+                    onToggled: appManager1.setWebSearchEnabled(checked)
+                }
+                KButton {
+                    visible: appManager1.webSearchEnabled() && !folderProposalsDialog.askingWeb
+                    variant: "secondary"
+                    icon.name: "internet-web-browser"
+                    text: qsTr("Prepare the searches")
+                    onClicked: {
+                        folderProposalsDialog.queries = appManager1.pendingWebQueries(exploreFolders.openedDeviceId)
+                        folderProposalsDialog.askingWeb = true
+                    }
+                }
+                Controls.Label {
+                    visible: folderProposalsDialog.askingWeb
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    color: KTheme.text2
+                    text: folderProposalsDialog.queries.length > 0
+                          ? qsTr("These %1 searches would be sent:").arg(folderProposalsDialog.queries.length)
+                          : qsTr("Nothing to search: the names hold no event to look up.")
+                }
+                Repeater {
+                    model: folderProposalsDialog.askingWeb ? folderProposalsDialog.queries : []
+                    delegate: Controls.Label {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        text: "• " + modelData.query + (modelData.reason ? "  —  " + modelData.reason : "")
+                        wrapMode: Text.Wrap
+                        color: KTheme.text
+                        font.family: KTheme.mono
+                        font.pixelSize: KTheme.note
+                    }
+                }
+                KButton {
+                    visible: folderProposalsDialog.askingWeb && folderProposalsDialog.queries.length > 0
+                    variant: "primary"
+                    icon.name: "internet-web-browser"
+                    text: qsTr("Send these searches")
+                    onClicked: {
+                        const error = appManager1.runWebQueries(exploreFolders.openedDeviceId, folderProposalsDialog.queries)
+                        folderProposalsDialog.askingWeb = false
+                        showPassiveNotification(error !== "" ? error : qsTr("Searching: the proposals update when it ends."))
+                    }
+                }
+            }
+        }
+    }
+
     // The mouse's Back and Forward buttons
     TapHandler {
         acceptedButtons: Qt.BackButton | Qt.ForwardButton
@@ -3405,6 +3583,32 @@ Kirigami.ApplicationWindow {
                 onTriggered: root.editFileInfo(root.exploreColumns
                     ? [{ catalogId: exploreFiles.catalogId, fullPath: exploreColumnBrowser.selectedFullPath }]
                     : exploreFiles.infoFiles())
+            },
+            // What the analysis deduces for the folder on show (D39)
+            Kirigami.Action {
+                text: qsTr("Proposals")
+                icon.name: "tools-wizard"
+                enabled: !root.exploreChooser && root.exploreCurrentFolder !== ""
+                onTriggered: folderProposalsDialog.openFor()
+            },
+            // An HTML page to share (D39)
+            Kirigami.Action {
+                text: qsTr("Export HTML")
+                icon.name: "document-export"
+                enabled: !root.exploreChooser && exploreFiles.catalogId > 0
+                Kirigami.Action {
+                    text: qsTr("The selected file")
+                    enabled: (root.exploreColumns ? exploreColumnBrowser.selectedFullPath : exploreFiles.selectedFullPath) !== ""
+                    onTriggered: root.exportHtml("file")
+                }
+                Kirigami.Action {
+                    text: qsTr("This folder")
+                    onTriggered: root.exportHtml("folder")
+                }
+                Kirigami.Action {
+                    text: qsTr("The whole catalog")
+                    onTriggered: root.exportHtml("catalog")
+                }
             },
             // Enrich the catalog shown (fork, SpecMediaIntelligence.md MDI-F8, Q9)
             Kirigami.Action {

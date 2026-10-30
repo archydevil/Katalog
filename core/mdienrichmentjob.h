@@ -59,6 +59,8 @@
 #include <functional>
 
 #include "core/mdiknowledge.h"
+#include "core/mdifaces.h"
+#include <memory>
 
 class QProcess;
 
@@ -86,6 +88,10 @@ public:
         QString     pdftotextPath;
         QString     whisperPath;         // whisper-cli (whisper.cpp)
         QString     whisperModelPath;    // ggml model file
+        QString     whisperVadModelPath; // ggml-silero-*.bin: whisper skips what is not speech
+        QString     faceDetectorModelPath;     // YuNet ONNX (faces, OpenCV)
+        QString     faceRecognizerModelPath;   // SFace ONNX
+        double      faceMatchThreshold = 0.363;   // cosine from which a face is suggested as a person
         QString     ollamaUrl = QStringLiteral("http://localhost:11434");
         QString     visionModel = QStringLiteral("gemma4");
         QString     textModel   = QStringLiteral("gemma4");
@@ -104,6 +110,7 @@ public:
         QString     scopeFolder;             // the scope's folder (full path), all when empty
         QString     scopeFileType;           // the scope's file type ("image"...), all when empty
         bool        knowledgeOnly = false;   // a pass indexing the knowledge base's pending documents
+        bool        facesOnly = false;       // the "faces" analysis only, on the catalog's images
     };
 
     MdiEnrichmentJob(const Config &config, const QList<FileItem> &files, QObject *parent = nullptr);
@@ -119,6 +126,9 @@ public:
     // A whisper.cpp ggml model: the configured file, else the largest
     // ggml-*.bin in ~/whisper-models or the Homebrew share folder; empty when none
     static QString findWhisperModel(const QString &configuredPath = QString());
+    // whisper.cpp's voice-activity model (ggml-silero-*.bin) in the same
+    // places; empty when none (the transcript then runs without --vad)
+    static QString findWhisperVadModel(const QString &configuredPath = QString());
 
     // Unit-length embeddings of `texts` from an Ollama endpoint, in order; empty
     // on error. Synchronous: usable on any thread (the search query is
@@ -185,6 +195,10 @@ private:
     Result makeArchiveListing(const FileItem &file);
     // Interpretation in the collection's context, text only (D33)
     Result makeClassification(const FileItem &file);
+    // Faces of an image: found, embedded, cropped, suggested (never confirmed)
+    Result makeFaces(const FileItem &file);
+    std::unique_ptr<MdiFaces::Engine> m_faceEngine;   // loaded on the job's thread at first use
+    QString                           m_faceEngineError;
     // Knowledge-base pass: text, passages and embeddings of pending documents
     void   indexKnowledge(int &completed, int &skipped, int &failed);
     MdiKnowledge::Index m_knowledge;    // loaded once per job for the classification

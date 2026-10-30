@@ -28,6 +28,7 @@
 */
 #include "core/mdifts.h"
 #include "core/mdidata.h"
+#include "core/mdipeople.h"
 #include "core/search.h"
 
 #include <QSqlDatabase>
@@ -193,7 +194,7 @@ bool MdiFts::rebuildCatalog(const QString &mdiDbPath, int catalogId, const QStri
             d.prepare(QLatin1String(R"(
                 SELECT datum_full_path, datum_analysis, datum_value FROM mdi_datum
                 WHERE datum_catalog_id = :id AND datum_outcome = 'completed'
-                  AND datum_analysis IN ('snippet', 'summary', 'caption', 'archive')
+                  AND datum_analysis IN ('snippet', 'summary', 'caption', 'classification', 'archive')
             )"));
             d.bindValue(":id", catalogId);
             if (d.exec())
@@ -201,6 +202,8 @@ bool MdiFts::rebuildCatalog(const QString &mdiDbPath, int catalogId, const QStri
                     derived[d.value(0).toString()][d.value(1).toString()] =
                         QJsonDocument::fromJson(d.value(2).toString().toUtf8()).object();
         }
+        // What the owner wrote about the files and who is in them
+        const QHash<QString, QString> people = MdiPeople::searchTextByFile(mdiConn, catalogId);
 
         // Clear the catalog's previous entries
         mdi.transaction();
@@ -232,7 +235,11 @@ bool MdiFts::rebuildCatalog(const QString &mdiDbPath, int catalogId, const QStri
             insFts.bindValue(":name", name);
             insFts.bindValue(":folder", folder);
             const auto it = derived.constFind(fullPath);
-            insFts.bindValue(":derived", it == derived.constEnd() ? QString() : composeText(it.value()));
+            QString text = it == derived.constEnd() ? QString() : composeText(it.value());
+            const auto own = people.constFind(fullPath);
+            if (own != people.constEnd())
+                text = (text + QLatin1Char(' ') + own.value()).trimmed();
+            insFts.bindValue(":derived", text);
             insFts.exec();
             if (++count % kBatch == 0) {
                 mdi.commit();
@@ -369,7 +376,19 @@ QString MdiFts::derivedText(const QString &mdiConnectionName, int catalogId, con
     for (const MdiData::Datum &d : MdiData::forFile(mdiConnectionName, catalogId, fullPath))
         if (d.outcome == QLatin1String("completed"))
             byAnalysis[d.analysis] = d.value;
-    return composeText(byAnalysis);
+    return (composeText(byAnalysis) + QLatin1Char(' ')
+            + MdiPeople::searchText(mdiConnectionName, catalogId, fullPath)).trimmed();
+}
+
+void MdiFts::markStale(const QString &mdiConnectionName, int catalogId)
+{
+    if (!ensureTables(mdiConnectionName))
+        return;
+    QSqlQuery q(QSqlDatabase::database(mdiConnectionName));
+    q.prepare(QStringLiteral("DELETE FROM mdi_fts_state WHERE state_catalog_id = :id"));
+    q.bindValue(":id", catalogId);
+    if (!q.exec())
+        qWarning() << "MdiFts::markStale failed:" << q.lastError().text();
 }
 
 void MdiFts::updateDerivedText(const QString &mdiConnectionName, int catalogId, const QString &fullPath)

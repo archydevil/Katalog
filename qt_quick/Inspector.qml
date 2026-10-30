@@ -22,6 +22,7 @@ Rectangle {
     function reload() {
         info = (catalogId > 0 && fullPath !== "") ? appManager1.inspectorInfo(catalogId, fullPath) : ({})
         reloadPeople()
+        reloadDeductions()
     }
     // What the owner wrote about the file, its people and their faces (D38)
     property var fileFacts: ({})
@@ -37,6 +38,19 @@ Rectangle {
         [qsTr("Author"), fileFacts.author], [qsTr("Notes"), fileFacts.notes]
     ].filter(r => (r[1] || "") !== "")
     function thisFile() { return [{ catalogId: inspector.catalogId, fullPath: inspector.fullPath }] }
+    // What the analysis deduces (date, event, place…) waiting for approval, and
+    // the study of a document (D39)
+    property var proposals: []
+    property var study: ({})
+    function reloadDeductions() {
+        const shown = catalogId > 0 && fullPath !== ""
+        proposals = shown ? appManager1.proposalsForFile(catalogId, fullPath).filter(p => p.status === "pending") : []
+        study = shown ? appManager1.documentStudy(catalogId, fullPath) : ({})
+    }
+    function fieldName(field) {
+        return field === "date" ? qsTr("Date") : field === "event" ? qsTr("Event") : field === "place" ? qsTr("Place")
+             : field === "title" ? qsTr("Title") : field
+    }
     function personMenuFor(face) { faceMenu.face = face; faceMenu.popup() }
     onCatalogIdChanged: reload()
     onFullPathChanged:  reload()
@@ -48,6 +62,7 @@ Rectangle {
         function onFileInfoChanged()    { if (inspector.visible) inspector.reloadPeople() }
         function onPeopleChanged()      { if (inspector.visible) inspector.reloadPeople() }
         function onFacesChanged()       { if (inspector.visible) inspector.reloadPeople() }
+        function onProposalsChanged()   { if (inspector.visible) inspector.reloadDeductions() }
     }
 
     function entry(analysis) {
@@ -397,6 +412,101 @@ Rectangle {
                                     appManager1.addPeopleToFiles(inspector.thisFile(), [personId])
                             })
                         }
+                    }
+                }
+
+                // ── What the analysis deduces, to approve (D39) ───────────────
+                KCard {
+                    Layout.fillWidth: true
+                    visible: inspector.proposals.length > 0
+                    KSectionHeader {
+                        level: 3
+                        title: qsTr("Proposals")
+                        description: qsTr("Deduced from the metadata, the names, the folder, the context and the reference documents. Nothing is written until you approve it.")
+                    }
+                    Repeater {
+                        model: inspector.proposals
+                        delegate: ColumnLayout {
+                            id: proposal
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: 4
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                Controls.Label {
+                                    text: inspector.fieldName(proposal.modelData.field)
+                                    color: KTheme.text3
+                                    font.pixelSize: KTheme.note
+                                }
+                                Controls.Label {
+                                    Layout.fillWidth: true
+                                    text: proposal.modelData.value
+                                    color: KTheme.text
+                                    font.weight: Font.DemiBold
+                                    wrapMode: Text.Wrap
+                                }
+                                KInfoTag {
+                                    text: qsTr("%1% sure").arg(Math.round((proposal.modelData.confidence || 0) * 100))
+                                    tone: (proposal.modelData.confidence || 0) >= 0.8 ? "ok" : (proposal.modelData.confidence || 0) >= 0.5 ? "warn" : "neutral"
+                                }
+                            }
+                            // Where it comes from, each source named
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                Repeater {
+                                    model: proposal.modelData.sources || []
+                                    delegate: KInfoTag {
+                                        required property var modelData
+                                        text: modelData.label + (modelData.detail ? ": " + modelData.detail : "")
+                                        tone: "info"
+                                    }
+                                }
+                            }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                KButton {
+                                    variant: "tonal"
+                                    icon.name: "dialog-ok-apply"
+                                    text: qsTr("Approve")
+                                    Accessible.description: inspector.fieldName(proposal.modelData.field) + " " + proposal.modelData.value
+                                    onClicked: appManager1.acceptProposals([proposal.modelData.proposalId])
+                                }
+                                KButton {
+                                    variant: "link"
+                                    text: qsTr("Discard")
+                                    Accessible.description: inspector.fieldName(proposal.modelData.field) + " " + proposal.modelData.value
+                                    onClicked: appManager1.rejectProposals([proposal.modelData.proposalId])
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── The study of a document (D39) ─────────────────────────────
+                KCard {
+                    Layout.fillWidth: true
+                    visible: inspector.study.available === true
+                    KSectionHeader {
+                        level: 3
+                        title: qsTr("Study of the document")
+                        description: [inspector.study.type, inspector.study.date].filter(x => x).join(" · ")
+                    }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        text: inspector.study.synthesis || ""
+                        wrapMode: Text.Wrap
+                        maximumLineCount: 8
+                        elide: Text.ElideRight
+                        color: KTheme.text
+                    }
+                    KButton {
+                        variant: "primary"
+                        icon.name: "view-preview"
+                        text: qsTr("Read the document")
+                        onClicked: applicationWindow().readDocument(inspector.catalogId, inspector.fullPath)
                     }
                 }
 

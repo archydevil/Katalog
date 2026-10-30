@@ -81,12 +81,17 @@ public:
     static QList<QVariantMap> catalogsNeedingPass(const QString &connectionName, const QString &mdiDbPath,
                                                   const QString &pass);
 
-    // Text derived for a file (snippet, summary, caption, tags), for the index
+    // Text derived for a file (snippet, summary, caption, tags), and what the
+    // owner wrote about it and who is in it (MdiPeople), for the index
     static QString derivedText(const QString &mdiConnectionName, int catalogId, const QString &fullPath);
 
     // Refreshes one file's derived text in the index; nothing when the file
     // is not indexed yet (the next rebuild includes it)
     static void updateDerivedText(const QString &mdiConnectionName, int catalogId, const QString &fullPath);
+
+    // The catalog's index is no longer current: the search runs without the
+    // prefilter until the next rebuild (AppManager::scheduleFtsIndexing)
+    static void markStale(const QString &mdiConnectionName, int catalogId);
 
     // FTS5 query for a search text and criteria (Search::TEXT_CRITERIA_*);
     // empty when the prefilter cannot be a superset of the regex: regex

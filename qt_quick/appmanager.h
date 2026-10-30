@@ -515,6 +515,42 @@ public slots:
     Q_INVOKABLE void         clearSemanticResults();
     Q_INVOKABLE QString      localFileUrl(const QString &path) const;
 
+    // Transcripts (fork, owner's request 2026-10-30): the stored ones filtered
+    // like the new ones, on a worker thread, every catalog of the collection;
+    // {started: bool, error: text}; the counts {checked, cleaned, removed,
+    // failed} come with transcriptsCleaned. Refused while the enrichment runs.
+    Q_INVOKABLE QVariantMap  cleanTranscripts();
+
+    // File information and people (fork, owner's request 2026-10-30).
+    // files: [{catalogId, fullPath}]. Strings returned: empty on success, else
+    // the reason. File and Memory modes (mdi_data.db); not Hosted.
+    Q_INVOKABLE QVariantMap  fileInfo(int catalogId, const QString &fullPath);
+    Q_INVOKABLE QString      setFileInfo(const QVariantList &files, const QVariantMap &fields);
+    Q_INVOKABLE QVariantList people(const QString &filter);
+    Q_INVOKABLE QVariantMap  person(int personId);
+    Q_INVOKABLE int          savePerson(const QVariantMap &person);
+    Q_INVOKABLE QString      deletePerson(int personId);
+    Q_INVOKABLE QString      addPeopleToFiles(const QVariantList &files, const QVariantList &personIds);
+    Q_INVOKABLE QString      removePersonFromFile(int personId, int catalogId, const QString &fullPath);
+    Q_INVOKABLE QVariantList filesOfPerson(int personId);
+    // Files whose information or people contain every word of `text`
+    Q_INVOKABLE QVariantList findFilesByInfo(const QString &text, int limit = 500);
+
+    // Faces (fork, OpenCV YuNet + SFace, local). Never confirmed by the app:
+    // suggestions wait for the owner's approval.
+    Q_INVOKABLE bool         facesAvailable();
+    Q_INVOKABLE QString      facesUnavailableReason();
+    Q_INVOKABLE QVariantList facesInFile(int catalogId, const QString &fullPath);
+    Q_INVOKABLE QString      confirmFaces(const QVariantList &faceIds, int personId);
+    Q_INVOKABLE QString      rejectFaces(const QVariantList &faceIds);
+    Q_INVOKABLE QString      ignoreFaces(const QVariantList &faceIds);
+    Q_INVOKABLE QString      clearFace(int faceId);
+    Q_INVOKABLE QVariantList similarFaces(int personId, int limit, double minScore);
+    Q_INVOKABLE QVariantList pendingFaces(int limit);
+    Q_INVOKABLE QVariantList unnamedFaceGroups(int limit);
+    // Queues the runner with the "faces" analysis only, on the catalog's images
+    Q_INVOKABLE QString      startFaceAnalysis(int deviceId);
+
     // Storage pre-selection for Create page (used by DeviceTreeComboBox storageOnly mode)
     Q_INVOKABLE int getDefaultStorageId() const;
 
@@ -757,6 +793,10 @@ signals:
     void homeOverviewChanged();   // a Home count computed in the background is ready
     void knowledgeStateChanged();
     void semanticResultsChanged();
+    void fileInfoChanged();
+    void peopleChanged();
+    void facesChanged();
+    void transcriptsCleaned(const QVariantMap &counts);
     // End of a Memory-mode Explore load: the open's result, or stopped
     void exploreCatalogOpened(const QVariantMap &info);
     // The latest open requested during a load, to run now that it has ended
@@ -1000,6 +1040,17 @@ private:
     QVariantList m_semanticResults;
     bool         m_semanticActive = false;
     bool         m_semanticOnly   = false;
+    // File information, people, faces, transcript cleaning (fork, 2026-10-30)
+    QThread          *m_transcriptCleanThread = nullptr;
+    std::atomic<bool> m_transcriptCleanStop{false};
+    QThread          *m_infoIndexThread = nullptr;
+    std::atomic<bool> m_infoIndexStop{false};
+    QList<QPair<int, QString>> m_infoIndexPending;   // files whose info changed: instant index + "info" vectors
+    QString peopleStoreRefusal();                     // empty when mdi_data.db is open for them
+    double  faceMatchThreshold();
+    void    reindexFileInfo(const QList<QPair<int, QString>> &files);
+    void    runInfoIndexing();
+    void    stopPeopleWorkers();
     DeviceUpdateManager    *m_deviceUpdateManager    = nullptr;
     CatalogProgressManager *m_catalogProgressManager = nullptr;
     CollectionImporter     *m_importer               = nullptr;

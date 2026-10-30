@@ -170,12 +170,12 @@ QString MdiTranscriptFilter::stripSoundTags(const QString &text)
 {
     static const QRegularExpression tags(QStringLiteral(
         "\\[[^\\]]*\\]|\\([^)]*\\)|\\*[^*]*\\*|【[^】]*】|（[^）]*）|［[^］]*］|♪[^♪]*♪|♫[^♫]*♫|[♪♫🎵🎶]"));
+    // A tag left open at the end of the passage ("… [Music", "*gunshot"):
+    // from its opening sign to the end
+    static const QRegularExpression unclosed(QStringLiteral("[\\[(（【［*♪♫][^\\])）】］*♪♫]*$"));
     QString t = text;
     t.remove(tags);
-    // An unclosed tag at an end: "[Music" or "*gunshot"
-    static const QRegularExpression open(QStringLiteral("^\\s*[\\[(*（【][^\\])*）】]*$|^[^\\[(*（【]*[\\])*）】]\\s*$"));
-    if (open.match(t).hasMatch() && normalize(t).split(' ', Qt::SkipEmptyParts).size() <= 3)
-        t.clear();
+    t.remove(unclosed);
     return t.simplified();
 }
 
@@ -366,8 +366,11 @@ MdiTranscriptFilter::CleanCounts MdiTranscriptFilter::cleanStored(const QString 
                                   {QStringLiteral("passage"), QStringLiteral("segment")});
         for (const MdiData::Datum &s : MdiData::forFile(connectionName, catalogId, d.fullPath))
             if (s.analysis == QLatin1String("summary")
-                && s.value.value("source").toString() == QLatin1String("whisper"))
+                && s.value.value("source").toString() == QLatin1String("whisper")) {
                 MdiData::removeDatum(connectionName, catalogId, d.fullPath, QStringLiteral("summary"));
+                MdiData::removeEmbeddings(connectionName, catalogId, d.fullPath,
+                                          {QStringLiteral("summary"), QStringLiteral("excerpt")});
+            }
     }
 
     if (affected.isEmpty())

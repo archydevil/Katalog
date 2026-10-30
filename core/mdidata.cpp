@@ -27,6 +27,7 @@
 /////////////////////////////////////////////////////////////////////////////
 */
 #include "core/mdidata.h"
+#include "core/mdipeople.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -212,6 +213,10 @@ bool MdiData::open(const QString &connectionName, const QString &dbPath)
             PRIMARY KEY (passage_doc_id, passage_index)
         )
     )"));
+    // File information, people and faces (owner's request 2026-10-30):
+    // store version 2
+    if (!MdiPeople::ensureTables(connectionName))
+        qWarning() << "MdiData::open: people tables not created:" << dbPath;
     return ok;
 }
 
@@ -285,6 +290,67 @@ bool MdiData::isCurrent(const QString &connectionName, int catalogId, const QStr
         && q.value(3).toString() == toJson(params);
 }
 
+bool MdiData::isSettledSkip(const QString &connectionName, int catalogId, const QString &fullPath,
+                            const QString &analysis, qint64 fileSize, const QString &fileDate,
+                            const QJsonObject &params, const QString &reason)
+{
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    q.prepare(QLatin1String(R"(
+        SELECT datum_outcome, datum_reason, datum_file_size, datum_file_date, datum_params
+        FROM mdi_datum
+        WHERE datum_catalog_id = :catalog_id AND datum_full_path = :full_path
+          AND datum_analysis = :analysis
+    )"));
+    q.bindValue(":catalog_id", catalogId);
+    q.bindValue(":full_path",  fullPath);
+    q.bindValue(":analysis",   analysis);
+    if (!q.exec() || !q.next())
+        return false;
+    return q.value(0).toString() == QLatin1String("skipped")
+        && q.value(1).toString() == reason
+        && q.value(2).toLongLong() == fileSize
+        && q.value(3).toString() == fileDate
+        && q.value(4).toString() == toJson(params);
+}
+
+bool MdiData::removeDatum(const QString &connectionName, int catalogId, const QString &fullPath,
+                          const QString &analysis)
+{
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    q.prepare(QLatin1String("DELETE FROM mdi_datum WHERE datum_catalog_id = :catalog_id "
+                            "AND datum_full_path = :full_path AND datum_analysis = :analysis"));
+    q.bindValue(":catalog_id", catalogId);
+    q.bindValue(":full_path",  fullPath);
+    q.bindValue(":analysis",   analysis);
+    if (!q.exec()) {
+        qWarning() << "MdiData::removeDatum failed:" << q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+bool MdiData::removeEmbeddings(const QString &connectionName, int catalogId, const QString &fullPath,
+                               const QStringList &kinds)
+{
+    QString sql = QStringLiteral("DELETE FROM mdi_embedding WHERE emb_catalog_id = :catalog_id AND emb_full_path = :full_path");
+    QStringList placeholders;
+    for (int i = 0; i < kinds.size(); ++i)
+        placeholders << QStringLiteral(":kind%1").arg(i);
+    if (!kinds.isEmpty())
+        sql += QStringLiteral(" AND emb_kind IN (%1)").arg(placeholders.join(','));
+    QSqlQuery q(QSqlDatabase::database(connectionName));
+    q.prepare(sql);
+    q.bindValue(":catalog_id", catalogId);
+    q.bindValue(":full_path",  fullPath);
+    for (int i = 0; i < kinds.size(); ++i)
+        q.bindValue(placeholders.at(i), kinds.at(i));
+    if (!q.exec()) {
+        qWarning() << "MdiData::removeEmbeddings failed:" << q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
 QHash<QString, QVariantMap> MdiData::catalogIndex(const QString &connectionName, int catalogId)
 {
     QHash<QString, QVariantMap> index;
@@ -350,6 +416,42 @@ QList<MdiData::Datum> MdiData::forCatalog(const QString &connectionName, int cat
     while (q.next())
         list.append(readDatum(q));
     return list;
+}
+
+bool MdiData::replaceEmbeddingKind(const QString &connectionName, int catalogId, const QString &fullPath,
+                                   const QString &model, const QString &kind, const QList<EmbeddingRow> &rows)
+{
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
+    if (!db.transaction())
+        return false;
+    if (!removeEmbeddings(connectionName, catalogId, fullPath, {kind})) {
+        db.rollback();
+        return false;
+    }
+    QSqlQuery ins(db);
+    ins.prepare(QLatin1String(R"(
+        INSERT INTO mdi_embedding (emb_catalog_id, emb_full_path, emb_kind, emb_index,
+                                   emb_start, emb_end, emb_text, emb_model, emb_vector)
+        VALUES (:catalog_id, :full_path, :kind, :index, :start, :end, :text, :model, :vector)
+    )"));
+    for (const EmbeddingRow &r : rows) {
+        ins.bindValue(":catalog_id", catalogId);
+        ins.bindValue(":full_path",  fullPath);
+        ins.bindValue(":kind",       kind);
+        ins.bindValue(":index",      r.index);
+        ins.bindValue(":start",      r.start);
+        ins.bindValue(":end",        r.end);
+        ins.bindValue(":text",       r.text);
+        ins.bindValue(":model",      model);
+        ins.bindValue(":vector",     QByteArray(reinterpret_cast<const char *>(r.vector.constData()),
+                                                r.vector.size() * int(sizeof(float))));
+        if (!ins.exec()) {
+            qWarning() << "MdiData::replaceEmbeddingKind failed:" << ins.lastError().text();
+            db.rollback();
+            return false;
+        }
+    }
+    return db.commit();
 }
 
 bool MdiData::replaceEmbeddings(const QString &connectionName, int catalogId, const QString &fullPath,
@@ -533,9 +635,26 @@ int MdiData::moveToCatalogs(const QString &connectionName, int oldCatalogId,
         UPDATE mdi_embedding SET emb_catalog_id = :new_id
         WHERE emb_catalog_id = :old_id AND emb_full_path = :full_path
     )"));
+    // File information, people in the file and faces follow the file too;
+    // an entry the new catalog already has for that path is kept
+    QSqlQuery annotation(db);
+    annotation.prepare(QLatin1String(R"(
+        UPDATE OR IGNORE mdi_annotation SET ann_catalog_id = :new_id
+        WHERE ann_catalog_id = :old_id AND ann_full_path = :full_path
+    )"));
+    QSqlQuery filePerson(db);
+    filePerson.prepare(QLatin1String(R"(
+        UPDATE OR IGNORE mdi_file_person SET fp_catalog_id = :new_id
+        WHERE fp_catalog_id = :old_id AND fp_full_path = :full_path
+    )"));
+    QSqlQuery face(db);
+    face.prepare(QLatin1String(R"(
+        UPDATE mdi_face SET face_catalog_id = :new_id
+        WHERE face_catalog_id = :old_id AND face_full_path = :full_path
+    )"));
     int moved = 0;
     for (auto it = newCatalogByPath.cbegin(); it != newCatalogByPath.cend(); ++it) {
-        for (QSqlQuery *q : {&datum, &emb}) {
+        for (QSqlQuery *q : {&datum, &emb, &annotation, &filePerson, &face}) {
             q->bindValue(":new_id",    it.value());
             q->bindValue(":old_id",    oldCatalogId);
             q->bindValue(":full_path", it.key());

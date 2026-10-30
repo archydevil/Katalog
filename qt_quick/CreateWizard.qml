@@ -48,6 +48,8 @@ ColumnLayout {
     property bool aiSegments:   true       // timecoded topic segments; needs the transcript
     property bool aiClassification: true   // in the collection's context, when it has one (D33)
     property bool aiFaces: false           // faces in photos, local OpenCV; off by default (D38: biometric data)
+    property bool aiDating: true           // dates, events, places deduced, as proposals (D39)
+    property bool aiDocument: true         // documents studied: OCR, fragments, synthesis, key facts (D39)
 
     readonly property var clipModel: [
         { text: qsTr("Off"),     value: "off"     },
@@ -97,7 +99,8 @@ ColumnLayout {
                 },
                 ai: { caption: aiCaption, summary: aiSummary,
                       transcript: aiTranscript || aiSegments, segments: aiSegments,
-                      classification: aiClassification, faces: aiFaces }
+                      classification: aiClassification, faces: aiFaces,
+                      dating: aiDating, document: aiDocument }
             }
         }
     }
@@ -131,6 +134,8 @@ ColumnLayout {
         aiSegments         = ai.segments !== false
         aiClassification   = ai.classification !== false
         aiFaces            = ai.faces === true
+        aiDating           = ai.dating !== false
+        aiDocument         = ai.document !== false
     }
 
     function restoreSettings() {
@@ -488,6 +493,27 @@ ColumnLayout {
             if (checked) createWizard.aiTranscript = true
             createWizard.choiceEdited()
         }
+    }
+    // Deductions and study (D39): proposals to approve, never written by themselves
+    Controls.Switch {
+        enabled: createWizard.typeImage || createWizard.typeVideo
+        text: qsTr("Dates and context")
+        checked: createWizard.aiDating
+        onToggled: { createWizard.aiDating = checked; createWizard.choiceEdited() }
+    }
+    Controls.Switch {
+        enabled: createWizard.typeText
+        text: qsTr("Study of the documents")
+        checked: createWizard.aiDocument
+        onToggled: { createWizard.aiDocument = checked; createWizard.choiceEdited() }
+    }
+    Controls.Label {
+        Layout.fillWidth: true
+        Layout.leftMargin: 8
+        wrapMode: Text.WordWrap
+        color: KTheme.text3
+        font.pixelSize: KTheme.note
+        text: qsTr("Dates, events and places are deduced from the metadata, the names, the folders, the context and the reference documents, and proposed for your approval. Scanned documents are read with OCR, then summarised fragment by fragment.")
     }
     // Faces (D38): off unless chosen, because recognisable faces are biometric data
     Controls.Switch {

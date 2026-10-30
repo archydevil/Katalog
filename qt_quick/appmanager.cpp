@@ -24,6 +24,9 @@
 #include "core/mdicontext.h"
 #include "core/mdiknowledge.h"
 #include "core/mdivolumes.h"
+#include "core/mdipeople.h"
+#include "core/mdifaces.h"
+#include "core/mditranscriptfilter.h"
 #include <QThread>
 #include <QThread>
 #include <QJsonDocument>
@@ -2767,7 +2770,7 @@ const QString kMdiMainConnection = QStringLiteral("mdi_main");
 const QStringList kMdiAnalysisOrder = {
     QStringLiteral("thumbnail"), QStringLiteral("poster"), QStringLiteral("keyframes"),
     QStringLiteral("clip_video"), QStringLiteral("clip_audio"), QStringLiteral("waveform"),
-    QStringLiteral("caption"), QStringLiteral("transcript"), QStringLiteral("segments"),
+    QStringLiteral("caption"), QStringLiteral("faces"), QStringLiteral("transcript"), QStringLiteral("segments"),
     QStringLiteral("summary"), QStringLiteral("mediainfo"), QStringLiteral("snippet"),
     QStringLiteral("archive"), QStringLiteral("classification"), QStringLiteral("quickhash"),
     QStringLiteral("embeddings")
@@ -2824,6 +2827,10 @@ QVariantMap AppManager::getEnrichmentTools()
     tools[QStringLiteral("pdftotext")] = MdiEnrichmentJob::findTool(QStringLiteral("pdftotext"), settings.value("MediaIntelligence/PdftotextPath").toString());
     tools[QStringLiteral("whisper")]   = MdiEnrichmentJob::findTool(QStringLiteral("whisper-cli"), settings.value("MediaIntelligence/WhisperPath").toString());
     tools[QStringLiteral("whisperModel")] = MdiEnrichmentJob::findWhisperModel(settings.value("MediaIntelligence/WhisperModelPath").toString());
+    tools[QStringLiteral("whisperVadModel")] = MdiEnrichmentJob::findWhisperVadModel(settings.value("MediaIntelligence/WhisperVadModelPath").toString());
+    tools[QStringLiteral("faceDetectorModel")]   = MdiFaces::findDetectorModel(settings.value("MediaIntelligence/FaceDetectorModelPath").toString());
+    tools[QStringLiteral("faceRecognizerModel")] = MdiFaces::findRecognizerModel(settings.value("MediaIntelligence/FaceRecognizerModelPath").toString());
+    tools[QStringLiteral("opencv")] = MdiFaces::openCvVersion();
     tools[QStringLiteral("ollamaUrl")]   = settings.value("MediaIntelligence/OllamaUrl", QStringLiteral("http://localhost:11434")).toString();
     tools[QStringLiteral("visionModel")] = settings.value("MediaIntelligence/VisionModel", QStringLiteral("gemma4")).toString();
     tools[QStringLiteral("textModel")]   = settings.value("MediaIntelligence/TextModel",   QStringLiteral("gemma4")).toString();
@@ -2852,6 +2859,7 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
     if (analysis == QLatin1String("archive"))    return tr("Archive contents");
     if (analysis == QLatin1String("classification")) return tr("Classification");
     if (analysis == QLatin1String("knowledge"))  return tr("Reference documents");
+    if (analysis == QLatin1String("faces"))      return tr("Faces");
     return analysis;
 }
 //----------------------------------------------------------------------
@@ -2876,8 +2884,8 @@ QString AppManager::startMdiJob(const MdiData::PendingJob &job, bool resumed)
 {
     // One job at a time; another waits its turn, and the same work already
     // running or waiting is not added twice (MDI-F16): same catalog, kind
-    // and scope
-    if (m_mdiJob) {
+    // and scope. Stored transcripts being cleaned: the job waits for it too.
+    if (m_mdiJob || m_transcriptCleanThread) {
         const bool running = job.sameWork(m_mdiRunning) && !m_mdiLeaving && !m_mdiKeepPending;
         const bool listed  = std::any_of(m_mdiWaiting.cbegin(), m_mdiWaiting.cend(),
                                          [&job](const MdiData::PendingJob &w) { return w.sameWork(job); });
@@ -2917,6 +2925,11 @@ QString AppManager::startMdiJob(const MdiData::PendingJob &job, bool resumed)
     config.pdftotextPath   = tools.value(QStringLiteral("pdftotext")).toString();
     config.whisperPath     = tools.value(QStringLiteral("whisper")).toString();
     config.whisperModelPath = tools.value(QStringLiteral("whisperModel")).toString();
+    config.whisperVadModelPath     = tools.value(QStringLiteral("whisperVadModel")).toString();
+    config.faceDetectorModelPath   = tools.value(QStringLiteral("faceDetectorModel")).toString();
+    config.faceRecognizerModelPath = tools.value(QStringLiteral("faceRecognizerModel")).toString();
+    config.faceMatchThreshold      = faceMatchThreshold();
+    config.facesOnly               = job.kind == QLatin1String("faces");
     config.ollamaUrl       = tools.value(QStringLiteral("ollamaUrl")).toString();
     config.visionModel     = tools.value(QStringLiteral("visionModel")).toString();
     config.textModel       = tools.value(QStringLiteral("textModel")).toString();
@@ -3098,6 +3111,8 @@ void AppManager::startNextEnrichment()
 {
     // Jobs whose source is reachable first, in their order; then the
     // quick-hash passes; then the jobs that will wait for their drive (MDI-F92)
+    if (m_transcriptCleanThread)
+        return;   // started again when the stored transcripts are cleaned
     bool notStarted = false;
     auto startJob = [this, &notStarted](const MdiData::PendingJob &next) {
         const QString error = startMdiJob(next, true);
@@ -3797,7 +3812,9 @@ QVariantMap AppManager::getMdiJobInfo() const
         d.ID = job.deviceId;
         d.loadDevice(m_connectionName);
         waiting << (job.kind == QLatin1String("reinterpret")
-                    ? d.name + QStringLiteral(" · ") + mdiAnalysisLabel(QStringLiteral("classification")) : d.name);
+                    ? d.name + QStringLiteral(" · ") + mdiAnalysisLabel(QStringLiteral("classification"))
+                    : job.kind == QLatin1String("faces")
+                    ? d.name + QStringLiteral(" · ") + mdiAnalysisLabel(QStringLiteral("faces")) : d.name);
     }
     info[QStringLiteral("waiting")] = waiting;
     // Where data went in this session: anything not on this Mac is egress
@@ -7970,3 +7987,645 @@ void AppManager::onCatalogUpdateForBackupStep()
     }
 }
 
+//----------------------------------------------------------------------
+// Transcripts, file information, people and faces (fork, owner's request
+// 2026-10-30, SpecMediaIntelligence.md). Data in mdi_data.db (File and Memory
+// modes), read and written on the main-thread connection; the slow parts
+// (cleaning stored transcripts, the "info" vectors for search by meaning)
+// run on worker threads with connections of their own.
+//----------------------------------------------------------------------
+namespace {
+
+QList<MdiPeople::FileRef> peopleFileRefs(const QVariantList &files)
+{
+    QList<MdiPeople::FileRef> refs;
+    for (const QVariant &v : files) {
+        const QVariantMap m = v.toMap();
+        const MdiPeople::FileRef ref{m.value(QStringLiteral("catalogId")).toInt(),
+                                     m.value(QStringLiteral("fullPath")).toString()};
+        if (ref.catalogId > 0 && !ref.fullPath.isEmpty() && !refs.contains(ref))
+            refs.append(ref);
+    }
+    return refs;
+}
+
+QList<int> peopleIds(const QVariantList &list)
+{
+    QList<int> ids;
+    for (const QVariant &v : list)
+        if (v.toInt() > 0 && !ids.contains(v.toInt()))
+            ids.append(v.toInt());
+    return ids;
+}
+
+QList<QPair<int, QString>> peoplePairs(const QList<MdiPeople::FileRef> &refs)
+{
+    QList<QPair<int, QString>> pairs;
+    for (const MdiPeople::FileRef &r : refs)
+        pairs.append({r.catalogId, r.fullPath});
+    return pairs;
+}
+
+// A derived file's URL while its drive is there, else empty (the UI shows an icon)
+QString existingFileUrl(const QString &path)
+{
+    return !path.isEmpty() && QFileInfo::exists(path) ? QUrl::fromLocalFile(path).toString() : QString();
+}
+
+QHash<int, QString> personNames(const QString &connectionName)
+{
+    QHash<int, QString> names;
+    for (const MdiPeople::Person &p : MdiPeople::persons(connectionName))
+        names.insert(p.id, p.displayName());
+    return names;
+}
+
+QVariantMap faceRow(const MdiPeople::Face &f, const QHash<int, QString> &names)
+{
+    return QVariantMap{
+        { QStringLiteral("faceId"),            f.id },
+        { QStringLiteral("catalogId"),         f.catalogId },
+        { QStringLiteral("fullPath"),          f.fullPath },
+        { QStringLiteral("fileName"),          QFileInfo(f.fullPath).fileName() },
+        { QStringLiteral("x"),                 f.x },
+        { QStringLiteral("y"),                 f.y },
+        { QStringLiteral("w"),                 f.w },
+        { QStringLiteral("h"),                 f.h },
+        { QStringLiteral("detectionScore"),    f.score },
+        { QStringLiteral("status"),            f.status },
+        { QStringLiteral("personId"),          f.personId },
+        { QStringLiteral("personName"),        names.value(f.personId) },
+        { QStringLiteral("suggestedPersonId"), f.suggestedPersonId },
+        { QStringLiteral("suggestedName"),     names.value(f.suggestedPersonId) },
+        { QStringLiteral("score"),             f.suggestionScore },
+        { QStringLiteral("cropUrl"),           existingFileUrl(f.cropPath()) },
+    };
+}
+
+} // namespace
+//----------------------------------------------------------------------
+QString AppManager::peopleStoreRefusal()
+{
+    if (collection->databaseMode == QLatin1String("Hosted"))
+        return tr("File information and people are not available for hosted collections.");
+    if (!openMdiMainConnection())
+        return tr("The change could not be saved.");
+    return QString();
+}
+//----------------------------------------------------------------------
+double AppManager::faceMatchThreshold()
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    const double value = settings.value("MediaIntelligence/FaceMatchThreshold", MdiPeople::kDefaultMatchThreshold).toDouble();
+    return qBound(0.2, value, 0.9);
+}
+//----------------------------------------------------------------------
+void AppManager::reindexFileInfo(const QList<QPair<int, QString>> &files)
+{
+    for (const auto &f : files)
+        if (!m_infoIndexPending.contains(f))
+            m_infoIndexPending.append(f);
+    runInfoIndexing();
+}
+//----------------------------------------------------------------------
+void AppManager::runInfoIndexing()
+{
+    // The changed files' text in the instant index, and their "info" vector
+    // for search by meaning (local embedding model only, as for the runner;
+    // nothing when none is configured or reachable). Never on the UI thread.
+    if (m_infoIndexThread || m_infoIndexPending.isEmpty())
+        return;
+    if (collection->databaseMode == QLatin1String("Hosted")) {
+        m_infoIndexPending.clear();
+        return;
+    }
+    const QList<QPair<int, QString>> batch = m_infoIndexPending;
+    m_infoIndexPending.clear();
+    const QString mdiPath = mdiDataPath();
+    const QVariantMap tools = getEnrichmentTools();
+    const QString url   = tools.value(QStringLiteral("ollamaUrl")).toString();
+    const QString model = tools.value(QStringLiteral("embedModel")).toString();
+    m_infoIndexStop = false;
+    m_infoIndexThread = QThread::create([this, batch, mdiPath, url, model]() {
+        const QString connection = QStringLiteral("mdi_info_%1").arg(reinterpret_cast<quintptr>(QThread::currentThread()));
+        if (MdiData::open(connection, mdiPath)) {
+            MdiFts::ensureTables(connection);
+            QList<QPair<int, QString>> toEmbed;
+            QStringList texts;
+            for (const auto &f : batch) {
+                if (m_infoIndexStop.load())
+                    break;
+                MdiFts::updateDerivedText(connection, f.first, f.second);
+                const QString text = MdiPeople::infoText(connection, f.first, f.second);
+                if (text.isEmpty()) {
+                    MdiData::removeEmbeddings(connection, f.first, f.second, {QStringLiteral("info")});
+                } else {
+                    toEmbed.append(f);
+                    texts.append(text);
+                }
+            }
+            constexpr int kBatch = 32;
+            for (int from = 0; !model.isEmpty() && from < texts.size() && !m_infoIndexStop.load(); from += kBatch) {
+                QString error;
+                const QList<QVector<float>> vectors = MdiEnrichmentJob::embedTexts(url, model, texts.mid(from, kBatch),
+                                                                                   &error, 60 * 1000);
+                if (vectors.isEmpty()) {
+                    qWarning() << "File information not indexed for search by meaning:" << error;
+                    break;   // indexed again by the next enrichment of these files
+                }
+                for (int i = 0; i < vectors.size(); ++i) {
+                    MdiData::EmbeddingRow row;
+                    row.kind   = QStringLiteral("info");
+                    row.text   = texts.at(from + i);
+                    row.vector = vectors.at(i);
+                    const auto &f = toEmbed.at(from + i);
+                    MdiData::replaceEmbeddingKind(connection, f.first, f.second, model, row.kind, {row});
+                }
+            }
+        }
+        MdiData::close(connection);
+    });
+    connect(qApp, &QCoreApplication::aboutToQuit, m_infoIndexThread, [this]() { stopPeopleWorkers(); });
+    connect(m_infoIndexThread, &QThread::finished, this, [this]() {
+        m_infoIndexThread->deleteLater();
+        m_infoIndexThread = nullptr;
+        if (!m_infoIndexStop.load())
+            runInfoIndexing();   // files changed meanwhile
+    });
+    m_infoIndexThread->start(QThread::LowPriority);
+}
+//----------------------------------------------------------------------
+void AppManager::stopPeopleWorkers()
+{
+    m_infoIndexStop = true;
+    m_transcriptCleanStop = true;
+    if (m_infoIndexThread)
+        m_infoIndexThread->wait(10000);
+    if (m_transcriptCleanThread)
+        m_transcriptCleanThread->wait(10000);
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::cleanTranscripts()
+{
+    QVariantMap result{ { QStringLiteral("started"), false } };
+    // The runner writes the same data: the cleaning waits for it to end
+    if (m_mdiJob) {
+        result[QStringLiteral("error")] = tr("The enrichment is running: the transcripts can be cleaned once it ends or is stopped.");
+        return result;
+    }
+    if (m_transcriptCleanThread) {
+        result[QStringLiteral("error")] = tr("The transcripts are being cleaned.");
+        return result;
+    }
+    if (collection->databaseMode == QLatin1String("Hosted") || !QFileInfo::exists(mdiDataPath())
+        || !openMdiMainConnection()) {
+        result[QStringLiteral("error")] = tr("No transcript to clean in this collection.");
+        return result;
+    }
+
+    QList<int> catalogIds;
+    for (const Device::DeviceTreeNode &n : Device::loadDeviceTree(m_connectionName))
+        if (n.type == QLatin1String("Catalog") && n.externalId > 0 && !catalogIds.contains(n.externalId))
+            catalogIds.append(n.externalId);
+    // The glossary hint as whisper may have been given it, whether or not it
+    // is enabled now: a passage reading it back is not speech
+    QJsonObject context = MdiContext::load(kMdiMainConnection, MdiContext::kCollectionScope);
+    context.insert(QStringLiteral("transcriptHint"), true);
+    const QString hint = MdiContext::whisperHint(context);
+
+    stopFtsIndexing();   // it writes the instant index this marks stale
+    const QString mdiPath = mdiDataPath();
+    m_transcriptCleanStop = false;
+    m_transcriptCleanThread = QThread::create([this, catalogIds, hint, mdiPath]() {
+        const QString connection = QStringLiteral("mdi_clean_%1").arg(reinterpret_cast<quintptr>(QThread::currentThread()));
+        MdiTranscriptFilter::CleanCounts total;
+        int catalogs = 0;
+        if (MdiData::open(connection, mdiPath)) {
+            for (int id : catalogIds) {
+                if (m_transcriptCleanStop.load())
+                    break;
+                const MdiTranscriptFilter::CleanCounts c = MdiTranscriptFilter::cleanStored(connection, id, hint,
+                                                                                            &m_transcriptCleanStop);
+                total.checked += c.checked;
+                total.cleaned += c.cleaned;
+                total.removed += c.removed;
+                total.failed  += c.failed;
+                ++catalogs;
+            }
+        }
+        MdiData::close(connection);
+        const QVariantMap counts{ { QStringLiteral("checked"),  total.checked },
+                                  { QStringLiteral("cleaned"),  total.cleaned },
+                                  { QStringLiteral("removed"),  total.removed },
+                                  { QStringLiteral("failed"),   total.failed },
+                                  { QStringLiteral("catalogs"), catalogs },
+                                  { QStringLiteral("stopped"),  m_transcriptCleanStop.load() } };
+        QMetaObject::invokeMethod(this, [this, counts]() { emit transcriptsCleaned(counts); }, Qt::QueuedConnection);
+    });
+    connect(qApp, &QCoreApplication::aboutToQuit, m_transcriptCleanThread, [this]() { stopPeopleWorkers(); });
+    connect(m_transcriptCleanThread, &QThread::finished, this, [this]() {
+        m_transcriptCleanThread->deleteLater();
+        m_transcriptCleanThread = nullptr;
+        bumpMdiRevision(-1);
+        scheduleFtsIndexing();   // the catalogs marked stale
+        startNextEnrichment();   // jobs asked for meanwhile
+    });
+    m_transcriptCleanThread->start(QThread::LowPriority);
+    result[QStringLiteral("started")] = true;
+    return result;
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::fileInfo(int catalogId, const QString &fullPath)
+{
+    QVariantMap info;
+    const QString refusal = peopleStoreRefusal();
+    info[QStringLiteral("available")] = refusal.isEmpty();
+    if (!refusal.isEmpty()) {
+        info[QStringLiteral("error")] = refusal;
+        return info;
+    }
+    const MdiPeople::Annotation a = MdiPeople::annotation(kMdiMainConnection, catalogId, fullPath);
+    info[QStringLiteral("title")]       = a.title;
+    info[QStringLiteral("description")] = a.description;
+    info[QStringLiteral("event")]       = a.event;
+    info[QStringLiteral("place")]       = a.place;
+    info[QStringLiteral("date")]        = a.date;
+    info[QStringLiteral("author")]      = a.author;
+    info[QStringLiteral("notes")]       = a.notes;
+    info[QStringLiteral("tags")]        = a.tags;
+    info[QStringLiteral("updated")]     = a.updated;
+    QVariantList people;
+    for (const MdiPeople::FilePerson &p : MdiPeople::peopleOfFile(kMdiMainConnection, catalogId, fullPath))
+        people.append(QVariantMap{ { QStringLiteral("personId"), p.personId },
+                                   { QStringLiteral("name"),     p.name },
+                                   { QStringLiteral("role"),     p.role },
+                                   { QStringLiteral("faceId"),   p.faceId },
+                                   { QStringLiteral("source"),   p.source } });
+    info[QStringLiteral("people")] = people;
+    return info;
+}
+//----------------------------------------------------------------------
+QString AppManager::setFileInfo(const QVariantList &files, const QVariantMap &fields)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const QList<MdiPeople::FileRef> refs = peopleFileRefs(files);
+    if (refs.isEmpty())
+        return tr("Select one or more files.");
+
+    QVariantMap annotation = fields;
+    for (const QString &key : {QStringLiteral("people"), QStringLiteral("peopleAdd"), QStringLiteral("peopleRemove")})
+        annotation.remove(key);
+    bool ok = MdiPeople::updateAnnotations(kMdiMainConnection, refs, annotation);
+    const bool peopleTouched = fields.contains(QStringLiteral("people")) || fields.contains(QStringLiteral("peopleAdd"))
+                            || fields.contains(QStringLiteral("peopleRemove"));
+    if (ok && fields.contains(QStringLiteral("people")))
+        ok = MdiPeople::setManualPeople(kMdiMainConnection, refs, peopleIds(fields.value(QStringLiteral("people")).toList()));
+    if (ok && fields.contains(QStringLiteral("peopleAdd")))
+        ok = MdiPeople::addPeopleToFiles(kMdiMainConnection, refs, peopleIds(fields.value(QStringLiteral("peopleAdd")).toList()));
+    if (ok && fields.contains(QStringLiteral("peopleRemove")))
+        for (int personId : peopleIds(fields.value(QStringLiteral("peopleRemove")).toList()))
+            for (const MdiPeople::FileRef &r : refs)
+                ok = ok && MdiPeople::removePersonFromFile(kMdiMainConnection, personId, r.catalogId, r.fullPath);
+
+    reindexFileInfo(peoplePairs(refs));
+    emit fileInfoChanged();
+    if (peopleTouched) {
+        emit peopleChanged();
+        emit facesChanged();
+    }
+    return ok ? QString() : tr("The change could not be saved.");
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::people(const QString &filter)
+{
+    QVariantList list;
+    if (!peopleStoreRefusal().isEmpty())
+        return list;
+    const QHash<int, QString> covers = MdiPeople::coverCrops(kMdiMainConnection);
+    for (const MdiPeople::Person &p : MdiPeople::persons(kMdiMainConnection, filter)) {
+        QString cover = existingFileUrl(covers.value(p.id));
+        if (cover.isEmpty()) {
+            // No face yet: the preview of one of the person's files
+            const QList<MdiPeople::FileRef> files = MdiPeople::filesOfPerson(kMdiMainConnection, p.id);
+            for (int i = 0; i < files.size() && i < 5 && cover.isEmpty(); ++i)
+                cover = mdiPreviewUrl(files.at(i).catalogId, files.at(i).fullPath, m_mdiRevision);
+        }
+        list.append(QVariantMap{
+            { QStringLiteral("id"),           p.id },
+            { QStringLiteral("firstName"),    p.firstName },
+            { QStringLiteral("lastName"),     p.lastName },
+            { QStringLiteral("name"),         p.displayName() },
+            { QStringLiteral("role"),         p.role },
+            { QStringLiteral("organisation"), p.organisation },
+            { QStringLiteral("notes"),        p.notes },
+            { QStringLiteral("fileCount"),    p.fileCount },
+            { QStringLiteral("faceCount"),    p.faceCount },
+            { QStringLiteral("pendingCount"), p.pendingCount },
+            { QStringLiteral("coverUrl"),     cover },
+        });
+    }
+    return list;
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::person(int personId)
+{
+    for (const QVariant &v : people(QString()))
+        if (v.toMap().value(QStringLiteral("id")).toInt() == personId)
+            return v.toMap();
+    return QVariantMap();
+}
+//----------------------------------------------------------------------
+int AppManager::savePerson(const QVariantMap &values)
+{
+    if (!peopleStoreRefusal().isEmpty())
+        return -1;
+    MdiPeople::Person p;
+    p.id           = values.value(QStringLiteral("id")).toInt();
+    p.firstName    = values.value(QStringLiteral("firstName")).toString();
+    p.lastName     = values.value(QStringLiteral("lastName")).toString();
+    p.role         = values.value(QStringLiteral("role")).toString();
+    p.organisation = values.value(QStringLiteral("organisation")).toString();
+    p.notes        = values.value(QStringLiteral("notes")).toString();
+    const int id = MdiPeople::savePerson(kMdiMainConnection, p);
+    if (id <= 0)
+        return -1;
+    // A new name or role: the person's files are found by it
+    if (p.id > 0)
+        reindexFileInfo(peoplePairs(MdiPeople::filesOfPerson(kMdiMainConnection, id)));
+    emit peopleChanged();
+    if (p.id > 0) {
+        emit fileInfoChanged();
+        emit facesChanged();
+    }
+    return id;
+}
+//----------------------------------------------------------------------
+QString AppManager::deletePerson(int personId)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    // Only the person and the links: no file is ever deleted
+    const QList<MdiPeople::FileRef> files = MdiPeople::filesOfPerson(kMdiMainConnection, personId);
+    if (!MdiPeople::deletePerson(kMdiMainConnection, personId))
+        return tr("The change could not be saved.");
+    reindexFileInfo(peoplePairs(files));
+    emit peopleChanged();
+    emit facesChanged();
+    emit fileInfoChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::addPeopleToFiles(const QVariantList &files, const QVariantList &personIds)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const QList<MdiPeople::FileRef> refs = peopleFileRefs(files);
+    if (refs.isEmpty())
+        return tr("Select one or more files.");
+    if (!MdiPeople::addPeopleToFiles(kMdiMainConnection, refs, peopleIds(personIds)))
+        return tr("The change could not be saved.");
+    reindexFileInfo(peoplePairs(refs));
+    emit fileInfoChanged();
+    emit peopleChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::removePersonFromFile(int personId, int catalogId, const QString &fullPath)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    if (!MdiPeople::removePersonFromFile(kMdiMainConnection, personId, catalogId, fullPath))
+        return tr("The change could not be saved.");
+    reindexFileInfo({{catalogId, fullPath}});
+    emit fileInfoChanged();
+    emit peopleChanged();
+    emit facesChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::filesOfPerson(int personId)
+{
+    QVariantList list;
+    if (!peopleStoreRefusal().isEmpty())
+        return list;
+    QHash<int, int> deviceByCatalog;
+    for (const Device::DeviceTreeNode &n : Device::loadDeviceTree(m_connectionName))
+        if (n.type == QLatin1String("Catalog"))
+            deviceByCatalog.insert(n.externalId, n.id);
+    QList<MdiPeople::FileRef> files = MdiPeople::filesOfPerson(kMdiMainConnection, personId);
+    // By catalog: the preview index is read once per catalog
+    std::stable_sort(files.begin(), files.end(), [](const MdiPeople::FileRef &a, const MdiPeople::FileRef &b) {
+        return a.catalogId < b.catalogId;
+    });
+    for (const MdiPeople::FileRef &f : std::as_const(files)) {
+        const QFileInfo info(f.fullPath);
+        list.append(QVariantMap{
+            { QStringLiteral("catalogId"),  f.catalogId },
+            { QStringLiteral("deviceId"),   deviceByCatalog.value(f.catalogId, 0) },
+            { QStringLiteral("fullPath"),   f.fullPath },
+            { QStringLiteral("name"),       info.fileName() },
+            { QStringLiteral("folderPath"), info.path() },
+            { QStringLiteral("thumbUrl"),   mdiPreviewUrl(f.catalogId, f.fullPath, m_mdiRevision) },
+        });
+    }
+    return list;
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::findFilesByInfo(const QString &text, int limit)
+{
+    QVariantList list;
+    if (text.trimmed().isEmpty() || !peopleStoreRefusal().isEmpty())
+        return list;
+    QHash<int, int> deviceByCatalog;
+    for (const Device::DeviceTreeNode &n : Device::loadDeviceTree(m_connectionName))
+        if (n.type == QLatin1String("Catalog"))
+            deviceByCatalog.insert(n.externalId, n.id);
+    for (const MdiPeople::FileRef &f : MdiPeople::findFiles(kMdiMainConnection, text, {}, limit)) {
+        const QFileInfo info(f.fullPath);
+        list.append(QVariantMap{
+            { QStringLiteral("catalogId"),  f.catalogId },
+            { QStringLiteral("deviceId"),   deviceByCatalog.value(f.catalogId, 0) },
+            { QStringLiteral("fullPath"),   f.fullPath },
+            { QStringLiteral("name"),       info.fileName() },
+            { QStringLiteral("folderPath"), info.path() },
+            { QStringLiteral("thumbUrl"),   mdiPreviewUrl(f.catalogId, f.fullPath, m_mdiRevision) },
+        });
+    }
+    return list;
+}
+//----------------------------------------------------------------------
+bool AppManager::facesAvailable()
+{
+    return facesUnavailableReason().isEmpty();
+}
+//----------------------------------------------------------------------
+QString AppManager::facesUnavailableReason()
+{
+    if (collection->databaseMode == QLatin1String("Hosted"))
+        return tr("Face recognition is not available for hosted collections.");
+    if (!MdiFaces::compiledIn())
+        return tr("Face recognition is not available: this version of Teca was built without OpenCV.");
+    const QVariantMap tools = getEnrichmentTools();
+    if (tools.value(QStringLiteral("faceDetectorModel")).toString().isEmpty()
+        || tools.value(QStringLiteral("faceRecognizerModel")).toString().isEmpty())
+        return tr("Face recognition models not found: face_detection_yunet and face_recognition_sface (ONNX) are needed in %1.")
+            .arg(QDir::homePath() + QStringLiteral("/teca-models"));
+    return QString();
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::facesInFile(int catalogId, const QString &fullPath)
+{
+    QVariantList list;
+    if (!peopleStoreRefusal().isEmpty())
+        return list;
+    const QHash<int, QString> names = personNames(kMdiMainConnection);
+    for (const MdiPeople::Face &f : MdiPeople::facesOfFile(kMdiMainConnection, catalogId, fullPath))
+        list.append(faceRow(f, names));
+    return list;
+}
+//----------------------------------------------------------------------
+QString AppManager::confirmFaces(const QVariantList &faceIds, int personId)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const QList<int> ids = peopleIds(faceIds);
+    QList<QPair<int, QString>> files;
+    for (int id : ids) {
+        const MdiPeople::Face f = MdiPeople::face(kMdiMainConnection, id);
+        if (f.id == id && !files.contains({f.catalogId, f.fullPath}))
+            files.append({f.catalogId, f.fullPath});
+    }
+    if (!MdiPeople::confirmFaces(kMdiMainConnection, ids, personId))
+        return tr("The change could not be saved.");
+    // The person's new faces make new suggestions, still to be approved
+    MdiPeople::suggestForPerson(kMdiMainConnection, personId, faceMatchThreshold());
+    reindexFileInfo(files);
+    emit facesChanged();
+    emit peopleChanged();
+    emit fileInfoChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::rejectFaces(const QVariantList &faceIds)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const QList<int> ids = peopleIds(faceIds);
+    QList<QPair<int, QString>> files;
+    for (int id : ids) {
+        const MdiPeople::Face f = MdiPeople::face(kMdiMainConnection, id);
+        if (f.id == id && f.personId > 0)
+            files.append({f.catalogId, f.fullPath});
+    }
+    if (!MdiPeople::rejectFaces(kMdiMainConnection, ids))
+        return tr("The change could not be saved.");
+    reindexFileInfo(files);
+    emit facesChanged();
+    emit peopleChanged();
+    if (!files.isEmpty())
+        emit fileInfoChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::ignoreFaces(const QVariantList &faceIds)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const QList<int> ids = peopleIds(faceIds);
+    QList<QPair<int, QString>> files;
+    for (int id : ids) {
+        const MdiPeople::Face f = MdiPeople::face(kMdiMainConnection, id);
+        if (f.id == id && f.personId > 0)
+            files.append({f.catalogId, f.fullPath});
+    }
+    if (!MdiPeople::ignoreFaces(kMdiMainConnection, ids))
+        return tr("The change could not be saved.");
+    reindexFileInfo(files);
+    emit facesChanged();
+    emit peopleChanged();
+    if (!files.isEmpty())
+        emit fileInfoChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QString AppManager::clearFace(int faceId)
+{
+    const QString refusal = peopleStoreRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const MdiPeople::Face f = MdiPeople::face(kMdiMainConnection, faceId);
+    if (!MdiPeople::clearFace(kMdiMainConnection, faceId))
+        return tr("The change could not be saved.");
+    if (f.personId > 0) {
+        reindexFileInfo({{f.catalogId, f.fullPath}});
+        emit fileInfoChanged();
+    }
+    emit facesChanged();
+    emit peopleChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::similarFaces(int personId, int limit, double minScore)
+{
+    QVariantList list;
+    if (!peopleStoreRefusal().isEmpty())
+        return list;
+    const QHash<int, QString> names = personNames(kMdiMainConnection);
+    const double floor = minScore > 0 ? minScore : faceMatchThreshold();
+    for (const auto &pair : MdiPeople::similarFaces(kMdiMainConnection, personId, limit, floor)) {
+        QVariantMap row = faceRow(pair.first, names);
+        row[QStringLiteral("suggestionScore")] = row.value(QStringLiteral("score"));
+        row[QStringLiteral("score")] = pair.second;   // similarity to this person
+        list.append(row);
+    }
+    return list;
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::pendingFaces(int limit)
+{
+    QVariantList list;
+    if (!peopleStoreRefusal().isEmpty())
+        return list;
+    const QHash<int, QString> names = personNames(kMdiMainConnection);
+    for (const MdiPeople::Face &f : MdiPeople::pendingFaces(kMdiMainConnection, limit))
+        list.append(faceRow(f, names));
+    return list;
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::unnamedFaceGroups(int limit)
+{
+    QVariantList list;
+    if (!peopleStoreRefusal().isEmpty())
+        return list;
+    const QHash<int, QString> names = personNames(kMdiMainConnection);
+    const double threshold = qMax(MdiPeople::kGroupThreshold, faceMatchThreshold());
+    int groupId = 0;
+    for (const QList<MdiPeople::Face> &group : MdiPeople::unnamedGroups(kMdiMainConnection, limit, threshold)) {
+        QVariantList faces;
+        for (const MdiPeople::Face &f : group)
+            faces.append(faceRow(f, names));
+        list.append(QVariantMap{ { QStringLiteral("groupId"), ++groupId },
+                                 { QStringLiteral("size"),    int(group.size()) },
+                                 { QStringLiteral("faces"),   faces } });
+    }
+    return list;
+}
+//----------------------------------------------------------------------
+QString AppManager::startFaceAnalysis(int deviceId)
+{
+    const QString reason = facesUnavailableReason();
+    if (!reason.isEmpty())
+        return reason;
+    MdiData::PendingJob job;
+    job.deviceId = deviceId;
+    job.kind     = QStringLiteral("faces");
+    return startMdiJob(job, false);
+}

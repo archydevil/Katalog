@@ -45,6 +45,9 @@ set(CORE_HEADERS
     mdicontext.h
     mdiknowledge.h
     cataloghistory.h
+    mditranscriptfilter.h
+    mdipeople.h
+    mdifaces.h
 )
 
 set(CORE_SOURCES
@@ -94,6 +97,9 @@ set(CORE_SOURCES
     mdicontext.cpp
     mdiknowledge.cpp
     cataloghistory.cpp
+    mditranscriptfilter.cpp
+    mdipeople.cpp
+    mdifaces.cpp
 )
 
 add_library(katalog-core STATIC ${CORE_SOURCES} ${CORE_HEADERS})
@@ -113,6 +119,19 @@ find_package(KF6Archive QUIET)
 if (TARGET KF6::Archive)
     target_link_libraries(katalog-core PUBLIC KF6::Archive)
     target_compile_definitions(katalog-core PUBLIC KATALOG_HAS_KARCHIVE)
+endif()
+
+# Fork: faces found and recognised locally with OpenCV (YuNet + SFace) when
+# OpenCV is available; without it the "faces" analysis is skipped and reports
+# why (owner's answer 2026-10-30, SpecMediaIntelligence.md)
+find_package(OpenCV QUIET COMPONENTS core imgproc dnn objdetect)
+if (OpenCV_FOUND)
+    message(STATUS "OpenCV ${OpenCV_VERSION}: face recognition enabled")
+    target_include_directories(katalog-core PRIVATE ${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(katalog-core PRIVATE opencv_core opencv_imgproc opencv_dnn opencv_objdetect)
+    target_compile_definitions(katalog-core PRIVATE TECA_HAVE_OPENCV)
+else()
+    message(STATUS "OpenCV not found: face recognition disabled")
 endif()
 
 target_include_directories(katalog-core
