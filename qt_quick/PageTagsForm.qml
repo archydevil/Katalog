@@ -246,7 +246,12 @@ ColumnLayout {
                             icon.name: "edit-delete"
                             text: qsTr("Remove this label")
                             flat: true
-                            onClicked: appManager1.deleteTag(entryRow.modelData.tagId)
+                            onClicked: {
+                                removeLabelDialog.tagId  = entryRow.modelData.tagId
+                                removeLabelDialog.label  = entryRow.modelData.name
+                                removeLabelDialog.folder = entryRow.modelData.folder
+                                removeLabelDialog.open()
+                            }
                         }
                     }
                 }
@@ -274,4 +279,34 @@ ColumnLayout {
     }
 
     Item { Layout.fillHeight: true }
+
+    // Removing a label asks first, and says what stays
+    Kirigami.PromptDialog {
+        id: removeLabelDialog
+        property var    tagId
+        property string label:  ""
+        property string folder: ""
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Remove this label?")
+        subtitle: qsTr("The label %1 is taken off %2: a search by this label no longer finds its files.")
+                      .arg(removeLabelDialog.label).arg(removeLabelDialog.folder)
+                  + " " + qsTr("Removing a label leaves the folder and its files untouched.")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTranslate("Main", "Remove")
+                icon.name: "edit-delete"
+                onTriggered: {
+                    appManager1.deleteTag(removeLabelDialog.tagId)
+                    removeLabelDialog.close()
+                }
+            },
+            Kirigami.Action {
+                text: qsTranslate("Main", "Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: removeLabelDialog.close()
+            }
+        ]
+    }
 }
