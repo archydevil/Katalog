@@ -2761,7 +2761,8 @@ Kirigami.ApplicationWindow {
             }
             onAccepted: {
                 devUpdateAllDialog.close()
-                appManager1.updateAllActiveDevices(devUpdateAllSummaryBox.checked)
+                if (appManager1.updateAllActiveDevices(devUpdateAllSummaryBox.checked) === 0)
+                    showPassiveNotification(qsTr("Nothing to update: no catalog of this choice has its drive connected."))
             }
             onRejected: devUpdateAllDialog.close()
         }
@@ -4026,6 +4027,7 @@ Kirigami.ApplicationWindow {
         visible: false
         title: qsTr("Action history")
         titleDelegate: Component { NavTitle { text: pageHistory.title } }   // Back, Forward, title (D36)
+        onVisibleChanged: pageHistory_form.setShown(visible)
         PageHistory {
             id: pageHistory_form
         }

@@ -620,7 +620,7 @@ public slots:
     Q_INVOKABLE int          addDeviceVirtual(int parentId);
     Q_INVOKABLE int          addDeviceStorage(int parentId);
     Q_INVOKABLE void         updateDevice(int deviceId);
-    Q_INVOKABLE void         updateAllActiveDevices(bool showEachReport = false);
+    Q_INVOKABLE int          updateAllActiveDevices(bool showEachReport = false);   // catalogs started or queued
     // Operation queue (SpecOperationQueue.md)
     QVariantList             getOperationQueue() const;
     int                      getOperationQueueWaitingCount() const { return m_pendingDeviceUpdates.size(); }

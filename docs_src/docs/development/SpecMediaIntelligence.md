@@ -2703,6 +2703,64 @@ and a K2 build with OpenCV.
   `Q68` (a); the partial items of `MDI-F160`, `MDI-F173`, `MDI-F177` and
   `MDI-F181`.
 
+### Review fixes and the portable macOS build — recorded 2026-10-30
+
+The main agent brought a read-only review of the D38–D41 views, and the
+portable macOS build made at the owner's request (relayed: "versione portabile
+mac … fai tutto"; the specifications agent did not see it). Each item was
+judged against the rows; the code was read only to check conformance. Commits
+`fc389153` and `47e5d77b` were made while the verdicts were given: not
+reviewed in full, nothing tested in the app.
+
+**Fixes within existing rows, no decision needed.** K3 only, no `core/`
+change: `MdiPeople::updateAnnotations` already takes `peopleRemove`,
+`tagsRemove` and an empty field. A new `AppManager` accessor calls existing
+core methods only and holds no raw `QSqlQuery` (`MDI-C38`);
+`deviceIdOfCatalog` (`fc389153`, through `Device::loadDeviceTree`) does. New
+strings follow D16 and `MDI-C39`: the owner approves them at the end of the
+step.
+
+| Finding | Rows | Fix |
+| --- | --- | --- |
+| *Persone* and a folder's proposals stay as they were while *faces* or *dating* runs, though the app says "the proposals appear here as it goes" | `MDI-F164`, `MDI-F167`, `MDI-F169`, `MDI-F175`, `MDI-O6` | Refresh when shown, and while shown when derived data changes, coalesced |
+| *Persone* holds the window: the face groups are computed again at each approval, each filter keystroke, and while hidden | `MDI-F164`, `MDI-F169`, `MDI-O6` | Refresh only when shown, coalesced; the filter reads the people only; a group shows its first faces, with a control that shows them all |
+| A person's photos stop at 60 | `MDI-F162` | "Show all" lists every file of the person |
+| Naming a group with no face ticked names every face of the group, the unseen ones too | `MDI-F169`, `MDI-O14` | A modal confirmation with the count first (`MDI-C17`); the row's outcome is unchanged |
+| Approving a proposal for a field the user filled seems to do nothing | `MDI-F175` | Show the user's value and the message the approval returns. Replacing the value is not authorised (finding *Replacing the user's own value*) |
+| *Read the document* and *Dettagli del file* reload at every change while a job writes, and the reader loses its place | `MDI-F159`, `MDI-F180`, `MDI-O12` | Reload only when that file or catalog changed, coalesced; opened fragments stay open |
+| "Study the documents of this drive" in the reader acts on the choice of *I miei dischi* | `MDI-F8`, `MDI-F179` (D8) | Act on the document's own catalog |
+| A bulk edit cannot remove a person or a tag from the files, or clear a field (known gap) | `MDI-F160` | Allowed for every selected file, after a modal confirmation with the count (`CLAUDE.md`, destructive actions) |
+| Face tiles do not say which photo they come from | `MDI-F167`–`F169`, `MDI-F153` | Tooltip and accessible name with the file and its folder |
+| Proposal sources and field names show in raw English | `MDI-F175`, `MDI-C17` | The translated labels `AppManager` already gives (`kindLabel`, `fieldLabel`) |
+| The end of a web search (`webQueriesFinished`) shows nothing | `MDI-F177`, `MDI-C57` | A passive notification with the result or the error |
+| On *Persone*, Enter does not act as Space on cards and tiles; the drive picker hides whether the drive is connected (its files are left out when it is not, `Q69` (j)) | `MDI-O12` (SC 2.1.1); `MDI-F165` | Enter acts as Space; the picker shows the drive's state as Home does (`MDI-F114`), with no new check on the UI thread (`Q42`) |
+| *Storico* refreshes while hidden; the reader's export dialog opens at `/`; `console.log` calls left in | `MDI-F138`; `MDI-F181`; — | Refresh when shown; open in a user folder; remove the logging (nothing logged may hold a key, `MDI-C13`) |
+
+**Not authorised by any row (the owner's choice; a row first).**
+
+- A search choice "In the information" with its own result list
+  (`findFilesByInfo`): `Q67` (b), open. `MDI-F163` authorises no text search
+  by information.
+- Person, event, place and tag chips in *Dettagli del file* that start a
+  search: new behaviour, through `Q67` (b) or a row for a search by meaning
+  from a chip.
+- "Use this value instead": against `MDI-F175` (finding *Replacing the user's
+  own value*).
+- "Show the photo" from a face tile; "Ignore these faces" (`ignoreFaces`, a
+  state *ignored* that `MDI-F166` does not define; finding *API beyond the
+  contract*).
+- A "To review" card on Home: Home's content is listed by `MDI-F112`.
+- An empty state for a search with no result, offering other choices: no row
+  (`MDI-C40`, `Q45`).
+- Plural-aware forms of counts already approved: `Q64`, open.
+
+**Portable macOS build.** Within the rows: the clean `qt.conf`, written by the
+script and by the workflow so that the app reads its QML modules from its own
+folders (`DPL-O1`, `DPL-F2`); Kirigami's `Theme.qml` copied for `TecaStyle` as
+for Fusion (`DPL-C6`, *Specs to amend*); Qt and KF6 through `macdeployqt`
+(`DPL-O1`). Not within them: the programs and models carried in the app
+(finding *Portable macOS build carries the tools and models*).
+
 ### Known gaps
 
 - Settings UI for tool paths and models (`MDI-F20`, `MDI-F23`).
@@ -2764,6 +2822,48 @@ and a K2 build with OpenCV.
   2026-10-30.
 
 ### Findings for the fork owner (not authorised by any row)
+
+Findings of the review and the portable macOS build (2026-10-30, late;
+*Review fixes and the portable macOS build*). Open; each needs the owner's
+decision.
+
+- **Portable macOS build carries the tools and models (D9; `7fc239df`,
+  `8889479b`).** `packaging/macos/Teca_macos_create_portable.sh` and
+  `packaging/macos/bundle_tools.py` copy `ffmpeg`, `ffprobe`, `whisper-cli`
+  with the `ggml` backends, `pdftotext`, `pdftoppm`, `tesseract` and `exiv2`
+  into `Teca.app/Contents/Helpers` and their Homebrew libraries into
+  `Contents/Frameworks`; the Silero VAD, YuNet and SFace models, `tessdata`
+  (`ita`, `eng`, `osd`) and, unless `--no-speech-model`, the whisper model
+  (about 550 MB) into `Contents/Resources/models`; then an ad-hoc signature
+  and a DMG. `AppManager::getEnrichmentTools` takes the copy in the app after
+  the setting and the computer. D9 says Katalog does not bundle the tools or
+  the models, and defers bundling and its licence review; `MDI-F20`,
+  `MDI-C50`, `MDI-C52`, `MDI-C54`, `MDI-C8` (`exiv2`) and *Scope* (non-goals)
+  say the same. The owner's request for a portable Mac version, relayed by the
+  main agent, does not settle that review. **What holds:** the programs stay
+  external programs started with `QProcess`, never linked (D4, `MDI-C7`,
+  `MDI-C8`); the setting and the computer still come first and nothing is
+  written to a settings file, so a beta settings file is unaffected
+  (`MDI-C7`, `MDI-C41`). **Open:** (a) lift D9 for the macOS portable build,
+  or remove the copy; (b) a DMG for the owner's Macs, or one that is
+  distributed: a distributed DMG carries GPL programs (`ffmpeg` built with
+  x264 and x265, poppler, `exiv2`), and the bundle has no licence notices and
+  no source offer today; (c) its limits: Apple Silicon only, macOS 26 at
+  least — not `DPL-F6`'s macOS 15, so this DMG is not the workflow's package
+  —, an ad-hoc signature that Gatekeeper questions, Ollama installed apart;
+  (d) `Q66` (b) and (d). **Also:** `MdiFaces::findModel` already looked in
+  folders of the app (`models`, `../Resources/models`,
+  `../share/teca/models`), beyond `MDI-C50`'s `~/teca-models` (drift,
+  harmless until a model is put there); and
+  `packaging/macos/__pycache__/bundle_tools.cpython-315.pyc`, a build
+  artefact, is committed (removing it needs the owner's word).
+- **Replacing the user's own value (`MDI-F175`; `47e5d77b` and the working
+  tree).** In *Dettagli del file*, a proposal for a field the user filled
+  offers "Use this value instead", and a dialog "Replace your value?" calls
+  `acceptProposals(…, true)`. `MDI-F175`, as the owner amended it ("Approvo
+  tutto", `Q70` (c)), says no approval replaces a value the user wrote; that
+  value changes only when the user edits it. Remove the replacement, or amend
+  `MDI-F175`?
 
 Findings of D38–D41 (2026-10-30). Most were decided by the owner in the
 second round (*D38–D41 — the owner's answers of 2026-10-30, second round*);
@@ -2999,7 +3099,7 @@ Earlier findings:
 | Q63 | **Delete dialog wording** (UX audit). The device deletion confirmation reads "dispositivo Catalog": an Italian word with the English device type. Reword with a translated type? Existing string: per-string approval. | Owner's choice |
 | Q64 | **Plural forms** (UX audit). "%1 passages" and "%1 terms" are not plural-aware ("1 passages"). Use Qt's `%n` plural forms? Each is a new string in place of the old one (`MDI-C39`). D36 adds "%1 catalog(s), %2 file(s)". | Owner's choice |
 | Q65 | **Faces and the GDPR (D39).** Faces processed to recognise a person are biometric data (GDPR art. 9), and the UITS archive shows real people. (a) On which legal basis does the archive run the *faces* analysis? (b) How long are face features and suggestions kept: until each is confirmed or rejected, or as long as the photo is catalogued? (c) Is a "delete all face data" action wanted — every face row, feature and suggestion removed, people and information kept — and with which confirmation (`MDI-C51`)? The specifications agent records the question and gives no legal opinion. | Owner's choice. Recommended before the analysis runs on the UITS archive. Still open when *faces* was built (2026-10-30). **Decided 2026-10-30 (owner, "Sì, con 'Cancella dati dei volti'"):** (a) the owner runs the analysis on his responsibility for the legal basis; (c) yes, `MDI-F182`, with a modal confirmation. (b) not asked, open |
-| Q66 | **OpenCV packaging and the models (D39).** (a) Windows and Linux: which OpenCV the portable builds carry, its size and its licence notice. (b) macOS: Homebrew's `opencv` pulls in many libraries; which of them `Teca.app` must carry. (c) A package without OpenCV has no faces, while `DPL-O1` asks a package to work as a build from source does: accept faces off in some packages, or require OpenCV in every package? (d) The models: installed by the user in `~/teca-models` (D9, as the whisper model), or downloaded by Teca on request? A download is a network destination other than `localhost`, so an exception to `MDI-C11` and D9. (e) A K2 build links OpenCV when found (`MDI-C50`): accept, or link it to K3 only? | Before the faces step is packaged; (d) before any download is built. As built (2026-10-30): (d) the user installs the models, with no download; (e) OpenCV is linked `PRIVATE` to `katalog-core`, so a K2 build that finds it links it too |
+| Q66 | **OpenCV packaging and the models (D39).** (a) Windows and Linux: which OpenCV the portable builds carry, its size and its licence notice. (b) macOS: Homebrew's `opencv` pulls in many libraries; which of them `Teca.app` must carry. (c) A package without OpenCV has no faces, while `DPL-O1` asks a package to work as a build from source does: accept faces off in some packages, or require OpenCV in every package? (d) The models: installed by the user in `~/teca-models` (D9, as the whisper model), or downloaded by Teca on request? A download is a network destination other than `localhost`, so an exception to `MDI-C11` and D9. (e) A K2 build links OpenCV when found (`MDI-C50`): accept, or link it to K3 only? | Before the faces step is packaged; (d) before any download is built. As built (2026-10-30): (d) the user installs the models, with no download; (e) OpenCV is linked `PRIVATE` to `katalog-core`, so a K2 build that finds it links it too. **As built later (2026-10-30, the local macOS portable DMG only, against D9; finding *Portable macOS build*):** (b) `Teca.app` carries OpenCV through `macdeployqt`; (d) the models travel in `Teca.app/Contents/Resources/models`. For the owner |
 | Q67 | **How Search finds files by information and people (D38, `MDI-F163`).** The design feeds them into the instant index (`MDI-F76`), but the index never changes a name search's results (`MDI-F77`, `MDI-C23`): a name search would still not find a photo by the person in it. (a) Embed the information and the names for semantic search (`MDI-F47`, *by meaning*). (b) A new way to search by information in *Cerca nei dischi*, matching the text of the information and the people: new behaviour, which answers part of `Q45`. (c) Both. Each needs its own row before it is built. | Owner's choice; before `MDI-F163` is built. **Built ahead of the answer (2026-10-30):** (a), the "info" vectors, against `MDI-C51`; and (b) in core and `AppManager` (`findFilesByInfo`), not wired (findings) **Decided 2026-10-30 (owner, "Persone e info in 'per significato'"):** (a); `MDI-F47`, `MDI-F163`, `MDI-C51` amended. (b) open; `findFilesByInfo` kept, unused. |
 | Q68 | **Transcript details (D40).** (a) In `whisper.cpp` the initial prompt goes through the text context that `-mc` limits, so with `-mc 0` the glossary prompt of `MDI-F98`'s option may be ignored (to check on the installed version). Keep `-mc 0` and drop the prompt, or keep the prompt? (b) With no VAD model, or a `whisper.cpp` without VAD: transcribe without VAD and still filter (recorded in the provenance), or skip with the reason (`MDI-F21`)? (c) A listed phrase that was really said ("Grazie.", "Thank you.") is dropped too. Accept? (d) *Skipped (no speech found)* is retried at every run, since only a completed datum counts as current (finding *Skipped analyses and `MDI-F13`*). Count it as current until the file changes? (e) Summaries of recordings (finding *Summaries of recordings*) and classifications (`MDI-F100`) made from an invented transcript: redo them after the cleaning, or leave them? (f) The specifications agent's readings: the cleaning asks a confirmation with its counts and cannot be undone (D13); the recomputation runs as an enrichment job; the new options do not make stored transcripts out of date (`MDI-C52`). Confirm. | Owner's choice; (a), (b) and (f) before `MDI-F171`–`F173` are built. **Answered in code, for the owner to confirm (2026-10-30):** (a) checked: `-mc 0` drops `--prompt` in `whisper.cpp` 1.9.5; with a hint, `-mc 64 --carry-initial-prompt`. (b) Without the VAD model, transcribe without VAD and filter; provenance `vad: off`. (d) Such a skip counts as current while the file and the parameters are unchanged. (e) Summaries made from the whisper transcript are removed, to be redone; classifications are left. (f) Not as read: no confirmation, the recomputation waits for the next run, and the new options make every stored transcript out of date (findings) **2026-10-30 (owner, "Rifai tutte"):** (f), third reading reversed: every stored transcript is made again (`MDI-C52`); the cleaning's run without confirmation accepted after the fact. (a) not asked, open. |
 | Q69 | **Readings of D38 and D39** (the specifications agent's, in `MDI-F158`–`F170`, `MDI-C49`). (a) Bulk edit: a changed field goes to every selected file, an untouched one keeps each file's value (`MDI-F160`); free *Tags* added to each file's tags, or replacing them? (b) Information on any file, not only photos (`MDI-F158`). (c) The free *Tags* are not Katalog's user tags (`Tags` page), so two kinds of user tags exist. Or should they be the same? (d) After *Not this person*, that person is not suggested for that face again, nor listed among their similar faces (`MDI-F166`, `MDI-F168`). (e) A confirmed face counts its person among the file's people (`MDI-F162`). (f) Deleting a person turns their confirmed faces back to unknown (`MDI-F161`). (g) User data survives *Clear derived data*, re-runs and a new faces run (`MDI-C49`). When a catalog is deleted (`MDI-F57`), do its files' information, people links and faces go with it? (h) The carry-over extends `MdiData::moveToCatalogs` (`MDI-C49`): does "Approvo" cover that change? (i) The people of `MDI-F161` and the context's known entities of kind *person* (`MDI-F94`) are two lists: link them, or keep them apart? (j) Faces in images only; video frames (poster, contact sheet) are left out (`MDI-F165`). (k) The similarity that makes a suggestion and the one that groups unnamed faces; can a group be corrected before it is named (`MDI-F169`)? (l) The sidebar group of *Persone* (`MDI-F164`). | Readings applied when the step is built unless the owner decides otherwise; (h) before `MDI-C49` is built. **As built (2026-10-30):** (a) tags are added; an empty field is left untouched. (h) built before the owner confirmed. (j) images only, files on a disconnected drive left out. (k) suggestion at 0.363 (a setting), groups at max(0.42, that value), at most 4,000 faces; naming a group attributes its ticked faces, or all of them when none is ticked. (l) *Intelligenza*. (c), (g), (i) not changed: two kinds of tags, two lists of people **Decided 2026-10-30 (owner, "Approvo tutto"):** (h) ratified. |

@@ -5093,7 +5093,7 @@ void AppManager::updateDevice(int deviceId)
     startNextDeviceUpdate();
 }
 //----------------------------------------------------------------------
-void AppManager::updateAllActiveDevices(bool showEachReport)
+int AppManager::updateAllActiveDevices(bool showEachReport)
 {
     const QString conn = m_connectionName;
 
@@ -5102,8 +5102,10 @@ void AppManager::updateAllActiveDevices(bool showEachReport)
     int scopeId = selectedDevice ? selectedDevice->ID : 0;
     QList<Device *> activeCatalogs = Device::getActiveCatalogList(conn, scopeId);
 
+    // How many catalogs go: none tells the page to say so (fork, 2026-10-30)
+    const int count = activeCatalogs.size();
     if (activeCatalogs.isEmpty())
-        return;
+        return 0;
 
     if (m_deviceUpdateIsRunning
         || (m_deviceUpdateManager && m_deviceUpdateManager->operationRunning())) {
@@ -5115,7 +5117,7 @@ void AppManager::updateAllActiveDevices(bool showEachReport)
         for (Device *d : activeCatalogs)
             enqueueOperation(d->ID, false, d->name);
         qDeleteAll(activeCatalogs);
-        return;
+        return count;
     }
 
     m_showEachUpdateReport  = showEachReport;
@@ -5153,6 +5155,7 @@ void AppManager::updateAllActiveDevices(bool showEachReport)
         // values but the copies share raw catalog*/storage* pointers with the originals.
         // Deleting the originals would create dangling pointers in dummy->subDevices (same pattern as K2).
     }
+    return count;
 }
 //----------------------------------------------------------------------
 void AppManager::stopDeviceUpdate()

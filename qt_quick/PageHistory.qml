@@ -43,11 +43,25 @@ ColumnLayout {
              : action === "restore" ? "ok" : "neutral"
     }
 
-    Component.onCompleted: refresh()
+    // Read while shown only (the grouping asks every drive for a proposal);
+    // a change while hidden is read when the page shows again
+    property bool stale: true
+    function setShown(shown) {
+        if (shown && history.stale) {
+            history.stale = false
+            history.refresh()
+        }
+    }
+    function changed() {
+        if (history.visible)
+            history.refresh()
+        else
+            history.stale = true
+    }
     Connections {
         target: appManager1
-        function onHistoryChanged()     { history.refresh() }
-        function onDeviceListChanged()  { history.refresh() }
+        function onHistoryChanged()     { history.changed() }
+        function onDeviceListChanged()  { history.changed() }
     }
 
     // What the page is for
