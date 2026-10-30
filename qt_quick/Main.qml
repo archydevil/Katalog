@@ -998,9 +998,11 @@ Kirigami.ApplicationWindow {
         const deviceId = root.catalogPaths[folderPath] || 0
         return deviceId !== exploreFolders.openedDeviceId ? deviceId : 0
     }
+    // Opened in Browse only, like Explore's other direct opens: the choice in My
+    // drives, and so what Search covers, stays as it is
     function openCatalogFolder(deviceId) {
-        appManager1.selectDeviceById(deviceId)
-        root.browseSelection()
+        root.exploreChooser = false
+        exploreFolders.openByDeviceId(deviceId)
     }
 
     globalDrawer: Kirigami.GlobalDrawer {

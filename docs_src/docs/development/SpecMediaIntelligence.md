@@ -296,9 +296,30 @@ committed before the rows were written (`2cdcd326` to `cba65b5b`).
   (2026-10-30). The Italian of "AI analysis" was aligned to *Analisi AI*. This
   changes the translation only.
 
+**Browse never empty (D34 follow-up, 2026-10-30).** On 2026-10-30 the fork
+owner asked that every feature be easy, explained and simple to use ("a prova
+di deficiente"). Offered four options, he chose *Sfoglia mai vuota*, worded to
+him as: "Se nessun disco è scelto, Sfoglia mostra i dischi da aprire invece di
+'Nessuna cartella selezionata'; i file con risultati AI hanno un'etichetta 'AI'
+e una riga spiega che cliccandoli si vedono anteprima, descrizione e
+trascrizione." The answer is relayed by the main agent; the agent did not see
+it itself. Rows `MDI-F129`–`F131` and `MDI-C44`. This is new behaviour, not a
+presentation phase, so `MDI-C44` bounds it in place of `MDI-C40`. The other
+three options were not chosen now (`Q48`).
+
 | # | Decision (2026-10-29, fork owner) |
 | --- | ------------------------ |
-| D34 | **New design system and new K3 interface** (owner's request, 2026-10-29: "adesso cambiamo completamente il design system e generiamo una interfaccia completamente nuova e con una nomenclatura parlante. con card, infotags, descrizioni e una navigabilità moderna e semplice."). Answers: (1) "Che stile vuoi per il nuovo design system?" → "Control Center (Consigliato)" — card su fondo morbido, angoli arrotondati, un colore d'accento, infotag colorati per stato e tipo; segue chiaro/scuro del Mac; (2) "Come vuoi muoverti nell'app?" → "Barra laterale + Home (Consigliato)" — una barra fissa a sinistra con poche voci raggruppate e descritte; una Home con card dei dischi, lavori in corso e scorciatoie; (3) "Nomenclatura parlante … Vale solo per Katalog 3 (Katalog 2 resta com'è)?" → free answer: "tutto nuovo e con traduzione solo in ita e inglese per ora. cambiamo tutto"; (4) "Come procediamo?" → "Prima un prototipo da vedere (Consigliato)"; (5) design system of the prototype → "Uno nuovo per Katalog (Consigliato)". Prototype: <https://claude.ai/artifact/JVQYDfH6v7wgLsv96WGQpY> (Home, Design system, Sfoglia l'archivio, Cerca nei dischi, Conoscenza dell'archivio, Lavori in corso), with the names of the table *Nomenclature (D34)* and the sidebar groups *Archivio*, *Intelligenza*, *Altro*. After the prototype: «procedi». Effects: the sidebar replaces the side menu of D29 (`MDI-F89`) and the *Tools* place of the *Context* page (`Q19`, `MDI-F107`) once phase R1 is built; D20's "Search, Devices and Settings are unchanged for now" ends with phases R3, R7 and R8; new strings of the redesign are in English and Italian only "per ora" (`MDI-C39`). "Cambiamo tutto" is the whole K3 interface; K2 stays unchanged ("Solo Katalog 3", `Q32`; D1, `MDI-C1`). Text sizes and colours are fixed, as in the prototype, independent of the *Text size* and *Theme* settings (`Q34`, `Q35`). The navigation and Home choices made in code were approved ("Approvo tutto", `Q36`–`Q38`). Phases R1–R8 (*Phasing*). R1 rows: `MDI-O9`, `MDI-F111`–`F115`, `MDI-C18`, `MDI-C37`–`C39`. R2–R8 rows: `MDI-F116`–`F122`, `MDI-C40`. Name, style and *My drives*: `MDI-F123`–`F125`, `MDI-C41`, `MDI-C42`. |
+| D34 | **New design system and new K3 interface** (owner's request, 2026-10-29: "adesso cambiamo completamente il design system e generiamo una interfaccia completamente nuova e con una nomenclatura parlante. con card, infotags, descrizioni e una navigabilità moderna e semplice."). Answers: (1) "Che stile vuoi per il nuovo design system?" → "Control Center (Consigliato)" — card su fondo morbido, angoli arrotondati, un colore d'accento, infotag colorati per stato e tipo; segue chiaro/scuro del Mac; (2) "Come vuoi muoverti nell'app?" → "Barra laterale + Home (Consigliato)" — una barra fissa a sinistra con poche voci raggruppate e descritte; una Home con card dei dischi, lavori in corso e scorciatoie; (3) "Nomenclatura parlante … Vale solo per Katalog 3 (Katalog 2 resta com'è)?" → free answer: "tutto nuovo e con traduzione solo in ita e inglese per ora. cambiamo tutto"; (4) "Come procediamo?" → "Prima un prototipo da vedere (Consigliato)"; (5) design system of the prototype → "Uno nuovo per Katalog (Consigliato)". Prototype: <https://claude.ai/artifact/JVQYDfH6v7wgLsv96WGQpY> (Home, Design system, Sfoglia l'archivio, Cerca nei dischi, Conoscenza dell'archivio, Lavori in corso), with the names of the table *Nomenclature (D34)* and the sidebar groups *Archivio*, *Intelligenza*, *Altro*. After the prototype: «procedi». Effects: the sidebar replaces the side menu of D29 (`MDI-F89`) and the *Tools* place of the *Context* page (`Q19`, `MDI-F107`) once phase R1 is built; D20's "Search, Devices and Settings are unchanged for now" ends with phases R3, R7 and R8; new strings of the redesign are in English and Italian only "per ora" (`MDI-C39`). "Cambiamo tutto" is the whole K3 interface; K2 stays unchanged ("Solo Katalog 3", `Q32`; D1, `MDI-C1`). Text sizes and colours are fixed, as in the prototype, independent of the *Text size* and *Theme* settings (`Q34`, `Q35`). The navigation and Home choices made in code were approved ("Approvo tutto", `Q36`–`Q38`). Phases R1–R8 (*Phasing*). R1 rows: `MDI-O9`, `MDI-F111`–`F115`, `MDI-C18`, `MDI-C37`–`C39`. R2–R8 rows: `MDI-F116`–`F122`, `MDI-C40`. Name, style and *My drives*: `MDI-F123`–`F125`, `MDI-C41`, `MDI-C42`. Follow-up *Browse never empty* (2026-10-30): `MDI-F129`–`F131`, `MDI-C44`. |
+
+D35 was decided by the fork owner on **2026-10-30** in the main session. He was
+answering the main agent's question after the AI data of his split catalogs
+was found invisible. The reply is relayed by the main agent; the agent did not
+see it itself. "Sì, correggi" is also the `MDI-C14` approval of the core change
+of `MDI-C43`, as `CLAUDE.md` requires for `core/`.
+
+| # | Decision (2026-10-30, fork owner) |
+| --- | ------------------------ |
+| D35 | **AI data follows a split catalog** ("Sì, correggi"). When a catalog is split by sub-folder or by file type (`SpecDevicesSplit.md`), the AI data of its files moves to the new catalog that now holds each file, matched by full path. Rows whose file is in none of the new catalogs stay as they are. A row that would collide with an existing row of the new catalog is left in place. Nothing is deleted, and derived files on disk do not move. The old catalog's enrichment profile is copied to each new catalog. The new catalogs' instant search index is built as for any new catalog. Hosted collections have no `mdi_data.db`, so no derived data moves there. Cause: the split gives the files new catalog IDs and removes the old catalog's device. The AI data is keyed by catalog ID and full path, the profile by device ID, and neither was moved. The owner's previews, descriptions, transcripts and classifications therefore vanished from Browse, Search and Home (*Split carry-over (D35)*) (`MDI-F126`–`F128`, `MDI-C43`). |
 
 ---
 
@@ -330,7 +351,9 @@ reference documents, re-interpretation on request, and the *Context* page in
 the *Tools* submenu (D33, context phase 1); the K3 redesign, phase R1 (D34): a
 design system, a fixed sidebar in place of the side menu, a *Home* page, and
 speaking names on sidebar entries and page titles, with new strings in English
-and Italian only for now.
+and Italian only for now; when a catalog is split, the carry-over of its AI
+data, its enrichment profile and its instant search index to the new catalogs
+(D35).
 
 **Later phase (in scope, `[Backlog]`):** text and Office documents beyond PDF;
 characterising information for applications and other files; MCP servers and
@@ -340,7 +363,8 @@ online or cloud sources for the context (D33, context phase 2).
 authorised by the owner on 2026-10-30 and bounded to presentation (`MDI-F116`–`F122`,
 `MDI-C40`), reported implemented on 2026-10-30. Also in scope: the visible
 name *Teca* and the `TecaStyle` controls style (`MDI-F123`–`F125`,
-`MDI-C41`, `MDI-C42`).
+`MDI-C41`, `MDI-C42`), and the D34 follow-up *Browse never empty*
+(`MDI-F129`–`F131`, `MDI-C44`).
 
 **Out of scope (non-goals):**
 
@@ -597,6 +621,17 @@ name *Teca* and the `TecaStyle` controls style (`MDI-F123`–`F125`,
 > database keeps every caption, transcript and embedding. Removing derived data
 > is always the explicit action of `MDI-F59` (or a catalog deletion, `MDI-F57`).
 
+### Splitting a catalog {#split}
+
+D35 (2026-10-30). The split itself is `SpecDevicesSplit.md`. These rows add
+only what happens to the fork's data when a catalog is split.
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F126 | **AI data follows its files when a catalog is split (D35).** When a catalog is split by sub-folder or by file type, every derived datum (`MDI-F52`) and every embedding (`MDI-F47`) of the old catalog whose file is held by one of the new catalogs, matched by the file's full path, is moved to that new catalog. Nothing else in it changes: outcome, value, provenance, dates and derived root stay as they were. The file's previews, captions, summaries, transcripts and classifications then show for the new catalog in Browse, Search and Home, and a later job on the new catalog treats them under `MDI-F13` like any other datum. A datum whose file is in none of the new catalogs stays as it is. A datum that would collide with a datum the new catalog already has for the same file and analysis is left in place: nothing is overwritten. Nothing is deleted, and no derived file is moved, renamed or deleted on disk. The removal of the old catalog by the split is not a deletion in the sense of `MDI-F57`: its derived data and derived files are not deleted. Hosted mode stores no derived data (`Q11`), so nothing moves there. | [Implemented — D35] |
+| MDI-F127 | **The enrichment profile follows a split catalog (D35).** When a catalog is split, the old catalog's enrichment profile (`MDI-F8`), with its destination path and its settings, is copied to the device of each new catalog. *Analyse with AI* on a new catalog then opens with that profile, and its jobs write under the same destination path. A catalog without a profile gives new catalogs without one. In Memory mode the copies are written to `mdi_profile.csv`, as any saved profile is (`MDI-C5`). | [Implemented — D35] |
+| MDI-F128 | **Instant search index after a split (D35).** After a split, the instant search index (`MDI-F76`) of each new catalog is built in the background, as after a catalog creation, so the text-search fast path (`MDI-F77`) applies to it once the index is current. Searches and Browse keep working meanwhile. | [Implemented — D35] |
+
 ### Side menu {#side-menu}
 
 | ID | Requirement | Status |
@@ -674,7 +709,7 @@ named *Teca* in every language (`MDI-F123`).
 | ID | Requirement | Status |
 | ---- | ------------- | -------- |
 | MDI-F111 | **Sidebar (D34, answer 2; `Q36`).** In place of the side menu of `MDI-F89`, K3 shows a sidebar at the left of the window. It is always visible, with no pinned / floating toggle. From top to bottom it holds: (1) the collection's name, which opens the collection menu — *Open...* (*SQLite Database...*, *Collection Folder...*, *Hosted Database...*, `OPN-F9`), *New...* and the recent collections (`OPN-F7`), unchanged in content; (2) *Home*; (3) the group *Archivio* — *I miei dischi*, *Sfoglia l'archivio*, *Cerca nei dischi*, *Aggiungi un disco*; (4) the group *Intelligenza* — *Conoscenza dell'archivio*, *Lavori in corso*; (5) the group *Altro* — *Numeri dell'archivio*, *Etichette*, *Copie di sicurezza*, *Gestisci i dischi* (the Devices page, until phase R7), *Informazioni* (About); (6) at its foot, *Impostazioni* and a compact card of the running enrichment job (`MDI-F17`). The card opens *Lavori in corso* when activated, as the activity panel's row does (`MDI-F69`). Names are those of the nomenclature table, in the interface language (`MDI-F113`). Each entry shows an icon and its name; *Home* and the entries of *Archivio* and *Intelligenza* also show their one-line description. The entry of the page shown is marked. The *I miei dischi* column beside feature pages stays, with its show / hide toggle (`Q36`, choice 4). Quit stays on its standard shortcut, with no entry (D29). Behaviour at phone width is `Q41`. | [Implemented — R1] |
-| MDI-F112 | **Home page (D34, answer 2; `Q37`).** A K3 page *Home* shows the open collection at a glance: key numbers of the archive; a card per catalogued drive or folder, with info tags for its state (`MDI-F114`); the work in progress (the running enrichment job); the archive knowledge (the context, `MDI-F94`, and the knowledge base, `MDI-F104`); and shortcuts. Its cards and shortcuts only open existing pages, or start actions that already exist elsewhere, with the same behaviour and the same confirmations as there: Home adds no action of its own. **Katalog always opens on Home**: at launch and after a collection is opened. The last page is no longer restored at launch, which amends `SET-F4` for the start page (`Q37`, choice 6). Its texts are the approved strings of R1. | [Implemented — R1] |
+| MDI-F112 | **Home page (D34, answer 2; `Q37`).** A K3 page *Home* shows the open collection at a glance: key numbers of the archive; a card per catalogued drive or folder, with info tags for its state (`MDI-F114`); the work in progress (the running enrichment job); the archive knowledge (the context, `MDI-F94`, and the knowledge base, `MDI-F104`); and shortcuts. Its cards and shortcuts only open existing pages, or start actions that already exist elsewhere, with the same behaviour and the same confirmations as there: Home adds no action of its own. **Katalog always opens on Home**: at launch and after a collection is opened. The last page is no longer restored at launch, which amends `SET-F4` for the start page (`Q37`, choice 6). Its texts are the approved strings of R1. **Amended (2026-10-30, fix under `MDI-F129`):** Home's "AI: %1 files" tags and its *Files with AI results* key number count the files with AI results as `MDI-F130` defines them. Before, they counted every file with any completed datum, quick hash included. | [Implemented — R1] |
 | MDI-F113 | **Speaking names (D34, answer 3).** The sidebar entries and the page titles use the names of the nomenclature table; the sidebar entries that have a description show it (`MDI-F111`). The Selection page is titled *I miei dischi* and the Devices page *Gestisci i dischi* until phase R7. The bottom activity panel's title is *Lavori in corso* (`Q38`, choice 7). In phase R1 nothing else changes: labels, buttons and menus inside a page change with that page's phase (R2–R8). *Analisi AI* and *Dettagli del file* apply with the phases of the pages that show the enrichment and the Inspector. Names not in the table (Search results, Device edit, Backup mapping and preview, About's own page) are unchanged. Every name and description is a new string or a reused existing one (`MDI-C39`); no existing source string is edited. | [Implemented — R1] |
 | MDI-F114 | **Info tags (D34, answer 1).** States and kinds are shown as info tags: a short text on a rounded, coloured background, in one of six tones — neutral, info, ok, warn, bad, and ai for AI-derived data. The tone adds to the text and never replaces it: every tag carries its text, and a tag's text is never elided (`CDT-C1`). The tones take the fixed Katalog palette of `MDI-C37` (`Q35`). In phase R1 info tags appear on Home and in the sidebar's job card. | [Implemented — R1] |
 | MDI-F115 | **Look (D34, answers 1 and 5; `Q34`, `Q35`).** The sidebar, Home and every page rebuilt in a phase of D34 use Katalog's new design system in the *Control Center* style: cards on a soft background, rounded corners, one accent colour, coloured info tags (`MDI-F114`). Text sizes and colours are **fixed, as in the prototype**: they follow neither the *Text size* setting (`TYP-F2`) nor the *Theme* setting (`THM-C3`). The look follows the system's light or dark scheme, and a change of that scheme while Katalog runs, without restart. Since 2026-10-30 every page's background is the design system's ground colour, in place of the Selection page's tinted surface (`THM-F19`) and the style's window colour. Apart from that background, a page not yet rebuilt keeps its present look, and keeps following both settings, until its phase (R2–R8). | [Implemented — R1; ground on every page 2026-10-30] |
@@ -709,6 +744,22 @@ D34). The code came before the rows. The constructional rows are `MDI-C41` and
 | MDI-F123 | **Visible name *Teca* (owner, "Nome visibile", 2026-10-29).** K3 shows the name *Teca* wherever it names the application. That covers the window title (the application display name), About (display name, plus the credit "Teca is based on Katalog by Stéphane Couturier, released under the GNU GPL."), the title of every dialog, and the name and monogram at the top of the sidebar. On macOS the build is `Teca.app` with the executable `Teca` (CMake `OUTPUT_NAME` and `MACOSX_BUNDLE_BUNDLE_NAME`). Existing strings that named the application now say *Teca*: the first-run welcome; the alpha-warning welcome, reworded as "Welcome to Teca. Teca is based on Katalog: …"; the NTFS mount-failure line; and R1's "Teca reads the drive, NTFS too, without changing it.". Strings that name Katalog's own things keep the name: the "Katalog Colors" theme and the "Katalog / File" and "Katalog / Memory" export formats. Editing these existing strings is the owner's exception to `MDI-C17`, `MDI-C39` and `MDI-C40` ("no existing source string is edited"), and it covers these strings only (*User-visible text*). | [Implemented — 2026-10-30] |
 | MDI-F124 | **Dialogs and the page header in the design system (D34, 2026-10-30).** Every `Controls.Dialog` is painted on the design system's surface, with its line colour for frames (`palette.window: KTheme.surface`, `palette.mid: KTheme.line`). Every `Kirigami.Dialog` and `Kirigami.PromptDialog` has a rounded `KTheme.surface` background. The Kirigami page header bar is painted with the ground colour as soon as it is created (`Main.qml` `styleHeader`), and its separator is off. *Home* shows no Close action, and `Esc` still works there (`KBS-F1`, *Specs to amend*). Nothing else in the dialogs changes (`MDI-C40`). | [Implemented — 2026-10-30] |
 | MDI-F125 | ***My drives* header and drive cards (R7, owner, 2026-10-30).** The header of *I miei dischi* has five parts. (1) A description line, "The drive or folder chosen here is the one searched, browsed and counted." (a new string). (2) The selection reminder, a rounded row on the accent-soft colour. It still has no label of its own, and its behaviour is unchanged (`SEL-F5`, `SEL-F6`, `SEL-C7`). (3) The filter field, now rounded. (4) *Show device info*, now a visible switch whose label is its existing string. Before, it was a bare check box with that string as its tooltip. (5) Collapse and expand as framed icon buttons. On a drive card, the used-space info tag shows the existing K2 label "Used Space: " before its figure. Each part of the card's details is now a tag of its own, and the bare figure read as a second copy of the file size. These choices depart from three earlier rows for the fork's K3. The label goes against `SEL-C11`, which kept the figure unlabelled. The reminder's idle accent-soft surface replaces the transparent idle surface of `THM-F10`. The description line sits above the reminder, which `SEL-F5` places "at the very top" with no label, heading or title before it (*Specs to amend*). Otherwise `MDI-F121` holds. | [Implemented — R7] |
+
+#### Browse never empty (D34 follow-up, 2026-10-30)
+
+The owner's choice of 2026-10-30 (see D34). New behaviour, bounded by
+`MDI-C44`. The owner's wording speaks of no drive being chosen. Three points
+of `MDI-F129` are the specifications agent's reading of that wording (`Q50`):
+entering Browse opens the catalog chosen; a Storage or Virtual choice shows
+the catalogs within it; a choice that holds no catalog shows them all.
+Behaviours built on 2026-10-30 beyond these rows are not authorised until the
+owner confirms them (`Q51`).
+
+| ID | Requirement | Status |
+| ---- | ------------- | -------- |
+| MDI-F129 | **Catalogs to open when Browse has nothing to show.** Entering *Sfoglia l'archivio*, from the sidebar or from Home's *Browse*, opens the catalog chosen in *I miei dischi*. *Sfoglia l'archivio* can have no catalog open: nothing is chosen in *I miei dischi*, or the choice is *All*, a Storage or a Virtual group and no catalog has been opened. The page then shows a card per catalog to open, in place of "No folder selected". The cards cover every catalog of the collection when nothing or *All* is chosen or when the choice holds no catalog, and the catalogs within the choice otherwise. With no catalog in the collection, the page says so. Each card shows the catalog's name, its path, its file count and its count of files with AI results as `MDI-F130` defines them. These are the same figures as on Home's drive cards, and they are absent where Home leaves them out (`MDI-C38`). The card's *Open* action selects that catalog and opens it in Browse with its folders, as Home's *Browse* and the Selection card's *Explore* do (`MDI-F112`, `SEL-F3`, `EXP-F27` (c)). A catalog already open stays open when a Storage or Virtual device is chosen (`EXP-F27` (a)). | [Implemented — D34 follow-up] |
+| MDI-F130 | **"AI" tag on files with AI results.** In Browse's file rows, in the list view and in the column view (`MDI-F88`), a file with at least one completed caption, summary, transcript or classification carries the info tag "AI" in the *ai* tone (`MDI-F114`). A file carries none when its AI results are all failed or skipped, or when it has only previews, technical data, a text snippet, an archive listing or a quick hash. The mark of `MDI-F44` is unchanged. | [Implemented — D34 follow-up] |
+| MDI-F131 | **What Browse is for.** A description line at the top of *Sfoglia l'archivio* says what the page is for. It also says that clicking a file shows its preview, its AI description and its transcript in *Dettagli del file* (`MDI-F87`). Its wording is a new string (`MDI-C44`). | [Implemented — D34 follow-up] |
 
 ## Constructional requirements — *how it is built / limits / MUST-NOTs*
 
@@ -756,6 +807,8 @@ D34). The code came before the rows. The constructional rows are `MDI-C41` and
 | MDI-C40 | **Bounds of phases R2–R8 (D34, 2026-10-30): presentation only.** A phase changes layout, components, colours, type, icons and label wording, and nothing else. **Kept on every page:**<br>• every behaviour, binding, data shown, validation, confirmation dialog, keyboard and focus rule, stored setting key and message channel, as the page's own spec and this spec state (`SpecExplore.md`, `SpecSearchList.md`, `SpecSearchResults.md`, `SpecSearchResultsFilters.md`, `SpecSelection.md`, `SpecDevicesPage.md`, `SpecBackup.md`, `SpecSettingsPage.md`, `SpecValidationRules.md`, `SpecKeyboardShortcuts.md`, `SpecCardsAndTables.md`, `SpecComboBoxes.md`, `SpecIconButtons.md`, `SpecProgressReport.md`, `SpecOperationQueue.md`, `SpecWindowGeometry.md`);<br>• every piece of information a page shows: what moves into a card or a tag stays readable in full (`CDT-O2`, `CDT-C1`);<br>• tables keep their columns, sort, stored widths and keyboard navigation (`CDT-O3`, `CDT-F12`), and lists stay readable row by row (`THM-O1`);<br>• the user settings that the `MDI-C37` exception does not name: bigger icon size (`THM-F7`), stored views, the Explore view choice (`MDI-F88`) and the Inspector's visibility (`MDI-F87`).<br>**Files and limits:** `MDI-C37` (files and tokens, the owner's exception for sizes and colours) and `MDI-C38` (no core change, no raw SQL, message channels) apply. No file is added beyond those of `MDI-C37` and `MDI-C42`.<br>**Strings:** new strings follow `MDI-C39` (English source, Italian only) and are approved by the owner's instruction of 2026-10-30 (D34). No existing source string is edited, except for the name *Teca* (`MDI-F123`).<br>**New behaviour:** a behaviour that a phase seems to need is NOT IN SPEC until a row authorises it (`Q45`). | [Implemented — phases R2–R8] |
 | MDI-C41 | **What keeps the name Katalog (owner, 2026-10-29).** The name *Teca* is a visible name only (`MDI-F123`). It MUST NOT reach the application's identity on disk or in code. The settings files (`katalog3_prerelease_settings.ini`, the collection `.ini`), the collection format, the catalogs, internal identifiers (for example the CMake target `Katalog3` and the desktop file name), the QML module URI and the `KAboutData` component name all stay "Katalog". Settings and data paths therefore do not move, and a beta settings file stays readable (`MDI-C7`). | [Implemented — 2026-10-30] |
 | MDI-C42 | **TecaStyle, the redesign's Qt Quick Controls style (owner, 2026-10-30).** `TecaStyle` is a static QML module in `qt_quick/TecaStyle/`. Its files are `Button.qml`, `CheckBox.qml`, `ComboBox.qml`, `Menu.qml`, `MenuItem.qml`, `RadioButton.qml`, `SpinBox.qml`, `Switch.qml`, `TextArea.qml`, `TextField.qml`, `ToolButton.qml` and its `CMakeLists.txt`. It is linked into the K3 executable. It adds no Qt or KF6 module, because `Qt6::QuickControls2` was already linked (`MDI-C8`). Each control derives from its Fusion counterpart and changes only its look: rounded fields and buttons (10 px), check boxes, radio buttons and switches in the accent colour, and rounded menus. Every other control falls back to Fusion (the module imports `QtQuick.Controls.Fusion`). Colours come only from the palette, which `Main.qml` sets from the `KTheme` tokens: window, base, button, text, highlight, `mid` (line), `midlight` (hover), `brightText` (onAccent), placeholder text and tool tips. `main.cpp` selects `TecaStyle` on **every platform**. Before, K3 used the system's `org.kde.desktop` style on Linux and Fusion elsewhere. **For the fork's K3, this supersedes the earlier style choice** wherever a spec names Fusion, Breeze or `org.kde.desktop` as K3's style. Those rows are listed under *Specs to amend* and are not rewritten. Their aim still holds: K3's own surfaces look the same whatever style draws the controls (`THM-F9`, `THM-C14`). | [Implemented — 2026-10-30] |
+| MDI-C43 | **Split carry-over in core (D35, `MDI-C14`).** Approved core changes, nothing else. (1) A new method `static int MdiData::moveToCatalogs(const QString &connectionName, int oldCatalogId, const QHash<QString, int> &newCatalogByPath)`. Like `MdiData`'s other methods it works on a connection the caller has opened. In one transaction it moves the old catalog's `mdi_datum` rows with `UPDATE OR IGNORE`, so a row that would collide stays on the old catalog, and its `mdi_embedding` rows with `UPDATE`, for the full paths in the map. It returns the number of `mdi_datum` rows moved. (2) In `Collection::applySplitResult`, only when the mode is not Hosted and `mdi_data.db` exists: open that file with `MdiData::open` on a connection of its own; build the map of full path to new catalog ID from the new catalogs' rows of the `file` table, which hold them right after the split in File and Memory modes; call `moveToCatalogs`; close the connection. (3) Also in `Collection::applySplitResult`: copy the old device's profile to each new catalog's device with `MdiProfile::load` and `MdiProfile::save`, plus `MdiProfile::saveTableToFile` in Memory mode. No other new method and no new file. No change to the `mdi_` tables, to the core schema (`MDI-C15`) or to the split's own steps (`SpecDevicesSplit.md`). No file on disk is touched. The index build of `MDI-F128` reuses the existing rebuild (`MDI-C22`). This code is in core, so a fork build of K2 that splits a collection with `mdi_data.db` carries the data too, with no K2 file changed (`MDI-C1`). Upstream builds do not carry it. | [Implemented — D35] |
+| MDI-C44 | **Bounds of *Browse never empty* (D34 follow-up).** `MDI-F129`–`F131` are K3 only (`MDI-C1`) and change no core class. The cards and the "AI" tag use data K3 already reads through existing core methods: the figures of Home's drive cards, and the derived data Browse already reads for `MDI-F44`. `MDI-C38`'s rules for Home's counts apply to the cards: no file list is read on the UI thread, and counts run on a worker thread and are cached. A new core method needs the owner's approval first (`MDI-C14`). The views use the design system (`MDI-C37`). No new file. New strings follow `MDI-C39` (English source, Italian translation), and the owner approves them together at the end of the step, before its commit (D16). Existing strings are reused where they fit. "No folder selected" is not edited. Everything else on the page keeps `MDI-F116` and `MDI-C40`. | [Implemented — D34 follow-up] |
 
 ---
 
@@ -781,6 +834,8 @@ D34). The code came before the rows. The constructional rows are `MDI-C41` and
 | **R7** | *I miei dischi* and *Gestisci i dischi*: the Selection and Devices pages, restyled, still separate (D34). Authorised 2026-10-30 (D34); presentation only (`MDI-C40`). | `MDI-F121`, `MDI-C40`; `SpecSelection.md`, `SpecDevicesPage.md` |
 | **R8** | *Altro* and *Impostazioni*: Statistics, Tags, Backup, Settings, metadata dialog (D34). Authorised 2026-10-30 (D34); presentation only (`MDI-C40`). | `MDI-F122`, `MDI-C40`; `SpecBackup.md`, `SpecSettingsPage.md`; `Q46` |
 | **Name and style** | The visible name *Teca*, the `TecaStyle` controls style, dialogs and the page header, and the *My drives* header (D34, 2026-10-29/30). Coded before the rows were written. | `MDI-F123`–`F125`, `MDI-C41`, `MDI-C42`; `MDI-C18`, `MDI-C37`, `MDI-C39`, `MDI-C40`, `MDI-F121` amended |
+| **Split carry-over** | The AI data, enrichment profile and instant search index of a split catalog (D35, 2026-10-30). The core change was approved with the decision. Not bound to the A–E order. | `MDI-F126`–`F128`, `MDI-C43`; `SpecDevicesSplit.md` |
+| **Browse never empty** | Catalog cards when Browse has nothing to show, the "AI" tag on files, the page's description line (D34 follow-up, 2026-10-30). New behaviour, bounded by `MDI-C44`. | `MDI-F129`–`F131`, `MDI-C44`; `SpecExplore.md` (`EXP-F27`), `MDI-F44`, `MDI-F112` |
 
 A phase starts only when the previous one is implemented, and each phase starts
 with the core design approval required by `MDI-C14` and the string approvals of
@@ -1146,6 +1201,28 @@ unfinished entry on 2026-10-30. The other languages show the English source
 (`MDI-C39`). The Italian of the existing string "AI analysis" was aligned from
 *Analisi IA* to *Analisi AI*, since every other Italian string says AI. Only the
 translation changed, not the source.
+
+### Awaiting approval — D34 follow-up *Browse never empty* (2026-10-30)
+
+The main agent reports these strings as built, with their Italian applied
+(`MDI-C39`), and committed in `faeef817`. No owner approval of them has been
+reported. `MDI-C44` (D16) asks for that approval at the end of the step,
+before the commit. The blanket instruction of 2026-10-30 approved the strings
+of R2–R8 only. They are therefore listed here for the owner's approval.
+
+| String | Italian | Where |
+| --- | --- | --- |
+| "The folders and files of a catalogued drive, even when it is not connected. A file tagged AI already has a preview, a description or a transcript: selecting it shows them in File details." | "Le cartelle e i file di un disco catalogato, anche quando non è collegato. Un file con l'etichetta AI ha già un'anteprima, una descrizione o una trascrizione: selezionandolo li vedi in Dettagli del file." | Browse description line (`MDI-F131`) |
+| "Choose what to browse" | "Scegli cosa sfogliare" | Title of the card list (`MDI-F129`) |
+| "Each card is a catalogued drive or folder. Opening it shows its folders and files." | "Ogni card è un disco o una cartella catalogati. Aprendola vedi le sue cartelle e i suoi file." | Description of the card list (`MDI-F129`) |
+| "Nothing is catalogued yet: a drive added and catalogued shows here." | "Non c'è ancora nulla di catalogato: un disco aggiunto e catalogato compare qui." | Card list, collection without catalogs (`MDI-F129`) |
+| "AI" | "AI" | File-row tag (`MDI-F130`) |
+| "Choose another drive" | "Scegli un altro disco" | Link beside the open catalog's name. It belongs to a behaviour not authorised yet (`Q51`) |
+
+Existing strings reused: "Connected", "Not connected", "Saved search
+results", "%1 files", "AI: %1 files", "Open" and "Add a drive". "Add a drive"
+is also the label of an action not authorised yet (`Q51`). "No folder
+selected" is unchanged.
 
 ### No longer used (D15)
 
@@ -1610,6 +1687,109 @@ the settings file name and the `KAboutData` component name unchanged; the
   (French) in every context, K2's included. This predates the fork, but the
   drive card now shows it.
 
+### Split carry-over (D35) — finding, core design and report, 2026-10-30
+
+**Finding (2026-10-30).** Splitting a catalog (`SpecDevicesSplit.md`) goes
+through `Collection::executeSplitBySubDirectory` / `executeSplitByFileType`,
+then `Catalog::executeSplitBySubDirectory` / `executeSplitByFileType`, then
+`Collection::applySplitResult`. It moves the file rows to new catalogs with new
+catalog IDs and removes the old catalog's device. The fork's derived data
+(`mdi_datum` and `mdi_embedding` in `mdi_data.db`, keyed by catalog ID and full
+path) and the enrichment profile (`mdi_profile`, keyed by device ID) were not
+moved. Every preview, description, transcript and classification of the split
+catalogs was therefore invisible in Browse, Search and Home. No row said what a
+split does to the fork's data: a gap in the spec, which D35 fills. The main
+agent reports the finding as verified on the owner's data.
+
+**Manual relink (2026-10-30).** The main agent reports that the owner's 14,545
+analysed files were relinked by hand the same day, after a backup
+(`katalog 3/backup_prima_del_ricollegamento_AI_20261030/`). The specifications
+agent did not check the relink. `MDI-F126`–`F128` prevent the loss on the next
+split.
+
+**Approved core design.** The owner's "Sì, correggi" (D35) is the `MDI-C14`
+approval of these changes. The signature is the main agent's.
+
+| Class | Approved design |
+| --- | --- |
+| `MdiData` | `static int moveToCatalogs(const QString &connectionName, int oldCatalogId, const QHash<QString, int> &newCatalogByPath)`. Takes an open connection, like `clearCatalog` and `forCatalog`. One transaction: `UPDATE OR IGNORE` on `mdi_datum` (a colliding row stays on the old catalog), `UPDATE` on `mdi_embedding`. Returns the number of `mdi_datum` rows moved. |
+| `Collection` | `applySplitResult`: when the mode is not Hosted and `mdi_data.db` exists, opens it with `MdiData::open` on its own connection, builds the full path → new catalog ID map from the new catalogs' `file` rows, calls `moveToCatalogs` and closes the connection. Copies the old device's `MdiProfile` to each new catalog's device (`load` / `save`, and `saveTableToFile` in Memory mode). |
+
+**Points for the owner (not authorised by any row).**
+
+- **Catalog notes.** The old catalog's notes (`MDI-F95`, in `mdi_context`
+  under its device ID) are not part of D35. They stay under the removed device
+  and no longer show (`Q49`).
+- **Rows left behind.** These stay under the old catalog ID and show nowhere:
+  derived data whose file is in none of the new catalogs, a colliding datum,
+  the old quick-hash pass stamp (`mdi_pass`) and the old instant-index rows.
+  Nothing deletes them: `MDI-F57` is not built, and it does not apply to a
+  split (`MDI-F126`). The new catalogs have no pass stamp, so under `MDI-F84`
+  their files are hashed again when their source is reachable.
+- **Embeddings.** `mdi_embedding` has no key, so its `UPDATE` never collides.
+  When a datum stays on the old catalog because of a collision, the same
+  file's embeddings still move. New catalogs get new IDs, so a collision right
+  after a split is unlikely.
+- **K2 and upstream.** The change is in core, so a fork build of K2 carries
+  the data on a split too, with no K2 file changed (`MDI-C1`). Upstream K2 and
+  K3 3.0 do not: splitting an enriched collection with them loses the link
+  again.
+- **Pending jobs.** A waiting job of the old catalog leaves the list, as
+  `MDI-F12` states for a catalog that no longer exists. It is not moved to the
+  new catalogs.
+
+**Reported implemented (2026-10-30, commit `faeef817`).** The main agent
+reports `MDI-F126`–`F128` and `MDI-C43` as built. The specifications agent read
+the core diff against `MDI-C43` and found no other new method. The profile is
+copied before the old device is removed, and only to each new catalog's own
+device. `AppManager::splitCatalogBySubDirectory` and the split by file type
+now call `scheduleFtsIndexing()` after the split (`MDI-F128`). **Verification
+is at unit level only:** a test of `MdiData::moveToCatalogs` on a synthetic
+`mdi_data.db` passed 9 of 9 checks (rows moved per path, collision kept,
+unmapped file kept, embeddings moved, empty map changes nothing). The glue in
+`Collection::applySplitResult` (the map built from the `file` table, the
+profile copy, Memory mode) and the index build after a split were not
+exercised end to end. The `MDI-F126`–`F128` charter lines are still to be run
+on a real split.
+
+### Browse never empty (D34 follow-up) — reported 2026-10-30
+
+The main agent reports `MDI-F129`–`F131` and `MDI-C44` as built and checked
+in the running app (commit `faeef817`). The specifications agent checked the
+commit for `MDI-C44`: no core change for these rows (the core files are those
+of `MDI-C43`), no new file, and no new `QSqlQuery` in `qt_quick/`. The cards
+also show the existing "Connected", "Not connected" and "Saved search results"
+tags (presentation).
+
+Fixes made in the same step, inside existing rows:
+
+- **Home's AI counts** (`MDI-F112` amended, `MDI-F129`). Home's "AI: %1 files"
+  tags and its *Files with AI results* number counted every file with any
+  completed datum, quick hash included, so they always equalled the file
+  count. They now use the definition of `MDI-F130`. On the owner's data the
+  number now reads 14,001 of 35,002, where it read 14,545.
+- **Home's drive-card names** now wrap instead of being cut. Cutting them
+  broke `CDT-C1`, which `MDI-C38` keeps binding on Home. Split catalogs differ
+  only at the end of their names.
+
+**Built without a row (not authorised until the owner confirms, `Q51`).** The
+main agent reads these as part of the approved option *Sfoglia mai vuota*,
+since empty folders were the owner's complaint. The option as worded to the
+owner does not name them:
+
+- **"Choose another drive."** A link beside the open catalog's name brings
+  the card list back while a catalog is open. `MDI-F129` shows the list only
+  when no catalog is open.
+- **A folder that is its own catalog.** In the column, tree and list views,
+  opening a folder whose path is the source path of another catalog opens
+  that catalog instead, and selects it in *I miei dischi*. After a split, the
+  parent catalog still lists the sub-folders, but their files are in the
+  sub-folders' own catalogs, so the folder showed an empty column. Side
+  effect: the choice in *I miei dischi* scopes Search (`SpecSelection.md`,
+  `MDI-F49`), so browsing into such a folder also changes what Search covers.
+- **"Add a drive"** beside the message of a collection with no catalog. It
+  opens *Aggiungi un disco*.
+
 ### Known gaps
 
 - Settings UI for tool paths and models (`MDI-F20`, `MDI-F23`).
@@ -1633,6 +1813,12 @@ the settings file name and the `KAboutData` component name unchanged; the
   value is not built (`Q26`, open).
 - Failure and skip reasons are core English text, shown untranslated.
 - *Open at timecode* only opens the file; there is no seek (D7).
+- D35: only `MdiData::moveToCatalogs` was tested (unit level). The split glue
+  in `Collection::applySplitResult` and the index build after a split have not
+  been run end to end (`MDI-F126`–`F128` charter lines).
+- *Browse never empty*: three behaviours built without a row wait for the
+  owner (`Q51`), and the step's new strings wait for his approval (*User-visible
+  text*).
 
 ### Findings for the fork owner (not authorised by any row)
 
@@ -1747,6 +1933,10 @@ the settings file name and the `KAboutData` component name unchanged; the
 | Q45 | **D34 search by content** (R3). The phase plan offers three ways to search: by name, by content and by meaning. There is no existing search on file content: the instant index (`MDI-F76`) only narrows a name search and must never change its results (`MDI-F77`, `MDI-C23`). Searching the derived text (snippets, summaries, captions, classifications) would be a new behaviour, so it needs its own row before it is built. Wanted? | Owner's choice. R3 was built without it, offering only by name and by meaning. |
 | Q46 | **D34 *Theme* and *Text size* after R8.** Once every page uses the fixed sizes and palette (`MDI-C37`), these two Settings controls change nothing in K3. They stay shared with K2 through the settings file. Remove them from K3's Settings, keep them with no effect, or keep a way to enlarge text? With fixed pixel sizes, K3 no longer follows the system's text size either (`TYP-O1`). | Owner's choice. R8 kept both controls in Settings. |
 | Q47 | **D34 Search action twice** (R3 report). *Cerca nei dischi* offers the search in two places: the toolbar's *Search* action and the primary *Search* button of the search card. Should the page keep both, or only one? | Owner's choice; not blocking |
+| Q48 | **Making Teca self-explanatory: three options not chosen** (2026-10-30). The owner chose *Browse never empty* (`MDI-F129`–`F131`) and left three options for later: (a) Home grouped by drive, with one card per Storage holding its folder catalogs and names never cut; (b) a guided "First steps" card; (c) plain-language explanations before every action that changes data, and the removal of the legacy page-header Close buttons. Each is new behaviour or changes existing rows (`MDI-F112`, `MDI-F124`, `KBS-F1`), so each needs its own row before it is built. Names on Home's drive cards already wrap since 2026-10-30 (`CDT-C1`); the grouping of (a) is still open. | Owner's choice; not blocking |
+| Q49 | **Catalog notes on a split** (D35). The old catalog's notes (`MDI-F95`) stay under the removed device and no longer show. Copy them to each new catalog as the profile is copied (`MDI-F127`), or leave them? Copying needs a row and, since it is in core, the owner's approval (`MDI-C14`). | Owner's choice; not blocking |
+| Q50 | **Readings of *Sfoglia mai vuota*** (`MDI-F129`). The owner's wording covers no drive being chosen. The row reads three more points into it. (1) Entering Browse opens the catalog chosen in *I miei dischi*. (2) A Storage or Virtual choice shows the catalogs within it. (3) A choice that holds no catalog, like nothing or *All*, shows every catalog. These are the specifications agent's readings, built on 2026-10-30. Confirm them, or show every catalog in all cases? | Readings applied until the owner decides; not blocking |
+| Q51 | **Browse behaviours built without a row** (2026-10-30, commit `faeef817`; *Browse never empty (D34 follow-up) — reported*). (1) The "Choose another drive" link. (2) A folder that is its own catalog opens that catalog and selects it in *I miei dischi*, which also changes the scope of Search. (3) "Add a drive" in a collection with no catalog. Keep them (each then gets a row) or remove them? Until the owner answers they are DRIFT: no row authorises them, and the string "Choose another drive" waits on this answer. | Owner's choice; before the strings are approved |
 
 ### Decided 2026-10-29/30 — D34 (kept for traceability)
 
@@ -1917,6 +2107,14 @@ For each row: set up the stated condition, run the operation, confirm the result
 - **MDI-C42** — On macOS, Windows and Linux (Plasma included), K3 starts with `TecaStyle`. Fields and buttons are rounded, check boxes, radio buttons and switches use the accent colour, and menus are rounded. A control outside the module looks as it does under Fusion. Switch between light and dark: the controls follow. `qt_quick/TecaStyle/` holds no colour literal, and `CMakeLists.txt` adds no Qt or KF6 module.
 - **MDI-F124** — Open a `Controls.Dialog` (a deletion confirmation) and a `Kirigami.PromptDialog`, in light and in dark. Both sit on the surface colour with rounded corners. The page header has the ground colour and no separator line. *Home* shows no Close action, and `Esc` behaves as before.
 - **MDI-F125** — On *I miei dischi*, the description line shows above the reminder. The reminder is an accent-soft row with no label. Clicking it scrolls to the selected card and leaves the selection unchanged. *Show device info* is a labelled switch, and turning it on shows the info tags. Collapse and expand are framed and keep their tooltips. A Storage card shows "Used Space: " before its used-space figure.
+- **MDI-F126 / C43** — Enrich a catalog, then split it by sub-folder. Each file's previews, caption, summary, transcript and classification show for its new catalog in Browse, in text and semantic Search, and on Home. The number of `mdi_datum` rows now on the new catalogs equals the number returned. A listing of the destination path is identical before and after. Rows of files left out of every new catalog are still under the old ID. Run *Analyse with AI* on a new catalog: no completed analysis of an unchanged file is redone. Repeat with a split by file type, and in Memory mode. In a Hosted collection the split behaves as before.
+- **MDI-F127** — Split a catalog that has a profile: *Analyse with AI* on each new catalog opens with the same destination path and settings. In Memory mode, close and reopen the collection: the profiles are still there. Split a catalog without a profile: the new catalogs have none.
+- **MDI-F128** — After a split, each new catalog's instant index is built in the background. A text search on a new catalog gives the same files with and without the index (`MDI-F77`).
+- **MDI-F112 (AI counts)** — On a catalog with quick hashes and no caption, summary, transcript or classification, Home's drive card has no "AI" tag. The *Files with AI results* number equals the sum of the files that carry "AI" in Browse.
+- **MDI-F129** — Choose a catalog in *I miei dischi*, then enter *Sfoglia l'archivio* from the sidebar, and again from Home's *Browse*: that catalog opens each time. Open *Sfoglia l'archivio* with nothing chosen in *I miei dischi*: a card per catalog with name, path, file count and AI count, and no "No folder selected". Choose an empty Storage: every catalog shows. In a collection with no catalog, the page says so. *Open* on a card selects that catalog in *I miei dischi* and shows its folders, as Home's *Browse* does. Before opening any catalog, choose a Storage with two catalogs: its two catalogs show as cards. With a catalog open, choose a Storage: the catalog stays open. File and Memory modes show the same figures as Home; Hosted mode hides the figures Home hides.
+- **MDI-F130** — In the list view and in the column view, a captioned image, a summarised PDF, a transcribed video and a classified file each carry "AI" in the *ai* tone. A file with only a thumbnail, and a file whose analyses all failed, carry none.
+- **MDI-F131** — The description line shows at the top of *Sfoglia l'archivio* in English and in Italian; in French it shows the English source.
+- **MDI-C44** — `git diff` of the step touches nothing under `core/` and adds no file; `qt_quick/` holds no new `QSqlQuery`. In Memory mode, with a large collection and nothing chosen, open Browse: the window stays responsive while the cards' counts appear. The new strings are listed under *User-visible text* with the owner's approval.
 
 ---
 
@@ -1959,3 +2157,5 @@ target spec is edited.
 | `SpecK3Deployment.md` (Teca, TecaStyle) | `DPL-C4`, `DPL-C6` ("The Controls style stays Fusion") and *Known limitations* ("Fusion style, not the desktop style"): the fork's K3 selects `TecaStyle` in every build, and whether the bundled `styles/Fusion/Theme.qml` is still loaded has not been verified. The executable and the macOS bundle are named `Teca` (`MDI-F123`), while the K3 packaging scripts still expect `Katalog`. |
 | `SpecSelection.md` (R7, `MDI-F125`) | `SEL-C11`: in the fork's K3 the used-space figure carries the label "Used Space: ". `SEL-F5`: the page's description line now sits above the reminder, which still has no label of its own. `THM-F10` (`SpecTheme.md`): the reminder's idle surface is accent-soft, not transparent, and its hover tint comes from `KTheme`. |
 | `SpecKeyboardShortcuts.md` (`MDI-F124`) | `KBS-F1` speaks of "the visible Close button": *Home* shows no Close action, and `Esc` still works there. |
+| `SpecDevicesSplit.md` (D35) | *Original Catalog* and *Impact Summary*: in the fork, a split also moves the old catalog's derived data to the new catalogs, copies its enrichment profile and builds their instant index; nothing derived is deleted (`MDI-F126`–`F128`, `MDI-C43`). The spec has no requirement IDs; converting it is a separate task. |
+| `SpecExplore.md` (*Browse never empty*) | Add these next to `EXP-F27`, whose (a) still holds: entering Browse opens the catalog chosen in *I miei dischi*; the catalog cards shown when no catalog is open (`MDI-F129`); the "AI" tag on file rows (`MDI-F130`); the description line (`MDI-F131`). Add the behaviours of `Q51` only if the owner keeps them. |
