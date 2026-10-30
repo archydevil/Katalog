@@ -33,6 +33,8 @@
 #include "database.h"
 #include "device.h"
 #include "catalog.h"
+#include "mdidata.h"
+#include "mdiprofile.h"
 #include <QMutex>
 #include <QStorageInfo>
 #include <QSet>
@@ -2887,6 +2889,7 @@ void Collection::applySplitResult(Device *activeDevice, const QList<Catalog*> &n
     parentDevice.ID = activeDevice->parentID;
     parentDevice.loadDevice(m_connectionName);
 
+    QList<int> newDeviceIDs;
     for (Catalog *c : std::as_const(newCatalogs)) {
         Device newDev;
         newDev.setConnectionName(m_connectionName);  // this collection, not the default connection
@@ -2902,6 +2905,37 @@ void Collection::applySplitResult(Device *activeDevice, const QList<Catalog*> &n
         newDev.active         = activeDevice->active;
         newDev.order          = 0;
         newDev.insertDevice();
+        newDeviceIDs << newDev.ID;
+    }
+
+    // Fork (SpecMediaIntelligence.md): the AI data and the enrichment profile
+    // follow the files into the new catalogs; left on the original catalog,
+    // every preview, description and transcript would vanish with it. The new
+    // catalogs' file rows are in the file table now, in Memory mode too.
+    const QString mdiPath = MdiData::filePath(folder);
+    if (databaseMode != QLatin1String("Hosted") && QFile::exists(mdiPath)) {
+        QHash<QString, int> newCatalogByPath;
+        QSqlQuery files(QSqlDatabase::database(m_connectionName));
+        files.prepare(QLatin1String("SELECT file_full_path FROM file WHERE file_catalog_id = :catalogID"));
+        for (Catalog *c : std::as_const(newCatalogs)) {
+            files.bindValue(":catalogID", c->ID);
+            if (files.exec())
+                while (files.next())
+                    newCatalogByPath.insert(files.value(0).toString(), c->ID);
+        }
+        const QString mdiConnection = QStringLiteral("mdi_split_%1").arg(activeDevice->externalID);
+        if (MdiData::open(mdiConnection, mdiPath))
+            MdiData::moveToCatalogs(mdiConnection, activeDevice->externalID, newCatalogByPath);
+        MdiData::close(mdiConnection);
+    }
+    MdiProfile profile;
+    if (profile.load(m_connectionName, activeDevice->ID)) {
+        for (int newDeviceID : std::as_const(newDeviceIDs)) {
+            profile.deviceId = newDeviceID;
+            profile.save(m_connectionName);
+        }
+        if (databaseMode == "Memory")
+            MdiProfile::saveTableToFile(m_connectionName, folder);
     }
 
     // Find virtual devices the original catalog was assigned to, so the splits

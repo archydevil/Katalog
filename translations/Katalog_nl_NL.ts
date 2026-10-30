@@ -7,12 +7,12 @@
         <location filename="../qt_quick/appmanager.cpp" line="+170"/>
         <location line="+112"/>
         <location line="+16"/>
-        <location line="+6424"/>
+        <location line="+6464"/>
         <source>Search</source>
         <translation>Zoeken</translation>
     </message>
     <message>
-        <location line="-6548"/>
+        <location line="-6588"/>
         <source>Stopped</source>
         <translation>Gestopt</translation>
     </message>
@@ -20,12 +20,12 @@
         <location line="+4"/>
         <location line="+24"/>
         <location line="+100"/>
-        <location line="+4857"/>
+        <location line="+4897"/>
         <source>Evaluated</source>
         <translation>Geëvalueerd</translation>
     </message>
     <message>
-        <location line="-4979"/>
+        <location line="-5019"/>
         <location line="+16"/>
         <location line="+8"/>
         <location line="+99"/>
@@ -48,11 +48,11 @@
         <location line="+2334"/>
         <location line="+380"/>
         <location line="+152"/>
-        <location line="+422"/>
-        <location line="+1128"/>
+        <location line="+435"/>
+        <location line="+1151"/>
         <location line="+26"/>
         <location line="+20"/>
-        <location line="+380"/>
+        <location line="+384"/>
         <location line="+33"/>
         <location line="+596"/>
         <location line="+37"/>
@@ -70,12 +70,12 @@
         <translation>Bezig</translation>
     </message>
     <message>
-        <location line="-6425"/>
+        <location line="-6465"/>
         <location line="+2724"/>
         <location line="+1"/>
-        <location line="+553"/>
+        <location line="+566"/>
         <location line="+1"/>
-        <location line="+2238"/>
+        <location line="+2265"/>
         <location line="+342"/>
         <location line="+112"/>
         <location line="+53"/>
@@ -85,7 +85,7 @@
         <translation>Voltooid</translation>
     </message>
     <message>
-        <location line="-6012"/>
+        <location line="-6052"/>
         <source>Empty database path provided</source>
         <translation>Leeg databasepad opgegeven</translation>
     </message>
@@ -171,12 +171,12 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+4401"/>
+        <location line="+4441"/>
         <source>Size</source>
         <translation>Grootte</translation>
     </message>
     <message>
-        <location line="-4400"/>
+        <location line="-4440"/>
         <source>Date</source>
         <translation>Datum</translation>
     </message>
@@ -270,14 +270,14 @@ Kies een andere naam en probeer het opnieuw.</translation>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+2587"/>
+        <location line="+2627"/>
         <location line="+607"/>
         <source>A device operation is already running.</source>
         <translation>Een apparaatoperatie is al actief.</translation>
     </message>
     <message>
-        <location line="-3108"/>
-        <location line="+2107"/>
+        <location line="-3148"/>
+        <location line="+2143"/>
         <source>Create</source>
         <translation>Maken</translation>
     </message>
@@ -340,7 +340,7 @@ Kies een andere naam en probeer het opnieuw.</translation>
     </message>
     <message>
         <location line="+58"/>
-        <location line="+16"/>
+        <location line="+18"/>
         <source>Split failed: no catalogs were created.</source>
         <translation>Splitsen mislukt: er zijn geen catalogi gemaakt.</translation>
     </message>
@@ -349,7 +349,7 @@ Kies een andere naam en probeer het opnieuw.</translation>
         <translation type="vanished">MIME-typen verifiëren voor %1…</translation>
     </message>
     <message>
-        <location line="+112"/>
+        <location line="+114"/>
         <source>Device has no catalog.</source>
         <translation>Apparaat heeft geen catalogus.</translation>
     </message>
@@ -469,9 +469,9 @@ Kies een andere naam.</translation>
         <translation type="vanished">Er bestaat al een opslag met deze ID. Kies een andere ID.</translation>
     </message>
     <message>
-        <location line="-2659"/>
+        <location line="-2699"/>
         <location line="+61"/>
-        <location line="+2797"/>
+        <location line="+2837"/>
         <source>Selected device is not a catalog</source>
         <translation>Geselecteerd apparaat is geen catalogus</translation>
     </message>
@@ -528,9 +528,9 @@ Kies een andere naam.</translation>
         <translation>Exporteren</translation>
     </message>
     <message>
-        <location line="-3282"/>
-        <location line="+554"/>
-        <location line="+2236"/>
+        <location line="-3322"/>
+        <location line="+567"/>
+        <location line="+2263"/>
         <location line="+411"/>
         <location line="+26"/>
         <location line="+17"/>
@@ -541,7 +541,7 @@ Kies een andere naam.</translation>
         <translation>Geannuleerd</translation>
     </message>
     <message>
-        <location line="-4271"/>
+        <location line="-4311"/>
         <source>Thumbnail</source>
         <translation>Miniatuur</translation>
     </message>
@@ -659,21 +659,21 @@ Kies een andere naam.</translation>
         <translation>Wachten op de schijf</translation>
     </message>
     <message>
-        <location line="+2606"/>
+        <location line="+2646"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>Verkennen</translation>
     </message>
     <message>
-        <location line="-2211"/>
-        <location line="+2213"/>
+        <location line="-2238"/>
+        <location line="+2240"/>
         <location line="+450"/>
         <location line="+10"/>
         <source>Loaded</source>
         <translation>Geladen</translation>
     </message>
     <message>
-        <location line="-3405"/>
+        <location line="-3445"/>
         <source>Classification</source>
         <translation>Classificatie</translation>
     </message>
@@ -683,7 +683,7 @@ Kies een andere naam.</translation>
         <translation>Referentiedocumenten</translation>
     </message>
     <message>
-        <location line="+3449"/>
+        <location line="+3489"/>
         <source>The export folder must be empty.</source>
         <translation>De exportmap moet leeg zijn.</translation>
     </message>
@@ -925,7 +925,7 @@ Kies een andere naam.</translation>
 <context>
     <name>Collection</name>
     <message>
-        <location filename="../core/collection.cpp" line="+2785"/>
+        <location filename="../core/collection.cpp" line="+2787"/>
         <source>This folder contains Memory mode collection files, but you are currently in File mode.&lt;br/&gt;Switch to Memory mode or select a different folder.</source>
         <translation>Deze map bevat collectiebestanden in geheugenmodus, maar u bent momenteel in bestandsmodus.&lt;br/&gt;Schakel over naar geheugenmodus of selecteer een andere map.</translation>
     </message>
@@ -961,9 +961,14 @@ Kies een andere naam.</translation>
 <context>
     <name>ColumnBrowser</name>
     <message>
-        <location filename="../qt_quick/ColumnBrowser.qml" line="+68"/>
+        <location filename="../qt_quick/ColumnBrowser.qml" line="+72"/>
         <source>No folder selected</source>
         <translation>Geen map geselecteerd</translation>
+    </message>
+    <message>
+        <location line="+150"/>
+        <source>AI</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1542,7 +1547,7 @@ Kies een andere naam.</translation>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+1462"/>
+        <location filename="../qt_quick/Main.qml" line="+1509"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>Wilt u dit %1-apparaat &lt;b&gt;verwijderen&lt;/b&gt;?&lt;br/&gt;&lt;br/&gt;Naam: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -1560,13 +1565,13 @@ Kies een andere naam.</translation>
         <location line="-581"/>
         <location line="+72"/>
         <location line="+270"/>
-        <location line="+1203"/>
+        <location line="+1377"/>
         <location line="+128"/>
         <source>Cancel</source>
         <translation>Annuleren</translation>
     </message>
     <message>
-        <location line="-1840"/>
+        <location line="-2014"/>
         <location line="+126"/>
         <location line="+81"/>
         <location line="+195"/>
@@ -1989,12 +1994,12 @@ Kies een andere naam.</translation>
     </message>
     <message>
         <location line="+21"/>
-        <location line="+634"/>
+        <location line="+673"/>
         <source>Analyse with AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-591"/>
+        <location line="-630"/>
         <source>The source folder does not contain any file.
 This could mean that the source is empty or the device is not mounted to this folder.
 Do you want to save it anyway (the catalog would be empty)?</source>
@@ -2042,12 +2047,12 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
     <message>
         <location line="+7"/>
         <location line="+126"/>
-        <location line="+404"/>
+        <location line="+578"/>
         <source>Stop</source>
         <translation>Stoppen</translation>
     </message>
     <message>
-        <location line="-523"/>
+        <location line="-697"/>
         <source>Reset</source>
         <translation>Herstellen</translation>
     </message>
@@ -2061,8 +2066,8 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
         <location line="+339"/>
         <location line="+48"/>
         <location line="+109"/>
-        <location line="+74"/>
-        <location line="+159"/>
+        <location line="+113"/>
+        <location line="+294"/>
         <location line="+21"/>
         <location line="+42"/>
         <location line="+62"/>
@@ -2081,7 +2086,7 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
 </translation>
     </message>
     <message>
-        <location line="-1034"/>
+        <location line="-1208"/>
         <source>Copy version and system information</source>
         <translation>Versie- en systeeminformatie kopiëren</translation>
     </message>
@@ -2163,7 +2168,7 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
         <translation type="vanished">Catalogus succesvol aangemaakt.</translation>
     </message>
     <message>
-        <location line="+350"/>
+        <location line="+524"/>
         <source>Catalog creation failed: </source>
         <translation>Aanmaken van catalogus mislukt: </translation>
     </message>
@@ -2172,18 +2177,18 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
         <translation type="vanished">Maken</translation>
     </message>
     <message>
-        <location line="-288"/>
+        <location line="-423"/>
         <source>Columns</source>
         <translation>Kolommen</translation>
     </message>
     <message>
-        <location line="-1573"/>
-        <location line="+1781"/>
+        <location line="-1612"/>
+        <location line="+1955"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1780"/>
+        <location line="-1954"/>
         <source>Archive overview</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2227,12 +2232,13 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1816"/>
+        <location line="+1794"/>
+        <location line="+196"/>
         <source>Add a drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1815"/>
+        <location line="-1989"/>
         <source>Catalogue a drive or a folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2243,24 +2249,24 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1773"/>
+        <location line="+1947"/>
         <source>Archive knowledge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1772"/>
+        <location line="-1946"/>
         <source>Context, glossary, documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+26"/>
-        <location line="+1690"/>
+        <location line="+1864"/>
         <source>Work in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1715"/>
+        <location line="-1889"/>
         <source>Analysis, resources, history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2271,24 +2277,24 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+1941"/>
+        <location line="+2115"/>
         <source>Archive in numbers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1940"/>
-        <location line="+1963"/>
+        <location line="-2114"/>
+        <location line="+2137"/>
         <source>Labels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1962"/>
-        <location line="+1984"/>
+        <location line="-2136"/>
+        <location line="+2158"/>
         <source>Safety copies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1983"/>
+        <location line="-2157"/>
         <location line="+1416"/>
         <source>Manage drives</source>
         <translation type="unfinished"></translation>
@@ -2320,17 +2326,72 @@ Wilt u het toch opslaan (de catalogus zou leeg zijn)?</translation>
     </message>
     <message>
         <location line="+1192"/>
-        <location line="+165"/>
+        <location line="+204"/>
         <source>File details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="-39"/>
+        <source>The folders and files of a catalogued drive, even when it is not connected. A file tagged AI already has a preview, a description or a transcript: selecting it shows them in File details.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Choose another drive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+33"/>
         <source>Topic clusters</source>
         <translation>Onderwerpclusters</translation>
     </message>
     <message>
-        <location line="+225"/>
+        <location line="+176"/>
+        <source>Choose what to browse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Each card is a catalogued drive or folder. Opening it shows its folders and files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Nothing is catalogued yet: a drive added and catalogued shows here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+54"/>
+        <source>Connected</source>
+        <translation>Verbonden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Not connected</source>
+        <translation>Niet verbonden</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Saved search results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>%1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>AI: %1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Open</source>
+        <translation>Openen</translation>
+    </message>
+    <message>
+        <location line="+109"/>
         <source>Re-interpret with the context</source>
         <translation>Opnieuw interpreteren met de context</translation>
     </message>
@@ -9578,7 +9639,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="vanished">Totale grootte</translation>
     </message>
     <message>
-        <location line="+400"/>
+        <location line="+412"/>
         <location line="+11"/>
         <source>Open folder</source>
         <translation>Map openen</translation>
@@ -9657,14 +9718,14 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="vanished">Controlesom berekenen (SHA-256)</translation>
     </message>
     <message>
-        <location line="-609"/>
-        <location line="+638"/>
+        <location line="-621"/>
+        <location line="+650"/>
         <location line="+40"/>
         <source>File not found or could not be read</source>
         <translation>Bestand niet gevonden of kon niet worden gelezen</translation>
     </message>
     <message>
-        <location line="-667"/>
+        <location line="-679"/>
         <source>Folder not found.</source>
         <translation>Map niet gevonden.</translation>
     </message>
@@ -9678,7 +9739,12 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+526"/>
+        <location line="+288"/>
+        <source>AI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+250"/>
         <source>Error: </source>
         <translation>Fout: </translation>
     </message>
@@ -9912,7 +9978,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+64"/>
+        <location line="+65"/>
         <source>Connected</source>
         <translation>Verbonden</translation>
     </message>
@@ -10291,7 +10357,7 @@ Controleer of de bronmap (%1) juist is, of dat het apparaat op de bronmap is aan
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-5347"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-5387"/>
         <source>Exact Phrase</source>
         <translation>Exacte zin</translation>
     </message>

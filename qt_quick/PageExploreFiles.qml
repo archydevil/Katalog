@@ -473,6 +473,7 @@ Item {
                         implicitHeight: root.rowHeight
                         // Full, unelided content width, read by the double-click fit (CDT-F4).
                         implicitWidth: cellLabel.x + cellLabel.implicitWidth + 4
+                                       + (aiTag.visible ? aiTag.width + 4 : 0)
 
                         readonly property string checksum: checksumSha256
 
@@ -523,6 +524,17 @@ Item {
                             implicitHeight: root.rowIconSize
                         }
 
+                        // The file already has a description, summary, transcript
+                        // or classification: File details shows them
+                        KInfoTag {
+                            id: aiTag
+                            visible: column === 0 && entryType === "file"
+                                     && appManager1.mdiHasAi(root.catalogId, fullPath, appManager1.mdiRevision)
+                            anchors { right: parent.right; rightMargin: 4; verticalCenter: parent.verticalCenter }
+                            text: qsTr("AI")
+                            tone: "ai"
+                        }
+
                         Controls.Label {
                             id: cellLabel
                             anchors {
@@ -530,7 +542,7 @@ Item {
                                 right: parent.right
                                 verticalCenter: parent.verticalCenter
                                 leftMargin:  column === 0 ? 4 : 6
-                                rightMargin: 4
+                                rightMargin: aiTag.visible ? aiTag.width + 8 : 4
                             }
                             text: {
                                 // Merged metadata columns, as in Search results: the

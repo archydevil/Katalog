@@ -130,6 +130,13 @@ public:
     // Removes the catalog's data and returns the derived files it recorded (absolute)
     static QStringList clearCatalog(const QString &connectionName, int catalogId);
 
+    // A split catalog's data follows its files: each file's data and indexed
+    // texts move to the catalog that now holds the file. Data of files in none
+    // of them, or that would replace a row of the new catalog, stays. Returns
+    // the data rows moved.
+    static int moveToCatalogs(const QString &connectionName, int oldCatalogId,
+                              const QHash<QString, int> &newCatalogByPath);
+
     // The enrichment list (running job first, then the waiting ones), kept
     // across restarts and collection switches (MDI-C28). No file position:
     // resuming relies on the incremental check (MDI-F13).

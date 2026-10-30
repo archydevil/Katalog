@@ -146,7 +146,8 @@ ColumnLayout {
                                 font.weight: Font.Bold
                                 font.pixelSize: KTheme.titleCard
                                 color: KTheme.text
-                                elide: Text.ElideRight
+                                // Never cut (CDT-C1): split catalogs differ only at the end
+                                wrapMode: Text.Wrap
                             }
                             Controls.Label {
                                 Layout.fillWidth: true

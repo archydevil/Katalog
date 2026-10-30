@@ -512,6 +512,40 @@ QStringList MdiData::clearCatalog(const QString &connectionName, int catalogId)
     return derived;
 }
 
+int MdiData::moveToCatalogs(const QString &connectionName, int oldCatalogId,
+                            const QHash<QString, int> &newCatalogByPath)
+{
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
+    db.transaction();
+    // OR IGNORE: a row the new catalog already has is kept, never replaced
+    QSqlQuery datum(db);
+    datum.prepare(QLatin1String(R"(
+        UPDATE OR IGNORE mdi_datum SET datum_catalog_id = :new_id
+        WHERE datum_catalog_id = :old_id AND datum_full_path = :full_path
+    )"));
+    QSqlQuery emb(db);
+    emb.prepare(QLatin1String(R"(
+        UPDATE mdi_embedding SET emb_catalog_id = :new_id
+        WHERE emb_catalog_id = :old_id AND emb_full_path = :full_path
+    )"));
+    int moved = 0;
+    for (auto it = newCatalogByPath.cbegin(); it != newCatalogByPath.cend(); ++it) {
+        for (QSqlQuery *q : {&datum, &emb}) {
+            q->bindValue(":new_id",    it.value());
+            q->bindValue(":old_id",    oldCatalogId);
+            q->bindValue(":full_path", it.key());
+            if (!q->exec()) {
+                qWarning() << "MdiData::moveToCatalogs failed:" << q->lastError().text();
+                db.rollback();
+                return 0;
+            }
+        }
+        moved += datum.numRowsAffected();
+    }
+    db.commit();
+    return moved;
+}
+
 QList<MdiData::PendingJob> MdiData::pendingJobs(const QString &connectionName)
 {
     QList<PendingJob> jobs;

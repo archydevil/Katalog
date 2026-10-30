@@ -3327,6 +3327,16 @@ QVariantMap AppManager::homeOverview()
         drive[QStringLiteral("files")]     = device.totalFileCount;
         drive[QStringLiteral("size")]      = formatDataSize(device.totalFileSize);
         drive[QStringLiteral("updated")]   = QLocale().toString(device.dateTimeUpdated.date(), QLocale::ShortFormat);
+        // The drives and groups that hold it, so Browse can list what a choice holds
+        QVariantList ancestors;
+        for (int parentId = device.parentID, guard = 0; parentId > 0 && guard < 32; ++guard) {
+            ancestors << parentId;
+            Device parent;
+            parent.ID = parentId;
+            parent.loadDevice(m_connectionName);
+            parentId = parent.parentID;
+        }
+        drive[QStringLiteral("ancestors")] = ancestors;
 
         // Files by type (once per catalog state) and files with AI results (at
         // most every 15 s) are counted in the background: Home shows what is
@@ -3405,7 +3415,10 @@ void AppManager::runNextHomeCount()
         int aiFiles = -1;
         const QString mdiName = name + QStringLiteral("_mdi");
         if (QFileInfo::exists(mdiDb) && MdiData::open(mdiName, mdiDb)) {
-            aiFiles = int(MdiData::catalogIndex(mdiName, job.catalogId).size());
+            // Files with AI results, not every file with some data: the quick
+            // hash covers them all (MDI-F130)
+            aiFiles = int(aiResultPaths(mdiName, job.catalogId,
+                                        MdiData::catalogIndex(mdiName, job.catalogId)).size());
             MdiData::close(mdiName);
         }
         QMetaObject::invokeMethod(this, [this, job, counts, aiFiles]() {
@@ -3843,8 +3856,24 @@ void AppManager::refreshMdiIndex(int catalogId)
     m_mdiIndexCatalogId = catalogId;
     m_mdiIndexRevision  = m_mdiRevision;
     m_mdiIndex.clear();
-    if (catalogId > 0 && QFileInfo::exists(mdiDataPath()) && openMdiMainConnection())
-        m_mdiIndex = MdiData::catalogIndex(kMdiMainConnection, catalogId);
+    m_mdiAiPaths.clear();
+    if (catalogId > 0 && QFileInfo::exists(mdiDataPath()) && openMdiMainConnection()) {
+        m_mdiIndex   = MdiData::catalogIndex(kMdiMainConnection, catalogId);
+        m_mdiAiPaths = aiResultPaths(kMdiMainConnection, catalogId, m_mdiIndex);
+    }
+}
+//----------------------------------------------------------------------
+QSet<QString> AppManager::aiResultPaths(const QString &mdiConnection, int catalogId,
+                                        const QHash<QString, QVariantMap> &catalogIndex)
+{
+    QSet<QString> paths;
+    for (auto it = catalogIndex.cbegin(); it != catalogIndex.cend(); ++it)
+        if (it->contains(QStringLiteral("caption")) || it->contains(QStringLiteral("summary")))
+            paths.insert(it.key());
+    for (const QString &analysis : {QStringLiteral("transcript"), QStringLiteral("classification")})
+        for (const MdiData::Datum &d : MdiData::forCatalog(mdiConnection, catalogId, analysis))
+            paths.insert(d.fullPath);
+    return paths;
 }
 //----------------------------------------------------------------------
 QString AppManager::mdiPreviewUrl(int catalogId, const QString &fullPath, int revision)
@@ -3864,6 +3893,13 @@ bool AppManager::mdiHasData(int catalogId, const QString &fullPath, int revision
     Q_UNUSED(revision)
     refreshMdiIndex(catalogId);
     return m_mdiIndex.value(fullPath).value(QStringLiteral("hasData")).toBool();
+}
+//----------------------------------------------------------------------
+bool AppManager::mdiHasAi(int catalogId, const QString &fullPath, int revision)
+{
+    Q_UNUSED(revision)
+    refreshMdiIndex(catalogId);
+    return m_mdiAiPaths.contains(fullPath);
 }
 //----------------------------------------------------------------------
 QVariantList AppManager::mdiDetails(int catalogId, const QString &fullPath)
@@ -5056,6 +5092,8 @@ QString AppManager::splitCatalogBySubDirectory(int deviceId)
     collection->saveDeviceTableToFile();
     emit deviceListChanged();
     refreshDeviceList();
+    // The new catalogs' instant index, as after a creation (MDI-F128)
+    scheduleFtsIndexing();
     return QString();
 }
 //----------------------------------------------------------------------
@@ -5072,6 +5110,8 @@ void AppManager::splitCatalogByFileType(int deviceId, bool verifyFirst)
             collection->saveDeviceTableToFile();
             emit deviceListChanged();
             refreshDeviceList();
+            // The new catalogs' instant index, as after a creation (MDI-F128)
+            scheduleFtsIndexing();
             emit splitCompleted(true, QString());
         }
         delete dev;

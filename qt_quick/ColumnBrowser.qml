@@ -20,6 +20,10 @@ Item {
     property string selectedFullPath: ""
     property int    focusedColumn: 0
     signal inspectorToggleRequested()
+    // A folder that is a catalog of its own (a split catalog's sub-folder):
+    // its files are there, so that catalog opens instead (D34, "Sfoglia mai vuota")
+    property var catalogForFolder: function(folderPath) { return 0 }
+    signal catalogFolderRequested(int deviceId)
 
     readonly property real columnWidth: Kirigami.Units.gridUnit * 15
     readonly property real rowHeight: 40      // touch size, room for the preview
@@ -108,7 +112,10 @@ Item {
                     column.current = i
                     list.positionViewAtIndex(i, ListView.Contain)
                     const e = column.entries[i]
-                    if (e.entryType === "folder")
+                    const otherCatalog = e.entryType === "folder" ? browser.catalogForFolder(e.fullPath) : 0
+                    if (otherCatalog > 0)
+                        browser.catalogFolderRequested(otherCatalog)
+                    else if (e.entryType === "folder")
                         browser.openFolder(column.index, e.fullPath)
                     else
                         browser.selectFile(column.index, e.fullPath)
@@ -206,6 +213,14 @@ Item {
                             color: row.active ? KTheme.accentText : KTheme.text
                             font.pixelSize: KTheme.body
                             font.weight: row.highlighted ? Font.DemiBold : Font.Normal
+                        }
+                        // The file already has a description, summary, transcript
+                        // or classification: File details shows them
+                        KInfoTag {
+                            visible: row.modelData.entryType === "file"
+                                     && appManager1.mdiHasAi(browser.catalogId, row.modelData.fullPath, appManager1.mdiRevision)
+                            text: qsTr("AI")
+                            tone: "ai"
                         }
                         Kirigami.Icon {
                             visible: row.modelData.entryType === "folder"

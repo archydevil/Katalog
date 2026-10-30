@@ -489,6 +489,8 @@ public slots:
     // Explore / details: revision is passed only to re-evaluate the bindings
     Q_INVOKABLE QString      mdiPreviewUrl(int catalogId, const QString &fullPath, int revision = 0);
     Q_INVOKABLE bool         mdiHasData(int catalogId, const QString &fullPath, int revision = 0);
+    // A description, summary, transcript or classification: what Browse tags "AI"
+    Q_INVOKABLE bool         mdiHasAi(int catalogId, const QString &fullPath, int revision = 0);
     Q_INVOKABLE QVariantList mdiDetails(int catalogId, const QString &fullPath);
     Q_INVOKABLE QVariantMap  mdiClusters(int catalogId);
     // Inspector panel (fork, owner's request 2026-10-29): everything known about
@@ -871,6 +873,11 @@ private:
     int                          m_mdiIndexCatalogId = -1;
     int                          m_mdiIndexRevision  = -1;
     QHash<QString, QVariantMap>  m_mdiIndex;
+    QSet<QString>                m_mdiAiPaths;   // files of the indexed catalog with AI results
+    // Files with a description, summary, transcript or classification: what
+    // Browse tags "AI" and Home counts (MDI-F130)
+    static QSet<QString> aiResultPaths(const QString &mdiConnection, int catalogId,
+                                       const QHash<QString, QVariantMap> &catalogIndex);
     QString mdiDataPath() const;
     bool    openMdiMainConnection();
     void    refreshMdiIndex(int catalogId);

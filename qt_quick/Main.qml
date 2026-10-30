@@ -503,6 +503,9 @@ Kirigami.ApplicationWindow {
     }
     property bool inspectorVisible: appManager1.getViewSetting("InspectorVisible")
     property bool exploreColumns: appManager1.getViewSetting("ExploreColumns")   // column view instead of tree + list (fork)
+    // Browse lists the catalogs to choose from instead of showing one (D34,
+    // "Sfoglia mai vuota"): until a catalog is open, or when asked for
+    property bool exploreChooser: true
     onInspectorVisibleChanged: appManager1.setViewSetting("InspectorVisible", inspectorVisible)
     onExploreColumnsChanged:   appManager1.setViewSetting("ExploreColumns", exploreColumns)
 
@@ -953,7 +956,51 @@ Kirigami.ApplicationWindow {
     // sections grouped and described, the running job and Settings at the foot
     function sidebarGo(name, page) {
         appManager1.setLastPage(name)
+        if (name === "Explore")
+            root.browseSelection()
         root.showPage(page)
+    }
+    // Browse shows what is chosen in My drives: a catalog opens. Anything else
+    // (All, a drive, a group) keeps the catalog already open (EXP-F27 a); with
+    // none open, Browse lists the catalogs the choice holds, ready to open
+    function browseSelection() {
+        root.refreshCatalogPaths()
+        if (appManager1.selectedDeviceType === "Catalog") {
+            root.exploreChooser = false
+            if (exploreFolders.openedDeviceId !== appManager1.selectedDeviceId)
+                exploreFolders.openByDeviceId(appManager1.selectedDeviceId)
+        } else if (exploreFolders.openedDeviceId <= 0) {
+            root.exploreChooser = true
+        }
+    }
+    Connections {
+        target: appManager1
+        function onSelectedDeviceChanged() {
+            if (pageExplore.visible)
+                root.browseSelection()
+        }
+        function onHomeOverviewChanged() {
+            if (pageExplore.visible)
+                root.refreshCatalogPaths()
+        }
+    }
+    // The catalogs by their folder: after a split, a sub-folder shown in its
+    // parent's catalog holds no files there; they are in its own catalog
+    property var catalogPaths: ({})
+    function refreshCatalogPaths() {
+        const paths = {}
+        for (const d of (appManager1.homeOverview().drives || []))
+            if (d.isDrive)
+                paths[d.path] = d.deviceId
+        root.catalogPaths = paths
+    }
+    function otherCatalogForFolder(folderPath) {
+        const deviceId = root.catalogPaths[folderPath] || 0
+        return deviceId !== exploreFolders.openedDeviceId ? deviceId : 0
+    }
+    function openCatalogFolder(deviceId) {
+        appManager1.selectDeviceById(deviceId)
+        root.browseSelection()
     }
 
     globalDrawer: Kirigami.GlobalDrawer {
@@ -2618,6 +2665,45 @@ Kirigami.ApplicationWindow {
         title: qsTr("Browse the archive")
         padding: 0
 
+        // What the page is for, and which catalog is open (D34, "Sfoglia mai vuota")
+        header: ColumnLayout {
+            width: parent.width
+            spacing: 8
+            Controls.Label {
+                Layout.fillWidth: true
+                Layout.leftMargin:  KTheme.gap
+                Layout.rightMargin: KTheme.gap
+                Layout.topMargin:   KTheme.gap
+                wrapMode: Text.WordWrap
+                color: KTheme.text2
+                text: qsTr("The folders and files of a catalogued drive, even when it is not connected. A file tagged AI already has a preview, a description or a transcript: selecting it shows them in File details.")
+            }
+            RowLayout {
+                visible: !root.exploreChooser && exploreFiles.catalogName !== ""
+                Layout.fillWidth: true
+                Layout.leftMargin:  KTheme.gap
+                Layout.rightMargin: KTheme.gap
+                spacing: 10
+                Kirigami.Icon {
+                    source: "drive-harddisk"
+                    implicitWidth: 20
+                    implicitHeight: 20
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: exploreFiles.catalogName
+                    font.weight: Font.DemiBold
+                    color: KTheme.text
+                    wrapMode: Text.Wrap
+                }
+                KButton {
+                    variant: "link"
+                    text: qsTr("Choose another drive")
+                    onClicked: root.exploreChooser = true
+                }
+            }
+        }
+
         actions: [
             Kirigami.Action {
                 // Finder-style column view instead of tree + list (fork)
@@ -2671,6 +2757,7 @@ Kirigami.ApplicationWindow {
             id: exploreSplit
             anchors.fill: parent
             orientation: Qt.Horizontal
+            visible: !root.exploreChooser
 
             // A 1 px line, as the separator it replaces. Wider, its transparent
             // sides showed the window background as a grey band; the grab
@@ -2725,9 +2812,14 @@ Kirigami.ApplicationWindow {
                 Controls.SplitView.minimumWidth:   exploreSplit.treeMinimum
 
                 onFolderClicked: function(folderPath) {
-                    exploreFiles.currentFolderPath = folderPath
+                    const otherCatalog = root.otherCatalogForFolder(folderPath)
+                    if (otherCatalog > 0)
+                        root.openCatalogFolder(otherCatalog)
+                    else
+                        exploreFiles.currentFolderPath = folderPath
                 }
                 onCatalogOpenRequested: function(info) {
+                    root.exploreChooser = false
                     exploreFiles.catalogName  = info.name  ?? ""
                     exploreFiles.catalogPath  = info.path  ?? ""
                     exploreFiles.catalogId    = info.externalId ?? 0
@@ -2746,6 +2838,11 @@ Kirigami.ApplicationWindow {
 
                 onInspectorToggleRequested: root.inspectorVisible = !root.inspectorVisible
                 onFolderNavigated: function(folderPath) {
+                    const otherCatalog = root.otherCatalogForFolder(folderPath)
+                    if (otherCatalog > 0) {
+                        root.openCatalogFolder(otherCatalog)
+                        return
+                    }
                     exploreFolders.selectedFolderPath = folderPath
                     exploreFiles.currentFolderPath    = folderPath
                 }
@@ -2758,6 +2855,8 @@ Kirigami.ApplicationWindow {
                 Controls.SplitView.fillWidth: true
                 rootPath:  exploreFiles.catalogPath
                 catalogId: exploreFiles.catalogId
+                catalogForFolder: root.otherCatalogForFolder
+                onCatalogFolderRequested: (deviceId) => root.openCatalogFolder(deviceId)
                 onInspectorToggleRequested: root.inspectorVisible = !root.inspectorVisible
             }
 
@@ -2775,8 +2874,130 @@ Kirigami.ApplicationWindow {
         // The styles' handle grabs only its own 1-2 px (measured) and SplitView
         // ignores a wider containmentMask, so this strip, laid over the line
         // and a few pixels each side of it, does the drag (EXP-F34).
+        // Nothing open to browse (D34, "Sfoglia mai vuota"): the catalogs the
+        // choice in My drives holds, each ready to open, instead of an empty page
+        Controls.ScrollView {
+            id: exploreChooserView
+            anchors.fill: parent
+            visible: root.exploreChooser
+            contentWidth: availableWidth
+            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
+
+            property var drives: []
+            function refresh() {
+                const all = appManager1.homeOverview().drives || []
+                const chosen = appManager1.selectedDeviceId
+                const inChoice = chosen > 0 ? all.filter(d => (d.ancestors || []).indexOf(chosen) >= 0) : []
+                drives = inChoice.length > 0 ? inChoice : all
+            }
+            function count(n) { return Number(n || 0).toLocaleString(Qt.locale(), "f", 0) }
+            onVisibleChanged: if (visible) refresh()
+            Connections {
+                target: appManager1
+                function onHomeOverviewChanged() { if (exploreChooserView.visible) exploreChooserView.refresh() }
+                function onSelectedDeviceChanged() { if (exploreChooserView.visible) exploreChooserView.refresh() }
+            }
+
+            ColumnLayout {
+                width: exploreChooserView.availableWidth
+                spacing: KTheme.gap
+
+                KSectionHeader {
+                    Layout.leftMargin:  KTheme.gap
+                    Layout.rightMargin: KTheme.gap
+                    Layout.topMargin:   KTheme.gap
+                    level: 2
+                    title: qsTr("Choose what to browse")
+                    description: exploreChooserView.drives.length > 0
+                                 ? qsTr("Each card is a catalogued drive or folder. Opening it shows its folders and files.")
+                                 : qsTr("Nothing is catalogued yet: a drive added and catalogued shows here.")
+                }
+
+                KButton {
+                    visible: exploreChooserView.drives.length === 0
+                    Layout.leftMargin: KTheme.gap
+                    variant: "primary"
+                    icon.name: "list-add"
+                    text: qsTr("Add a drive")
+                    onClicked: root.sidebarGo("Create", pageCreate)
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin:   KTheme.gap
+                    Layout.rightMargin:  KTheme.gap
+                    Layout.bottomMargin: KTheme.gap
+                    columns: Math.max(1, Math.floor(width / 320))
+                    columnSpacing: KTheme.gap
+                    rowSpacing: KTheme.gap
+
+                    Repeater {
+                        model: exploreChooserView.drives
+                        delegate: KCard {
+                            id: chooserCard
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+                                Controls.Label {
+                                    Layout.fillWidth: true
+                                    text: chooserCard.modelData.name
+                                    font.weight: Font.Bold
+                                    font.pixelSize: KTheme.titleCard
+                                    color: KTheme.text
+                                    wrapMode: Text.Wrap
+                                }
+                                Controls.Label {
+                                    Layout.fillWidth: true
+                                    text: chooserCard.modelData.path
+                                    font.family: KTheme.mono
+                                    font.pixelSize: KTheme.note
+                                    color: KTheme.text3
+                                    wrapMode: Text.WrapAnywhere
+                                }
+                            }
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                KInfoTag {
+                                    visible: chooserCard.modelData.isDrive
+                                    text: chooserCard.modelData.connected ? qsTr("Connected") : qsTr("Not connected")
+                                    tone: chooserCard.modelData.connected ? "ok" : "warn"
+                                }
+                                KInfoTag {
+                                    visible: !chooserCard.modelData.isDrive
+                                    text: qsTr("Saved search results")
+                                    tone: "info"
+                                }
+                                KInfoTag { text: qsTr("%1 files").arg(exploreChooserView.count(chooserCard.modelData.files)) }
+                                KInfoTag {
+                                    visible: chooserCard.modelData.aiFiles > 0
+                                    text: qsTr("AI: %1 files").arg(exploreChooserView.count(chooserCard.modelData.aiFiles))
+                                    tone: "ai"
+                                }
+                            }
+                            KButton {
+                                variant: "primary"
+                                icon.name: "document-open-folder"
+                                text: qsTr("Open")
+                                // Chosen in My drives too, as Home's Browse does
+                                onClicked: {
+                                    appManager1.selectDeviceById(chooserCard.modelData.deviceId)
+                                    root.browseSelection()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         MouseArea {
             id: exploreSplitGrab
+            enabled: !root.exploreChooser
             x: exploreSplit.x + exploreFolders.width - Kirigami.Units.smallSpacing
             y: exploreSplit.y
             width:  Kirigami.Units.smallSpacing * 2 + 1
