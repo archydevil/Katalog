@@ -83,6 +83,25 @@ ColumnLayout {
         loadCatalogNotes()
         dirty = false
     }
+    // A catalog chosen elsewhere (a drive card on Home): shown in both the
+    // re-interpret and the draft cards, which share one catalog choice
+    function selectCatalog(deviceId) {
+        for (var i = 0; i < catalogs.length; ++i) {
+            if (catalogs[i].deviceId === deviceId) {
+                catalogBox.currentIndex = i
+                return true
+            }
+        }
+        return false
+    }
+    // ...and its re-interpretation asked for at once, when it can run
+    function reinterpretCatalog(deviceId) {
+        // After the page's own load, once the catalog list fills the choice
+        Qt.callLater(function() {
+            if (pageContext.selectCatalog(deviceId) && pageContext.hasSavedContext && !pageContext.dirty)
+                pageContext.openReinterpret()
+        })
+    }
     function loadCatalogNotes() {
         catalogNotesField.text = catalogDeviceId >= 0 ? appManager1.getCatalogNotes(catalogDeviceId) : ""
         catalogNotesField.edited = false
@@ -800,7 +819,11 @@ ColumnLayout {
                                     }
                                 }
                                 RemoveButton {
-                                    onClicked: appManager1.removeKnowledgeDocument(documentRow.modelData.id)
+                                    onClicked: {
+                                        removeDocumentDialog.documentId    = documentRow.modelData.id
+                                        removeDocumentDialog.documentTitle = documentRow.modelData.title
+                                        removeDocumentDialog.open()
+                                    }
                                 }
                             }
                         }
@@ -905,6 +928,34 @@ ColumnLayout {
     }
 
     Item { Layout.preferredHeight: KTheme.gap }
+
+    // Removing a reference document asks first, and says what stays
+    Kirigami.PromptDialog {
+        id: removeDocumentDialog
+        property int    documentId: -1
+        property string documentTitle: ""
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Remove this reference document?")
+        subtitle: qsTr("%1 leaves the archive knowledge: the AI no longer uses its passages. The file itself stays where it is, unchanged.")
+                  .arg(removeDocumentDialog.documentTitle)
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Remove")
+                icon.name: "list-remove"
+                onTriggered: {
+                    appManager1.removeKnowledgeDocument(removeDocumentDialog.documentId)
+                    removeDocumentDialog.close()
+                }
+            },
+            Kirigami.Action {
+                text: qsTranslate("Main", "Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: removeDocumentDialog.close()
+            }
+        ]
+    }
 
     Dialogs.FileDialog {
         id: documentsDialog

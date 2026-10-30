@@ -148,6 +148,9 @@ Kirigami.ApplicationWindow {
 
     signal searchTriggered()
     property real cardScale: 1.0
+    // Web searches sent in this session (counted when each run ends), for
+    // Home's and Work in progress's "Data sent"
+    property int webSearchesSent: 0
 
     // App-wide text size (TYP-F7): scales the application font. QML sizes read
     // appManager1.textPointSize (already scaled), never Kirigami.Theme.defaultFont,
@@ -1053,6 +1056,9 @@ Kirigami.ApplicationWindow {
                 if (error !== "")
                     showPassiveNotification(error, 5000)
             })
+        }
+        function onWebQueriesFinished(asked, found, error) {
+            root.webSearchesSent += asked
         }
     }
 
@@ -2316,6 +2322,8 @@ Kirigami.ApplicationWindow {
     }
 
     // Edit device dialogs
+    // Deleting says what goes, what stays and how it is undone, in the words
+    // of the Manage drives dialog (one translation each)
     Controls.Dialog {
         id: editDeleteDeviceDialog
         // Fusion paints the dialog, its title and its buttons from the
@@ -2325,23 +2333,44 @@ Kirigami.ApplicationWindow {
         property string deviceName: ""
         property string deviceType: ""
         property int    deviceId:   0
+        property bool   historyOn:  false
         title: "Teca"
         modal: true
         anchors.centerIn: parent
         width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)
+        onAboutToShow: historyOn = appManager1.historyAvailable()
         contentItem: ColumnLayout {
+            spacing: Kirigami.Units.largeSpacing
             Controls.Label {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 textFormat: Text.RichText
                 text: qsTr("Do you want to <b>delete</b> this %1 device?<br/><br/>Name: <b>%2</b>")
-                      .arg(editDeleteDeviceDialog.deviceType)
-                      .arg(editDeleteDeviceDialog.deviceName)
+                      .arg(editDeleteDeviceDialog.deviceType === "Virtual" ? qsTranslate("PageDevicesViewDelegate", "Virtual")
+                           : editDeleteDeviceDialog.deviceType === "Storage" ? qsTranslate("PageDevicesViewDelegate", "Storage")
+                           : qsTranslate("PageDevicesViewDelegate", "Catalog"))
+                      .arg(String(editDeleteDeviceDialog.deviceName).replace(/&/g, "&amp;").replace(/</g, "&lt;"))
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: editDeleteDeviceDialog.deviceType === "Catalog"
+                      ? qsTranslate("PageDevicesView", "The files on the drive are not touched: only this catalog's list of files and its AI results leave the archive.")
+                      : qsTranslate("PageDevicesView", "Nothing on the drives is touched: only this entry and its details leave the archive.")
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: KTheme.text2
+                text: editDeleteDeviceDialog.historyOn
+                      ? qsTranslate("PageDevicesView", "A restore point is saved first, so this can be undone from Action history.")
+                      : qsTranslate("PageDevicesView", "This collection keeps no restore points, so this cannot be undone.")
             }
         }
         footer: Controls.DialogButtonBox {
             Controls.Button {
-                text: qsTr("Yes")
+                text: qsTr("Delete")
+                icon.name: "edit-delete"
                 Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.AcceptRole
             }
             Controls.Button {
@@ -2657,40 +2686,57 @@ Kirigami.ApplicationWindow {
         appManager1.openRecentCollection(entry)
     }
 
-    // Update All Active — pre-confirmation dialog
+    // Update All Active — pre-confirmation dialog: what it does and on which
+    // drives, K2's summary question as a choice, then Update or Cancel (Cancel
+    // starts nothing)
     Controls.Dialog {
         id: devUpdateAllDialog
         // Fusion paints the dialog, its title and its buttons from the
         // window palette: the design system surface and line (D34)
         palette.window: KTheme.surface
         palette.mid:    KTheme.line
-        title: "Teca"
+        title: qsTr("Update the connected drives")
         modal: true
         anchors.centerIn: parent
-        width: Math.min(440, root.width - Kirigami.Units.largeSpacing * 4)
+        width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)
         contentItem: ColumnLayout {
+            spacing: Kirigami.Units.largeSpacing
+            // The scope is the choice in My drives (updateAllActiveDevices)
             Controls.Label {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
-                text: qsTr("Do you want the summary of updates for each catalog?")
+                text: appManager1.selectedDeviceId > 0
+                      ? qsTr("Each connected catalog in %1 is read again from its drive and brought up to date. Catalogs whose drive is not connected are left as they are.")
+                            .arg(appManager1.selectedDeviceName)
+                      : qsTr("Each connected catalog is read again from its drive and brought up to date. Catalogs whose drive is not connected are left as they are.")
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                color: KTheme.text2
+                text: qsTr("The files on the drives are only read, never changed.")
+            }
+            Controls.CheckBox {
+                id: devUpdateAllSummaryBox
+                Layout.fillWidth: true
+                text: qsTr("Show a summary after each catalog")
             }
         }
         footer: Controls.DialogButtonBox {
             Controls.Button {
-                text: qsTr("Yes")
-                Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.YesRole
-                onClicked: { devUpdateAllDialog.close(); appManager1.updateAllActiveDevices(true) }
-            }
-            Controls.Button {
-                text: qsTr("No")
-                Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.NoRole
-                onClicked: { devUpdateAllDialog.close(); appManager1.updateAllActiveDevices(false) }
+                text: qsTranslate("PageDevicesViewDelegate", "Update")
+                icon.name: "media-playlist-repeat"
+                Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.AcceptRole
             }
             Controls.Button {
                 text: qsTr("Cancel")
                 Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.RejectRole
-                onClicked: devUpdateAllDialog.close()
             }
+            onAccepted: {
+                devUpdateAllDialog.close()
+                appManager1.updateAllActiveDevices(devUpdateAllSummaryBox.checked)
+            }
+            onRejected: devUpdateAllDialog.close()
         }
     }
 
@@ -3402,7 +3448,8 @@ Kirigami.ApplicationWindow {
         titleDelegate: Component { NavTitle { text: pageDevices.title } }   // Back, Forward, title (D36)
         actions: [
             Kirigami.Action {
-                text:        qsTr("All active")
+                // Named by what it does (it used to read "All active")
+                text:        qsTr("Update the connected drives")
                 icon.name:   "media-playlist-repeat"
                 displayHint: Kirigami.DisplayHint.KeepVisible
                 // Always enabled: requests are queued while an operation runs
@@ -4005,6 +4052,12 @@ Kirigami.ApplicationWindow {
                               "Context": pageContext, "Activity": pageActivity, "Selection": pageSelection }
                 if (pages[name])
                     root.sidebarGo(name, pages[name])
+            }
+            // A drive card: Archive knowledge on that catalog, its
+            // re-interpretation asked for straight away
+            onReinterpretDrive: (deviceId) => {
+                root.sidebarGo("Context", pageContext)
+                pageContext_form.reinterpretCatalog(deviceId)
             }
         }
     }

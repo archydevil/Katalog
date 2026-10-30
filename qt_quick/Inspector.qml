@@ -272,8 +272,10 @@ Rectangle {
                     Flow {
                         Layout.fillWidth: true
                         spacing: 6
+                        // The words the drive cards use for the same state
                         KInfoTag {
-                            text: inspector.online ? qsTr("Online") : qsTr("Offline")
+                            text: inspector.online ? qsTranslate("PageHome", "Connected")
+                                                   : qsTranslate("PageHome", "Not connected")
                             tone: inspector.online ? "ok" : "warn"
                         }
                         KInfoTag {

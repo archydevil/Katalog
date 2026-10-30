@@ -74,6 +74,71 @@ Item {
     property string operationDeviceName: ""
     property bool   operationDeviceActive: false
 
+    // Whether this collection keeps restore points (not in Hosted mode): the
+    // split and delete dialogs say how the change is undone, or that it is not
+    property bool historyOn: false
+    // The device kinds in the words the cards use, never the internal type
+    function typeWord(type) {
+        return type === "Virtual" ? qsTranslate("PageDevicesViewDelegate", "Virtual")
+             : type === "Storage" ? qsTranslate("PageDevicesViewDelegate", "Storage")
+             : qsTranslate("PageDevicesViewDelegate", "Catalog")
+    }
+    // A name inside a sentence in bold: its own < and & stay text
+    function htmlText(text) {
+        return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    }
+
+    // A split, start to end: the catalogs there were before it, so the new
+    // ones are told apart afterwards; the catalog split, with its drive
+    property var  splitBefore: ({})
+    property var  splitSource: ({})
+    property bool splitPending: false
+    function prepareSplit(deviceId, kind) {
+        let before = {}
+        let source = { deviceId: deviceId, parentId: 0, parentType: "", path: "" }
+        for (const d of appManager1.getDeviceList("All", 0)) {
+            if (d.type === "Catalog")
+                before[d.deviceId] = true
+            if (d.deviceId === deviceId && d.parentType !== "Virtual")
+                source = d
+        }
+        root.splitBefore  = before
+        root.splitSource  = Object.assign({ kind: kind }, source)
+        root.splitPending = true
+    }
+    // After it: My drives no longer points to the catalog that is gone, and
+    // the result says how many catalogs there are now, with Browse at hand
+    function finishSplit() {
+        if (!root.splitPending)
+            return
+        root.splitPending = false
+        const source = root.splitSource
+        const parts = appManager1.getDeviceList("All", 0)
+            .filter(d => d.type === "Catalog" && d.parentType !== "Virtual" && root.splitBefore[d.deviceId] !== true)
+        root.splitBefore = ({})
+        if (parts.length === 0)
+            return
+        // Browse opens on the files that stayed at the top (split by folder),
+        // or on the largest part (split by type)
+        let first = parts[0]
+        for (const d of parts) {
+            if (source.kind === "folder" ? d.path === source.path
+                                         : Number(d.fileCount) > Number(first.fileCount))
+                first = d
+            if (source.kind === "folder" && d.path === source.path)
+                break
+        }
+        // The drive holds every part, so Search keeps finding all the files;
+        // a catalog outside a drive points to that first part instead
+        if (appManager1.selectedDeviceId === source.deviceId)
+            appManager1.selectDeviceById(source.parentType === "Storage" && source.parentId > 0
+                                         ? source.parentId : first.deviceId)
+        const firstId = first.deviceId
+        applicationWindow().showPassiveNotification(
+            qsTr("Split done: %1 catalogs, with every file and its AI results.").arg(parts.length), "long",
+            qsTranslate("PageHome", "Browse"), function() { root.exploreDeviceRequested(firstId) })
+    }
+
     // Table display mode (SpecDevicesPage DVP-F1). Offered for the Storage and
     // Catalogs lists only; the Device tree keeps its cards until that view is
     // migrated in its own right.
@@ -199,9 +264,14 @@ Item {
         }
         function onSplitCompleted(success, error) {
             root.refreshDevices()
-            if (!success && error.length > 0) {
-                operationResultLabel.text = error
-                operationResultDialog.open()
+            if (success) {
+                root.finishSplit()
+            } else {
+                root.splitPending = false
+                if (error.length > 0) {
+                    operationResultLabel.text = error
+                    operationResultDialog.open()
+                }
             }
         }
     }
@@ -210,6 +280,7 @@ Item {
 
     // ── Dialogs ────────────────────────────────────────────────────────────
 
+    // A split says plainly what it does, what stays and how it is undone
     Controls.Dialog {
         id: splitSubDirConfirmDialog
         // The design system surface and line (D34)
@@ -219,12 +290,23 @@ Item {
         title: qsTr("Split Catalog")
         modal: true
         anchors.centerIn: parent
-        width: Math.min(420, root.width - Kirigami.Units.largeSpacing * 4)
+        width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)
+        onAboutToShow: root.historyOn = appManager1.historyAvailable()
         contentItem: ColumnLayout {
+            spacing: Kirigami.Units.largeSpacing
             Controls.Label {
                 Layout.fillWidth: true
-                text: qsTr("Split <b>%1</b> into sub-catalogs by sub-directory?<br/><br/>This will create one sub-catalog per immediate sub-directory and remove the original catalog. This operation cannot be undone.").arg(root.operationDeviceName)
-                textFormat: Text.RichText
+                text: qsTr("Each main folder of <b>%1</b> becomes a catalog of its own; the files directly at its top stay in <b>%2</b>. Browse and Search still find every file, and the AI results follow the files.")
+                      .arg(root.htmlText(root.operationDeviceName))
+                      .arg(root.htmlText(root.operationDeviceName + "_(" + qsTranslate("Catalog", "root") + ")"))
+                textFormat: Text.StyledText
+                wrapMode: Text.WordWrap
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                text: root.historyOn ? qsTr("A restore point is saved first, so this can be undone from Action history.")
+                                     : qsTr("This collection keeps no restore points, so this cannot be undone.")
+                color: KTheme.text2
                 wrapMode: Text.WordWrap
             }
         }
@@ -240,12 +322,15 @@ Item {
             onAccepted: {
                 var id = splitSubDirConfirmDialog.deviceId
                 splitSubDirConfirmDialog.close()
+                root.prepareSplit(id, "folder")
                 var err = appManager1.splitCatalogBySubDirectory(id)
                 if (err.length > 0) {
+                    root.splitPending = false
                     operationResultLabel.text = err
                     operationResultDialog.open()
                 } else {
                     root.refreshDevices()
+                    root.finishSplit()
                 }
             }
             onRejected: splitSubDirConfirmDialog.close()
@@ -262,14 +347,23 @@ Item {
         title: qsTr("Split Catalog")
         modal: true
         anchors.centerIn: parent
-        width: Math.min(420, root.width - Kirigami.Units.largeSpacing * 4)
+        width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)
+        onAboutToShow: root.historyOn = appManager1.historyAvailable()
         contentItem: ColumnLayout {
             spacing: Kirigami.Units.largeSpacing
             Controls.Label {
-                text: qsTr("Split <b>%1</b> into sub-catalogs by file type:").arg(root.operationDeviceName)
-                textFormat: Text.RichText
+                text: qsTr("The files of <b>%1</b> are shared out by type, each type in a catalog of its own: images, videos, audio, text and other files. Browse and Search still find every file, and the AI results follow the files.")
+                      .arg(root.htmlText(root.operationDeviceName))
+                textFormat: Text.StyledText
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                text: root.historyOn ? qsTr("A restore point is saved first, so this can be undone from Action history.")
+                                     : qsTr("This collection keeps no restore points, so this cannot be undone.")
+                color: KTheme.text2
+                wrapMode: Text.WordWrap
             }
             ColumnLayout {
                 Layout.fillWidth: true
@@ -282,8 +376,18 @@ Item {
                     onClicked: {
                         var id = splitFileTypeDialog.deviceId
                         splitFileTypeDialog.close()
+                        root.prepareSplit(id, "type")
                         appManager1.splitCatalogByFileType(id, true)
                     }
+                }
+                // Why the first choice is greyed, in words
+                Controls.Label {
+                    Layout.fillWidth: true
+                    visible: !splitFileTypeDialog.deviceActive
+                    text: qsTr("Verifying reads the files, so it needs the drive connected.")
+                    color: KTheme.text3
+                    font.pixelSize: KTheme.note
+                    wrapMode: Text.WordWrap
                 }
                 Controls.Button {
                     text: qsTr("Split without verifying")
@@ -292,6 +396,7 @@ Item {
                     onClicked: {
                         var id = splitFileTypeDialog.deviceId
                         splitFileTypeDialog.close()
+                        root.prepareSplit(id, "type")
                         appManager1.splitCatalogByFileType(id, false)
                     }
                 }
@@ -419,6 +524,7 @@ Item {
         }
     }
 
+    // Deleting says what goes, what stays and how it is undone
     Controls.Dialog {
         id: deleteConfirmDialog
         // The design system surface and line (D34)
@@ -429,20 +535,37 @@ Item {
         title: qsTr("Delete Device")
         modal: true
         anchors.centerIn: parent
-        width: Math.min(420, root.width - Kirigami.Units.largeSpacing * 4)
+        width: Math.min(460, root.width - Kirigami.Units.largeSpacing * 4)
+        onAboutToShow: root.historyOn = appManager1.historyAvailable()
         contentItem: ColumnLayout {
+            spacing: Kirigami.Units.largeSpacing
             Controls.Label {
                 Layout.fillWidth: true
                 text: qsTr("Do you want to <b>delete</b> this %1 device?<br/><br/>Name: <b>%2</b>")
-                      .arg(deleteConfirmDialog.deviceType)
-                      .arg(root.operationDeviceName)
+                      .arg(root.typeWord(deleteConfirmDialog.deviceType))
+                      .arg(root.htmlText(root.operationDeviceName))
                 textFormat: Text.RichText
+                wrapMode: Text.WordWrap
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                text: deleteConfirmDialog.deviceType === "Catalog"
+                      ? qsTr("The files on the drive are not touched: only this catalog's list of files and its AI results leave the archive.")
+                      : qsTr("Nothing on the drives is touched: only this entry and its details leave the archive.")
+                wrapMode: Text.WordWrap
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                text: root.historyOn ? qsTr("A restore point is saved first, so this can be undone from Action history.")
+                                     : qsTr("This collection keeps no restore points, so this cannot be undone.")
+                color: KTheme.text2
                 wrapMode: Text.WordWrap
             }
         }
         footer: Controls.DialogButtonBox {
             Controls.Button {
-                text: qsTr("Yes")
+                text: qsTranslate("PageDevicesViewDelegate", "Delete")
+                icon.name: "edit-delete"
                 Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.AcceptRole
             }
             Controls.Button {

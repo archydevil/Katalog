@@ -2824,24 +2824,50 @@ bool AppManager::saveEnrichmentProfile(int deviceId, const QVariantMap &values)
     return true;
 }
 //----------------------------------------------------------------------
+// Portable macOS build (fork, 2026-10-30): the external programs travel in
+// Teca.app/Contents/Helpers and the models in Contents/Resources/models. They
+// are the last resort: a path set in the settings, then the programs and
+// models already on the computer, come first.
+static QString bundledTool(const QString &found, const QString &program)
+{
+    if (!found.isEmpty())
+        return found;
+    const QFileInfo tool(QCoreApplication::applicationDirPath() + QStringLiteral("/../Helpers/") + program);
+    return tool.isExecutable() ? tool.canonicalFilePath() : QString();
+}
+static QString bundledModel(const QString &found, const QString &pattern, const QString &skipPrefix = QString())
+{
+    if (!found.isEmpty())
+        return found;
+    const QDir models(QCoreApplication::applicationDirPath() + QStringLiteral("/../Resources/models"));
+    // Largest first: the most capable model when several travel along
+    for (const QFileInfo &f : models.entryInfoList({pattern}, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Size))
+        if (skipPrefix.isEmpty() || !f.fileName().startsWith(skipPrefix))
+            return f.canonicalFilePath();
+    return QString();
+}
+
 QVariantMap AppManager::getEnrichmentTools()
 {
     QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
     QVariantMap tools;
-    tools[QStringLiteral("ffmpeg")]    = MdiEnrichmentJob::findTool(QStringLiteral("ffmpeg"),    settings.value("MediaIntelligence/FfmpegPath").toString());
-    tools[QStringLiteral("ffprobe")]   = MdiEnrichmentJob::findTool(QStringLiteral("ffprobe"),   settings.value("MediaIntelligence/FfprobePath").toString());
-    tools[QStringLiteral("pdftotext")] = MdiEnrichmentJob::findTool(QStringLiteral("pdftotext"), settings.value("MediaIntelligence/PdftotextPath").toString());
-    tools[QStringLiteral("whisper")]   = MdiEnrichmentJob::findTool(QStringLiteral("whisper-cli"), settings.value("MediaIntelligence/WhisperPath").toString());
-    tools[QStringLiteral("whisperModel")] = MdiEnrichmentJob::findWhisperModel(settings.value("MediaIntelligence/WhisperModelPath").toString());
-    tools[QStringLiteral("whisperVadModel")] = MdiEnrichmentJob::findWhisperVadModel(settings.value("MediaIntelligence/WhisperVadModelPath").toString());
+    tools[QStringLiteral("ffmpeg")]    = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("ffmpeg"),    settings.value("MediaIntelligence/FfmpegPath").toString()), QStringLiteral("ffmpeg"));
+    tools[QStringLiteral("ffprobe")]   = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("ffprobe"),   settings.value("MediaIntelligence/FfprobePath").toString()), QStringLiteral("ffprobe"));
+    tools[QStringLiteral("pdftotext")] = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("pdftotext"), settings.value("MediaIntelligence/PdftotextPath").toString()), QStringLiteral("pdftotext"));
+    tools[QStringLiteral("whisper")]   = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("whisper-cli"), settings.value("MediaIntelligence/WhisperPath").toString()), QStringLiteral("whisper-cli"));
+    tools[QStringLiteral("whisperModel")] = bundledModel(MdiEnrichmentJob::findWhisperModel(settings.value("MediaIntelligence/WhisperModelPath").toString()),
+                                                         QStringLiteral("ggml-*.bin"), QStringLiteral("ggml-silero"));
+    tools[QStringLiteral("whisperVadModel")] = bundledModel(MdiEnrichmentJob::findWhisperVadModel(settings.value("MediaIntelligence/WhisperVadModelPath").toString()),
+                                                            QStringLiteral("ggml-silero-*.bin"));
     tools[QStringLiteral("faceDetectorModel")]   = MdiFaces::findDetectorModel(settings.value("MediaIntelligence/FaceDetectorModelPath").toString());
     tools[QStringLiteral("faceRecognizerModel")] = MdiFaces::findRecognizerModel(settings.value("MediaIntelligence/FaceRecognizerModelPath").toString());
     tools[QStringLiteral("opencv")] = MdiFaces::openCvVersion();
     // Dating and document study (fork, 2026-10-30): photo metadata, scanned pages
-    tools[QStringLiteral("exiv2")]     = MdiEnrichmentJob::findTool(QStringLiteral("exiv2"),     settings.value("MediaIntelligence/Exiv2Path").toString());
-    tools[QStringLiteral("pdftoppm")]  = MdiEnrichmentJob::findTool(QStringLiteral("pdftoppm"),  settings.value("MediaIntelligence/PdftoppmPath").toString());
-    tools[QStringLiteral("tesseract")] = MdiEnrichmentJob::findTool(QStringLiteral("tesseract"), settings.value("MediaIntelligence/TesseractPath").toString());
-    tools[QStringLiteral("tessdata")]  = MdiDocument::findTessdata(settings.value("MediaIntelligence/TessdataPath").toString());
+    tools[QStringLiteral("exiv2")]     = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("exiv2"),     settings.value("MediaIntelligence/Exiv2Path").toString()), QStringLiteral("exiv2"));
+    tools[QStringLiteral("pdftoppm")]  = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("pdftoppm"),  settings.value("MediaIntelligence/PdftoppmPath").toString()), QStringLiteral("pdftoppm"));
+    tools[QStringLiteral("tesseract")] = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("tesseract"), settings.value("MediaIntelligence/TesseractPath").toString()), QStringLiteral("tesseract"));
+    tools[QStringLiteral("tessdata")]  = bundledModel(MdiDocument::findTessdata(settings.value("MediaIntelligence/TessdataPath").toString()),
+                                                      QStringLiteral("tessdata"));
     tools[QStringLiteral("ollamaUrl")]   = settings.value("MediaIntelligence/OllamaUrl", QStringLiteral("http://localhost:11434")).toString();
     tools[QStringLiteral("visionModel")] = settings.value("MediaIntelligence/VisionModel", QStringLiteral("gemma4")).toString();
     tools[QStringLiteral("textModel")]   = settings.value("MediaIntelligence/TextModel",   QStringLiteral("gemma4")).toString();
@@ -3853,15 +3879,14 @@ QVariantMap AppManager::getMdiJobInfo() const
 //----------------------------------------------------------------------
 QVariantMap AppManager::mdiToolsInfo()
 {
-    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
-    QVariantMap configured;
-    configured[QStringLiteral("ffmpeg")]       = settings.value("MediaIntelligence/FfmpegPath");
-    configured[QStringLiteral("ffprobe")]      = settings.value("MediaIntelligence/FfprobePath");
-    configured[QStringLiteral("pdftotext")]    = settings.value("MediaIntelligence/PdftotextPath");
-    configured[QStringLiteral("whisper")]      = settings.value("MediaIntelligence/WhisperPath");
-    configured[QStringLiteral("whisperModel")] = settings.value("MediaIntelligence/WhisperModelPath");
-    QVariantMap info = MdiSystemMonitor::toolsInfo(configured);
+    // The paths the analysis uses: the settings, the computer, then the
+    // programs that travel inside the portable app
     const QVariantMap tools = getEnrichmentTools();
+    QVariantMap configured;
+    for (const QString &key : {QStringLiteral("ffmpeg"), QStringLiteral("ffprobe"), QStringLiteral("pdftotext"),
+                               QStringLiteral("whisper"), QStringLiteral("whisperModel")})
+        configured[key] = tools.value(key);
+    QVariantMap info = MdiSystemMonitor::toolsInfo(configured);
     info[QStringLiteral("ollamaUrl")]   = tools.value(QStringLiteral("ollamaUrl"));
     info[QStringLiteral("visionModel")] = tools.value(QStringLiteral("visionModel"));
     info[QStringLiteral("textModel")]   = tools.value(QStringLiteral("textModel"));

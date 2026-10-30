@@ -11,10 +11,22 @@ ColumnLayout {
     spacing: 28
 
     signal openPage(string name)
+    // A drive card's "Re-interpret with the context": Archive knowledge opens
+    // on that catalog, not on the first one of its list
+    signal reinterpretDrive(int deviceId)
     property var ov: ({})
     readonly property var job: appManager1.mdiJobInfo
 
-    function refresh() { ov = appManager1.homeOverview() }
+    // What left this computer in this session: the AI services that are not
+    // local, and the web searches sent (counted by Main.qml)
+    readonly property var egress: job.egress || []
+    readonly property int webSearches: applicationWindow().webSearchesSent
+    property bool webAllowed: false
+
+    function refresh() {
+        ov = appManager1.homeOverview()
+        webAllowed = appManager1.webSearchEnabled()
+    }
     // Called by Main.qml when the page is shown
     function setShown(shown) { if (shown) refresh() }
     function count(n) { return Number(n || 0).toLocaleString(Qt.locale(), "f", 0) }
@@ -85,9 +97,15 @@ ColumnLayout {
         KMetricCard {
             Layout.fillWidth: true
             label: qsTr("Data sent")
-            value: home.job.egress && home.job.egress.length > 0 ? home.job.egress.join(", ") : qsTr("Nothing sent")
-            tagText: qsTr("On this computer")
-            tagTone: home.job.egress && home.job.egress.length > 0 ? "warn" : "ok"
+            value: home.egress.length > 0 ? home.egress.join(", ")
+                   : home.webSearches > 0 ? qsTr("Web searches: %1").arg(home.webSearches)
+                   : qsTr("Nothing sent")
+            // Never "On this computer" once something has left it
+            tagText: home.egress.length > 0 && home.webSearches > 0 ? qsTr("Web searches: %1").arg(home.webSearches)
+                     : home.egress.length > 0 || home.webSearches > 0 ? qsTranslate("PageActivity", "Sent outside this computer")
+                     : home.webAllowed ? qsTranslate("Main", "Web searches allowed for this collection")
+                     : qsTr("On this computer")
+            tagTone: home.egress.length > 0 || home.webSearches > 0 ? "warn" : home.webAllowed ? "info" : "ok"
         }
     }
 
@@ -236,7 +254,7 @@ ColumnLayout {
                             visible: home.ov.hasContext === true
                             variant: "secondary"
                             text: qsTr("Re-interpret with the context")
-                            onClicked: home.openPage("Context")
+                            onClicked: home.reinterpretDrive(driveCard.modelData.deviceId)
                         }
                     }
                 }
