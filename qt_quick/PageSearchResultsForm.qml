@@ -20,18 +20,66 @@ ColumnLayout {
     // drive or folder searched straight. Not said for a comparison of two
     // devices, which names its own two.
     property string searchedDeviceName: ""
-    readonly property bool searchedTwoDevices: !appManager1.semanticOnly
+    // Only the lists by meaning and in the information: no table search ran
+    // (MDI-F47, MDI-F183)
+    readonly property bool listsOnly: appManager1.semanticOnly || appManager1.infoOnly
+    // The share of the page each list takes above the table
+    readonly property real listShare: appManager1.semanticActive && appManager1.infoActive ? 0.3 : 0.45
+    readonly property bool searchedTwoDevices: !listsOnly
         && (searchProps.searchOnDifferences === true
             || (searchProps.searchOnDuplicates === true && searchProps.duplicatesCompareDevices === true))
-    readonly property bool searchedConnected: !appManager1.semanticOnly && searchProps.searchInConnectedChecked === true
+    readonly property bool searchedConnected: !listsOnly && searchProps.searchInConnectedChecked === true
     readonly property string searchedScope: searchedConnected
         ? String(searchProps.connectedDirectory ?? "")
         : (searchedDeviceName !== "" ? searchedDeviceName : qsTranslate("Main", "All the drives"))
 
+    // The files of the lists, each counted once
+    function listsFoundCount() {
+        let seen = ({})
+        let n = 0
+        const lists = [appManager1.semanticActive ? appManager1.semanticResults : [],
+                       appManager1.infoActive ? appManager1.infoResults : []]
+        for (const list of lists)
+            for (const row of list) {
+                const key = row.catalogId + "\n" + row.fullPath
+                if (!seen[key]) { seen[key] = true; ++n }
+            }
+        return n
+    }
+
+    // ── A search that found nothing (MDI-F187) ───────────────────────────
+    // Offered again with one change; a way the search already used is not
+    // offered. By meaning only when the local model answers (asked once the
+    // search has found nothing, without waiting).
+    property bool localModelReady: false
+    readonly property bool nothingFound: !appManager1.searchIsRunning && !appManager1.infoSearchRunning
+        && (listsOnly || Number(searchProps.filesFoundNumber ?? 0) === 0)
+        && (!appManager1.semanticActive || appManager1.semanticResults.length === 0)
+        && (!appManager1.infoActive || appManager1.infoResults.length === 0)
+    onNothingFoundChanged: if (nothingFound) appManager1.checkLocalModel()
+    Connections {
+        target: appManager1
+        function onLocalModelChecked(reachable) { pageSearchResults_column.localModelReady = reachable }
+    }
+    // Duplicates and differences compare files: searching words another way does not apply
+    readonly property bool comparedFiles: !listsOnly && (!!searchProps.searchOnDuplicates || !!searchProps.searchOnDifferences)
+    readonly property bool searchedNameWords: !listsOnly && !!searchProps.searchOnFileName
+        && String(searchProps.searchText ?? "").trim() !== ""
+    readonly property bool searchedWords: !comparedFiles
+        && (searchedNameWords || appManager1.semanticActive || appManager1.infoActive)
+    readonly property bool offerFolders: nothingFound && !comparedFiles && searchedNameWords
+        && searchProps.selectedSearchIn === "FileNamesOnly" && searchProps.selectedTextCriteria !== "BeginsWith"
+    readonly property bool offerMeaning: nothingFound && searchedWords && !searchedConnected
+        && !appManager1.semanticActive && localModelReady
+    readonly property bool offerInformation: nothingFound && searchedWords && !searchedConnected
+        && !appManager1.infoActive && appManager1.databaseMode !== "Hosted"
+    readonly property bool offerAllDrives: nothingFound && !searchedConnected && !searchedTwoDevices
+        && searchedDeviceName !== ""
+
     // The results header's title: the existing wording per kind of result
     readonly property string resultsCountText: {
-        if (appManager1.semanticOnly)
-            return qsTr("%1 file(s) found").arg(Number(appManager1.semanticResults.length).toLocaleString(Qt.locale(), "f", 0))
+        if (listsOnly)
+            return qsTr("%1 file(s) found").arg(Number(listsFoundCount()).toLocaleString(Qt.locale(), "f", 0))
         let n = Number(searchProps.filesFoundNumber ?? 0).toLocaleString(Qt.locale(), "f", 0)
         if (searchProps.searchOnDuplicates)
             return qsTr("%1 duplicate(s) found").arg(n)
@@ -187,6 +235,11 @@ ColumnLayout {
     // Called when a search is run: keyboard focus only, no row is selected
     // (SRS-F11, SRS-C6).
     function focusTable() {
+        // No table: the keyboard goes to the list in the information (MDI-F183)
+        if (pageSearchResults_column.listsOnly && appManager1.infoActive) {
+            infoList.forceActiveFocus()
+            return
+        }
         tableView.forceActiveFocus()
     }
 
@@ -277,7 +330,7 @@ ColumnLayout {
 
             ComboBoxFitted {
                 id: batchActionCombo
-                visible: !appManager1.semanticOnly
+                visible: !pageSearchResults_column.listsOnly
                 rowLeadingWidth: Kirigami.Units.iconSizes.small + Kirigami.Units.smallSpacing * 2  // row icon
                 textRole: "text"
                 valueRole: "value"
@@ -337,7 +390,7 @@ ColumnLayout {
             }
 
             IconButton {
-                visible: !appManager1.semanticOnly
+                visible: !pageSearchResults_column.listsOnly
                 icon.name: "document-export"
                 text: qsTr("Run process on all results")
                 enabled: (pageSearchResults_column.searchProps.filesFoundNumber ?? 0) > 0
@@ -376,7 +429,9 @@ ColumnLayout {
             spacing: 6
             // The path of the choice in My drives says nothing about a folder
             // searched straight on a connected drive
+            // ...nor of the last table search when only the lists ran
             visible: devicePathLabel.text !== "" && !pageSearchResults_column.searchedConnected
+                     && !pageSearchResults_column.listsOnly
             Kirigami.Icon {
                 Layout.alignment: Qt.AlignTop
                 source: "drive-harddisk"
@@ -400,7 +455,7 @@ ColumnLayout {
             Layout.fillWidth: true
             spacing: 6
             readonly property var props: pageSearchResults_column.searchProps
-            readonly property bool table: !appManager1.semanticOnly
+            readonly property bool table: !pageSearchResults_column.listsOnly
             readonly property bool byName: table && !!props.searchOnFileName
 
             KInfoTag { visible: parent.byName; text: qsTr("By name"); tone: "info" }
@@ -414,6 +469,7 @@ ColumnLayout {
             }
             KInfoTag { visible: parent.byName && !!parent.props.caseSensitive; text: qsTr("case sensitive") }
             KInfoTag { visible: appManager1.semanticActive; text: qsTr("By meaning"); tone: "ai" }
+            KInfoTag { visible: appManager1.infoActive; text: qsTranslate("PageSearchForm", "In the information"); tone: "info" }
             KInfoTag { visible: parent.table && !!parent.props.searchOnFileCriteria; text: qsTr("Type, size and date") }
             KInfoTag { visible: parent.table && !!parent.props.searchOnFileMetadata; text: qsTr("Information in the files") }
             KInfoTag { visible: parent.table && !!parent.props.searchOnFolderCriteria; text: qsTr("Folders and tags") }
@@ -423,7 +479,7 @@ ColumnLayout {
 
         // What the table results add up to
         Flow {
-            visible: !appManager1.semanticOnly
+            visible: !pageSearchResults_column.listsOnly
             Layout.fillWidth: true
             spacing: 6
             readonly property var props: pageSearchResults_column.searchProps
@@ -452,6 +508,56 @@ ColumnLayout {
         }
     }
 
+    // ── Nothing found: the same search with one change (MDI-F187) ────────
+    // Each button changes that one thing on the Search page and runs it.
+    KCard {
+        id: searchAgainCard
+        visible: pageSearchResults_column.offerFolders || pageSearchResults_column.offerMeaning
+                 || pageSearchResults_column.offerInformation || pageSearchResults_column.offerAllDrives
+        Layout.fillWidth: true
+        Layout.leftMargin: 20
+        Layout.rightMargin: 20
+        Layout.bottomMargin: 12
+
+        KSectionHeader {
+            level: 3
+            title: qsTr("Search again with one change")
+            description: qsTr("Nothing was found. The same search can run again in another way or in more places.")
+        }
+        Flow {
+            Layout.fillWidth: true
+            spacing: 8
+            KButton {
+                visible: pageSearchResults_column.offerFolders
+                variant: "tonal"
+                icon.name: "folder"
+                text: qsTr("File names or Folder paths")
+                onClicked: applicationWindow().searchAgainWith("folders")
+            }
+            KButton {
+                visible: pageSearchResults_column.offerMeaning
+                variant: "tonal"
+                icon.name: "tools-wizard"
+                text: qsTr("By meaning")
+                onClicked: applicationWindow().searchAgainWith("meaning")
+            }
+            KButton {
+                visible: pageSearchResults_column.offerInformation
+                variant: "tonal"
+                icon.name: "document-edit"
+                text: qsTranslate("PageSearchForm", "In the information")
+                onClicked: applicationWindow().searchAgainWith("information")
+            }
+            KButton {
+                visible: pageSearchResults_column.offerAllDrives
+                variant: "tonal"
+                icon.name: "drive-multidisk"
+                text: qsTranslate("Main", "All the drives")
+                onClicked: applicationWindow().searchAgainWith("all")
+            }
+        }
+    }
+
     // ── By meaning (fork, SpecMediaIntelligence.md MDI-F47..F49) ─────────
     // Its own list: the table's columns hold no matched sentence. Alone on the
     // page when no other criterion was set, above the table otherwise. Each
@@ -463,8 +569,8 @@ ColumnLayout {
         Layout.leftMargin: 20
         Layout.rightMargin: 20
         Layout.bottomMargin: 12
-        Layout.fillHeight: appManager1.semanticOnly
-        Layout.preferredHeight: appManager1.semanticOnly ? -1 : Math.min(implicitHeight, pageSearchResults_column.height * 0.45)
+        Layout.fillHeight: pageSearchResults_column.listsOnly
+        Layout.preferredHeight: pageSearchResults_column.listsOnly ? -1 : Math.min(implicitHeight, pageSearchResults_column.height * pageSearchResults_column.listShare)
         spacing: 10
 
         RowLayout {
@@ -476,7 +582,7 @@ ColumnLayout {
                 description: qsTr("Files ranked by how close their descriptions, summaries and transcripts come to the text searched.")
             }
             KInfoTag {
-                visible: !appManager1.semanticOnly
+                visible: !pageSearchResults_column.listsOnly || appManager1.infoActive
                 Layout.alignment: Qt.AlignTop
                 text: qsTr("%1 file(s) found").arg(appManager1.semanticResults.length)
                 tone: "ai"
@@ -628,6 +734,160 @@ ColumnLayout {
         }
     }
 
+    // ── In the information (fork, SpecMediaIntelligence.md MDI-F183) ─────
+    // Its own list, as the one by meaning: the files whose information or
+    // people hold every word searched. A row shows its file in Browse: with
+    // the mouse, or from the keyboard (the arrows, then Enter or Space).
+    ColumnLayout {
+        id: infoPanel
+        visible: appManager1.infoActive
+        Layout.fillWidth: true
+        Layout.leftMargin: 20
+        Layout.rightMargin: 20
+        Layout.bottomMargin: 12
+        Layout.fillHeight: pageSearchResults_column.listsOnly
+        Layout.preferredHeight: pageSearchResults_column.listsOnly ? -1 : Math.min(implicitHeight, pageSearchResults_column.height * pageSearchResults_column.listShare)
+        spacing: 10
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            KSectionHeader {
+                level: 3
+                title: qsTranslate("PageSearchForm", "In the information")
+                description: qsTr("Files whose information or people hold every word searched. Each one opens in Browse.")
+            }
+            KInfoTag {
+                visible: appManager1.infoSearchRunning
+                Layout.alignment: Qt.AlignTop
+                text: qsTr("In Progress")
+                tone: "info"
+            }
+            KInfoTag {
+                visible: !appManager1.infoSearchRunning
+                         && (!pageSearchResults_column.listsOnly || appManager1.semanticActive)
+                Layout.alignment: Qt.AlignTop
+                text: qsTr("%1 file(s) found").arg(appManager1.infoResults.length)
+            }
+        }
+
+        Kirigami.PlaceholderMessage {
+            visible: !appManager1.infoSearchRunning && appManager1.infoResults.length === 0
+            Layout.fillWidth: true
+            Layout.margins: Kirigami.Units.largeSpacing
+            text: qsTr("No file has these words in its information.")
+        }
+
+        ListView {
+            id: infoList
+            visible: appManager1.infoResults.length > 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            implicitHeight: contentHeight
+            clip: true
+            spacing: 8
+            model: appManager1.infoResults
+            activeFocusOnTab: true
+            keyNavigationEnabled: true
+            currentIndex: -1
+            Controls.ScrollBar.vertical: Controls.ScrollBar {}
+            Accessible.role: Accessible.List
+            Accessible.name: qsTranslate("PageSearchForm", "In the information")
+
+            function openRow(index) {
+                const row = appManager1.infoResults[index]
+                if (row)
+                    applicationWindow().showFileInBrowse(row.deviceId, row.fullPath)
+            }
+            // The keyboard lands on the first row
+            onActiveFocusChanged: if (activeFocus && currentIndex < 0 && count > 0) currentIndex = 0
+            onCountChanged: if (activeFocus && currentIndex < 0 && count > 0) currentIndex = 0
+            Keys.onReturnPressed: openRow(currentIndex)
+            Keys.onEnterPressed:  openRow(currentIndex)
+            Keys.onSpacePressed:  openRow(currentIndex)
+
+            delegate: Rectangle {
+                id: infoRow
+                required property var modelData
+                required property int index
+                readonly property bool current: infoList.currentIndex === index
+                // A gutter for the list's scroll bar, so it never covers a row
+                width: infoList.width - 12
+                implicitHeight: infoRowLayout.implicitHeight + 20
+                radius: KTheme.radiusCard - 2
+                color: infoRowMouse.containsMouse ? KTheme.hover : KTheme.surface
+                border.width: current && infoList.activeFocus ? 2 : 1
+                border.color: current && infoList.activeFocus ? KTheme.accent : KTheme.line
+                Accessible.role: Accessible.ListItem
+                Accessible.name: modelData.name
+                Accessible.description: modelData.folderPath
+
+                MouseArea {
+                    id: infoRowMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        infoList.currentIndex = infoRow.index
+                        infoList.openRow(infoRow.index)
+                    }
+                }
+
+                RowLayout {
+                    id: infoRowLayout
+                    x: 10
+                    y: 10
+                    width: parent.width - 20
+                    spacing: 12
+
+                    Rectangle {
+                        Layout.alignment: Qt.AlignTop
+                        Layout.preferredWidth: 64
+                        Layout.preferredHeight: 48
+                        radius: KTheme.radiusItem
+                        color: KTheme.neutralSoft
+                        clip: true
+                        Image {
+                            anchors.fill: parent
+                            visible: infoRow.modelData.thumbUrl !== ""
+                            source: infoRow.modelData.thumbUrl
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            Accessible.ignored: true
+                        }
+                        Kirigami.Icon {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            visible: infoRow.modelData.thumbUrl === ""
+                            source: "document-open"
+                            Accessible.ignored: true
+                        }
+                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignTop
+                        spacing: 2
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: infoRow.modelData.name
+                            wrapMode: Text.WrapAnywhere
+                            font.weight: Font.Bold
+                            color: KTheme.text
+                        }
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: infoRow.modelData.folderPath
+                            wrapMode: Text.WrapAnywhere
+                            font.family: KTheme.mono
+                            font.pixelSize: KTheme.note
+                            color: KTheme.text3
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // ── Column headers + Table ───────────────────────────────────────────
     // In a card of the design system (D34). The table keeps its columns, sort,
     // stored widths and keys (MDI-C40, CDT-F12), and its rows keep the list
@@ -635,7 +895,7 @@ ColumnLayout {
     // (CDT-F2). The inset keeps the rows inside the card's rounded corners.
     Rectangle {
         id: tableCard
-        visible: !appManager1.semanticOnly
+        visible: !pageSearchResults_column.listsOnly
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.leftMargin: 20
