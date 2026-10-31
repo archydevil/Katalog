@@ -183,6 +183,7 @@ public:
         int links = 0;          // person <-> file links removed
         int faces = 0;          // face rows removed (Layer A)
         int faceData = 0;       // "faces" analysis records removed (their crop references)
+        int crops = 0;          // face crops they listed, never published
         int infoVectors = 0;    // "info" meaning-search rows removed (built from Notes and names)
         int documentPeople = 0; // document studies whose "people of the archive" were removed
         int indexRows = 0;      // instant-index rows rebuilt from the cleaned information

@@ -61,6 +61,8 @@ int main(int argc, char *argv[])
             QStringLiteral("update_all_active"), QStringLiteral("search"),
             // AI analysis (fork, D43)
             QStringLiteral("analyze"), QStringLiteral("analyze_all"),
+            // Publish for the read-only Macs (fork, D43 (4))
+            QStringLiteral("publish"),
             QStringLiteral("--help"), QStringLiteral("-h"),
             QStringLiteral("--version"), QStringLiteral("-v")
         };

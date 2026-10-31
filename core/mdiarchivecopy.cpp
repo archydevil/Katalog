@@ -493,6 +493,17 @@ QString MdiPublish::cleanMdiCopy(const QString &path, CleanReport *report)
         r.people = exec(db, QStringLiteral("DELETE FROM mdi_person"), &error);
         // Layer A: faces with their boxes, vectors and crop references, and
         // the analysis records listing the crops
+        {
+            // The crops, counted before their references go (none is copied)
+            QSet<QString> crops;
+            QSqlQuery q(db);
+            if (q.exec(QStringLiteral("SELECT face_crop_file FROM mdi_face WHERE face_crop_file IS NOT NULL AND face_crop_file <> '' "
+                                      "UNION ALL SELECT datum_derived_files FROM mdi_datum WHERE datum_analysis = 'faces'")))
+                while (q.next())
+                    for (const QString &f : q.value(0).toString().split(QLatin1Char('\n'), Qt::SkipEmptyParts))
+                        crops.insert(f);
+            r.crops = int(crops.size());
+        }
         r.faces    = exec(db, QStringLiteral("DELETE FROM mdi_face"), &error);
         r.faceData = exec(db, QStringLiteral("DELETE FROM mdi_datum WHERE datum_analysis = 'faces'"), &error);
         if (hasTable(db, QStringLiteral("sqlite_sequence")))
@@ -822,6 +833,7 @@ MdiPublish::Result MdiPublish::run(const Sources &s, const QString &destination,
         r.detail = markerFileName() + QStringLiteral(": ") + error;
         return r;
     }
+    r.cropsLeftOut += r.cleaned.crops;
     if (progress)
         progress(steps, steps, QString());
     return r;
