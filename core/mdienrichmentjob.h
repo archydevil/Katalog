@@ -71,7 +71,8 @@ class MdiEnrichmentJob : public QObject
     Q_OBJECT
 public:
     struct FileItem {
-        QString fullPath;
+        QString fullPath;      // the file's path in the collection: the key of its data
+        QString sourcePath;    // where it is read on this Mac (per-Mac remap, D43 P3); set by the job
         QString fileType;      // "image", "video", "audio", "text", "other"
         QString extension;
         qint64  size = 0;
@@ -265,6 +266,7 @@ private:
 
     Config          m_config;
     QList<FileItem> m_files;
+    QString         m_sourceLocalRoot;   // m_config.sourceRoot on this Mac (D43 P3)
     QString         m_connectionName;
     QString         m_ffmpegVersion;
     bool            m_segmentsChanged = false;

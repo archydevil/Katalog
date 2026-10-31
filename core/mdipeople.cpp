@@ -27,6 +27,7 @@
 /////////////////////////////////////////////////////////////////////////////
 */
 #include "core/mdipeople.h"
+#include "core/mdidata.h"
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -284,7 +285,9 @@ bool MdiPeople::clearAllFaces(const QString &connectionName, QList<QPair<int, QS
 
 QString MdiPeople::Face::cropPath() const
 {
-    return cropRoot.isEmpty() || cropFile.isEmpty() ? QString() : QDir(cropRoot).filePath(cropFile);
+    // Found relative to the collection when the recorded root is not here (MDI-F207)
+    return cropRoot.isEmpty() || cropFile.isEmpty() ? QString()
+                                                    : QDir(MdiData::resolveDerivedRoot(cropRoot)).filePath(cropFile);
 }
 
 double MdiPeople::cosine(const QVector<float> &a, const QVector<float> &b)

@@ -242,6 +242,12 @@ MdiEnrichmentJob::MdiEnrichmentJob(const Config &config, const QList<FileItem> &
                 || (!m_config.scopeFileType.isEmpty() && f.fileType != m_config.scopeFileType);
         });
     }
+    // Where the files are read on this Mac (per-Mac remap of the device path,
+    // D43 P3); their data stays keyed by the recorded path
+    m_sourceLocalRoot = Device::resolvePath(m_config.sourceRoot);
+    for (FileItem &f : m_files)
+        if (f.sourcePath.isEmpty())
+            f.sourcePath = Device::resolvePath(f.fullPath);
 }
 
 //----------------------------------------------------------------------
@@ -489,9 +495,10 @@ QString MdiEnrichmentJob::driveAway() const
     // The source drive; a quick-hash pass never waits, it is scheduled again
     // (MDI-F84). A fixed mount point stays as an empty folder when its drive
     // is gone.
-    if (!m_config.quickHashOnly && !m_config.sourceRoot.isEmpty()
-        && (!QFileInfo::exists(m_config.sourceRoot) || QDir(m_config.sourceRoot).isEmpty()))
-        return m_config.sourceRoot;
+    // where the drive is on this Mac (D43 P3)
+    if (!m_config.quickHashOnly && !m_sourceLocalRoot.isEmpty()
+        && (!QFileInfo::exists(m_sourceLocalRoot) || QDir(m_sourceLocalRoot).isEmpty()))
+        return m_sourceLocalRoot;
     // The drive of the derived files, waited for as well (D31). The folder
     // itself is created when first used: only a folder that cannot be created
     // (its drive is away) is waited for.
@@ -597,7 +604,7 @@ void MdiEnrichmentJob::run()
         // while its drive is there is skipped; a drive gone is waited for,
         // and the job goes on with this same file once it is back (MDI-F91).
         // A re-interpretation reads derived data only: no source needed
-        if (!m_config.reinterpret && !QFileInfo::exists(file.fullPath)) {
+        if (!m_config.reinterpret && !QFileInfo::exists(file.sourcePath)) {
             if (!driveAway().isEmpty()) {
                 if (!waitForSource())
                     break;
@@ -1184,7 +1191,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeQuickHash(const FileItem &file)
 {
     Result r;
     r.tool = QStringLiteral("katalog");
-    const QString hash = FileChecksum::computeQuickHash(file.fullPath);
+    const QString hash = FileChecksum::computeQuickHash(file.sourcePath);
     if (hash.isEmpty()) {
         r.outcome = QStringLiteral("failed");
         r.reason  = QStringLiteral("file not readable");
@@ -1198,7 +1205,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSnippet(const FileItem &file)
 {
     Result r;
     QString tool, reason;
-    QString text = extractText(file.fullPath, &tool, &reason).simplified();
+    QString text = extractText(file.sourcePath, &tool, &reason).simplified();
     r.tool = tool;
     if (text.isEmpty()) {
         r.outcome = QStringLiteral("skipped");
@@ -1254,10 +1261,10 @@ void MdiEnrichmentJob::precomputeThumbnails(int from, int to)
             continue;
         if (MdiData::isCurrent(m_connectionName, m_config.catalogId, file.fullPath, QStringLiteral("thumbnail"),
                                file.size, file.dateUpdated, analysisParams(QStringLiteral("thumbnail")))
-            || !QFileInfo::exists(file.fullPath))
+            || !QFileInfo::exists(file.sourcePath))
             continue;
         const QString rel = derivedRelative(file, QStringLiteral("thumbnail"), thumbnailSuffix());
-        tasks.append({file.fullPath, absoluteDerived(rel), rel});
+        tasks.append({file.sourcePath, absoluteDerived(rel), rel});
     }
     if (tasks.isEmpty())
         return;
@@ -1287,7 +1294,7 @@ void MdiEnrichmentJob::precomputeThumbnails(int from, int to)
 MdiEnrichmentJob::Result MdiEnrichmentJob::makeThumbnail(const FileItem &file)
 {
     // Done by the parallel pre-pass
-    const auto pre = m_precomputed.find(file.fullPath);
+    const auto pre = m_precomputed.find(file.sourcePath);
     if (pre != m_precomputed.end()) {
         const Result r = pre.value();
         m_precomputed.erase(pre);
@@ -1297,7 +1304,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeThumbnail(const FileItem &file)
     Result r;
     const QString target = absoluteDerived(derivedRelative(file, QStringLiteral("thumbnail"), thumbnailSuffix()));
     QString qtError;
-    if (qtImageThumbnail(file.fullPath, target, &qtError)) {
+    if (qtImageThumbnail(file.sourcePath, target, &qtError)) {
         r.tool = QStringLiteral("qt %1").arg(QString::fromLatin1(qVersion()));
         r.derivedFiles << derivedRelative(file, QStringLiteral("thumbnail"), thumbnailSuffix());
         return r;
@@ -1313,7 +1320,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeThumbnail(const FileItem &file)
     QTemporaryDir tmp;
     const QString jpeg = tmp.filePath(QStringLiteral("frame.jpg"));
     QString err;
-    if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error", "-i", file.fullPath,
+    if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error", "-i", file.sourcePath,
                                        "-vf", scaleFilter(kThumbnailSize), "-frames:v", "1", "-q:v", "3",
                                        jpeg}, nullptr, &err)
         || !finishThumbnail(jpeg, absoluteDerived(rel), &err)) {
@@ -1341,14 +1348,14 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makePosterFrame(const FileItem &file)
 {
     Result r;
     r.tool = m_ffmpegVersion;
-    const double duration = probeDuration(file.fullPath);
+    const double duration = probeDuration(file.sourcePath);
     const double at = duration > 0 ? duration * 0.10 : 0.0;   // MDI-F30
     const QString rel = derivedRelative(file, QStringLiteral("poster"), thumbnailSuffix());
     QTemporaryDir tmp;
     const QString jpeg = tmp.filePath(QStringLiteral("frame.jpg"));
     QString err;
     if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error",
-                                       "-ss", QString::number(at, 'f', 2), "-i", file.fullPath,
+                                       "-ss", QString::number(at, 'f', 2), "-i", file.sourcePath,
                                        "-vf", scaleFilter(kThumbnailSize), "-frames:v", "1", "-q:v", "3",
                                        jpeg}, nullptr, &err)
         || !finishThumbnail(jpeg, absoluteDerived(rel), &err)) {
@@ -1370,7 +1377,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeKeyframes(const FileItem &file)
     Result r;
     r.tool = m_ffmpegVersion;
     const int count = qBound(2, m_config.settings.value("video").toObject().value("keyframeCount").toInt(4), 32);
-    const double duration = probeDuration(file.fullPath);
+    const double duration = probeDuration(file.sourcePath);
     if (duration <= 0) {
         r.outcome = QStringLiteral("failed");
         r.reason  = QStringLiteral("duration unknown");
@@ -1384,7 +1391,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeKeyframes(const FileItem &file)
         const QString jpeg = tmp.filePath(QStringLiteral("frame_%1.jpg").arg(k));
         QString err;
         if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error",
-                                           "-ss", QString::number(at, 'f', 2), "-i", file.fullPath,
+                                           "-ss", QString::number(at, 'f', 2), "-i", file.sourcePath,
                                            "-vf", QStringLiteral("scale=-2:%1").arg(kSheetHeight),
                                            "-frames:v", "1", "-q:v", "3", jpeg}, nullptr, &err)) {
             r.outcome = QStringLiteral("failed");
@@ -1483,11 +1490,11 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeArchiveListing(const FileItem &fi
     std::unique_ptr<QIODevice> device;   // outlives the archive reading it
     std::unique_ptr<KArchive> archive;
     if (kind == QLatin1String("zip"))
-        archive = std::make_unique<KZip>(file.fullPath);
+        archive = std::make_unique<KZip>(file.sourcePath);
     else if (kind == QLatin1String("7z"))
-        archive = std::make_unique<K7Zip>(file.fullPath);
+        archive = std::make_unique<K7Zip>(file.sourcePath);
     else
-        archive = std::make_unique<KTar>(file.fullPath);   // compression detected by KArchive
+        archive = std::make_unique<KTar>(file.sourcePath);   // compression detected by KArchive
     bool opened = archive->open(QIODevice::ReadOnly);
     if (!opened && kind == QLatin1String("tar")) {
         // Second attempt with the decompressor named by the suffix
@@ -1503,7 +1510,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeArchiveListing(const FileItem &fi
             type = KCompressionDevice::Zstd;
         if (type != KCompressionDevice::None) {
             archive.reset();
-            device = std::make_unique<KCompressionDevice>(file.fullPath, type);
+            device = std::make_unique<KCompressionDevice>(file.sourcePath, type);
             archive = std::make_unique<KTar>(device.get());
             opened = archive->open(QIODevice::ReadOnly);
         }
@@ -1546,7 +1553,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeMediaInfo(const FileItem &file)
     if (!runTool(m_config.ffprobePath, {"-v", "error", "-show_entries",
                                         "format=duration,bit_rate:stream=codec_type,codec_name,width,height,"
                                         "avg_frame_rate,sample_rate,channels",
-                                        "-of", "json", file.fullPath}, &out, &err)) {
+                                        "-of", "json", file.sourcePath}, &out, &err)) {
         r.outcome = QStringLiteral("failed");
         r.reason  = err;
         return r;
@@ -1584,7 +1591,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeClip(const FileItem &file, bool v
     QStringList args = {"-nostdin", "-y", "-loglevel", "error"};
     if (partial)
         args << "-ss" << QString::number(o.value("clipStart").toInt(0));
-    args << "-i" << file.fullPath;
+    args << "-i" << file.sourcePath;
     if (partial)
         args << "-t" << QString::number(qMax(1, o.value("clipDuration").toInt(30)));
     if (video)   // H.264 no taller than 360 px, AAC (MDI-F32)
@@ -1614,7 +1621,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeWaveform(const FileItem &file)
     r.tool = m_ffmpegVersion;
     const QString rel = derivedRelative(file, QStringLiteral("waveform"), QStringLiteral(".png"));
     QString err;
-    if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error", "-i", file.fullPath,
+    if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error", "-i", file.sourcePath,
                                        "-filter_complex", "showwavespic=s=1200x200:colors=0x3daee9",
                                        "-frames:v", "1", absoluteDerived(rel)}, nullptr, &err)) {
         r.outcome = QStringLiteral("failed");
@@ -1643,10 +1650,10 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeCaption(const FileItem &file)
         frame = tmp.filePath(QStringLiteral("frame.jpg"));
         QStringList args = {"-nostdin", "-y", "-loglevel", "error"};
         if (file.fileType == QLatin1String("video")) {
-            const double d = probeDuration(file.fullPath);
+            const double d = probeDuration(file.sourcePath);
             args << "-ss" << QString::number(d > 0 ? d * 0.10 : 0.0, 'f', 2);
         }
-        args << "-i" << file.fullPath << "-vf" << scaleFilter(768) << "-frames:v" << "1" << frame;
+        args << "-i" << file.sourcePath << "-vf" << scaleFilter(768) << "-frames:v" << "1" << frame;
         QString err;
         if (!runTool(m_config.ffmpegPath, args, nullptr, &err)) {
             r.outcome = QStringLiteral("failed");
@@ -1681,10 +1688,10 @@ QString MdiEnrichmentJob::findTranscript(const FileItem &file) const
 {
     // A recording's transcript sits next to it: "talk.m4a.txt", "talk.m4a.pdf",
     // "talk.txt", "talk.pdf" or "talk.docx".
-    const QFileInfo info(file.fullPath);
+    const QFileInfo info(file.sourcePath);
     const QString base = info.dir().filePath(info.completeBaseName());
     const QStringList candidates = {
-        file.fullPath + ".txt", file.fullPath + ".pdf", file.fullPath + ".docx",
+        file.sourcePath + ".txt", file.sourcePath + ".pdf", file.sourcePath + ".docx",
         base + ".txt", base + ".pdf", base + ".docx", base + ".srt", base + ".vtt",
     };
     for (const QString &c : candidates)
@@ -1772,7 +1779,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeSummary(const FileItem &file)
     Result r;
     r.model = m_config.textModel;
 
-    QString source = file.fullPath;
+    QString source = file.sourcePath;
     bool isTranscript = false;
     QString text, tool, reason;
     if (file.fileType == QLatin1String("audio") || file.fileType == QLatin1String("video")) {
@@ -1860,7 +1867,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
         QByteArray streams;
         QString probeError;
         if (runTool(m_config.ffprobePath, {"-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
-                                           "-of", "csv=p=0", file.fullPath}, &streams, &probeError)
+                                           "-of", "csv=p=0", file.sourcePath}, &streams, &probeError)
             && streams.trimmed().isEmpty()) {
             r.outcome = QStringLiteral("skipped");
             r.reason  = QStringLiteral("no audio track");
@@ -1876,9 +1883,9 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeTranscript(const FileItem &file)
     }
     // whisper.cpp reads 16 kHz mono PCM
     const QString wav = tmp.filePath(QStringLiteral("audio.wav"));
-    const double duration = probeDuration(file.fullPath);
+    const double duration = probeDuration(file.sourcePath);
     QString err;
-    if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error", "-i", file.fullPath,
+    if (!runTool(m_config.ffmpegPath, {"-nostdin", "-y", "-loglevel", "error", "-i", file.sourcePath,
                                        "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", wav},
                  nullptr, &err)) {
         r.outcome = QStringLiteral("failed");
@@ -2734,7 +2741,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeFaces(const FileItem &file)
     }
 
     QString error;
-    const QImage image = MdiFaces::readImage(file.fullPath, &error);
+    const QImage image = MdiFaces::readImage(file.sourcePath, &error);
     if (image.isNull()) {
         r.outcome = QStringLiteral("skipped");
         r.reason  = error.isEmpty() ? QStringLiteral("image not readable") : error;
@@ -2805,7 +2812,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeDating(const FileItem &file)
     tools.ffprobe   = m_config.ffprobePath;
     tools.timeoutMs = qMin(m_config.toolTimeoutMs, 60 * 1000);
     tools.stop      = &m_stop;
-    r.value = MdiDating::analyseFile(file.fullPath, file.fileType, tools, &r.outcome, &r.reason);
+    r.value = MdiDating::analyseFile(file.sourcePath, file.fileType, tools, &r.outcome, &r.reason);
     r.tool  = r.value.value("embedded").toObject().value("source").toString();
     return r;
 }
@@ -2911,7 +2918,7 @@ MdiEnrichmentJob::Result MdiEnrichmentJob::makeDocument(const FileItem &file)
     };
 
     QList<MdiDocument::Fragment> fragments;
-    r.value = MdiDocument::study(file.fullPath, o, &fragments, &r.outcome, &r.reason, &r.tool);
+    r.value = MdiDocument::study(file.sourcePath, o, &fragments, &r.outcome, &r.reason, &r.tool);
     if (r.outcome == QLatin1String("stopped") || m_stop.load())
         return r;
     // The fragments go with the study; a study redone replaces them

@@ -32,6 +32,7 @@
 #include "core/mdidating.h"
 #include "core/mdiwebsearch.h"
 #include "core/mdidocument.h"
+#include "core/collectionaccess.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -44,8 +45,27 @@
 #include <algorithm>
 #include <cstring>
 #include <QDebug>
+#include <QElapsedTimer>
+#include <QFileInfo>
+#include <QMutex>
+#include <QMutexLocker>
+#include <QSet>
 
 namespace {
+
+// Read-only stores and the derived-root fallback (fork D43): process-wide,
+// read from every thread that opens mdi_data.db or resolves a derived file
+QMutex                 s_storeMutex;
+QSet<QString>          s_readOnlyStores;
+QString                s_fallbackRoot;                     // <collection folder>/katalog_mdi
+QHash<QString, QPair<QString, qint64>> s_resolvedRoots;    // recorded root -> (resolved, checked at)
+QElapsedTimer          s_rootClock;
+constexpr qint64       kRootCheckMs = 5000;                // a drive connected meanwhile is seen again
+
+QString cleanStorePath(const QString &path)
+{
+    return path.isEmpty() ? path : QDir::cleanPath(QFileInfo(path).absoluteFilePath());
+}
 
 QString toJson(const QJsonObject &object)
 {
@@ -93,6 +113,19 @@ bool MdiData::open(const QString &connectionName, const QString &dbPath)
     QSqlDatabase db = QSqlDatabase::contains(connectionName)
                       ? QSqlDatabase::database(connectionName, false)
                       : QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
+    // A published copy (D43): read-only and immutable, nothing created or
+    // changed in its folder, no -wal or -shm
+    if (isReadOnlyStore(dbPath)) {
+        if (db.isOpen())
+            return true;
+        db.setDatabaseName(databaseNameFor(dbPath));
+        db.setConnectOptions(QLatin1String(CollectionWriters::kReadOnlyConnectOptions));
+        if (!db.open()) {
+            qWarning() << "MdiData::open (read-only) failed:" << dbPath << db.lastError().text();
+            return false;
+        }
+        return true;
+    }
     if (!db.isOpen()) {
         db.setDatabaseName(dbPath);
         db.setConnectOptions(QStringLiteral("QSQLITE_BUSY_TIMEOUT=5000"));
@@ -228,6 +261,62 @@ bool MdiData::open(const QString &connectionName, const QString &dbPath)
     MdiWebSearch::ensureTables(connectionName);
     MdiDocument::ensureTables(connectionName);
     return ok;
+}
+
+void MdiData::setReadOnlyStores(const QStringList &dbPaths)
+{
+    QMutexLocker lock(&s_storeMutex);
+    s_readOnlyStores.clear();
+    for (const QString &p : dbPaths)
+        if (!p.isEmpty())
+            s_readOnlyStores.insert(cleanStorePath(p));
+}
+
+bool MdiData::isReadOnlyStore(const QString &dbPath)
+{
+    QMutexLocker lock(&s_storeMutex);
+    return !s_readOnlyStores.isEmpty() && s_readOnlyStores.contains(cleanStorePath(dbPath));
+}
+
+QString MdiData::databaseNameFor(const QString &dbPath)
+{
+    return isReadOnlyStore(dbPath) ? CollectionWriters::readOnlyDatabaseName(dbPath) : dbPath;
+}
+
+void MdiData::setCollectionFolder(const QString &folder)
+{
+    QMutexLocker lock(&s_storeMutex);
+    s_fallbackRoot = folder.isEmpty() ? QString() : QDir(folder).filePath(QStringLiteral("katalog_mdi"));
+    s_resolvedRoots.clear();
+    if (!s_rootClock.isValid())
+        s_rootClock.start();
+}
+
+QString MdiData::resolveDerivedRoot(const QString &recordedRoot)
+{
+    if (recordedRoot.isEmpty())
+        return recordedRoot;
+    QString fallback;
+    {
+        QMutexLocker lock(&s_storeMutex);
+        if (s_fallbackRoot.isEmpty() || recordedRoot == s_fallbackRoot)
+            return recordedRoot;
+        fallback = s_fallbackRoot;
+        // Asked once per row of a catalog index: the answer is kept a few seconds
+        const auto it = s_resolvedRoots.constFind(recordedRoot);
+        if (it != s_resolvedRoots.constEnd() && s_rootClock.elapsed() - it->second < kRootCheckMs)
+            return it->first;
+    }
+    // The recorded destination wins whenever it is here (MDI-F207)
+    const QString resolved = QFileInfo(recordedRoot).isDir() || !QFileInfo(fallback).isDir() ? recordedRoot : fallback;
+    QMutexLocker lock(&s_storeMutex);
+    s_resolvedRoots.insert(recordedRoot, qMakePair(resolved, s_rootClock.elapsed()));
+    return resolved;
+}
+
+QString MdiData::Datum::derivedPath(const QString &relative) const
+{
+    return QDir(resolveDerivedRoot(derivedRoot)).filePath(relative);
 }
 
 void MdiData::close(const QString &connectionName)
@@ -378,7 +467,7 @@ QHash<QString, QVariantMap> MdiData::catalogIndex(const QString &connectionName,
         QVariantMap &entry = index[q.value(0).toString()];
         entry[QStringLiteral("hasData")] = true;
         const QString analysis = q.value(1).toString();
-        const QString root     = q.value(3).toString();
+        const QString root     = resolveDerivedRoot(q.value(3).toString());   // MDI-F207
         const QString files    = q.value(4).toString();
         // Thumbnail first, poster frame for videos
         if ((analysis == QLatin1String("thumbnail") || analysis == QLatin1String("poster")) && !files.isEmpty())

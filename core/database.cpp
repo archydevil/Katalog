@@ -552,6 +552,10 @@ QSqlError Database::initialize(const QString &connectionName, Collection *collec
     if (collection->databaseMode == "Memory") {
         db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
         db.setDatabaseName(":memory:");
+        // A published copy (fork, D43): URI names, so its mdi_data.db can be
+        // attached read-only and immutable (MdiFts::attach)
+        if (collection->openReadOnly)
+            db.setConnectOptions(QStringLiteral("QSQLITE_OPEN_URI"));
     }
     else if (collection->databaseMode == "File") {
         if (collection->databaseFilePath.isEmpty()) {

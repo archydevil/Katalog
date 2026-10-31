@@ -30,6 +30,7 @@
 */
 
 #include "storage.h"
+#include "device.h"   // Device::resolvePath: where the drive is on this Mac (D43 P3)
 #include <QSqlError>
 #include <QDebug>
 #include <QCoreApplication>
@@ -217,7 +218,7 @@ bool Storage::isDirectoryEmpty(const QString &dirPath)
 bool Storage::getStorageInfo()
 {
     QStorageInfo storageInfo;
-    storageInfo.setPath(path);
+    storageInfo.setPath(Device::resolvePath(path));   // where the drive is on this Mac (D43 P3)
 
     label        = storageInfo.name();
     fileSystem   = storageInfo.fileSystemType();
@@ -257,8 +258,8 @@ Storage::UpdateResult Storage::updateStorageInfo()
         return result;
     }
 
-    // Check if directory is empty
-    if (isDirectoryEmpty(path)) {
+    // Check if directory is empty, where the drive is on this Mac (D43 P3)
+    if (isDirectoryEmpty(Device::resolvePath(path))) {
         result.errorCode = ErrorEmptyDirectory;
         result.errorMessage = QCoreApplication::translate("MainWindow",
             "Storage: '%1'\n\nThe source folder does not contain any file: '%2'\n\nThis could mean that the device is not mounted to this folder, or the folder is simply empty.").arg(name, path);

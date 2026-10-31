@@ -90,6 +90,27 @@ void CatalogJobStoppable::configureOperation(Device *device,
 
 }
 
+void CatalogJobStoppable::resolveScanRoot()
+{
+    // The device's path stays the recorded one: the .idx header and the device
+    // row are written from it (STI-C19)
+    m_recordedRoot = (m_device && m_device->catalog) ? m_device->catalog->sourcePath : QString();
+    m_scanRoot     = m_device ? Device::resolvedDevicePath(m_device->ID, m_recordedRoot) : m_recordedRoot;
+    if (m_scanRoot != m_recordedRoot)
+        qInfo() << "Catalog" << (m_device ? m_device->name : QString()) << "read from" << m_scanRoot
+                << "on this Mac, recorded as" << m_recordedRoot;
+}
+
+QString CatalogJobStoppable::recordedPathOf(const QString &scannedPath) const
+{
+    return Device::rebasePath(scannedPath, m_scanRoot, m_recordedRoot);
+}
+
+QString CatalogJobStoppable::scanPathOf(const QString &recordedPath) const
+{
+    return Device::rebasePath(recordedPath, m_recordedRoot, m_scanRoot);
+}
+
 void CatalogJobStoppable::processCatalog()
 {
 
@@ -112,6 +133,8 @@ void CatalogJobStoppable::processCatalog()
         // Reset counters
         filesProcessed = 0;
         currentCatalogName = m_device->catalog->name;
+        // Where the drive is on this Mac (D43 P3)
+        resolveScanRoot();
 
 
         // Route to correct operation
@@ -794,8 +817,9 @@ void CatalogJobStoppable::verifyMimeTypes()
         QString extension = fileData[1].toString();
         QString extensionType = fileData[2].toString();
 
-        // Check if file still exists
-        QFileInfo fileInfo(filePath);
+        // Check if file still exists, where the drive is on this Mac (D43 P3)
+        const QString localFilePath = scanPathOf(filePath);
+        QFileInfo fileInfo(localFilePath);
         if (!fileInfo.exists()) {
 
             // Mark as verified even if file doesn't exist
@@ -814,7 +838,7 @@ void CatalogJobStoppable::verifyMimeTypes()
         }
 
         // Verify MIME type
-        QVariantMap verifyResult = FileMetadata::verifyMimeType(filePath, extensionType);
+        QVariantMap verifyResult = FileMetadata::verifyMimeType(localFilePath, extensionType);
 
         if (verifyResult.contains("error")) {
 
@@ -1070,8 +1094,9 @@ void CatalogJobStoppable::extractMissingMetadata()
         QString folderPath = fileData[3].toString();
         QString fileType = fileData[4].toString();
 
-        // Check if file still exists
-        QFileInfo fileInfo(filePath);
+        // Check if file still exists, where the drive is on this Mac (D43 P3)
+        const QString localFilePath = scanPathOf(filePath);
+        QFileInfo fileInfo(localFilePath);
         if (!fileInfo.exists()) {
             processedFiles++;
             continue;
@@ -1079,9 +1104,18 @@ void CatalogJobStoppable::extractMissingMetadata()
 
         // Extract metadata based on catalog settings
         if (FileMetadata::isMetadataSupported(filePath)) {
-            FileMetadata::extractAndStore(filePath, m_connectionName,
-                                          m_device->catalog->ID,
-                                          m_device->catalog->includeMetadata);
+            if (localFilePath == filePath) {
+                FileMetadata::extractAndStore(filePath, m_connectionName,
+                                              m_device->catalog->ID,
+                                              m_device->catalog->includeMetadata);
+            } else {
+                // Read on this Mac, stored under the recorded name and folder
+                const QVariantMap metadata = FileMetadata::extractMetadata(localFilePath,
+                                                                           m_device->catalog->includeMetadata);
+                if (!metadata.isEmpty())
+                    FileMetadata::updateFileMetadata(m_connectionName, m_device->catalog->ID,
+                                                     fileName, folderPath, metadata);
+            }
         }
 
         processedFiles++;
@@ -1290,6 +1324,8 @@ void CatalogJobStoppable::updateCatalogIncremental()
 
     Catalog *catalog = m_device->catalog;
     m_updateStats.clear();
+    if (m_recordedRoot != catalog->sourcePath || m_scanRoot.isEmpty())
+        resolveScanRoot();   // where the drive is on this Mac (D43 P3)
 
     m_originalFileCount = catalog->fileCount;
     m_originalTotalFileSize = catalog->totalFileSize;
@@ -1408,9 +1444,10 @@ void CatalogJobStoppable::updateCatalogIncremental()
     } else {
     }
 
-    // Step 2: Estimate total files for progress
+    // Step 2: Estimate total files for progress. The drive is read where it is
+    // on this Mac (m_scanRoot, D43 P3)
     QDateTime startTime = QDateTime::currentDateTime();
-    qint64 countedTotalFiles = countTotalFiles(catalog->sourcePath, catalog);
+    qint64 countedTotalFiles = countTotalFiles(m_scanRoot, catalog);
     QDateTime endTime = QDateTime::currentDateTime();
 
     if (!shouldContinue()) {
@@ -1421,7 +1458,7 @@ void CatalogJobStoppable::updateCatalogIncremental()
     Database::beginTransaction(m_connectionName);
 
     qint64 indexedCount = 0;
-    scanDirectoryIntoFiletemp(catalog->sourcePath, catalog, indexedCount);
+    scanDirectoryIntoFiletemp(m_scanRoot, catalog, indexedCount);
 
     if (!shouldContinue()) {
         Database::rollbackTransaction(m_connectionName);
@@ -1754,7 +1791,7 @@ void CatalogJobStoppable::extractChecksumsForFiles(const QList<QVariantList> &fi
                 continue; // Skip this file
             }
 
-            batchFullPaths << fileData[0].toString();      // file_full_path
+            batchFullPaths << scanPathOf(fileData[0].toString());   // file_full_path, read on this Mac (D43 P3)
             batchFileNames << fileData[1].toString();      // file_name
             batchFolderPaths << fileData[2].toString();    // file_folder_path
             batchFileSizes << fileData[3].toLongLong();    // file_size
@@ -2003,8 +2040,11 @@ void CatalogJobStoppable::scanDirectoryIntoFiletemp(const QString &directory,
     while (it.hasNext() && shouldContinue()) {
         waitIfPaused();
 
-        QString entryPath = it.next();
-        QFileInfo entry(entryPath);
+        const QString scannedPath = it.next();
+        QFileInfo entry(scannedPath);
+        // Recorded under the device's path, wherever the drive is on this Mac
+        // (D43 P3): the excluded folders and the rows use the recorded paths
+        const QString entryPath = recordedPathOf(scannedPath);
 
         if (!catalog->includeHidden && entry.fileName().startsWith('.'))
             continue;
@@ -2028,7 +2068,7 @@ void CatalogJobStoppable::scanDirectoryIntoFiletemp(const QString &directory,
             QString quickMimeType = FileMetadata::getMimeTypeFromExtension(extension);
 
             fileNames << entry.fileName();
-            fileFolderPaths << entry.path();
+            fileFolderPaths << recordedPathOf(entry.path());
             fileFullPaths << entryPath;
             fileDateTimes << entry.lastModified().toString("yyyy/MM/dd hh:mm:ss");
             fileCatalogs << catalog->name;
@@ -2483,7 +2523,8 @@ void CatalogJobStoppable::extractMetadataForChangedFiles(const QList<QVariantLis
             QFileInfo fileInfo(filePath);
             extractFileNames << fileInfo.fileName();
             extractFolderPaths << fileInfo.absolutePath();
-            extractFullPaths << filePath;
+            // Read where the drive is on this Mac; the rows keep the recorded path (D43 P3)
+            extractFullPaths << scanPathOf(filePath);
         }
     }
 

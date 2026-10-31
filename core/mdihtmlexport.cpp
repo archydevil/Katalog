@@ -565,7 +565,7 @@ QVariantMap MdiHtmlExport::fileRecord(const QString &mdiConnection, int catalogI
             ai["tags"] = tags;
         } else if ((d.analysis == QLatin1String("thumbnail") || d.analysis == QLatin1String("poster"))
                    && !d.derivedFiles.isEmpty() && !r.contains("preview")) {
-            r["preview"] = QDir(d.derivedRoot).filePath(d.derivedFiles.first());
+            r["preview"] = d.derivedPath(d.derivedFiles.first());   // MDI-F207
         } else if (d.analysis == QLatin1String("document")) {
             QVariantMap study = v;
             QVariantList fragments;

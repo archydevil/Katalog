@@ -220,6 +220,16 @@ private:
     QString m_collectionFolder;
     QString m_connectionName = "defaultConnection";
 
+    // Where the catalog's drive is on this Mac (per-Mac remap, D43 P3): the
+    // scan reads m_scanRoot and records every path under m_recordedRoot, the
+    // device's path, so the collection is unchanged by a remap. Equal when the
+    // drive is where it was recorded.
+    QString m_recordedRoot;
+    QString m_scanRoot;
+    void resolveScanRoot();
+    QString recordedPathOf(const QString &scannedPath) const;   // scan → collection
+    QString scanPathOf(const QString &recordedPath) const;      // collection → this Mac
+
     // State management (atomic for thread safety)
     QAtomicInt m_stopRequested{0};
     QAtomicInt m_hardStopRequested{0};

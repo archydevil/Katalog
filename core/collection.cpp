@@ -2734,16 +2734,20 @@ bool Collection::updateAllDeviceActive(bool skipNetworkPaths)
     bool anyChanged = false;
     Device loopDevice;
     while (query.next()){
+        const int deviceId = query.value(0).toInt();
         if (skipNetworkPaths) {
-            const QString devicePath = query.value(1).toString();
+            // Where the drive is on this Mac: a remap to a share is a network path (D43 P3)
+            const QString devicePath = Device::resolvedDevicePath(deviceId, query.value(1).toString());
             if (devicePath.isEmpty() || pathIsOnNetworkMount(devicePath, mounts))
                 continue;
         }
-        loopDevice.ID = query.value(0).toInt();
+        // Read-only, the state shown is the last probe, not the stored one (D43)
+        const bool shownBefore = Device::probedActiveState(deviceId, query.value(2).toBool());
+        loopDevice.ID = deviceId;
         loopDevice.loadDevice(m_connectionName);
         // loadDevice() probes via updateActiveState(); it records the change on
         // the object, so no second probe is needed to learn the outcome.
-        if (loopDevice.activeStoredValid && loopDevice.active != query.value(2).toBool())
+        if (loopDevice.activeStoredValid && loopDevice.active != shownBefore)
             anyChanged = true;
     }
     return anyChanged;

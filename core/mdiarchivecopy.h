@@ -43,6 +43,8 @@
 #define MDIARCHIVECOPY_H
 
 #include <QDateTime>
+#include <QJsonArray>
+#include <QList>
 #include <QString>
 #include <QStringList>
 #include <functional>
@@ -93,6 +95,128 @@ public:
     // 10 %), then copies. destination: the folder chosen by the owner.
     static Result run(const Sources &sources, const QString &destination, const QDateTime &when,
                       const Progress &progress = nullptr);
+};
+
+// Publishing for the read-only Macs (fork, D43 (4), D44; SpecMediaIntelligence.md
+// MDI-F202..F207, MDI-F215, MDI-C65). On an authorised Mac the collection is
+// written into a folder the owner syncs to his other Macs (Syncthing over
+// Tailscale, receive-only there; Teca starts no sync program and opens no
+// tunnel). The folder holds, each written under a hidden temporary name and
+// then renamed, so a reader never sees half a file:
+//   <collection>.db, or the Memory-mode files   consistent snapshot (VACUUM INTO / copies)
+//   mdi_data.db                                  cleaned snapshot: no Notes, no people, no
+//                                                faces (P2a), index rows rebuilt without them
+//   katalog_mdi/<catalog>/<analysis>/<file>      derived files, mirrored incrementally;
+//                                                face crops never
+//   teca_published.json                          the marker, written last
+// A folder with the marker opens read-only on every Mac (MDI-F204).
+// Runs on the caller's thread with its own connections: meant for a worker.
+class MdiPublish
+{
+public:
+    static constexpr int kFormatVersion = 1;
+    // Automatic publishing (MDI-F205): after this quiet time following the
+    // last catalog update or AI job, and never sooner than kAutoMinimumSeconds
+    // after the previous publish
+    static constexpr int kAutoQuietSeconds   = 120;
+    static constexpr int kAutoMinimumSeconds = 300;
+
+    static QString markerFileName();      // "teca_published.json"
+    static QString derivedFolderName();   // "katalog_mdi"
+    static bool    isPublishedFolder(const QString &folder);
+
+    // App-wide settings keys, per collection (Collection::settingsKey): the
+    // folder chosen, and whether to publish again after updates and analyses
+    static QString folderKey();           // "MediaIntelligence/PublishFolder"
+    static QString autoKey();             // "MediaIntelligence/PublishAuto" (default true)
+
+    struct FileEntry {
+        QString name;      // relative to the published folder
+        qint64  size = 0;
+        QString sha256;    // hex
+    };
+    struct Marker {
+        bool             valid = false;
+        int              format = 0;
+        QDateTime        publishedAt;
+        QString          publisherCode;   // CollectionWriters::thisComputerCode of the publisher
+        QString          publisherName;
+        QString          collectionName;
+        QString          databaseMode;    // "File" or "Memory"
+        QString          databaseFile;    // File mode: the database's file name
+        QList<FileEntry> files;           // the snapshots
+        int              derivedFiles = 0;
+        QJsonArray       layers;          // protected layers: written by P2b, empty in P2a
+    };
+    static Marker readMarker(const QString &folder);
+    // Every file the marker lists is there with its size and, when
+    // checkHashes, its SHA-256: a set Syncthing has not finished is not complete
+    static bool isComplete(const QString &folder, const Marker &marker, bool checkHashes,
+                           QString *missing = nullptr);
+
+    struct Sources {
+        QString     collectionFolder;
+        QString     databaseMode;          // "File" or "Memory" (Hosted is refused)
+        QString     databaseFilePath;      // File mode
+        QString     collectionName;
+        QStringList catalogSourcePaths;    // the publish folder may not be inside one (MDI-C10)
+    };
+
+    enum class Error {
+        None,
+        Hosted,             // a hosted collection has no files to publish
+        PublishedCopy,      // the collection is itself a published copy
+        NoDestination,      // folder missing or not a folder
+        InsideCollection,   // folder inside the collection folder
+        OnCatalogedSource,  // folder inside a catalog's source (detail: that path)
+        NotEnoughSpace,
+        CannotWrite,        // a file could not be written or renamed (detail)
+        CopyFailed,         // a snapshot could not be made (detail)
+        CleanFailed,        // mdi_data.db could not be cleaned or checked (detail)
+        Stopped
+    };
+
+    // What the published mdi_data.db leaves out (MDI-F215, D44)
+    struct CleanReport {
+        int notes = 0;          // files whose Notes were removed
+        int people = 0;         // people removed (Layer B)
+        int links = 0;          // person <-> file links removed
+        int faces = 0;          // face rows removed (Layer A)
+        int faceData = 0;       // "faces" analysis records removed (their crop references)
+        int infoVectors = 0;    // "info" meaning-search rows removed (built from Notes and names)
+        int documentPeople = 0; // document studies whose "people of the archive" were removed
+        int indexRows = 0;      // instant-index rows rebuilt from the cleaned information
+    };
+
+    struct Result {
+        Error       error = Error::None;
+        QString     detail;
+        QDateTime   publishedAt;
+        QStringList written;            // the snapshots, relative to the folder
+        CleanReport cleaned;
+        int         derivedCopied = 0;     // new or changed since the last publish
+        int         derivedUnchanged = 0;
+        int         derivedMissing = 0;    // recorded but not found at the source (drive away)
+        int         cropsLeftOut = 0;      // face crops never published
+        qint64      bytesCopied = 0;
+        qint64      needed = 0;
+        qint64      available = -1;
+        bool ok() const { return error == Error::None; }
+    };
+
+    // The catalogs' source paths of a collection connection (device paths)
+    static QStringList catalogSourcePaths(const QString &connectionName);
+
+    static Error checkDestination(const Sources &sources, const QString &destination, QString *detail);
+
+    // progress(done, total, item): returning false stops before the next step
+    using Progress = MdiArchiveCopy::Progress;
+    static Result run(const Sources &sources, const QString &destination, const QDateTime &when,
+                      const Progress &progress = nullptr);
+
+    // Cleans a copy of mdi_data.db in place for publishing, then checks it:
+    // empty when clean, otherwise the reason. Never used on the collection's own file.
+    static QString cleanMdiCopy(const QString &path, CleanReport *report);
 };
 
 #endif // MDIARCHIVECOPY_H

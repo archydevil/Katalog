@@ -159,7 +159,11 @@ bool MdiFts::attach(const QString &connectionName, const QString &mdiDbPath)
         return false;   // nothing indexed for this collection yet
     QSqlQuery q(db);
     q.prepare(QStringLiteral("ATTACH DATABASE :path AS mdi"));
-    q.bindValue(":path", mdiDbPath);
+    // A published copy (D43): attached read-only and immutable, by its URI
+    // name when the connection reads URI names (otherwise the name would be
+    // taken as a file name)
+    const bool uri = db.connectOptions().contains(QLatin1String("QSQLITE_OPEN_URI"));
+    q.bindValue(":path", uri ? MdiData::databaseNameFor(mdiDbPath) : mdiDbPath);
     if (!q.exec()) {
         qWarning() << "MdiFts::attach failed:" << q.lastError().text();
         return false;
