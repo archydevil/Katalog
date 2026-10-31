@@ -1283,8 +1283,7 @@ private:
     QTimer           *m_publishedPoll = nullptr;
     QString           m_publishedFolder;          // empty when the collection open is not one
     QDateTime         m_publishedLoadedAt;        // publishedAt of the snapshot open
-    QDateTime         m_publishedRefusedAt;       // a newer marker whose files did not match yet
-    QString           m_publishedRefusedFiles;    // their sizes and dates then: hashed again only once they change
+    QDateTime         m_publishedRefusedAt;       // newer marker logged as incomplete
     bool              m_publishedChecking = false;
     QThread          *m_publishedCheckThread = nullptr;   // hashes the arrived files
     void    watchPublishedCopy();                 // after a collection is opened
