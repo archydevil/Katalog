@@ -54,7 +54,9 @@ const config: Config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'fr', 'cs'], //, 'de'
+    // 'it': Italian, for the pages of Teca's features (fork; the other pages
+    // fall back to English)
+    locales: ['en', 'fr', 'cs', 'it'], //, 'de'
   },
 
   presets: [

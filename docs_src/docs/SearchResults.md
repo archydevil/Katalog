@@ -110,5 +110,8 @@ The list next to *Export* chooses an action, and the button beside it (*Run proc
 | *Move to Trash* | Moves all results to the trash, after confirmation. |
 | *Delete* | Deletes all results **permanently**, after confirmation. Available only when *Authorize actions that delete files (no recovery)* is enabled in the [Settings](Settings#behavior). |
 
+## Nothing found (Teca) {#nothing-found}
+In Teca, when a search finds no file, the results page offers to run the same search again with one change: in the folder paths too, by meaning, in the information of the files, or in all the drives. See [When a search finds nothing](SearchInformation#nothing-found).
+
 ## Development
 * See the backlog of [Search development](https://github.com/users/StephaneCouturier/projects/7/views/1?filterQuery=search).

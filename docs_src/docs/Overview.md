@@ -56,6 +56,16 @@ The window shows the **[Selection](Selection)** page on the left: the tree of al
 - **[Backup & archive](BackUp)**: copy or move files between catalogs, preview, run several links at once, and check the coverage.
 - **[Data modes](Settings#database-memory-mode)**: keep the collection in a folder of files, in a SQLite database, or in a hosted database.
 
+### Teca {#teca}
+Teca, based on Katalog by Stéphane Couturier, adds:
+- **[People and faces](People)**: the people of the archive, and the faces of the photos, named only with your approval.
+- **[File information](FileInformation)**: title, event, place, date, author, notes, tags and people, for one file or many.
+- **[Proposals](Proposals)**: dates, events and places deduced for the files, to approve.
+- **[Document reader](DocumentReader)**: the study of a document, and its export as an HTML page.
+- **[Action history](ActionHistory)**: restore points of the catalogs, to go back to how they were.
+- **[Copy of the archive data](ArchiveCopy)**: a dated copy of what lives only in the collection.
+- **[Search in the information](SearchInformation)**: the search *In the information*, the *To review* card of *Home*, and the searches that find nothing.
+
 ### Katalog 2
 Katalog 2 remains available, with its [documentation](Katalog2), including the [command line](k2/CommandLines) (Linux).
 
@@ -90,6 +100,29 @@ on Macs managed by an organization (MDM/corporate profile), these workarounds ma
 
 A legacy build (v2.5, pure Qt6, no KF6 dependencies) is also available with the same macOS requirements.
 
+### Teca portable app for macOS {#teca-macos}
+The owner of the Teca fork builds a portable Teca app for macOS, as a DMG, for his own Macs. It is not published, and is a different package from the macOS packages above.
+
+| Topic | Detail |
+|-------|--------|
+| **Mac** | Apple Silicon only. |
+| **System** | macOS 26 (Tahoe) or later. |
+| **Signature** | Ad-hoc signature, not notarized: macOS asks before the first start. |
+| **Inside the app** | The programs of the AI analysis (video and audio, speech to text, PDF text and pages, OCR, photo metadata) and their models (speech, voice detection, faces, OCR in Italian and English). |
+| **Not inside** | Ollama, the local AI service for descriptions, summaries and the search by meaning: it is installed separately. |
+
+**First start.** The app comes from a DMG and has no Apple notarization, so Gatekeeper stops it the first time:
+1. The DMG is opened, and *Teca* is dragged into *Applications*.
+2. At the first start, macOS says it cannot verify the app, and does not open it.
+3. In *System Settings › Privacy & Security*, near the bottom, *Open Anyway* appears for Teca; macOS then asks once more, and opens it.
+4. From then on, Teca opens normally.
+
+**Programs and models.** A program or a model set in the *Settings*, or already installed on the Mac, is used first; the copy inside the app is used only when neither exists. Nothing is written to the settings to choose it.
+
+:::note
+Only one Teca at a time on a collection: the portable app and another Teca (another copy, or a build from source) are never open on the same collection at the same time. Both would write the same files. One Teca is quit before the other one opens that collection.
+:::
+
 ---
 ## Multi-Language Support
 
@@ -116,6 +149,7 @@ Documentation is available in:
 | en_US    | English     |
 | cs_CZ    | Czech       |
 | fr_FR    | French      |
+| it_IT    | Italian (the pages of Teca's features) |
 
 ---
 

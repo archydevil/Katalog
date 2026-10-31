@@ -66,6 +66,20 @@ export default {
               ],
     },
     {
+      // Teca's features (fork): English and Italian only
+      type: 'category',
+      label: 'Teca',
+      items: [
+                'People',
+                'FileInformation',
+                'Proposals',
+                'DocumentReader',
+                'ActionHistory',
+                'ArchiveCopy',
+                'SearchInformation'
+              ],
+    },
+    {
       type: 'category',
       label: 'Development',
       items: [  'development/Dev-Overview',

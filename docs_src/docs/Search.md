@@ -141,6 +141,9 @@ Differences is available only when searching in *Catalogs*.
 *Duplicates* and *Differences* cannot be used at the same time.
 :::
 
+### In the information (Teca) {#in-the-information}
+Teca also searches what was written about the files: their title, event, place, date, author, notes, tags and people. See [Search in the information](SearchInformation).
+
 ## Running a search {#running}
 The buttons at the top of the page:
 
