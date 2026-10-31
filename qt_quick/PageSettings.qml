@@ -90,6 +90,30 @@ ScrollablePageFitted {
         return error === ""
     }
 
+    // Publishing for the read-only Macs (fork, D43 (4)): see AppManager::publishState
+    property var publish: ({})
+    function reloadPublish() { publish = appManager1.publishState() }
+    function publishResult(error) {
+        publishMessage.text    = error
+        publishMessage.visible = error !== ""
+        reloadPublish()
+        return error === ""
+    }
+    Connections {
+        target: appManager1
+        function onPublishStateChanged()  { pageSettingsRoot.reloadPublish() }
+        function onReadOnlyChanged()      { pageSettingsRoot.reloadPublish() }
+        function onRecentCollectionsChanged() { pageSettingsRoot.reloadPublish() }
+    }
+    Component {   // a fresh dialog per open (openFreshDialog)
+        id: publishFolderDialogComponent
+        FolderDialog {
+            title: qsTr("Select a folder")
+            onAccepted: pageSettingsRoot.publishResult(
+                            appManager1.setPublishFolder(appManager1.pathFromFileUrl(selectedFolder.toString())))
+        }
+    }
+
     // ── Dialogs ────────────────────────────────────────────────────────
 
     // Writers (D43): removing a Mac, and turning protection off, ask first
@@ -775,6 +799,104 @@ ScrollablePageFitted {
                             appManager1.copyToClipboard(appManager1.thisComputerCode)
                             applicationWindow().showPassiveNotification(qsTr("Copied"))
                         }
+                    }
+                }
+            }
+
+            // ── Publish for the read-only Macs (fork, D43 (4)) ─────────────
+            // A copy written into a folder synced to the other Macs, which
+            // open it read-only; republished after updates and analyses.
+            KCard {
+                id: publishCard
+                Layout.fillWidth: true
+                visible: appManager1.databaseMode !== "Hosted"
+                Component.onCompleted: pageSettingsRoot.reloadPublish()
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+                    KSectionHeader {
+                        level: 3
+                        title: qsTr("Publish for the read-only Macs")
+                        description: qsTr("A copy of this collection is written into a folder that you sync to the other Macs, for example with Syncthing; they open it read-only. People, faces and notes are not published.")
+                    }
+                    KInfoTag {
+                        Layout.alignment: Qt.AlignTop
+                        text: (pageSettingsRoot.publish.lastPublishText || "") !== ""
+                              ? pageSettingsRoot.publish.lastPublishText : qsTr("Not published yet")
+                        tone: (pageSettingsRoot.publish.lastPublishText || "") !== "" ? "ok" : "neutral"
+                    }
+                }
+
+                // Blocking validation error of the last change (SpecValidationRules)
+                Kirigami.InlineMessage {
+                    id: publishMessage
+                    Layout.fillWidth: true
+                    type: Kirigami.MessageType.Warning
+                    showCloseButton: true
+                    visible: false
+                }
+                // Why this collection cannot be published (read-only, published copy)
+                Controls.Label {
+                    Layout.fillWidth: true
+                    visible: pageSettingsRoot.publish.available === false
+                    text: pageSettingsRoot.publish.reason || ""
+                    wrapMode: Text.WordWrap
+                    color: KTheme.text2
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Controls.Label {
+                        text: qsTr("Folder")
+                        color: KTheme.text2
+                    }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        // The elided path must not size the card (PGL-F16)
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 6
+                        text: pageSettingsRoot.publish.folder || "—"
+                        elide: Text.ElideMiddle
+                        font.family: KTheme.mono
+                        font.pixelSize: KTheme.note
+                        color: KTheme.text
+                    }
+                    KButton {
+                        text: qsTr("Select")
+                        icon.name: "folder-open"
+                        enabled: pageSettingsRoot.publish.available === true
+                        onClicked: {
+                            publishMessage.visible = false
+                            applicationWindow().openFreshDialog(publishFolderDialogComponent,
+                                                                pageSettingsRoot.publish.folder || "")
+                        }
+                    }
+                }
+
+                Controls.Switch {
+                    text: qsTr("Publish again after updates and analyses")
+                    checked: pageSettingsRoot.publish.auto === true
+                    enabled: pageSettingsRoot.publish.available === true
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: pageSettingsRoot.fitWidth(implicitWidth)
+                    onToggled: {
+                        appManager1.setPublishAuto(checked)
+                        checked = Qt.binding(() => pageSettingsRoot.publish.auto === true)
+                    }
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.smallSpacing
+                    KButton {
+                        variant: "primary"
+                        text: qsTr("Publish now")
+                        icon.name: "document-send"
+                        enabled: pageSettingsRoot.publish.available === true
+                                 && (pageSettingsRoot.publish.folder || "") !== ""
+                                 && !appManager1.publishRunning
+                        onClicked: pageSettingsRoot.publishResult(appManager1.publishNow())
                     }
                 }
             }

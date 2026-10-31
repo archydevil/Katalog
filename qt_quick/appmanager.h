@@ -960,7 +960,7 @@ signals:
     // Publishing (fork, D43 (4)), and a published copy open here reloaded
     // when a newer one has arrived (MDI-F206): Reloading before, Reloaded after
     void publishStateChanged();
-    void publishFinished(bool ok, const QString &message);
+    void publishFinished(bool ok, const QString &message, bool automatic);
     void publishedCopyReloading();
     void publishedCopyReloaded(const QString &message);
     // End of a Memory-mode Explore load: the open's result, or stopped
@@ -1244,6 +1244,8 @@ private:
     // Per-Mac remaps of device paths (D43 P3): read from this Mac's settings
     // for the collection opened, and applied in core/ (Device::resolvePath)
     void    loadDevicePathRemaps();
+    QList<Device::PathRemap> m_pathRemaps;            // all of the collection's, current or not
+    QString m_pathRemapsKey;                          // the collection they were read for
     QSet<int> m_dismissedPathSuggestions;             // "Not now", for this session
     QString   m_pathSuggestionSignature;              // mounts and remaps the last search saw
     QVariantMap m_pathSuggestion;                     // what it found
@@ -1283,6 +1285,7 @@ private:
     QDateTime         m_publishedLoadedAt;        // publishedAt of the snapshot open
     QDateTime         m_publishedRefusedAt;       // a newer marker whose files did not match yet
     bool              m_publishedChecking = false;
+    QThread          *m_publishedCheckThread = nullptr;   // hashes the arrived files
     void    watchPublishedCopy();                 // after a collection is opened
     void    checkPublishedCopy();
     QString prepareHtmlExport(const QString &scope, int catalogId, const QString &path, const QString &targetFile,

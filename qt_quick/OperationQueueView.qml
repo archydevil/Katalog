@@ -69,11 +69,19 @@ Controls.ToolBar {
              || appManager1.mdiIsRunning || root.mdiLingering
              || appManager1.htmlExportRunning || root.htmlExportLingering
              || appManager1.archiveCopyRunning || root.archiveCopyLingering
+             || appManager1.publishRunning || root.publishLingering
 
     // An HTML export and a copy of the archive data run on workers of their
     // own (fork, 2026-10-30): a row each, with the same tail
     property bool htmlExportLingering: false
     property bool archiveCopyLingering: false
+    property bool publishLingering: false   // publishing for the read-only Macs (D43 (4))
+    property bool publishWasRunning: false
+    Timer {
+        id: publishLingerTimer
+        interval: root.completionLinger
+        onTriggered: root.publishLingering = false
+    }
     Timer {
         id: htmlExportLingerTimer
         interval: root.completionLinger
@@ -93,6 +101,18 @@ Controls.ToolBar {
             } else if (!root.htmlExportLingering) {
                 root.htmlExportLingering = true
                 htmlExportLingerTimer.restart()
+            }
+        }
+        // The tail follows the end of a publish only, not a change of its settings
+        function onPublishStateChanged() {
+            if (appManager1.publishRunning) {
+                root.publishWasRunning = true
+                root.publishLingering = false
+                publishLingerTimer.stop()
+            } else if (root.publishWasRunning) {
+                root.publishWasRunning = false
+                root.publishLingering = true
+                publishLingerTimer.restart()
             }
         }
         function onArchiveCopyStateChanged() {
@@ -318,6 +338,11 @@ Controls.ToolBar {
             running: appManager1.archiveCopyRunning
             lingering: root.archiveCopyLingering
             status: appManager1.archiveCopyStatusText
+        }
+        WorkerRow {
+            running: appManager1.publishRunning
+            lingering: root.publishLingering
+            status: appManager1.publishStatusText
         }
 
         Rectangle {

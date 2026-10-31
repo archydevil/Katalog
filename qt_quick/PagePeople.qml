@@ -23,7 +23,10 @@ ColumnLayout {
     property bool   allPhotos: false
     // Faces ticked in a grid, by face id: the bulk actions apply to them
     property var    picked: ({})
-    readonly property bool facesOn: appManager1.facesAvailable()
+    // A published copy carries no people and no faces (D44, P2a): one message
+    // in their place; P2b unlocks them here
+    readonly property bool published: appManager1.publishedCopy
+    readonly property bool facesOn: appManager1.facesAvailable() && !published
     // Something changed while the page was hidden: it reloads when shown
     property bool   stale: true
     readonly property int groupFacesShown: 12
@@ -259,7 +262,13 @@ ColumnLayout {
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
-        visible: !people.facesOn
+        visible: people.published
+        type: Kirigami.MessageType.Information
+        text: qsTr("People, faces and notes are not in this published copy.")
+    }
+    Kirigami.InlineMessage {
+        Layout.fillWidth: true
+        visible: !people.facesOn && !people.published
         type: Kirigami.MessageType.Information
         text: appManager1.facesUnavailableReason() + " " + qsTr("People can still be added to photos by hand, from File details.")
     }
@@ -326,6 +335,7 @@ ColumnLayout {
 
     // ── People ────────────────────────────────────────────────────────────
     KSectionHeader {
+        visible: !people.published
         level: 2
         title: qsTr("People")
         description: people.list.length > 0
@@ -333,6 +343,7 @@ ColumnLayout {
                      : qsTr("Nobody yet. A person is added here, or from File details on a photo.")
     }
     RowLayout {
+        visible: !people.published
         Layout.fillWidth: true
         spacing: 10
         Controls.TextField {
@@ -786,8 +797,9 @@ ColumnLayout {
     // ── Face data (GDPR) ──────────────────────────────────────────────────
     // Recognisable faces are personal data: they can be forgotten all at once
     // Shown even when this build cannot recognise faces: data found by another
-    // build must still be deletable (GDPR)
+    // build must still be deletable (GDPR); a published copy has none
     KCard {
+        visible: !people.published
         Layout.fillWidth: true
         KSectionHeader {
             level: 3

@@ -1557,6 +1557,34 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    // Publishing for the read-only Macs (fork, D43 (4)): a publish asked for
+    // says how it ended; an automatic one only when it failed. A published
+    // copy open here is reloaded by itself when a newer one has arrived
+    // (MDI-F206): the page stays, and Browse reopens its catalog and folder.
+    property var _publishedBrowse: null
+    Connections {
+        target: appManager1
+        function onPublishFinished(ok, message, automatic) {
+            if (!automatic || !ok)
+                showPassiveNotification(message, ok ? "short" : "long")
+        }
+        function onPublishedCopyReloading() {
+            root._publishedBrowse = exploreFolders.openedDeviceId > 0 && !root.exploreChooser
+                ? { deviceId: exploreFolders.openedDeviceId, folder: root.exploreCurrentFolder } : null
+        }
+        function onPublishedCopyReloaded(message) {
+            showPassiveNotification(message)
+            const browse = root._publishedBrowse
+            root._publishedBrowse = null
+            if (browse) {
+                root.navRestoring = true
+                root.explorePendingFolder = browse.folder || ""
+                exploreFolders.openByDeviceId(browse.deviceId)
+                Qt.callLater(function() { root.navRestoring = false })
+            }
+        }
+    }
+
     // What the analysis deduces for a folder, grouped: approved for every file
     // at once (D39); and, only on request, a look on the web for the events
     Kirigami.Dialog {

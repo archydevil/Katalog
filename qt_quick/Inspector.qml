@@ -412,7 +412,10 @@ Rectangle {
                     KSectionHeader {
                         level: 3
                         title: qsTr("Information and people")
-                        description: inspector.factRows.length === 0 && (inspector.fileFacts.people || []).length === 0
+                        // A published copy has no people, faces or notes (D44, P2a)
+                        description: appManager1.publishedCopy
+                                     ? qsTr("People, faces and notes are not in this published copy.")
+                                     : inspector.factRows.length === 0 && (inspector.fileFacts.people || []).length === 0
                                      ? qsTr("Nothing written yet: a title, an event, a place, the people in it…") : ""
                     }
                     Repeater {

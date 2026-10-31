@@ -32,6 +32,7 @@
 #include "core/mdifts.h"
 #include "core/cataloghistory.h"
 #include "core/collectionaccess.h"
+#include "core/device.h"   // Device::resolvePath (D43 P3)
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -415,8 +416,13 @@ QStringList MdiPublish::catalogSourcePaths(const QString &connectionName)
     QSqlQuery q(QSqlDatabase::database(connectionName));
     if (q.exec(QStringLiteral("SELECT device_path FROM device WHERE device_type = 'Catalog'")))
         while (q.next())
-            if (!q.value(0).toString().trimmed().isEmpty())
+            if (!q.value(0).toString().trimmed().isEmpty()) {
                 paths << q.value(0).toString();
+                // And where the drive is on this Mac (per-Mac remap, D43 P3)
+                const QString local = Device::resolvePath(q.value(0).toString());
+                if (local != q.value(0).toString())
+                    paths << local;
+            }
     return paths;
 }
 //----------------------------------------------------------------------

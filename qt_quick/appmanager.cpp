@@ -4701,6 +4701,16 @@ QVariantList AppManager::getDeviceList(const QString &viewFilter, int scopeDevic
         item[QStringLiteral("groupId")]       = n.groupId;
         item[QStringLiteral("externalId")]    = n.externalId;
         item[QStringLiteral("comment")]       = n.comment;
+        // Where it is on this Mac, when remapped (D43 P3): its own remap, or
+        // that of the drive it is on
+        if (n.type == QLatin1String("Storage") || n.type == QLatin1String("Catalog")) {
+            const QString local = Device::resolvedDevicePath(n.id, n.path);
+            item[QStringLiteral("localPath")] = local != n.path ? local : QString();
+            bool ownRemap = false;
+            for (const Device::PathRemap &r : m_pathRemaps)
+                ownRemap = ownRemap || r.deviceId == n.id;
+            item[QStringLiteral("ownPathRemap")] = ownRemap;
+        }
         // Used space is not stored; K2 derives it the same way
         // (mainwindow_tab_device_pr.cpp:1519).
         item[QStringLiteral("usedSpace")]     = n.totalSpace - n.freeSpace;
@@ -8408,6 +8418,10 @@ void AppManager::prepareCollectionAccess()
     // reloaded at the same path: the immutable connection must not stay)
     if (QSqlDatabase::contains(kMdiMainConnection))
         MdiData::close(kMdiMainConnection);
+    // An automatic publish waiting belongs to the collection being left
+    if (m_publishTimer)
+        m_publishTimer->stop();
+    m_publishAgain = false;
 
     // The collection about to be opened, read as Database::initialize() reads it
     QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
@@ -9625,6 +9639,114 @@ QString AppManager::collectionSettingsKey(const QString &key) const
     return collection->settingsKey(key);
 }
 //----------------------------------------------------------------------
+// Where a drive is on this Mac (per-Mac remap of its path, D43 P3; MDI-F209,
+// MDI-C66). Kept in this Mac's settings file, never in the collection, so
+// it is allowed on a read-only Mac too (MDI-C64)
+void AppManager::loadDevicePathRemaps()
+{
+    const QString key = collectionSettingsKey(QString::fromLatin1(Device::kPathRemapsKey));
+    if (key != m_pathRemapsKey) {
+        // Another collection: its own suggestions, none dismissed yet
+        m_pathRemapsKey = key;
+        m_dismissedPathSuggestions.clear();
+    }
+    m_pathRemaps = Device::loadPathRemaps(collection->settingsFilePath, key, m_connectionName);
+    m_pathSuggestionSignature.clear();
+    m_pathSuggestion.clear();
+    for (const Device::PathRemap &r : std::as_const(m_pathRemaps))
+        qInfo() << "Device" << r.deviceId << "recorded at" << r.recordedPath << "is on this Mac at" << r.localPath
+                << (r.current ? "" : "(not applied: the device's path changed since)");
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::devicePathOnThisMac(int deviceId) const
+{
+    QVariantMap result;
+    const QList<Device::DeviceTreeNode> nodes = Device::loadDeviceTree(m_connectionName, deviceId);
+    if (nodes.isEmpty() || nodes.first().id != deviceId)
+        return result;
+    const Device::DeviceTreeNode &node = nodes.first();
+    result[QStringLiteral("deviceId")]     = node.id;
+    result[QStringLiteral("name")]         = node.name;
+    result[QStringLiteral("type")]         = node.type;
+    result[QStringLiteral("recordedPath")] = node.path;
+    result[QStringLiteral("localPath")]    = QString();
+    result[QStringLiteral("current")]      = false;
+    for (const Device::PathRemap &r : m_pathRemaps)
+        if (r.deviceId == deviceId) {
+            result[QStringLiteral("localPath")] = r.localPath;
+            result[QStringLiteral("current")]   = r.current;
+        }
+    return result;
+}
+//----------------------------------------------------------------------
+QString AppManager::setDevicePathOnThisMac(int deviceId, const QString &localPath)
+{
+    const QVariantMap device = devicePathOnThisMac(deviceId);
+    const QString recorded = device.value(QStringLiteral("recordedPath")).toString();
+    const QString type     = device.value(QStringLiteral("type")).toString();
+    const QString local    = Catalog::normalizeSourcePath(QDir::fromNativeSeparators(localPath.trimmed()));
+    // A drive or folder with a path of its own; never a filesystem root
+    if ((type != QLatin1String("Storage") && type != QLatin1String("Catalog"))
+        || !QDir::isAbsolutePath(recorded) || recorded == QLatin1String("/")
+        || (recorded.length() == 3 && recorded.at(1) == QLatin1Char(':')))
+        return tr("The change could not be saved.");
+    if (local.isEmpty() || !QFileInfo(local).isDir())
+        return QCoreApplication::translate("PageExploreFiles", "Folder not found.");
+
+    const QString key = collectionSettingsKey(QString::fromLatin1(Device::kPathRemapsKey));
+    if (local == Catalog::normalizeSourcePath(recorded))
+        Device::removePathRemap(collection->settingsFilePath, key, deviceId);   // where it was recorded
+    else
+        Device::savePathRemap(collection->settingsFilePath, key, deviceId, recorded, local);
+    m_dismissedPathSuggestions.insert(deviceId);
+    loadDevicePathRemaps();
+    // Connected or not, from where it is now; the cards show the new place
+    refreshDeviceList();
+    return QString();
+}
+//----------------------------------------------------------------------
+void AppManager::forgetDevicePathOnThisMac(int deviceId)
+{
+    Device::removePathRemap(collection->settingsFilePath,
+                            collectionSettingsKey(QString::fromLatin1(Device::kPathRemapsKey)), deviceId);
+    loadDevicePathRemaps();
+    refreshDeviceList();
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::devicePathSuggestion()
+{
+    // Looked for again only when the mounts or the remaps changed: the search
+    // reads a few names on each mounted volume, nothing more (cheap)
+    QStringList dismissed;
+    for (int id : std::as_const(m_dismissedPathSuggestions))
+        dismissed << QString::number(id);
+    dismissed.sort();
+    const QString signature = collection->mountSignature() + QLatin1Char('|') + dismissed.join(QLatin1Char(','));
+    if (signature == m_pathSuggestionSignature)
+        return m_pathSuggestion;
+    m_pathSuggestionSignature = signature;
+    m_pathSuggestion.clear();
+    for (const Device::DeviceTreeNode &node : Device::loadDeviceTree(m_connectionName)) {
+        if ((node.type != QLatin1String("Storage") && node.type != QLatin1String("Catalog"))
+            || node.isActive || m_dismissedPathSuggestions.contains(node.id))
+            continue;
+        const QString found = Device::suggestPathRemap(node.id, m_connectionName);
+        if (found.isEmpty())
+            continue;
+        m_pathSuggestion[QStringLiteral("deviceId")]     = node.id;
+        m_pathSuggestion[QStringLiteral("name")]         = node.name;
+        m_pathSuggestion[QStringLiteral("recordedPath")] = node.path;
+        m_pathSuggestion[QStringLiteral("localPath")]    = found;
+        break;
+    }
+    return m_pathSuggestion;
+}
+//----------------------------------------------------------------------
+void AppManager::dismissDevicePathSuggestion(int deviceId)
+{
+    m_dismissedPathSuggestions.insert(deviceId);
+}
+//----------------------------------------------------------------------
 bool AppManager::webSearchEnabled()
 {
     // Per collection, off by default (owner's decision 2026-10-30)
@@ -10112,4 +10234,321 @@ QVariantMap AppManager::archiveCopyState()
         { QStringLiteral("days"),         days },
         { QStringLiteral("due"),          !last.isValid() || days > 30 },
         { QStringLiteral("hosted"),       collection->databaseMode == QLatin1String("Hosted") } };
+}
+//----------------------------------------------------------------------
+// Publishing for the read-only Macs (fork, D43 (4), MDI-F202..F206)
+//----------------------------------------------------------------------
+bool AppManager::getPublishedCopy() const
+{
+    return m_readOnlyCauses.contains(int(ReadOnlyCause::PublishedCopy));
+}
+//----------------------------------------------------------------------
+QString AppManager::publishRefusal() const
+{
+    if (collection->databaseMode == QLatin1String("Hosted"))
+        return tr("A hosted collection cannot be published: its database is on its server.");
+    // A published copy and a read-only collection are never published (MDI-F202)
+    if (getReadOnly())
+        return readOnlyRefusal();
+    return QString();
+}
+//----------------------------------------------------------------------
+QVariantMap AppManager::publishState()
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    const QString folder    = settings.value(collection->settingsKey(MdiPublish::folderKey())).toString();
+    const bool    automatic = settings.value(collection->settingsKey(MdiPublish::autoKey()), true).toBool();
+    // The last publish is read in the folder itself, so the command line's
+    // scheduled runs count too (they write no settings key)
+    const MdiPublish::Marker marker = folder.isEmpty() ? MdiPublish::Marker() : MdiPublish::readMarker(folder);
+    const QDateTime last = marker.valid ? marker.publishedAt.toLocalTime() : QDateTime();
+    const QString refusal = publishRefusal();
+    return QVariantMap{
+        { QStringLiteral("folder"),          folder },
+        { QStringLiteral("auto"),            automatic },
+        { QStringLiteral("lastPublish"),     last.isValid() ? last.toString(Qt::ISODate) : QString() },
+        { QStringLiteral("lastPublishText"), last.isValid() ? QLocale().toString(last, QLocale::ShortFormat) : QString() },
+        { QStringLiteral("available"),       refusal.isEmpty() },
+        { QStringLiteral("reason"),          refusal } };
+}
+//----------------------------------------------------------------------
+namespace {
+QString publishErrorText(MdiPublish::Error error, const QString &detail, qint64 needed, qint64 available)
+{
+    switch (error) {
+    case MdiPublish::Error::None:
+        return QString();
+    case MdiPublish::Error::NoDestination:
+        return AppManager::tr("The publish folder needs to be a folder that exists.");
+    case MdiPublish::Error::InsideCollection:
+        return AppManager::tr("The publish folder needs to be outside the collection folder.");
+    case MdiPublish::Error::OnCatalogedSource:
+        return AppManager::tr("The publish folder needs to be outside the folders the catalogs are made from (%1).").arg(detail);
+    case MdiPublish::Error::NotEnoughSpace:
+        return AppManager::tr("Publishing needs %1 of free space in the folder, which has %2 left.")
+            .arg(QLocale().formattedDataSize(needed), QLocale().formattedDataSize(available));
+    case MdiPublish::Error::Stopped:
+        return AppManager::tr("Publishing was stopped.");
+    default:
+        break;
+    }
+    return AppManager::tr("Not published: %1. The copy published before is unchanged.").arg(detail);
+}
+
+MdiPublish::Sources publishSources(Collection *collection, const QString &connectionName, const QString &name)
+{
+    MdiPublish::Sources sources;
+    sources.collectionFolder   = collection->databaseMode == QLatin1String("File") && !collection->databaseFilePath.isEmpty()
+                                 ? QFileInfo(collection->databaseFilePath).absolutePath() : collection->folder;
+    sources.databaseMode       = collection->databaseMode;
+    sources.databaseFilePath   = collection->databaseFilePath;
+    sources.collectionName     = name;
+    sources.catalogSourcePaths = MdiPublish::catalogSourcePaths(connectionName);
+    return sources;
+}
+} // namespace
+//----------------------------------------------------------------------
+QString AppManager::setPublishFolder(const QString &folder)
+{
+    const QString refusal = publishRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    const QString path = QDir::cleanPath(QUrl(folder).isLocalFile() ? QUrl(folder).toLocalFile() : folder);
+    QString detail;
+    const MdiPublish::Error error = MdiPublish::checkDestination(
+        publishSources(collection, m_connectionName, getCurrentCollectionDisplayName()), path, &detail);
+    if (error != MdiPublish::Error::None)
+        return publishErrorText(error, detail, 0, -1);
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    settings.setValue(collection->settingsKey(MdiPublish::folderKey()), path);
+    settings.sync();
+    emit publishStateChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+void AppManager::setPublishAuto(bool on)
+{
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    settings.setValue(collection->settingsKey(MdiPublish::autoKey()), on);
+    settings.sync();
+    if (!on && m_publishTimer)
+        m_publishTimer->stop();
+    emit publishStateChanged();
+}
+//----------------------------------------------------------------------
+QString AppManager::publishNow()
+{
+    const QString refusal = publishRefusal();
+    if (!refusal.isEmpty())
+        return refusal;
+    if (publishState().value(QStringLiteral("folder")).toString().isEmpty())
+        return tr("A publish folder is needed first.");
+    if (m_publishTimer)
+        m_publishTimer->stop();   // this publish covers the one waiting
+    return startPublish(false);
+}
+//----------------------------------------------------------------------
+QString AppManager::startPublish(bool automatic)
+{
+    if (m_publishThread) {
+        m_publishAgain = true;
+        return tr("Publishing is already running.");
+    }
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    const QString dest = settings.value(collection->settingsKey(MdiPublish::folderKey())).toString();
+    const MdiPublish::Sources sources = publishSources(collection, m_connectionName, getCurrentCollectionDisplayName());
+    const QDateTime when  = QDateTime::currentDateTime();
+    const QString operation = tr("Publish for the read-only Macs");
+
+    // A worker with its own connections: the collection stays usable, an AI
+    // job keeps running (VACUUM INTO reads one snapshot of each database)
+    m_publishThread = QThread::create([this, sources, dest, when, operation, automatic]() {
+        const MdiPublish::Result result = MdiPublish::run(sources, dest, when,
+            [this, operation](int done, int total, const QString &item) {
+                QMetaObject::invokeMethod(this, [this, operation, done, total, item]() {
+                    m_publishStatusText = StatusBarMessageBuilder().setOperation(operation).setStatus(tr("In Progress"))
+                                              .setProcess(tr("Steps"), done, total).setCurrentItem(item).build();
+                    emit publishStateChanged();
+                }, Qt::QueuedConnection);
+                return true;
+            });
+        QMetaObject::invokeMethod(this, [this, result, dest, operation, automatic]() {
+            m_lastPublishEnd = QDateTime::currentDateTime();
+            StatusBarMessageBuilder builder;
+            builder.setOperation(operation);
+            QString message;
+            if (result.ok()) {
+                message = tr("Published in %1.").arg(dest);
+                builder.setStatus(tr("Completed")).setCurrentItem(dest);
+                qInfo() << "Published in" << dest << "- derived files copied" << result.derivedCopied
+                        << "unchanged" << result.derivedUnchanged << "missing" << result.derivedMissing
+                        << "- left out: notes" << result.cleaned.notes << "people" << result.cleaned.people
+                        << "faces" << result.cleaned.faces << "info vectors" << result.cleaned.infoVectors;
+            } else {
+                message = publishErrorText(result.error, result.detail, result.needed, result.available);
+                builder.setStatus(tr("Error")).setCurrentItem(message);
+                qWarning() << "Publish failed:" << int(result.error) << result.detail;
+            }
+            m_publishStatusText = builder.build();
+            emit publishStateChanged();
+            emit publishFinished(result.ok(), message, automatic);
+        }, Qt::QueuedConnection);
+    });
+    // Never cut half-way by quitting: the publish is waited for
+    connect(qApp, &QCoreApplication::aboutToQuit, m_publishThread, [this]() {
+        if (m_publishThread)
+            m_publishThread->wait();
+    });
+    connect(m_publishThread, &QThread::finished, this, [this]() {
+        m_publishThread->deleteLater();
+        m_publishThread = nullptr;
+        emit publishStateChanged();
+        // An update or an analysis ended meanwhile: published again later
+        if (m_publishAgain) {
+            m_publishAgain = false;
+            schedulePublish();
+        }
+    });
+    m_publishStatusText = StatusBarMessageBuilder().setOperation(operation).setStatus(tr("In Progress"))
+                                                   .setCurrentItem(dest).build();
+    m_publishThread->start(QThread::LowPriority);
+    emit publishStateChanged();
+    return QString();
+}
+//----------------------------------------------------------------------
+void AppManager::schedulePublish()
+{
+    // Only a collection with a publish folder and the switch on (MDI-F205)
+    if (!publishRefusal().isEmpty())
+        return;
+    const QVariantMap state = publishState();
+    if (state.value(QStringLiteral("folder")).toString().isEmpty() || !state.value(QStringLiteral("auto")).toBool())
+        return;
+    if (!m_publishTimer) {
+        m_publishTimer = new QTimer(this);
+        m_publishTimer->setSingleShot(true);
+        connect(m_publishTimer, &QTimer::timeout, this, &AppManager::runScheduledPublish);
+    }
+    // Restarted by every event: a burst of updates and analyses ends first
+    m_publishTimer->start(MdiPublish::kAutoQuietSeconds * 1000);
+}
+//----------------------------------------------------------------------
+void AppManager::runScheduledPublish()
+{
+    if (!publishRefusal().isEmpty())
+        return;
+    // A catalog being created or updated: its end schedules the publish again
+    if (m_hasRunningOperation || m_catalogIsCreating || m_deviceUpdateIsRunning)
+        return;
+    if (m_publishThread) {
+        m_publishAgain = true;
+        return;
+    }
+    // At most one automatic publish every few minutes
+    const qint64 since = m_lastPublishEnd.isValid() ? m_lastPublishEnd.secsTo(QDateTime::currentDateTime())
+                                                    : qint64(MdiPublish::kAutoMinimumSeconds);
+    if (since < MdiPublish::kAutoMinimumSeconds) {
+        m_publishTimer->start(int(MdiPublish::kAutoMinimumSeconds - since) * 1000);
+        return;
+    }
+    const QString error = startPublish(true);
+    if (!error.isEmpty())
+        qWarning() << "Automatic publish not started:" << error;
+}
+//----------------------------------------------------------------------
+void AppManager::watchPublishedCopy()
+{
+    // The folder of the collection just opened, when it is a published copy
+    QString folder;
+    if (getPublishedCopy())
+        folder = collection->databaseMode == QLatin1String("File")
+                 ? QFileInfo(collection->databaseFilePath).absolutePath() : collection->folder;
+    if (m_publishTimer && !folder.isEmpty())
+        m_publishTimer->stop();
+    m_publishedFolder = folder;
+    if (!m_publishedWatcher) {
+        // Syncthing writes a temporary file and renames it: the folder's own
+        // change and a poll catch what a watch on the file misses
+        m_publishedWatcher = new QFileSystemWatcher(this);
+        auto soon = [this]() { QTimer::singleShot(3000, this, &AppManager::checkPublishedCopy); };
+        connect(m_publishedWatcher, &QFileSystemWatcher::fileChanged,      this, soon);
+        connect(m_publishedWatcher, &QFileSystemWatcher::directoryChanged, this, soon);
+        m_publishedPoll = new QTimer(this);
+        m_publishedPoll->setInterval(30 * 1000);
+        connect(m_publishedPoll, &QTimer::timeout, this, &AppManager::checkPublishedCopy);
+        connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+            if (m_publishedCheckThread)
+                m_publishedCheckThread->wait();
+        });
+    }
+    if (!m_publishedWatcher->files().isEmpty())
+        m_publishedWatcher->removePaths(m_publishedWatcher->files());
+    if (!m_publishedWatcher->directories().isEmpty())
+        m_publishedWatcher->removePaths(m_publishedWatcher->directories());
+    m_publishedRefusedAt = QDateTime();
+    if (folder.isEmpty()) {
+        m_publishedPoll->stop();
+        m_publishedLoadedAt = QDateTime();
+        return;
+    }
+    // The snapshot open now; one opened while its files were still arriving
+    // is reloaded once they are all there
+    const MdiPublish::Marker marker = MdiPublish::readMarker(folder);
+    m_publishedLoadedAt = MdiPublish::isComplete(folder, marker, false) ? marker.publishedAt : QDateTime();
+    m_publishedWatcher->addPath(folder);
+    m_publishedWatcher->addPath(QDir(folder).filePath(MdiPublish::markerFileName()));
+    m_publishedPoll->start();
+    // Protected layers (P2b): the layers unlocked in this session are
+    // attached here, in memory only (MDI-F219, MDI-C71). Nothing in P2a.
+}
+//----------------------------------------------------------------------
+void AppManager::checkPublishedCopy()
+{
+    if (m_publishedFolder.isEmpty() || m_publishedChecking)
+        return;
+    const QString markerPath = QDir(m_publishedFolder).filePath(MdiPublish::markerFileName());
+    // A watch on a file replaced by a rename is lost: set again
+    if (m_publishedWatcher && !m_publishedWatcher->files().contains(markerPath) && QFileInfo::exists(markerPath))
+        m_publishedWatcher->addPath(markerPath);
+    const MdiPublish::Marker marker = MdiPublish::readMarker(m_publishedFolder);
+    if (!marker.valid || marker.publishedAt == m_publishedLoadedAt)
+        return;
+    // Sizes here, the SHA-256 on a worker: a half-synced set is never opened
+    if (!MdiPublish::isComplete(m_publishedFolder, marker, false))
+        return;
+    // What reads the collection on this thread ends first
+    if (getSearchIsRunning() || getExploreLoadIsRunning() || getHtmlExportRunning() || m_infoSearchBusy) {
+        QTimer::singleShot(5000, this, &AppManager::checkPublishedCopy);
+        return;
+    }
+    m_publishedChecking = true;
+    const QString folder = m_publishedFolder;
+    m_publishedCheckThread = QThread::create([this, folder, marker]() {
+        const bool complete = MdiPublish::isComplete(folder, marker, true);
+        QMetaObject::invokeMethod(this, [this, folder, marker, complete]() {
+            m_publishedChecking = false;
+            if (folder != m_publishedFolder)
+                return;   // another collection was opened meanwhile
+            if (!complete) {
+                m_publishedRefusedAt = marker.publishedAt;   // still arriving: the next check looks again
+                qInfo() << "Published copy: a newer one is arriving, not complete yet";
+                return;
+            }
+            // Reloaded in place: the page shown stays (MDI-F206)
+            qInfo() << "Published copy: reloading the snapshot published at" << marker.publishedAt.toString(Qt::ISODate);
+            emit publishedCopyReloading();
+            if (!reconnectToDatabase()) {
+                qWarning() << "Published copy not reloaded:" << lastDatabaseError;
+                return;
+            }
+            const QString who = marker.publisherName.isEmpty() ? marker.publisherCode : marker.publisherName;
+            emit publishedCopyReloaded(tr("Updated from %1 at %2.")
+                                           .arg(who, QLocale().toString(marker.publishedAt.toLocalTime(), QLocale::ShortFormat)));
+        }, Qt::QueuedConnection);
+    });
+    connect(m_publishedCheckThread, &QThread::finished, this, [this]() {
+        m_publishedCheckThread->deleteLater();
+        m_publishedCheckThread = nullptr;
+    });
+    m_publishedCheckThread->start(QThread::LowPriority);
 }

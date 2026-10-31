@@ -648,6 +648,21 @@ bool CommandLineHandler::initializeDatabase()
         }
     }
 
+    // Where the collection's drives are on this Mac: the window's per-Mac
+    // remaps, read from the same settings keys and applied by the same
+    // resolver, so update_catalog, update_all_active, analyze and publish
+    // reach them there (D43 P3). Read only: no settings key is written (CLI-C4).
+    const QList<Device::PathRemap> remaps = Device::loadPathRemaps(
+        collection->settingsFilePath, collection->settingsKey(QString::fromLatin1(Device::kPathRemapsKey)),
+        m_connectionName);
+    if (verbose) {
+        QTextStream stdout_stream(stdout);
+        for (const Device::PathRemap &remap : remaps)
+            stdout_stream << "Device " << remap.deviceId << " recorded at " << remap.recordedPath
+                          << (remap.current ? " is on this Mac at " : " has a remap not applied (its path changed): ")
+                          << remap.localPath << Qt::endl;
+    }
+
     if (verbose) {
         QTextStream stdout_stream(stdout);
         stdout_stream << "=== End Database Initialization Debug ===" << Qt::endl;
@@ -1036,6 +1051,8 @@ bool CommandLineHandler::cmd_updateCatalog(int deviceId, bool displayReport)
     qInfo() << "Catalog ID:" << selectedDevice->ID;
     qInfo() << "Catalog Name:" << selectedDevice->name;
     qInfo() << "Catalog Path:" << selectedDevice->path;
+    if (selectedDevice->resolvedPath() != selectedDevice->path)
+        qInfo() << "Path on this Mac:" << selectedDevice->resolvedPath();   // per-Mac remap (D43 P3)
     qInfo() << "Catalog Type:" << selectedDevice->type;
     qInfo() << "Catalog Size:" << selectedDevice->totalFileSize;
     qInfo() << "Catalog Files:" << selectedDevice->totalFileCount;
@@ -1928,6 +1945,10 @@ CommandLineHandler::AnalysisOutcome CommandLineHandler::analyzeCatalog(int devic
     stdout_stream << "Catalog ID: " << device.ID << Qt::endl;
     stdout_stream << "Catalog Name: " << device.name << Qt::endl;
     stdout_stream << "Catalog Path: " << device.path << Qt::endl;
+    // Where the drive is on this Mac (per-Mac remap, D43 P3)
+    const QString sourcePath = device.resolvedPath();
+    if (sourcePath != device.path)
+        stdout_stream << "Path on this Mac: " << sourcePath << Qt::endl;
 
     MdiProfile profile;
     if (!profile.load(m_connectionName, deviceId)) {
@@ -1939,7 +1960,7 @@ CommandLineHandler::AnalysisOutcome CommandLineHandler::analyzeCatalog(int devic
     // The source, by the rule of the app and the runner (MDI-C29): present
     // and not an empty mount point. Not waited for here: a scheduled run goes
     // on with the next catalog, and the next run continues this one.
-    if (device.path.isEmpty() || !QFileInfo::exists(device.path) || QDir(device.path).isEmpty()) {
+    if (device.path.isEmpty() || !QFileInfo::exists(sourcePath) || QDir(sourcePath).isEmpty()) {
         (explicitRequest ? stderr_stream : stdout_stream)
             << "The catalog source is not connected: the catalog was not analyzed." << Qt::endl;
         return AnalysisOutcome::DriveAway;

@@ -31,6 +31,7 @@
 */
 
 #include "backupprofilegenerator.h"
+#include "device.h"   // Device::resolvePath (D43 P3)
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlDatabase>
@@ -193,8 +194,9 @@ QList<BackupTask> BackupProfileGenerator::loadBackupTasks(const QList<int>& mapp
         BackupTask task;
         task.mappingId = query.value("mapping_id").toInt();
         task.name = query.value("mapping_name").toString();  // CORRECTED: Use mapping_name
-        task.source = query.value("source_path").toString();
-        task.destination = query.value("target_path").toString();
+        // The profile runs on this Mac: the drives where they are here (per-Mac remap, D43 P3)
+        task.source = Device::resolvePath(query.value("source_path").toString());
+        task.destination = Device::resolvePath(query.value("target_path").toString());
         task.sourceName = query.value("source_name").toString();
         task.targetName = query.value("target_name").toString();
 
