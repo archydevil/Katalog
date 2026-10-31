@@ -326,15 +326,29 @@ QString MdiEnrichmentJob::findTool(const QString &name, const QString &configure
 }
 
 //----------------------------------------------------------------------
+// Where the whisper models installed by the user are looked for (MDI-F20,
+// D9): the user's own folder first, then the package managers' — Homebrew on
+// macOS, the distribution's /usr/share on Linux — and the per-user data folder
+static QStringList whisperModelDirs()
+{
+    QStringList dirs = {
+        QDir::homePath() + QStringLiteral("/whisper-models"),
+        QStringLiteral("/opt/homebrew/share/whisper-cpp"),
+        QStringLiteral("/usr/local/share/whisper-cpp"),
+        QStringLiteral("/usr/share/whisper-cpp"),
+        QStringLiteral("/usr/share/whisper.cpp"),
+    };
+    const QString data = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    if (!data.isEmpty())
+        dirs << data + QStringLiteral("/whisper-cpp");
+    return dirs;
+}
+
 QString MdiEnrichmentJob::findWhisperModel(const QString &configuredPath)
 {
     if (!configuredPath.isEmpty() && QFileInfo::exists(configuredPath))
         return configuredPath;
-    const QStringList dirs = {
-        QDir::homePath() + QStringLiteral("/whisper-models"),
-        QStringLiteral("/opt/homebrew/share/whisper-cpp"),
-        QStringLiteral("/usr/local/share/whisper-cpp"),
-    };
+    const QStringList dirs = whisperModelDirs();
     QFileInfo best;
     for (const QString &d : dirs)
         for (const QFileInfo &f : QDir(d).entryInfoList({QStringLiteral("ggml-*.bin")}, QDir::Files)) {
@@ -351,11 +365,7 @@ QString MdiEnrichmentJob::findWhisperVadModel(const QString &configuredPath)
 {
     if (!configuredPath.isEmpty() && QFileInfo::exists(configuredPath))
         return configuredPath;
-    const QStringList dirs = {
-        QDir::homePath() + QStringLiteral("/whisper-models"),
-        QStringLiteral("/opt/homebrew/share/whisper-cpp"),
-        QStringLiteral("/usr/local/share/whisper-cpp"),
-    };
+    const QStringList dirs = whisperModelDirs();
     for (const QString &d : dirs) {
         // The most recent version first (names carry it: ggml-silero-v5.1.2.bin)
         const QFileInfoList found = QDir(d).entryInfoList({QStringLiteral("ggml-silero-*.bin")}, QDir::Files,

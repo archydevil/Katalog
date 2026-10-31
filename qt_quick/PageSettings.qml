@@ -52,10 +52,14 @@ ScrollablePageFitted {
         const info = appManager1.devicePathOnThisMac(deviceId)
         if (info.deviceId === undefined)
             return
-        // Where it is now, else where it was recorded, else the mounted volumes
+        // Where it is now, else where it was recorded, else the mounted
+        // volumes: /Volumes on macOS, /media or /run/media on Linux
+        const recorded = String(info.recordedPath)
         const start = info.localPath !== "" ? info.localPath
                     : appManager1.pathExists(info.recordedPath) ? info.recordedPath
-                    : String(info.recordedPath).startsWith("/Volumes/") ? "/Volumes" : ""
+                    : recorded.startsWith("/Volumes/") ? "/Volumes"
+                    : recorded.startsWith("/run/media/") ? "/run/media"
+                    : recorded.startsWith("/media/") ? "/media" : ""
         pendingPathDevice = info
         applicationWindow().openFreshDialog(pathOnThisMacFolderComponent, start)
     }
