@@ -77,6 +77,10 @@ public:
     // profile, headless; they return the exit code
     int cmd_analyze(int deviceId);
     int cmd_analyzeAll();
+    // Publish for the read-only Macs (fork, D43 (4), MDI-F210): the same code
+    // as Teca's "Publish now" (MdiPublish), into the folder chosen in Teca's
+    // Settings for this collection, or into folder when given
+    int cmd_publish(const QString &folder);
 
     // Exit codes, listed in --help. 0 and 1 are those of every action
     // (SpecCommandLine.md CLI-F8); a stop by SIGINT or SIGTERM exits with
@@ -122,8 +126,10 @@ private:
     void cleanup();
 
     // Collection lock (.teca.lock), held while an action writes to the
-    // collection: update_catalog, update_all_active, analyze, analyze_all
+    // collection: update_catalog, update_all_active, analyze, analyze_all;
+    // and while publish reads it, so no other run changes it meanwhile
     bool actionWritesCollection() const;
+    bool m_publishedCopy = false;   // the collection is a published copy: read-only (MDI-F204)
     // 0, or the exit code of the refusal (message printed). Also refuses
     // when this computer is not among the collection's writers.
     int  lockCollection(const QString &databaseMode, const QString &databaseFilePath);

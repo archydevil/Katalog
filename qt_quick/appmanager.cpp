@@ -560,8 +560,8 @@ void AppManager::openDeviceFolder(int deviceId)
     Device device;
     device.ID = deviceId;
     device.loadDevice(m_connectionName);
-    if (!device.path.isEmpty())
-        QDesktopServices::openUrl(QUrl::fromLocalFile(device.path));
+    if (!device.path.isEmpty())   // where the drive is on this Mac (D43 P3)
+        QDesktopServices::openUrl(QUrl::fromLocalFile(device.resolvedPath()));
 }
 //----------------------------------------------------------------------
 void AppManager::expandDevice(int deviceId)
@@ -1499,12 +1499,13 @@ void AppManager::setLanguage(const QString &languageCode)
 //----------------------------------------------------------------------
 void AppManager::openFile(const QString &filePath)
 {
-    QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+    // A catalogued file is opened where its drive is on this Mac (D43 P3)
+    QDesktopServices::openUrl(QUrl::fromLocalFile(Device::resolvePath(filePath)));
 }
 //----------------------------------------------------------------------
 void AppManager::openFolder(const QString &folderPath)
 {
-    QDesktopServices::openUrl(QUrl::fromLocalFile(folderPath));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(Device::resolvePath(folderPath)));   // D43 P3
 }
 //----------------------------------------------------------------------
 bool AppManager::probeDeviceActive(int deviceId)
@@ -1594,7 +1595,7 @@ int AppManager::startDeferralMs() const
 //----------------------------------------------------------------------
 bool AppManager::pathExists(const QString &path) const
 {
-    return QFileInfo::exists(path);
+    return QFileInfo::exists(Device::resolvePath(path));   // where it is on this Mac (D43 P3)
 }
 //----------------------------------------------------------------------
 int AppManager::selectionRowForDevice(int deviceId) const
@@ -1768,7 +1769,7 @@ int AppManager::batchMoveSearchResultsToTrash()
     int count = 0;
     int total = searchObject->fileNames.size();
     for (int i = 0; i < total; ++i) {
-        QString path = searchObject->filePaths.value(i) + "/" + searchObject->fileNames.value(i);
+        QString path = Device::resolvePath(searchObject->filePaths.value(i) + "/" + searchObject->fileNames.value(i));
         if (QFile::moveToTrash(path))
             ++count;
     }
@@ -1789,7 +1790,7 @@ int AppManager::batchDeleteSearchResults()
     int count = 0;
     int total = searchObject->fileNames.size();
     for (int i = 0; i < total; ++i) {
-        QString path = searchObject->filePaths.value(i) + "/" + searchObject->fileNames.value(i);
+        QString path = Device::resolvePath(searchObject->filePaths.value(i) + "/" + searchObject->fileNames.value(i));
         if (QFile::remove(path))
             ++count;
     }
@@ -1806,7 +1807,7 @@ QVariantMap AppManager::batchVerifyChecksums()
             ++total;
             const QString &fileName  = searchObject->fileNames[i];
             const QString &folder    = searchObject->filePaths[i];
-            const QString  filePath  = folder + "/" + fileName;
+            const QString  filePath  = Device::resolvePath(folder + "/" + fileName);   // D43 P3
             const int      catalogId = searchObject->fileCatalogIDs.value(i, -1);
             const QString  stored    = searchObject->checksumSha256s.value(i);
 
@@ -1846,7 +1847,7 @@ QVariantMap AppManager::batchGetMetadata()
             ++total;
             const QString &fileName  = searchObject->fileNames[i];
             const QString &folder    = searchObject->filePaths[i];
-            const QString  filePath  = folder + "/" + fileName;
+            const QString  filePath  = Device::resolvePath(folder + "/" + fileName);   // D43 P3
             const int      catalogId = searchObject->fileCatalogIDs.value(i, -1);
 
             if (!QFileInfo::exists(filePath)) { ++errors; continue; }
@@ -1873,7 +1874,7 @@ QVariantMap AppManager::batchGetMetadata()
 //----------------------------------------------------------------------
 bool AppManager::moveFileToTrash(const QString &fullPath)
 {
-    return QFile::moveToTrash(fullPath);
+    return QFile::moveToTrash(Device::resolvePath(fullPath));   // where it is on this Mac (D43 P3)
 }
 //----------------------------------------------------------------------
 bool AppManager::deleteSingleFile(const QString &fullPath)
@@ -1884,7 +1885,7 @@ bool AppManager::deleteSingleFile(const QString &fullPath)
         qWarning() << "AppManager::deleteSingleFile: refused, file deletion is not enabled";
         return false;
     }
-    return QFile::remove(fullPath);
+    return QFile::remove(Device::resolvePath(fullPath));   // where it is on this Mac (D43 P3)
 }
 //----------------------------------------------------------------------
 bool AppManager::catalogIncludesExtendedMetadata(int catalogId)
@@ -1935,8 +1936,9 @@ QVariantList AppManager::getFileMetadataParsedFields(int catalogId, const QStrin
     return result;
 }
 //----------------------------------------------------------------------
-QString AppManager::calculateAndSaveChecksum(const QString &filePath, const QString &fileName, const QString &folderPath, int catalogId)
+QString AppManager::calculateAndSaveChecksum(const QString &recordedPath, const QString &fileName, const QString &folderPath, int catalogId)
 {
+    const QString filePath = Device::resolvePath(recordedPath);   // read on this Mac (D43 P3)
     if (!QFileInfo::exists(filePath))
         return QString();
     QString checksum = FileChecksum::calculateChecksum(filePath, QCryptographicHash::Sha256);
@@ -1947,7 +1949,7 @@ QString AppManager::calculateAndSaveChecksum(const QString &filePath, const QStr
 //----------------------------------------------------------------------
 QString AppManager::verifyFileChecksum(const QString &filePath, const QString &expectedChecksum)
 {
-    auto result = FileChecksum::verifyChecksum(filePath, expectedChecksum, QCryptographicHash::Sha256);
+    auto result = FileChecksum::verifyChecksum(Device::resolvePath(filePath), expectedChecksum, QCryptographicHash::Sha256);   // D43 P3
     if (!result.success)
         return "error:" + result.errorMessage;
     return result.match ? "match" : "mismatch:" + result.actualChecksum;
@@ -1956,9 +1958,10 @@ QString AppManager::verifyFileChecksum(const QString &filePath, const QString &e
 QString AppManager::calculateChecksumMd5(const QString &filePath)
 {
     // Calculated on demand only, never stored (SpecCatalogChecksum CKS-C1)
-    if (!QFileInfo::exists(filePath))
+    const QString localPath = Device::resolvePath(filePath);   // on this Mac (D43 P3)
+    if (!QFileInfo::exists(localPath))
         return QString();
-    return FileChecksum::calculateChecksum(filePath, QCryptographicHash::Md5);
+    return FileChecksum::calculateChecksum(localPath, QCryptographicHash::Md5);
 }
 //----------------------------------------------------------------------
 QVariantList AppManager::getSearchHistory() const
@@ -3015,7 +3018,7 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
     // computer, starts paused (D6, D31)
     m_mdiIsPaused    = !config.quickHashOnly && job.paused;
     m_mdiJobStart    = QDateTime::currentDateTime();
-    m_mdiSourcePath  = device.path;
+    m_mdiSourcePath  = device.resolvedPath();   // where the drive is on this Mac (D43 P3)
     m_mdiRunning          = job;
     m_mdiRunningCatalogId = device.externalID;
     m_mdiQuickHashOnly    = config.quickHashOnly;
@@ -3207,7 +3210,9 @@ bool AppManager::mdiSourceReachable(int deviceId)
     Device device;
     device.ID = deviceId;
     device.loadDevice(m_connectionName);
-    return !device.path.isEmpty() && QFileInfo::exists(device.path) && !QDir(device.path).isEmpty();
+    // where the drive is on this Mac (D43 P3)
+    const QString path = device.resolvedPath();
+    return !device.path.isEmpty() && QFileInfo::exists(path) && !QDir(path).isEmpty();
 }
 //----------------------------------------------------------------------
 bool AppManager::mdiJobReachable(const MdiData::PendingJob &job)
@@ -3889,7 +3894,7 @@ void AppManager::scheduleQuickHashes()
     if (collection->databaseMode == QLatin1String("Hosted"))
         return;
     for (const QVariantMap &c : MdiFts::catalogsNeedingPass(m_connectionName, mdiDataPath(), QStringLiteral("quickhash"))) {
-        const QString source = c.value(QStringLiteral("sourcePath")).toString();
+        const QString source = Device::resolvePath(c.value(QStringLiteral("sourcePath")).toString());   // D43 P3
         if (source.isEmpty() || !QFileInfo::exists(source))
             continue;
         startQuickHash(c.value(QStringLiteral("deviceId")).toInt());
@@ -4118,11 +4123,15 @@ QVariantMap AppManager::inspectorInfo(int catalogId, const QString &fullPath)
     info[QStringLiteral("name")]     = name;
     info[QStringLiteral("folder")]   = folder;
     info[QStringLiteral("fullPath")] = fullPath;
-    info[QStringLiteral("url")]      = QUrl::fromLocalFile(fullPath).toString();
+    // Where it is on this Mac (per-Mac remap, D43 P3): opened and probed there
+    const QString localPath = Device::resolvePath(fullPath);
+    info[QStringLiteral("url")]      = QUrl::fromLocalFile(localPath).toString();
+    if (localPath != fullPath)
+        info[QStringLiteral("localPath")] = localPath;
 
     // Where the file lives: its catalog and the storage above it; online when
     // the file itself can be reached now
-    info[QStringLiteral("online")] = file.exists();
+    info[QStringLiteral("online")] = QFileInfo::exists(localPath);
     const QList<Device::DeviceTreeNode> tree = Device::loadDeviceTree(m_connectionName);
     QHash<int, const Device::DeviceTreeNode *> byId;
     const Device::DeviceTreeNode *catalogNode = nullptr;
@@ -4430,7 +4439,7 @@ QVariantMap AppManager::reviewCounts()
 //----------------------------------------------------------------------
 QString AppManager::localFileUrl(const QString &path) const
 {
-    return QUrl::fromLocalFile(path).toString();
+    return QUrl::fromLocalFile(Device::resolvePath(path)).toString();   // on this Mac (D43 P3)
 }
 //----------------------------------------------------------------------
 void AppManager::onCatalogCreationCompleted(const QList<qint64> &results)
@@ -5385,8 +5394,8 @@ void AppManager::launchFilelight(int deviceId)
     dev.loadDevice(m_connectionName);
     QString path = (dev.type == QStringLiteral("Catalog") && dev.catalog)
                    ? dev.catalog->sourcePath : dev.path;
-    if (!path.isEmpty())
-        QProcess::startDetached(QStringLiteral("filelight"), {path});
+    if (!path.isEmpty())   // where the drive is on this Mac (D43 P3)
+        QProcess::startDetached(QStringLiteral("filelight"), {dev.resolvedPath()});
 }
 //----------------------------------------------------------------------
 QVariantMap AppManager::recordDevicesSnapshot()
@@ -7630,7 +7639,7 @@ void AppManager::runPreviewCompare(int mappingId)
     const bool                isArchive = (mapping.mappingType == QLatin1String("Archive"));
 
     const BackupSpaceCheck spaceCheck = evaluateBackupSpace(
-        Storage::availableSpace(targetDevice.path),
+        Storage::availableSpace(targetDevice.resolvedPath()),
         cmp.filesToCopy, cmp.fileConflicts, mapping.conflictMode);
 
     QString spaceStatusStr;
@@ -7803,13 +7812,13 @@ void AppManager::executeBackupJob(int mappingId)
     if (mapping.sourceDrive) {
         //Drive mode: walk the source filesystem directly
         DirectoryReplicator replicator(m_connectionName);
-        replicator.replicateFromDrive(sourceDevice.path, targetDevice.path, mapping.includeEmptyDirs);
+        replicator.replicateFromDrive(sourceDevice.resolvedPath(), targetDevice.resolvedPath(), mapping.includeEmptyDirs);
     } else {
         //Catalog mode: replicate from the folder table (includes empty directories)
         if (collection->databaseMode == QLatin1String("Memory"))
             sourceDevice.catalog->loadFoldersToTable();
         DirectoryReplicator replicator(m_connectionName);
-        replicator.replicate({sourceDevice.externalID}, sourceDevice.path, targetDevice.path, mapping.includeEmptyDirs);
+        replicator.replicate({sourceDevice.externalID}, sourceDevice.path, targetDevice.resolvedPath(), mapping.includeEmptyDirs);
     }
 
     CatalogDifferenceEngine cmpEngine(m_connectionName);
@@ -7828,7 +7837,7 @@ void AppManager::executeBackupJob(int mappingId)
     // Space check at run time, as K2 (BKP-F8): insufficient blocks the run;
     // low space already showed in the preview, so the run proceeds
     const BackupSpaceCheck spaceCheck = evaluateBackupSpace(
-        Storage::availableSpace(targetDevice.path),
+        Storage::availableSpace(targetDevice.resolvedPath()),
         cmp.filesToCopy, cmp.fileConflicts, mapping.conflictMode);
     if (spaceCheck.status == BackupSpaceStatus::Insufficient) {
         setRunningBackupMappingId(-1);
@@ -7853,7 +7862,7 @@ void AppManager::executeBackupJob(int mappingId)
     if (mapping.conflictMode == ConflictMode::RenameOldest)
         m_backupJob->setConflictFiles(cmp.fileConflicts);
     m_backupJob->setSourcePath(sourceDevice.path);
-    m_backupJob->setTargetPath(targetDevice.path);
+    m_backupJob->setTargetPath(targetDevice.resolvedPath());   // where it is on this Mac (D43 P3)
     m_backupJob->setArchiveMode(isArchive);
 
     m_backupThread = new QThread();
@@ -8045,11 +8054,11 @@ QVariantMap AppManager::replicateDirectories(int mappingId)
     DirectoryReplicator replicator(m_connectionName);
     ReplicationResult repResult;
     if (mapping.sourceDrive) {
-        repResult = replicator.replicateFromDrive(sourceDevice.path, targetDevice.path, mapping.includeEmptyDirs);
+        repResult = replicator.replicateFromDrive(sourceDevice.resolvedPath(), targetDevice.resolvedPath(), mapping.includeEmptyDirs);
     } else {
         if (collection->databaseMode == QLatin1String("Memory"))
             sourceDevice.catalog->loadFoldersToTable();
-        repResult = replicator.replicate({sourceDevice.externalID}, sourceDevice.path, targetDevice.path, mapping.includeEmptyDirs);
+        repResult = replicator.replicate({sourceDevice.externalID}, sourceDevice.path, targetDevice.resolvedPath(), mapping.includeEmptyDirs);
     }
 
     result[QStringLiteral("error")]   = QString();

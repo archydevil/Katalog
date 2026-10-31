@@ -34,6 +34,7 @@
 #include "catalog.h"
 #include "mdidata.h"
 #include "mdiprofile.h"
+#include "mdiarchivecopy.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -225,9 +226,12 @@ bool CatalogHistory::isAvailable(const QString &databaseMode, const QString &col
 {
     // Hosted: the collection folder is not the collection's (it can be the one
     // of the collection opened before), so nothing is written there
+    // A published copy (fork, D43): teca_history.db is not published, and
+    // nothing is created in its folder (MDI-C64)
     return databaseMode != QLatin1String("Hosted")
         && !collectionFolder.isEmpty()
-        && QDir(collectionFolder).exists();
+        && QDir(collectionFolder).exists()
+        && !MdiPublish::isPublishedFolder(collectionFolder);
 }
 
 bool CatalogHistory::ensureOpen(bool create) const

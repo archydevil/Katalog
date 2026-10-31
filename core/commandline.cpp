@@ -125,6 +125,8 @@ void CommandLineHandler::setupCommandLineParser()
         "\n"
         "  Katalog analyze 4                                  # AI analysis of catalog 4 with its saved profile\n"
         "  Katalog analyze_all                                # AI analysis of every catalog with a saved profile\n"
+        "  Katalog publish                                    # Publish for the read-only Macs, into the folder set in Teca\n"
+        "  Katalog publish /path/to/folder                    # Publish into that folder\n"
         "\n"
         "Exit codes:\n"
         "  0    Success\n"
@@ -148,7 +150,8 @@ void CommandLineHandler::setupCommandLineParser()
                                            // Fork, D43
                                            "\n"
                                            "  analyze           - AI analysis of one catalog with its saved profile (deviceID)\n"
-                                           "  analyze_all       - AI analysis of every catalog with a saved profile");
+                                           "  analyze_all       - AI analysis of every catalog with a saved profile\n"
+                                           "  publish           - Publish for the read-only Macs ([folder]; default: the folder set in Teca)");
 
     parser.addPositionalArgument("deviceID", "Device ID for update_catalog action (optional)", "[deviceID]");
 
@@ -395,6 +398,9 @@ int CommandLineHandler::processCommandLine(QCoreApplication &app)
     else if (requestedAction == "analyze_all") {
         return cmd_analyzeAll();
     }
+    else if (requestedAction == "publish") {
+        return cmd_publish(positionalArgs.value(1));
+    }
     else {
         QTextStream stderr_stream(stderr);
         stderr_stream << "Error: Unknown action: " << requestedAction << Qt::endl;
@@ -570,6 +576,15 @@ bool CommandLineHandler::initializeDatabase()
         stdout_stream << "  databaseMode: " << databaseMode << Qt::endl;
         stdout_stream << "  databaseFilePath: " << databaseFilePath << Qt::endl;
         stdout_stream << "  collectionFolder: " << collection->folder << Qt::endl;
+    }
+
+    // A published copy (D43, MDI-F204): opened read-only, nothing written in
+    // its folder (no -wal or -shm), and no action that writes runs on it
+    m_publishedCopy = databaseMode != QLatin1String("Hosted") && MdiPublish::isPublishedFolder(collection->folder);
+    if (m_publishedCopy) {
+        collection->readOnly     = true;
+        collection->openReadOnly = true;
+        MdiData::setReadOnlyStores({ MdiData::filePath(collection->folder) });
     }
 
     // The collection lock, before anything is written (D43): an action that
@@ -1734,7 +1749,8 @@ bool CommandLineHandler::actionWritesCollection() const
     return requestedAction == QLatin1String("update_catalog")
         || requestedAction == QLatin1String("update_all_active")
         || requestedAction == QLatin1String("analyze")
-        || requestedAction == QLatin1String("analyze_all");
+        || requestedAction == QLatin1String("analyze_all")
+        || requestedAction == QLatin1String("publish");
 }
 
 int CommandLineHandler::lockCollection(const QString &databaseMode, const QString &databaseFilePath)
@@ -1746,6 +1762,13 @@ int CommandLineHandler::lockCollection(const QString &databaseMode, const QStrin
 
     QTextStream stderr_stream(stderr);
     const QString path = Collection::lockFilePath(collection->folder);
+
+    // A published copy is read-only on every computer (MDI-F204)
+    if (m_publishedCopy) {
+        stderr_stream << "Error: This collection is a published copy for the read-only Macs, so it may not be changed."
+                      << " Nothing was done." << Qt::endl;
+        return ExitNotWritable;
+    }
 
     // A protected collection is changed only by its writers, read from its
     // files before anything is opened for writing
