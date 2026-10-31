@@ -35,7 +35,7 @@ specification and the code disagree, the specification is what was agreed.
 | [SpecDevicesPage](SpecDevicesPage.md) | DEVICES PAGE — CARDS AND TABLE DISPLAY | Approved | planned | — |
 | [SpecDevicesSplit](SpecDevicesSplit.md) | DEVICES: Split a Catalog | — | — | — |
 | [SpecExplore](SpecExplore.md) | EXPLORE — DIRECTORY TREE | Approved | complete | — |
-| [SpecHostedSecurity](SpecHostedSecurity.md) | HOSTED SECURITY — ONLY LOCAL OR PRIVATE-NETWORK SERVERS | Approved; fork extension proposed (P5) | K2 complete, K3 planned | — |
+| [SpecHostedSecurity](SpecHostedSecurity.md) | HOSTED SECURITY — ONLY LOCAL OR PRIVATE-NETWORK SERVERS | Approved | K2 complete, K3 planned | — |
 | [SpecIconButtons](SpecIconButtons.md) | ICON BUTTONS — TOOLTIPS ON ICON-ONLY BUTTONS | Approved | planned | — |
 | [SpecImportVVV2K](SpecImportVVV2K.md) | Feature Specification: VVV2K — Full Import of a VVV Database into Katalog | — | — | — |
 | [SpecKeyboardShortcuts](SpecKeyboardShortcuts.md) | KEYBOARD SHORTCUTS | Approved | complete | — |
@@ -45,6 +45,7 @@ specification and the code disagree, the specification is what was agreed.
 | [SpecLanguages](SpecLanguages.md) | LANGUAGES — INTERFACE LANGUAGE SELECTION | Approved | complete | — |
 | [SpecPageLayout](SpecPageLayout.md) | PAGE LAYOUT — SCROLLBAR MARGIN AND SECTION TITLES | Approved | planned | — |
 | [SpecMediaIntelligence](SpecMediaIntelligence.md) | MEDIA INTELLIGENCE — PREVIEWS, AI ENRICHMENT AND SEMANTIC SEARCH; K3 REDESIGN (D34) (fork only, K3) | Draft | partial | — |
+| [SpecMediaIntelligenceBacklogNotes](SpecMediaIntelligenceBacklogNotes.md) | MEDIA INTELLIGENCE — PROPOSALS NOT YET DECIDED (fork only) | Proposal | — | — |
 | [SpecMimeVerification](SpecMimeVerification.md) | MIME VERIFICATION — VERIFY MIME TYPES ON A CATALOG | Approved | planned | — |
 | [SpecOperationQueue](SpecOperationQueue.md) | OPERATION Queue | Specified | — | — |
 | [SpecProgressReport](SpecProgressReport.md) | Progress Reporting | — | — | — |

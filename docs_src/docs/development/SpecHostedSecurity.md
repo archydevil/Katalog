@@ -73,49 +73,6 @@ dialog titles and the six strings (`HST-C3`).
 
 ---
 
-## Fork extension — proposed, not decided (archydevil/Katalog, P5 of `SpecMediaIntelligence.md`)
+## Fork note (archydevil/Katalog)
 
-The rows above are upstream's and are not changed. The rows below are the fork's
-proposal of 2026-10-31 for the second road of D43 (`SpecMediaIntelligence.md`,
-D45 proposed, `MDI-F222`–`F229`): a Hosted collection reached over the owner's
-private network or tailnet, with AI data in a companion folder. They are
-**[Proposed]** until the fork owner decides them; nothing of them is built. They
-apply to K3 only (`MDI-C1`): K2 keeps `HST-F1`–`HST-F6` as they are.
-
-Two findings drive them. `Database::validateHostname()` refuses the range
-`100.64.0.0/10`, which Tailscale assigns, and refuses every name (`*.ts.net`
-MagicDNS names included), so the owner's own setup cannot reach a hosted server
-today. And the Hosted password is kept in clear in the settings file
-(`Settings/databasePassword`), read back to pre-fill the form.
-
-### Operational
-
-| ID | Requirement | Status |
-|----|-------------|--------|
-| HST-O2 | A user who keeps a collection on a database server of their own home network or tailnet reaches it from every computer of theirs, over an encrypted connection, without their password lying in a text file, and a computer given a read-only database account reads the collection and cannot change it. | K3 [Proposed] |
-
-### Functional
-
-| ID | Requirement | Status |
-|----|-------------|--------|
-| HST-F7 | **Tailnet and IPv6 private ranges count as private network.** `100.64.0.0/10` (CGNAT, the range Tailscale assigns) and `fc00::/7` (IPv6 unique local addresses, Tailscale's `fd7a:115c:a1e0::/48` among them) are classified as *private network*: they get the `HST-F3` confirmation, with the same two strings, and continue on *Yes*. `fe80::/10` (link-local) is private as well. Every other address stays as `HST-F2`–`HST-F4`. | K3 [Proposed] |
-| HST-F8 | **A name is classified by what it resolves to.** A host that is not an address is resolved first (`QHostInfo`, with a short timeout); it is classified as the *strictest* class among the addresses it resolves to — one public address makes it public and refused (`HST-F4`), all private makes it private (`HST-F3`), all loopback makes it localhost (`HST-F2`). A name that does not resolve, or resolves to nothing, is refused as today. The dialog of `HST-F3` shows the name and, after it, the address it resolved to. Whether names are accepted at all is the owner's decision (`Q76` (c)); if not, this row is dropped and names stay refused. | K3 [Proposed] |
-| HST-F9 | **TLS off localhost.** For a private-network host the connection asks the server for TLS: MySQL/MariaDB through the `QMYSQL` connect options (the CA, certificate and key files set in Settings when the server needs them; the required-mode option if the Qt build exposes it, `Q76` (d)), PostgreSQL through `sslmode=require` (or `verify-full` when a CA file is set). A server that does not offer TLS is refused with the reason, and nothing is written. Localhost connects as today. A per-collection *Allow a connection without TLS* switch, off by default and asking for confirmation, is the owner's choice (`Q76` (d)); without it there is no way around the rule. | K3 [Proposed] |
-| HST-F10 | **The password leaves the settings file.** On macOS the Hosted password is kept in the login keychain as a generic password keyed by host, port, database and user (the Security framework D44 approved), and `Settings/databasePassword` is written empty; a password found there at opening is moved to the keychain once and blanked. The form pre-fills from the keychain. On Windows and Linux the password stays in the settings file, and the form says so beside the field (`Q76` (e)). No password is ever logged or shown in a message. | K3 [Proposed] |
-| HST-F11 | **A read-only database user opens the collection read-only.** Before any table or index is created, Teca reads the user's grants (`MDI-C76`) and, when the user may not write the collection's tables, opens the collection in read-only mode (`MDI-F199`, `MDI-F226`) with the banner saying that the database user may only read. Nothing is created, altered or migrated on the server for such a user (`MDI-C64`). | K3 [Proposed] |
-
-### Constructional
-
-| ID | Requirement | Status |
-|----|-------------|--------|
-| HST-C6 | **Where the classification changes.** `HST-F7` and `HST-F8` are changes to `Database::validateHostname()` in `core/` (an exception to `HST-C1`, which froze it for the K3 port of `HST-F1`–`F6`), listed here before they are written (`MDI-C14`). `QHostInfo` is in `Qt6::Network`, already linked: no new module (`MDI-C8`). The backstop `HST-C4` keeps applying to the new classes. | K3 [Proposed] |
-| HST-C7 | **TLS and the keychain use what is linked.** TLS is asked through Qt SQL's connect options only (`QSqlDatabase::setConnectOptions`), no TLS library of the fork's own; the keychain through the `Security` framework already linked for D44 (`MacKeychain`'s file, a generic-password method listed before it is written), with the stub behaviour on other systems. No new library (`MDI-C8`). | K3 [Proposed] |
-| HST-C8 | **Compatibility.** New settings keys only add (`MDI-C7`): the TLS files and switch per collection (`Collection::settingsKey`). An existing `katalog3_prerelease_settings.ini` with a password in clear keeps working: the password is moved on the first opening (`HST-F10`); a saved host in `100.64.0.0/10` that `HST-F6` already reconnected to at startup is now also accepted by *Connect* and by the recent list. A refused server (no TLS, unresolvable name) is not written (`HST-C2`). The messages: new strings in English, approved together before the commit (fork rule), translated into Italian (D34 exception); the six strings of `HST-C3` are reused where they fit. | K3 [Proposed] |
-
-### Manual test charter — proposed rows
-
-- **HST-F7** — Host `100.101.102.103`: the private-network dialog of `HST-F3` appears; *No* writes nothing; *Yes* connects. Host `fd7a:115c:a1e0::1`: the same. Host `8.8.8.8`: refused as before.
-- **HST-F8** — A name that resolves to `100.x`: the dialog shows the name and the address. A name that resolves to a public address: refused inline (`HST-F4`). A name that does not resolve: refused.
-- **HST-F9** — A MariaDB without TLS on `192.168.1.10`: refused with the reason, nothing written. The same server with TLS: connects. `localhost` without TLS: connects as today.
-- **HST-F10** — macOS: after *Connect*, `Settings/databasePassword` is empty in the file and the keychain holds the item; restart pre-fills the form. A file with a password in clear: moved and blanked at the first opening.
-- **HST-F11** — A database user with `SELECT` only: the collection opens with the read-only banner; no table is created on the server; every write action is disabled (`MDI-F199`); search and Browse work (`MDI-F200`).
+A proposed extension of this page — Tailscale's `100.64.0.0/10` as private network, names classified by resolution, TLS off localhost, the Hosted password out of the settings file, read-only database users — is written in `SpecMediaIntelligenceBacklogNotes.md` (*P5*, rows `P5-H1`–`P5-H7`) for the fork owner's decision. **Nothing of it is decided**; the rows above stand unchanged until then.
