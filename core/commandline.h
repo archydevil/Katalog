@@ -42,6 +42,9 @@
 #include <QEventLoop>
 #include <QTimer>
 #include <QDateTime>
+#include <QLockFile>
+#include <QVariantMap>
+#include <memory>
 
 #include "collection.h"
 #include "device.h"
@@ -68,6 +71,21 @@ public:
     bool cmd_updateCatalog(int deviceId, bool displayReport);
     void cmd_listGroup0Catalogs();
     bool cmd_updateAllActive(bool displayReport);
+
+    // AI analysis from the command line (fork, D43): the app's runner
+    // (MdiEnrichmentJob) on one catalog, or on every catalog with a saved
+    // profile, headless; they return the exit code
+    int cmd_analyze(int deviceId);
+    int cmd_analyzeAll();
+
+    // Exit codes, listed in --help. 0 and 1 are those of every action
+    // (SpecCommandLine.md CLI-F8); a stop by SIGINT or SIGTERM exits with
+    // 128 + the signal number (130, 143)
+    static constexpr int ExitSuccess          = 0;
+    static constexpr int ExitError            = 1;
+    static constexpr int ExitAnalysisFailures = 2;   // analysed, some steps failed
+    static constexpr int ExitCollectionInUse  = 3;   // the collection lock is held
+    static constexpr int ExitNotWritable      = 4;   // this Mac may not write to the collection
 
 private slots:
     // Search completion handling
@@ -102,6 +120,21 @@ private:
 
     // Cleanup
     void cleanup();
+
+    // Collection lock (.teca.lock), held while an action writes to the
+    // collection: update_catalog, update_all_active, analyze, analyze_all
+    bool actionWritesCollection() const;
+    int  lockCollection();   // 0, or the exit code of the refusal (message printed)
+    std::unique_ptr<QLockFile> m_collectionLock;
+    int  m_initExitCode = 0;   // set when initializeDatabase() refused for a reason of its own
+
+    // AI analysis
+    enum class AnalysisOutcome { Done, DoneWithFailures, NotRun, DriveAway, Stopped };
+    bool prepareAnalysis();                          // MDI tables, Memory-mode profiles
+    void reportAnalysisTools(const QVariantMap &tools);   // missing tools, Ollama state
+    AnalysisOutcome analyzeCatalog(int deviceId, const QVariantMap &tools, bool explicitRequest);
+    static void installStopSignalHandlers();
+    static int  stopSignal();   // the signal received (SIGINT, SIGTERM), 0 when none
 
     // Members - Core objects
     QCommandLineParser parser;
