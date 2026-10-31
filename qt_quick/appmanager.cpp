@@ -35,6 +35,7 @@
 #include "core/mdidiskspace.h"
 #include "core/mdiarchivecopy.h"
 #include "core/collectionaccess.h"
+#include <QFileSystemWatcher>
 #include <QElapsedTimer>
 #include <QThread>
 #include <QThread>
@@ -507,6 +508,8 @@ QString AppManager::startDatabase()
 
     // Migrations, or nothing written when read-only (D43)
     openCollectionDatabase(conn);
+    // Where its drives are on this Mac, before anything probes them (D43 P3)
+    loadDevicePathRemaps();
 
     if (!getReadOnly()) {
         collection->insertPhysicalStorageGroup();
@@ -1357,6 +1360,8 @@ bool AppManager::reconnectToDatabase()
 
     lastDatabaseError.clear();
     collection->setConnectionName(conn);
+    // Where its drives are on this Mac, before anything probes them (D43 P3)
+    loadDevicePathRemaps();
     collection->loadImageFolderPath();
     if (!getReadOnly()) {
         collection->insertPhysicalStorageGroup();
@@ -2821,7 +2826,8 @@ bool AppManager::openMdiMainConnection()
         return false;
     if (QSqlDatabase::contains(kMdiMainConnection)) {
         QSqlDatabase db = QSqlDatabase::database(kMdiMainConnection, false);
-        if (db.isOpen() && db.databaseName() == path)
+        // A published copy's store is open by its read-only URI name (D43)
+        if (db.isOpen() && db.databaseName() == MdiData::databaseNameFor(path))
             return true;
         MdiData::close(kMdiMainConnection);
     }
@@ -3091,6 +3097,8 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
         bumpMdiRevision(jobCatalogId);
         emit mdiStateChanged();
         emit enrichmentFinished(summary);
+        if (!keptPending)
+            schedulePublish();   // published again once things are quiet (MDI-F205)
         QTimer::singleShot(0, this, &AppManager::startNextEnrichment);
     });
     connect(m_mdiJob,    &MdiEnrichmentJob::finished, m_mdiThread, &QThread::quit);
@@ -4049,7 +4057,7 @@ QVariantList AppManager::mdiDetails(int catalogId, const QString &fullPath)
     for (const MdiData::Datum &d : data) {
         QVariantList files;
         for (const QString &f : d.derivedFiles) {
-            const QString absolute = QDir(d.derivedRoot).filePath(f);
+            const QString absolute = d.derivedPath(f);   // found relative to the collection when needed (MDI-F207)
             files.append(QVariantMap{ { QStringLiteral("path"),   absolute },
                                       { QStringLiteral("url"),    QUrl::fromLocalFile(absolute).toString() },
                                       { QStringLiteral("exists"), QFileInfo::exists(absolute) } });
@@ -4317,9 +4325,9 @@ QString AppManager::runInfoSearch(const QString &text, bool onlyInfo)
                     if (d.outcome != QLatin1String("completed") || d.derivedFiles.isEmpty())
                         continue;
                     if (d.analysis == QLatin1String("thumbnail"))
-                        thumb = QDir(d.derivedRoot).filePath(d.derivedFiles.first());
+                        thumb = d.derivedPath(d.derivedFiles.first());
                     else if (d.analysis == QLatin1String("poster"))
-                        poster = QDir(d.derivedRoot).filePath(d.derivedFiles.first());
+                        poster = d.derivedPath(d.derivedFiles.first());
                 }
                 const QString preview = !thumb.isEmpty() ? thumb : poster;
                 const QFileInfo info(f.fullPath);
@@ -4994,6 +5002,7 @@ void AppManager::finishRunningOperation()
     // A created or updated catalog gets its instant-search index refreshed
     if (!m_hasRunningOperation)
         scheduleFtsIndexing();
+    schedulePublish();   // and is published again once things are quiet (MDI-F205)
 }
 //----------------------------------------------------------------------
 void AppManager::scheduleNextOperation()
@@ -8395,6 +8404,10 @@ void AppManager::prepareCollectionAccess()
     m_collectionLock->release();   // the collection being left
     m_readOnlyCauses.clear();
     m_migrationSkipped = false;
+    // Reopened for the collection about to be opened (a published copy is
+    // reloaded at the same path: the immutable connection must not stay)
+    if (QSqlDatabase::contains(kMdiMainConnection))
+        MdiData::close(kMdiMainConnection);
 
     // The collection about to be opened, read as Database::initialize() reads it
     QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
@@ -8414,6 +8427,21 @@ void AppManager::prepareCollectionAccess()
         mayWrite = CollectionWriters::mayThisComputerWriteFolder(folder);
     }
 
+    // A published copy (D43, MDI-F204): read-only on every Mac, the
+    // authorised ones included; no lock, nothing written in its folder, its
+    // databases opened immutable (no -wal or -shm)
+    const bool published = mode != QLatin1String("Hosted") && MdiPublish::isPublishedFolder(folder);
+    MdiData::setReadOnlyStores(published ? QStringList{ MdiData::filePath(folder) } : QStringList());
+    MdiData::setCollectionFolder(mode == QLatin1String("Hosted") ? QString() : folder);   // MDI-F207
+    if (published) {
+        const MdiPublish::Marker marker = MdiPublish::readMarker(folder);
+        const QString who  = marker.publisherName.isEmpty() ? marker.publisherCode : marker.publisherName;
+        const QString when = marker.publishedAt.isValid()
+                             ? QLocale().toString(marker.publishedAt.toLocalTime(), QLocale::ShortFormat) : QStringLiteral("?");
+        setReadOnlyCause(ReadOnlyCause::PublishedCopy,
+                         tr("It is a copy published by %1 on %2, for the Macs that only read it.")
+                             .arg(who.isEmpty() ? QStringLiteral("?") : who, when));
+    } else
     // A computer that may not change it does not take the lock: it would keep
     // an authorised one out
     if (!mayWrite) {
@@ -8434,15 +8462,17 @@ void AppManager::prepareCollectionAccess()
     }
     // Read by Database::initialize() and the Memory-mode load
     collection->readOnly     = getReadOnly();
-    collection->openReadOnly = !mayWrite && mode == QLatin1String("File");
+    collection->openReadOnly = (!mayWrite && mode == QLatin1String("File")) || published;
 }
 //----------------------------------------------------------------------
 void AppManager::confirmCollectionAccess()
 {
-    // Hosted collections are known only now; File and Memory are confirmed
-    if (!getReadOnlyNotAuthorised() && !CollectionWriters(collection).mayThisComputerWrite())
+    // Hosted collections are known only now; File and Memory are confirmed.
+    // A published copy is read-only for its own reason, whatever its list says.
+    if (!getPublishedCopy() && !getReadOnlyNotAuthorised() && !CollectionWriters(collection).mayThisComputerWrite())
         setReadOnlyCause(ReadOnlyCause::NotAuthorised, tr("This Mac is not among the Macs allowed to change it."));
     applyReadOnlyState();
+    watchPublishedCopy();
 }
 //----------------------------------------------------------------------
 void AppManager::applyReadOnlyState()

@@ -78,6 +78,7 @@
 #include <QElapsedTimer>
 
 class BackupJobStoppable;
+class QFileSystemWatcher;
 #include "core/mdienrichmentjob.h"   // Config is passed by value
 #include "core/mdidata.h"           // PendingJob is held by value
 #include "core/mdihtmlexport.h"     // Scope and Options are prepared by value
@@ -214,6 +215,12 @@ class AppManager : public QObject
     Q_PROPERTY(bool    readOnly              READ getReadOnly              NOTIFY readOnlyChanged)
     Q_PROPERTY(QString readOnlyReason        READ getReadOnlyReason        NOTIFY readOnlyChanged)
     Q_PROPERTY(bool    readOnlyNotAuthorised READ getReadOnlyNotAuthorised NOTIFY readOnlyChanged)
+    // Publishing for the read-only Macs (fork, D43 (4)): the collection open
+    // is a published copy (read-only, without people, faces and notes), and
+    // the publish of this collection running on its worker
+    Q_PROPERTY(bool    publishedCopy         READ getPublishedCopy         NOTIFY readOnlyChanged)
+    Q_PROPERTY(bool    publishRunning        READ getPublishRunning        NOTIFY publishStateChanged)
+    Q_PROPERTY(QString publishStatusText     READ getPublishStatusText     NOTIFY publishStateChanged)
     // Computers allowed to change the collection (Settings, D43)
     Q_PROPERTY(bool         writersProtection READ getWritersProtection NOTIFY writersChanged)
     Q_PROPERTY(QVariantList authorisedWriters READ getAuthorisedWriters NOTIFY writersChanged)
@@ -664,6 +671,17 @@ public slots:
     // (-1 when none), due (none, or older than 30 days), hosted}
     Q_INVOKABLE QString      saveArchiveCopy(const QString &destination);
     Q_INVOKABLE QVariantMap  archiveCopyState();
+    // Publish for the read-only Macs (fork, D43 (4), MDI-F202..F206), on a
+    // worker. State: {folder, auto, lastPublish (ISO), lastPublishText,
+    // available, reason (why not available)}. setPublishFolder and publishNow
+    // return "" when done or started (publishFinished follows), else the reason.
+    Q_INVOKABLE QVariantMap  publishState();
+    Q_INVOKABLE QString      setPublishFolder(const QString &folder);
+    Q_INVOKABLE void         setPublishAuto(bool on);
+    Q_INVOKABLE QString      publishNow();
+    bool                     getPublishedCopy() const;
+    bool                     getPublishRunning() const { return m_publishThread != nullptr; }
+    QString                  getPublishStatusText() const { return m_publishStatusText; }
     bool                     getArchiveCopyRunning() const { return m_archiveCopyThread != nullptr; }
     QString                  getArchiveCopyStatusText() const { return m_archiveCopyStatusText; }
 
@@ -687,6 +705,18 @@ public slots:
     Q_INVOKABLE QStringList  getDeviceExcludeFolders(int deviceId) const;
     Q_INVOKABLE bool         addDeviceExcludeFolder(int deviceId, const QString &path);
     Q_INVOKABLE bool         removeDeviceExcludeFolder(int deviceId, const QString &path);
+
+    // Where a drive is on this Mac (per-Mac remap of its path, D43 P3;
+    // MDI-F209, MDI-C66): kept in this Mac's settings, never in the
+    // collection, so a read-only Mac can set one too
+    // {deviceId, name, type, recordedPath, localPath (empty when none), current}
+    Q_INVOKABLE QVariantMap  devicePathOnThisMac(int deviceId) const;
+    Q_INVOKABLE QString      setDevicePathOnThisMac(int deviceId, const QString &localPath);   // "" or why not
+    Q_INVOKABLE void         forgetDevicePathOnThisMac(int deviceId);
+    // A drive not reached at its path that seems to be elsewhere on this Mac:
+    // {deviceId, name, recordedPath, localPath}, empty when none. Offered, never applied.
+    Q_INVOKABLE QVariantMap  devicePathSuggestion();
+    Q_INVOKABLE void         dismissDevicePathSuggestion(int deviceId);
 
     // Device delete
     Q_INVOKABLE QVariantMap  checkDeviceDeleteAllowed(int deviceId) const;
@@ -927,6 +957,12 @@ signals:
     void archiveCopyStateChanged();
     // message: what to tell the owner (the folder written, or why not)
     void archiveCopyFinished(bool ok, const QString &message);
+    // Publishing (fork, D43 (4)), and a published copy open here reloaded
+    // when a newer one has arrived (MDI-F206): Reloading before, Reloaded after
+    void publishStateChanged();
+    void publishFinished(bool ok, const QString &message);
+    void publishedCopyReloading();
+    void publishedCopyReloaded(const QString &message);
     // End of a Memory-mode Explore load: the open's result, or stopped
     void exploreCatalogOpened(const QVariantMap &info);
     // The latest open requested during a load, to run now that it has ended
@@ -1192,9 +1228,8 @@ private:
     // is set. The collection lock is held only while it can be changed.
     enum class ReadOnlyCause {
         LockedElsewhere = 1,   // another process holds the collection lock
-        NotAuthorised   = 2    // protection on, this computer not in the list
-        // P2 hook: PublishedCopy = 3 — a published copy is opened read-only;
-        // its text goes through setReadOnlyCause like the two above.
+        NotAuthorised   = 2,   // protection on, this computer not in the list
+        PublishedCopy   = 3    // a published copy (teca_published.json): read-only on every Mac (MDI-F204)
     };
     QMap<int, QString> m_readOnlyCauses;
     bool               m_migrationSkipped = false;   // read-only: the update of its database is not made
@@ -1206,6 +1241,12 @@ private:
     void    prepareCollectionAccess();                // before connecting: writers from the files, then the lock
     void    confirmCollectionAccess();                // after connecting: writers from the database (Hosted too)
     void    openCollectionDatabase(const QString &conn);   // migrations, or the read-only preparation
+    // Per-Mac remaps of device paths (D43 P3): read from this Mac's settings
+    // for the collection opened, and applied in core/ (Device::resolvePath)
+    void    loadDevicePathRemaps();
+    QSet<int> m_dismissedPathSuggestions;             // "Not now", for this session
+    QString   m_pathSuggestionSignature;              // mounts and remaps the last search saw
+    QVariantMap m_pathSuggestion;                     // what it found
     void    refreshCollectionLock();                  // every CollectionLock::kRefreshSeconds
     QString lockHolderText(const QString &host, qint64 pid, const QString &app) const;
     QString writersChangeText(int change) const;      // CollectionWriters::Change in words, "" for Ok
@@ -1222,6 +1263,28 @@ private:
     QString           m_htmlExportStatusText;
     QThread          *m_archiveCopyThread = nullptr;
     QString           m_archiveCopyStatusText;
+    // Publishing for the read-only Macs (fork, D43 (4)): one publish at a
+    // time on its worker; the automatic one waits for a quiet moment
+    QThread          *m_publishThread = nullptr;
+    QString           m_publishStatusText;
+    QTimer           *m_publishTimer = nullptr;
+    QDateTime         m_lastPublishEnd;
+    bool              m_publishAgain = false;     // an update or analysis ended while publishing
+    QString publishRefusal() const;               // "" when this collection can be published
+    QString startPublish(bool automatic);
+    void    schedulePublish();                    // after a catalog update or an AI job (MDI-F205)
+    void    runScheduledPublish();
+    // A published copy open here: its marker is watched, and a newer
+    // complete set reloads it (MDI-F206). P2b attaches the unlocked layers
+    // in memory after each load (see watchPublishedCopy).
+    QFileSystemWatcher *m_publishedWatcher = nullptr;
+    QTimer           *m_publishedPoll = nullptr;
+    QString           m_publishedFolder;          // empty when the collection open is not one
+    QDateTime         m_publishedLoadedAt;        // publishedAt of the snapshot open
+    QDateTime         m_publishedRefusedAt;       // a newer marker whose files did not match yet
+    bool              m_publishedChecking = false;
+    void    watchPublishedCopy();                 // after a collection is opened
+    void    checkPublishedCopy();
     QString prepareHtmlExport(const QString &scope, int catalogId, const QString &path, const QString &targetFile,
                               MdiHtmlExport::Scope *request, MdiHtmlExport::Options *options, QString *target);
     void    setHtmlExportProgress(const QString &target, int done, int total);

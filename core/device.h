@@ -175,9 +175,11 @@ public:
             QString localPath;         // where it is on this Mac
             bool    current  = false;  // recordedPath is still the device's path
         };
+        // Their settings group, made a collection's by Collection::settingsKey()
+        static constexpr char kPathRemapsKey[] = "Sharing/DevicePaths";
         // This Mac's remaps of the open collection (collectionKey:
-        // Collection::settingsKey()), each marked current or not; the current
-        // ones are applied
+        // Collection::settingsKey(kPathRemapsKey)), each marked current or
+        // not; the current ones are applied
         static QList<PathRemap> loadPathRemaps(const QString &settingsFilePath,
                                                const QString &collectionKey,
                                                const QString &connectionName);
