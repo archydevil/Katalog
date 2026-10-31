@@ -25,11 +25,61 @@ ScrollablePageFitted {
     // Tools and models of the AI analysis, as found when the page opens (read only)
     property var aiTools: ({})
 
+    property var pathRemapDevices: []
+    property var pathSuggestion: ({})
+    property var pendingPathDevice: ({})
+    property bool pathRemapsStale: true
+
+    function reloadPathRemapDevices() {
+        pathRemapDevices = appManager1.getDeviceList("All", 0).filter(function(device) {
+            const path = String(device.path || "")
+            return (device.type === "Storage" || device.type === "Catalog")
+                    && path !== "" && path !== "EXPORT" && path !== "/"
+                    && !/^[A-Za-z]:\/?$/.test(path)
+        })
+        pathSuggestion = appManager1.devicePathSuggestion()
+        pathRemapsStale = false
+    }
+
+    function requestPathRemapRefresh() {
+        if (pageSettingsRoot.visible)
+            reloadPathRemapDevices()
+        else
+            pathRemapsStale = true
+    }
+
+    function askPathOnThisMac(deviceId) {
+        const info = appManager1.devicePathOnThisMac(deviceId)
+        if (info.deviceId === undefined)
+            return
+        // Where it is now, else where it was recorded, else the mounted volumes
+        const start = info.localPath !== "" ? info.localPath
+                    : appManager1.pathExists(info.recordedPath) ? info.recordedPath
+                    : String(info.recordedPath).startsWith("/Volumes/") ? "/Volumes" : ""
+        pendingPathDevice = info
+        applicationWindow().openFreshDialog(pathOnThisMacFolderComponent, start)
+    }
+
+    function confirmPathOnThisMac(info, localPath) {
+        pathOnThisMacDialog.device = info
+        pathOnThisMacDialog.localPath = localPath
+        pathOnThisMacDialog.open()
+    }
+
+    function pathRemapResult(error) {
+        if (error !== "")
+            applicationWindow().showPassiveNotification(error)
+    }
+
     Connections {
         target: appManager1
         function onDatabaseModeChanged() {
             if (appManager1.databaseMode !== "Hosted")
                 showHostedForm = false
+            pageSettingsRoot.requestPathRemapRefresh()
+        }
+        function onDeviceListChanged() {
+            pageSettingsRoot.requestPathRemapRefresh()
         }
         function onImportSourceChanged() {
             importUpdateSourceCombo.model = appManager1.getImportSourcePaths()
@@ -49,6 +99,7 @@ ScrollablePageFitted {
         passwordField.text     = appManager1.getDatabasePassword()
         importUpdateSourceCombo.model = appManager1.getImportSourcePaths()
         aiTools = appManager1.getEnrichmentTools()
+        requestPathRemapRefresh()
         if (refusedHostedEntry) {
             hostField.text     = refusedHostedEntry.hostName
             dbNameField.text   = refusedHostedEntry.dbName
@@ -58,6 +109,7 @@ ScrollablePageFitted {
             invalidHostMessage.visible = true
         }
     }
+    onVisibleChanged: if (visible && pathRemapsStale) reloadPathRemapDevices()
 
     // FormLayout never sizes an item below its preferred width, so an item
     // whose natural width follows its content (checkbox text, combo entries,
@@ -113,8 +165,71 @@ ScrollablePageFitted {
                             appManager1.setPublishFolder(appManager1.pathFromFileUrl(selectedFolder.toString())))
         }
     }
+    Component {   // a fresh dialog per open (openFreshDialog)
+        id: pathOnThisMacFolderComponent
+        FolderDialog {
+            onAccepted: pageSettingsRoot.confirmPathOnThisMac(pageSettingsRoot.pendingPathDevice,
+                appManager1.normalizeSourcePath(appManager1.pathFromFileUrl(selectedFolder.toString())))
+        }
+    }
 
     // ── Dialogs ────────────────────────────────────────────────────────
+
+    Kirigami.PromptDialog {
+        id: pathOnThisMacDialog
+        property var device: ({})
+        property string localPath: ""
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Use this folder on this Mac?")
+        subtitle: qsTr("Recorded path: %1").arg(pathOnThisMacDialog.device.recordedPath || "") + "\n"
+                  + qsTr("On this Mac: %1").arg(pathOnThisMacDialog.localPath) + "\n\n"
+                  + qsTr("Only this Mac uses it: the collection keeps the recorded path.")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Use this folder")
+                icon.name: "dialog-ok"
+                onTriggered: {
+                    pageSettingsRoot.pathRemapResult(appManager1.setDevicePathOnThisMac(
+                        pathOnThisMacDialog.device.deviceId, pathOnThisMacDialog.localPath))
+                    pathOnThisMacDialog.close()
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: pathOnThisMacDialog.close()
+            }
+        ]
+    }
+
+    Kirigami.PromptDialog {
+        id: forgetPathOnThisMacDialog
+        property var device: ({})
+        function ask(deviceId) { device = appManager1.devicePathOnThisMac(deviceId); open() }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Forget the path on this Mac?")
+        subtitle: qsTr("This Mac looks for the drive at its recorded path again: %1")
+                  .arg(forgetPathOnThisMacDialog.device.recordedPath || "")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Forget")
+                icon.name: "edit-undo"
+                onTriggered: {
+                    appManager1.forgetDevicePathOnThisMac(forgetPathOnThisMacDialog.device.deviceId)
+                    forgetPathOnThisMacDialog.close()
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: forgetPathOnThisMacDialog.close()
+            }
+        ]
+    }
 
     // Writers (D43): removing a Mac, and turning protection off, ask first
     Kirigami.PromptDialog {
@@ -897,6 +1012,101 @@ ScrollablePageFitted {
                                  && (pageSettingsRoot.publish.folder || "") !== ""
                                  && !appManager1.publishRunning
                         onClicked: pageSettingsRoot.publishResult(appManager1.publishNow())
+                    }
+                }
+            }
+
+            // ── Where drives are on this Mac (per-Mac remap, D43 P3) ──────
+            KCard {
+                id: devicePathsCard
+                Layout.fillWidth: true
+
+                KSectionHeader {
+                    level: 3
+                    title: qsTr("Where is this drive on this Mac…")
+                    description: qsTr("Only this Mac uses it: the collection keeps the recorded path.")
+                }
+
+                Kirigami.InlineMessage {
+                    Layout.fillWidth: true
+                    visible: (pageSettingsRoot.pathSuggestion.deviceId || 0) > 0
+                    type: Kirigami.MessageType.Information
+                    text: qsTr("%1 is not at its recorded path. It seems to be at %2 on this Mac.")
+                          .arg(pageSettingsRoot.pathSuggestion.name || "")
+                          .arg(pageSettingsRoot.pathSuggestion.localPath || "")
+                    actions: [
+                        Kirigami.Action {
+                            text: qsTr("Use this folder")
+                            icon.name: "dialog-ok"
+                            onTriggered: pageSettingsRoot.confirmPathOnThisMac(
+                                appManager1.devicePathOnThisMac(pageSettingsRoot.pathSuggestion.deviceId),
+                                pageSettingsRoot.pathSuggestion.localPath)
+                        },
+                        Kirigami.Action {
+                            text: qsTr("Not now")
+                            icon.name: "dialog-close"
+                            onTriggered: {
+                                appManager1.dismissDevicePathSuggestion(pageSettingsRoot.pathSuggestion.deviceId)
+                                pageSettingsRoot.requestPathRemapRefresh()
+                            }
+                        }
+                    ]
+                }
+
+                Repeater {
+                    model: pageSettingsRoot.pathRemapDevices
+                    delegate: ColumnLayout {
+                        id: pathRemapRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: Kirigami.Units.smallSpacing
+
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: pathRemapRow.modelData.name
+                            color: KTheme.text
+                            font.weight: Font.DemiBold
+                            elide: Text.ElideRight
+                        }
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Recorded path: %1").arg(pathRemapRow.modelData.path || "")
+                            color: KTheme.text2
+                            font.family: KTheme.mono
+                            font.pixelSize: KTheme.note
+                            wrapMode: Text.WrapAnywhere
+                        }
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: qsTr("On this Mac: %1").arg(pathRemapRow.modelData.localPath
+                                                              || pathRemapRow.modelData.path || "")
+                            color: KTheme.text2
+                            font.family: KTheme.mono
+                            font.pixelSize: KTheme.note
+                            wrapMode: Text.WrapAnywhere
+                        }
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: Kirigami.Units.smallSpacing
+                            KButton {
+                                text: qsTr("Where is this drive on this Mac…")
+                                icon.name: "folder-open"
+                                onClicked: pageSettingsRoot.askPathOnThisMac(pathRemapRow.modelData.deviceId)
+                            }
+                            KButton {
+                                variant: "link"
+                                text: qsTr("Forget the path on this Mac")
+                                icon.name: "edit-undo"
+                                visible: pathRemapRow.modelData.ownPathRemap === true
+                                onClicked: forgetPathOnThisMacDialog.ask(pathRemapRow.modelData.deviceId)
+                            }
+                        }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 1
+                            color: KTheme.line
+                            visible: pathRemapRow.index < pageSettingsRoot.pathRemapDevices.length - 1
+                        }
                     }
                 }
             }
