@@ -32,6 +32,21 @@
 #include "core/catalogjobstoppable.h"
 #include "core/catalogmanager.h"
 #include "core/searchjobstoppable.h"
+#include "core/databasemanager.h"
+#include "core/mdienrichmentjob.h"
+#include "core/mdiprofile.h"
+#include "core/mdidata.h"
+#include "core/mdifts.h"
+#include "core/mdidiskspace.h"
+#include <QThread>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QUrl>
+#include <csignal>
 #include <QDir>
 #include <QDateTime>
 #include <QSqlDatabase>
@@ -43,6 +58,7 @@
 #include <QLocale>
 #include <QFile>
 #include <QProcess>
+#include <algorithm>
 
 CommandLineHandler::CommandLineHandler(QObject *parent)
     : QObject(parent)
@@ -105,6 +121,19 @@ void CommandLineHandler::setupCommandLineParser()
         "  Katalog search --collection /path/to/collection    # Use specified collection, all devices\n"
         "  Katalog search --collection /path/to/collection --selectedDeviceID 4  # Use specified collection, device ID 4\n"
         "  Katalog search --collection /path/to/collection --selectedDeviceID 0  # Use specified collection, all devices (explicit)"
+        // AI analysis and exit codes (fork, D43)
+        "\n"
+        "  Katalog analyze 4                                  # AI analysis of catalog 4 with its saved profile\n"
+        "  Katalog analyze_all                                # AI analysis of every catalog with a saved profile\n"
+        "\n"
+        "Exit codes:\n"
+        "  0    Success\n"
+        "  1    Error: invalid option or action, collection not found or not openable,\n"
+        "       catalog not updated or not analyzed\n"
+        "  2    Analysis done, but some steps failed: they run again next time\n"
+        "  3    The collection is in use by Teca or by another command line run: nothing was done\n"
+        "  4    This computer may not write to the collection: nothing was done\n"
+        "  130  Stopped by SIGINT (Ctrl+C); 143: stopped by SIGTERM. The analyses done so far are kept"
         );
 
     parser.addHelpOption();
@@ -115,7 +144,11 @@ void CommandLineHandler::setupCommandLineParser()
                                            "  list_catalogs     - List all catalogs (ID, active state, name)\n"
                                            "  update_catalog    - Update a specific catalog (deviceID)\n"
                                            "  update_all_active - Update all active catalogs\n"
-                                           "  search            - Execute search using last search criteria");
+                                           "  search            - Execute search using last search criteria"
+                                           // Fork, D43
+                                           "\n"
+                                           "  analyze           - AI analysis of one catalog with its saved profile (deviceID)\n"
+                                           "  analyze_all       - AI analysis of every catalog with a saved profile");
 
     parser.addPositionalArgument("deviceID", "Device ID for update_catalog action (optional)", "[deviceID]");
 
@@ -320,6 +353,9 @@ int CommandLineHandler::processCommandLine(QCoreApplication &app)
 
     // Initialize collection and database for any command
     if (!initializeDatabase()) {
+        // Refused for a reason of its own (collection lock): message printed
+        if (m_initExitCode != 0)
+            return m_initExitCode;
         QTextStream stderr_stream(stderr);
         stderr_stream << "Error: Failed to initialize database" << Qt::endl;
         return 1;
@@ -345,6 +381,19 @@ int CommandLineHandler::processCommandLine(QCoreApplication &app)
     }
     else if (requestedAction == "update_all_active") {
         return cmd_updateAllActive(false) ? 0 : 1;
+    }
+    else if (requestedAction == "analyze") {
+        bool deviceIdOk = false;
+        int deviceId = positionalArgs.value(1).toInt(&deviceIdOk);
+        if (!deviceIdOk) {
+            QTextStream stderr_stream(stderr);
+            stderr_stream << "Error: Invalid device ID: " << positionalArgs.value(1) << Qt::endl;
+            return 1;
+        }
+        return cmd_analyze(deviceId);
+    }
+    else if (requestedAction == "analyze_all") {
+        return cmd_analyzeAll();
     }
     else {
         QTextStream stderr_stream(stderr);
@@ -521,6 +570,14 @@ bool CommandLineHandler::initializeDatabase()
         stdout_stream << "  databaseMode: " << databaseMode << Qt::endl;
         stdout_stream << "  databaseFilePath: " << databaseFilePath << Qt::endl;
         stdout_stream << "  collectionFolder: " << collection->folder << Qt::endl;
+    }
+
+    // The collection lock, before anything is written (D43): an action that
+    // writes does not run while Teca or another command line run holds it
+    if (actionWritesCollection()) {
+        m_initExitCode = lockCollection();
+        if (m_initExitCode != 0)
+            return false;
     }
 
     // Use Database class for initialization with optional overrides
@@ -1642,4 +1699,421 @@ QDateTime CommandLineHandler::parseDate(const QString &dateStr)
         return QDateTime(date, QTime(0, 0, 0));
     }
     return QDateTime(); // Invalid datetime
+}
+
+//--- AI analysis (fork, D43) --------------------------------------------------------------
+namespace {
+volatile std::sig_atomic_t s_stopSignal = 0;
+
+void onStopSignal(int signalNumber)
+{
+    // Only a flag here: the waiting loop asks the runner to stop. A second
+    // signal ends the program at once.
+    s_stopSignal = signalNumber;
+    std::signal(signalNumber, SIG_DFL);
+}
+
+// TODO(D43 P1): take the path from P1's core helper for the collection lock
+// once it is in core/collection.h (expected Collection::lockFilePath(folder)):
+// same file, ".teca.lock" in the collection folder, held with QLockFile
+QString collectionLockPath(const QString &folder)
+{
+    return QDir(folder).filePath(QStringLiteral(".teca.lock"));
+}
+
+const QString kCliMdiConnection = QStringLiteral("cli_mdi");
+const QString kSeparator = QStringLiteral("-----------------------------------------------------------------------");
+const QString kDoubleSeparator = QStringLiteral("=======================================================================");
+}
+
+void CommandLineHandler::installStopSignalHandlers()
+{
+    std::signal(SIGINT,  onStopSignal);
+    std::signal(SIGTERM, onStopSignal);
+}
+
+int CommandLineHandler::stopSignal()
+{
+    return s_stopSignal;
+}
+
+bool CommandLineHandler::actionWritesCollection() const
+{
+    return requestedAction == QLatin1String("update_catalog")
+        || requestedAction == QLatin1String("update_all_active")
+        || requestedAction == QLatin1String("analyze")
+        || requestedAction == QLatin1String("analyze_all");
+}
+
+int CommandLineHandler::lockCollection()
+{
+    if (collection->folder.isEmpty())
+        return 0;   // a hosted collection has no folder to hold the lock in
+
+    // TODO(D43 P1): refuse with ExitNotWritable when the collection's
+    // protection says this computer may not write to it. P1's core answer to
+    // "may this Mac write?" is not in core yet; until then only a folder
+    // that cannot be written to is refused (PermissionError below).
+
+    QTextStream stderr_stream(stderr);
+    const QString path = collectionLockPath(collection->folder);
+    m_collectionLock = std::make_unique<QLockFile>(path);
+    // Held for the whole run, maybe hours: stale only when its owner is gone,
+    // never because of its age
+    m_collectionLock->setStaleLockTime(0);
+    if (m_collectionLock->tryLock(0)) {
+        if (verbose) {
+            QTextStream stdout_stream(stdout);
+            stdout_stream << "Collection lock taken: " << path << Qt::endl;
+        }
+        return 0;
+    }
+
+    const QLockFile::LockError error = m_collectionLock->error();
+    qint64 pid = 0;
+    QString hostName, appName;
+    if (error == QLockFile::LockFailedError)
+        m_collectionLock->getLockInfo(&pid, &hostName, &appName);
+    m_collectionLock.reset();
+
+    if (error == QLockFile::LockFailedError) {
+        stderr_stream << "Error: The collection is in use by Teca or by another command line run"
+                      << " (process " << pid << " on " << hostName << "). Nothing was done." << Qt::endl;
+        stderr_stream << "Lock file: " << path << Qt::endl;
+        return ExitCollectionInUse;
+    }
+    if (error == QLockFile::PermissionError) {
+        stderr_stream << "Error: The collection folder cannot be written to, so this computer may not change the collection."
+                      << " Nothing was done." << Qt::endl;
+        stderr_stream << "Lock file: " << path << Qt::endl;
+        return ExitNotWritable;
+    }
+    stderr_stream << "Error: The collection lock could not be taken: " << path << Qt::endl;
+    return ExitError;
+}
+
+bool CommandLineHandler::prepareAnalysis()
+{
+    // As when Teca opens the collection: schema checks, the AI tables, and in
+    // Memory mode the saved profiles (DatabaseManager::runMigrations, after
+    // the collection files were loaded)
+    const QSqlError err = DatabaseManager::runMigrations(m_connectionName, collection);
+    if (err.type() != QSqlError::NoError) {
+        QTextStream stderr_stream(stderr);
+        stderr_stream << "Error: The collection could not be prepared for the AI analysis: " << err.text() << Qt::endl;
+        return false;
+    }
+    return true;
+}
+
+void CommandLineHandler::reportAnalysisTools(const QVariantMap &tools)
+{
+    QTextStream stdout_stream(stdout);
+
+    // A step whose program or model is missing is skipped by the runner,
+    // with the reason on its line (MDI-F20)
+    const QList<QPair<QString, QString>> needed = {
+        { QStringLiteral("ffmpeg"),              QStringLiteral("ffmpeg") },
+        { QStringLiteral("ffprobe"),             QStringLiteral("ffprobe") },
+        { QStringLiteral("pdftotext"),           QStringLiteral("pdftotext") },
+        { QStringLiteral("whisper"),             QStringLiteral("whisper-cli") },
+        { QStringLiteral("whisperModel"),        QStringLiteral("whisper model") },
+        { QStringLiteral("exiv2"),               QStringLiteral("exiv2") },
+        { QStringLiteral("pdftoppm"),            QStringLiteral("pdftoppm") },
+        { QStringLiteral("tesseract"),           QStringLiteral("tesseract") },
+        { QStringLiteral("tessdata"),            QStringLiteral("tesseract language data") },
+        { QStringLiteral("faceDetectorModel"),   QStringLiteral("face detection model") },
+        { QStringLiteral("faceRecognizerModel"), QStringLiteral("face recognition model") },
+    };
+    QStringList missing;
+    for (const auto &tool : needed) {
+        const QString path = tools.value(tool.first).toString();
+        if (path.isEmpty())
+            missing << tool.second;
+        else if (verbose)
+            stdout_stream << "Tool " << tool.second << ": " << path << Qt::endl;
+    }
+    if (tools.value(QStringLiteral("opencv")).toString().isEmpty())
+        missing << QStringLiteral("OpenCV");
+    if (!missing.isEmpty())
+        stdout_stream << "Not found: " << missing.join(QStringLiteral(", "))
+                      << " (the steps that need them are skipped)" << Qt::endl;
+
+    // Ollama, for the AI steps (captions, summaries, topic segments, embeddings...)
+    const QString url = tools.value(QStringLiteral("ollamaUrl")).toString();
+    QNetworkAccessManager manager;
+    QNetworkRequest request(QUrl(url + QStringLiteral("/api/tags")));
+    request.setTransferTimeout(3000);
+    QNetworkReply *reply = manager.get(request);
+    QEventLoop loop;
+    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+    if (reply->error() != QNetworkReply::NoError) {
+        stdout_stream << "Ollama is not reachable at " << url
+                      << ": the AI steps fail and run again next time." << Qt::endl;
+    } else {
+        QStringList available;
+        const QJsonArray models = QJsonDocument::fromJson(reply->readAll()).object()
+                                      .value(QStringLiteral("models")).toArray();
+        for (const QJsonValue &m : models)
+            available << m.toObject().value(QStringLiteral("name")).toString();
+        QStringList absent;
+        for (const QString &key : { QStringLiteral("visionModel"), QStringLiteral("textModel"), QStringLiteral("embedModel") }) {
+            const QString model = tools.value(key).toString();
+            // Same match as the app: the name, or the name with a tag
+            const bool found = std::any_of(available.cbegin(), available.cend(), [&model](const QString &name) {
+                return name == model || name.startsWith(model + QLatin1Char(':'));
+            });
+            if (!found && !absent.contains(model))
+                absent << model;
+        }
+        if (!absent.isEmpty())
+            stdout_stream << "Ollama models not found: " << absent.join(QStringLiteral(", "))
+                          << " (the AI steps that use them fail and run again next time)" << Qt::endl;
+        else if (verbose)
+            stdout_stream << "Ollama: " << url << Qt::endl;
+    }
+    delete reply;
+}
+
+CommandLineHandler::AnalysisOutcome CommandLineHandler::analyzeCatalog(int deviceId, const QVariantMap &tools,
+                                                                       bool explicitRequest)
+{
+    QTextStream stdout_stream(stdout);
+    QTextStream stderr_stream(stderr);
+
+    Device device;
+    device.ID = deviceId;
+    device.loadDevice(m_connectionName);
+    if (device.type != QLatin1String("Catalog")) {
+        stderr_stream << "The device selected must be a Catalog. Try with a different device ID" << Qt::endl;
+        stderr_stream << "Device ID: " << deviceId << Qt::endl;
+        return AnalysisOutcome::NotRun;
+    }
+    stdout_stream << "Catalog ID: " << device.ID << Qt::endl;
+    stdout_stream << "Catalog Name: " << device.name << Qt::endl;
+    stdout_stream << "Catalog Path: " << device.path << Qt::endl;
+
+    MdiProfile profile;
+    if (!profile.load(m_connectionName, deviceId)) {
+        stderr_stream << "Error: No AI analysis profile is saved for this catalog." << Qt::endl;
+        return AnalysisOutcome::NotRun;
+    }
+    stdout_stream << "Derived files: " << profile.destinationPath << Qt::endl;
+
+    // The source, by the rule of the app and the runner (MDI-C29): present
+    // and not an empty mount point. Not waited for here: a scheduled run goes
+    // on with the next catalog, and the next run continues this one.
+    if (device.path.isEmpty() || !QFileInfo::exists(device.path) || QDir(device.path).isEmpty()) {
+        (explicitRequest ? stderr_stream : stdout_stream)
+            << "The catalog source is not connected: the catalog was not analyzed." << Qt::endl;
+        return AnalysisOutcome::DriveAway;
+    }
+    // The derived files: a folder that can be written to, or one on a drive
+    // that is away (the app waits for it, D31; skipped here)
+    if (!MdiDiskSpace::isWritable(profile.destinationPath)) {
+        if (!profile.destinationPath.isEmpty() && !QFileInfo::exists(profile.destinationPath)) {
+            (explicitRequest ? stderr_stream : stdout_stream)
+                << "The drive of the derived files is not connected: the catalog was not analyzed." << Qt::endl;
+            return AnalysisOutcome::DriveAway;
+        }
+        stderr_stream << "Error: The destination of the derived files cannot be written to." << Qt::endl;
+        return AnalysisOutcome::NotRun;
+    }
+    // Room for the AI data before anything starts (MDI-F19)
+    const MdiDiskSpace::Shortage shortage = MdiDiskSpace::firstShortage(
+        { collection->folder, profile.destinationPath }, MdiDiskSpace::kJobMinimumFree);
+    if (shortage.isShort()) {
+        stderr_stream << "Error: "
+                      << QStringLiteral("The AI analysis needs at least %1 of free space on %2, which has %3 left.")
+                             .arg(QLocale::c().formattedDataSize(shortage.needed), shortage.path,
+                                  QLocale::c().formattedDataSize(shortage.available))
+                      << Qt::endl;
+        return AnalysisOutcome::NotRun;
+    }
+
+    // The same config as the app's (core, D43), with the domain context read
+    // from mdi_data.db
+    const QString dataDbPath = MdiData::filePath(collection->folder);
+    const bool mdiOpen = MdiData::open(kCliMdiConnection, dataDbPath);
+    MdiEnrichmentJob::Config config = MdiEnrichmentJob::analysisConfig(
+        tools, collection->settingsFilePath, device, dataDbPath, profile,
+        mdiOpen ? kCliMdiConnection : QString());
+    if (mdiOpen)
+        MdiData::close(kCliMdiConnection);
+    config.catalogStamp = MdiFts::stamp(device.catalog->dateUpdated);
+    const QList<MdiEnrichmentJob::FileItem> files =
+        MdiEnrichmentJob::listCatalogFiles(m_connectionName, device.externalID,
+                                           collection->databaseMode, device.catalog->filePath);
+    stdout_stream << "Catalog Files: " << files.size() << Qt::endl;
+    stdout_stream << "Starting AI analysis..." << Qt::endl;
+
+    // The runner on its own thread, as in the app (MDI-C3); this thread only
+    // prints its steps and passes on a stop
+    auto *job    = new MdiEnrichmentJob(config, files);
+    auto *thread = new QThread();
+    job->moveToThread(thread);
+
+    QEventLoop loop;
+    QVariantMap summary;
+    bool driveLeft = false;
+    bool stopAsked = false;
+    connect(thread, &QThread::started, job, &MdiEnrichmentJob::run);
+    connect(thread, &QThread::finished, job, &QObject::deleteLater);
+    connect(job, &MdiEnrichmentJob::activity, &loop, [&](const QVariantMap &step) {
+        const QString event = step.value(QStringLiteral("event")).toString();
+        if (event == QLatin1String("end")) {
+            // One line per step that ran; steps already current are not run
+            const QString outcome = step.value(QStringLiteral("outcome")).toString();
+            const QString reason  = step.value(QStringLiteral("reason")).toString();
+            QString line = QStringLiteral("[%1/%2] %3 %4")
+                               .arg(step.value(QStringLiteral("fileIndex")).toInt())
+                               .arg(step.value(QStringLiteral("fileCount")).toInt())
+                               .arg(step.value(QStringLiteral("analysis")).toString(), outcome);
+            if (!reason.isEmpty())
+                line += QStringLiteral(" (") + reason + QLatin1Char(')');
+            else if (outcome == QLatin1String("completed"))
+                line += QStringLiteral(" (%1 s)").arg(step.value(QStringLiteral("durationMs")).toLongLong() / 1000.0, 0, 'f', 1);
+            line += QStringLiteral(": ") + step.value(QStringLiteral("filePath")).toString();
+            stdout_stream << line << Qt::endl;
+        } else if (event == QLatin1String("waiting") && step.value(QStringLiteral("waiting")).toBool() && !driveLeft) {
+            // A drive gone during the run is not waited for here (MDI-F91):
+            // the steps done are kept and the next run continues
+            driveLeft = true;
+            stdout_stream << "The drive of " << step.value(QStringLiteral("drivePath")).toString()
+                          << " is not connected: the analysis stops, the next run continues." << Qt::endl;
+            job->requestStop();
+        }
+    });
+    connect(job, &MdiEnrichmentJob::finished, &loop, [&](const QVariantMap &result) {
+        summary = result;
+        loop.quit();
+    });
+
+    // SIGINT or SIGTERM: the runner stops after recording what is done; the
+    // step it abandons is not recorded (MDI-F10) and runs again next time
+    QTimer signalPoll;
+    connect(&signalPoll, &QTimer::timeout, &loop, [&]() {
+        if (stopSignal() != 0 && !stopAsked) {
+            stopAsked = true;
+            stdout_stream << "Stop requested: the analyses done so far are kept, the next run continues." << Qt::endl;
+            job->requestStop();
+        }
+    });
+    signalPoll.start(100);
+    thread->start();
+    loop.exec();
+    signalPoll.stop();
+    thread->quit();
+    thread->wait();
+    delete thread;   // the job was deleted when its thread finished
+
+    const int failed = summary.value(QStringLiteral("failed")).toInt();
+    stdout_stream << "---" << Qt::endl;
+    stdout_stream << QStringLiteral("AI analysis: %1 completed, %2 unchanged, %3 skipped, %4 failed")
+                         .arg(summary.value(QStringLiteral("completed")).toInt())
+                         .arg(summary.value(QStringLiteral("unchanged")).toInt())
+                         .arg(summary.value(QStringLiteral("skipped")).toInt())
+                         .arg(failed)
+                  << Qt::endl;
+    if (summary.contains(QStringLiteral("error"))) {
+        stderr_stream << "Error: The AI data of the collection could not be opened: " << dataDbPath << Qt::endl;
+        return AnalysisOutcome::NotRun;
+    }
+    if (stopAsked)
+        return AnalysisOutcome::Stopped;
+    if (driveLeft)
+        return AnalysisOutcome::DriveAway;
+    stdout_stream << "Catalog analyzed." << Qt::endl;
+    return failed > 0 ? AnalysisOutcome::DoneWithFailures : AnalysisOutcome::Done;
+}
+
+int CommandLineHandler::cmd_analyze(int deviceId)
+{
+    QTextStream stdout_stream(stdout);
+    stdout_stream << "Starting AI analysis of catalog " << deviceId << "..." << Qt::endl;
+    if (!prepareAnalysis())
+        return ExitError;
+    installStopSignalHandlers();
+
+    const QVariantMap tools = MdiEnrichmentJob::findTools(collection->settingsFilePath);
+    reportAnalysisTools(tools);
+    stdout_stream << kSeparator << Qt::endl;
+
+    switch (analyzeCatalog(deviceId, tools, true)) {
+    case AnalysisOutcome::Done:             return ExitSuccess;
+    case AnalysisOutcome::DoneWithFailures: return ExitAnalysisFailures;
+    case AnalysisOutcome::Stopped:          return 128 + stopSignal();
+    case AnalysisOutcome::DriveAway:
+    case AnalysisOutcome::NotRun:           break;
+    }
+    return ExitError;
+}
+
+int CommandLineHandler::cmd_analyzeAll()
+{
+    QTextStream stdout_stream(stdout);
+    stdout_stream << "Starting AI analysis of every catalog with a saved profile..." << Qt::endl;
+    if (!prepareAnalysis())
+        return ExitError;
+    installStopSignalHandlers();
+
+    const QList<int> deviceIDs = MdiProfile::deviceIds(m_connectionName);
+    if (deviceIDs.isEmpty()) {
+        stdout_stream << "No catalog has a saved AI analysis profile." << Qt::endl;
+        return ExitSuccess;
+    }
+    stdout_stream << QStringLiteral("Found %1 catalog(s) with an AI analysis profile.").arg(deviceIDs.size()) << Qt::endl;
+
+    const QVariantMap tools = MdiEnrichmentJob::findTools(collection->settingsFilePath);
+    reportAnalysisTools(tools);
+
+    // One catalog after the other, in the order of their device IDs
+    int processed = 0, analyzed = 0, withFailures = 0, driveAway = 0;
+    QStringList notAnalyzed;
+    bool stopped = false;
+    for (int i = 0; i < deviceIDs.size() && !stopped; ++i) {
+        if (stopSignal() != 0) {
+            stopped = true;
+            break;
+        }
+        const int deviceID = deviceIDs.at(i);
+        stdout_stream << kSeparator << Qt::endl;
+        stdout_stream << QString("Processing catalog %1 of %2 (ID: %3)")
+                             .arg(i + 1).arg(deviceIDs.size()).arg(deviceID) << Qt::endl;
+        ++processed;
+        switch (analyzeCatalog(deviceID, tools, false)) {
+        case AnalysisOutcome::Done:             ++analyzed;     break;
+        case AnalysisOutcome::DoneWithFailures: ++withFailures; break;
+        case AnalysisOutcome::DriveAway:        ++driveAway;    break;
+        case AnalysisOutcome::Stopped:          stopped = true; break;
+        case AnalysisOutcome::NotRun: {
+            Device tempDevice;
+            tempDevice.ID = deviceID;
+            tempDevice.loadDevice(m_connectionName);
+            notAnalyzed.append(QString("%1 (%2)").arg(tempDevice.name).arg(deviceID));
+            break;
+        }
+        }
+    }
+
+    stdout_stream << kDoubleSeparator << Qt::endl;
+    stdout_stream << "AI ANALYSIS SUMMARY" << Qt::endl;
+    stdout_stream << kDoubleSeparator << Qt::endl;
+    stdout_stream << "Total catalogs processed: " << processed << Qt::endl;
+    stdout_stream << "Analyzed: " << analyzed << Qt::endl;
+    stdout_stream << "Analyzed with failed steps: " << withFailures << Qt::endl;
+    stdout_stream << "Not analyzed, drive not connected: " << driveAway << Qt::endl;
+    stdout_stream << "Not analyzed, error: " << notAnalyzed.size() << Qt::endl;
+    for (const QString &name : std::as_const(notAnalyzed))
+        stdout_stream << "  - " << name << Qt::endl;
+    if (stopped)
+        stdout_stream << "Stopped before the end: the next run continues." << Qt::endl;
+    stdout_stream << kDoubleSeparator << Qt::endl;
+
+    if (stopped)
+        return 128 + stopSignal();
+    if (!notAnalyzed.isEmpty())
+        return ExitError;
+    return withFailures > 0 ? ExitAnalysisFailures : ExitSuccess;
 }

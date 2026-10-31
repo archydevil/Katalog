@@ -59,6 +59,8 @@ int main(int argc, char *argv[])
         static const QStringList cliTriggers = {
             QStringLiteral("list_catalogs"), QStringLiteral("update_catalog"),
             QStringLiteral("update_all_active"), QStringLiteral("search"),
+            // AI analysis (fork, D43)
+            QStringLiteral("analyze"), QStringLiteral("analyze_all"),
             QStringLiteral("--help"), QStringLiteral("-h"),
             QStringLiteral("--version"), QStringLiteral("-v")
         };

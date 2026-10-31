@@ -48,6 +48,7 @@
 
 #include <QList>
 #include <QString>
+#include <QStringList>
 #include <memory>
 
 class Collection;
@@ -132,6 +133,17 @@ public:
     // True when protection is off, or this computer is in the list
     bool          mayThisComputerWrite() const;
 
+    // The same answer before the collection is opened, read from its files
+    // without writing anything (no -wal or -shm either): File mode from the
+    // SQLite file, Memory mode from parameters.csv. True when unreadable.
+    static bool mayThisComputerWriteFile(const QString &databaseFilePath);
+    static bool mayThisComputerWriteFolder(const QString &memoryFolder);
+    // SQLite database name that opens path read-only and immutable (nothing
+    // written, no -wal or -shm file), with the connect options
+    // kReadOnlyConnectOptions
+    static QString readOnlyDatabaseName(const QString &path);
+    static constexpr const char *kReadOnlyConnectOptions = "QSQLITE_OPEN_READONLY;QSQLITE_OPEN_URI";
+
     // Turning protection on adds this computer first; turning it off keeps
     // the list for the next time.
     Change setProtection(bool on);
@@ -140,6 +152,7 @@ public:
 
 private:
     Collection *m_collection;
+    static bool allows(bool protection, const QStringList &codes);
     QString connectionName() const;
     bool    insertWriter(const QString &code, const QString &name);
     void    saveToFile() const;   // Memory mode: parameters.csv
