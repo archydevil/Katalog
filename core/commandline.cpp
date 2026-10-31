@@ -38,6 +38,7 @@
 #include "core/mdidata.h"
 #include "core/mdifts.h"
 #include "core/mdidiskspace.h"
+#include "core/mdiarchivecopy.h"
 #include <QThread>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -2155,4 +2156,78 @@ int CommandLineHandler::cmd_analyzeAll()
     if (!notAnalyzed.isEmpty())
         return ExitError;
     return withFailures > 0 ? ExitAnalysisFailures : ExitSuccess;
+}
+
+int CommandLineHandler::cmd_publish(const QString &folderArgument)
+{
+    // Publish for the read-only Macs (fork, D43 (4)): Teca's own publishing,
+    // with the collection lock held (taken in initializeDatabase)
+    QTextStream stdout_stream(stdout);
+    QTextStream stderr_stream(stderr);
+    if (collection->databaseMode == QLatin1String("Hosted")) {
+        stderr_stream << "Error: A hosted collection cannot be published: its database is on its server." << Qt::endl;
+        return ExitError;
+    }
+    // The folder chosen in Teca for this collection; a command line run
+    // writes no settings key (CLI-C4)
+    QString folder = folderArgument;
+    if (folder.isEmpty()) {
+        QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+        folder = settings.value(collection->settingsKey(MdiPublish::folderKey())).toString();
+    }
+    if (folder.isEmpty()) {
+        stderr_stream << "Error: No publish folder is set for this collection: choose one in Teca's Settings,"
+                      << " or give it after the action (publish /path/to/folder)." << Qt::endl;
+        return ExitError;
+    }
+    folder = QDir::cleanPath(QFileInfo(folder).absoluteFilePath());
+    installStopSignalHandlers();   // Ctrl+C stops between steps; the published copy stays whole
+
+    MdiData::setCollectionFolder(collection->folder);   // derived files found as Teca finds them
+    MdiPublish::Sources sources;
+    sources.collectionFolder   = collection->folder;
+    sources.databaseMode       = collection->databaseMode;
+    sources.databaseFilePath   = collection->databaseFilePath;
+    sources.collectionName     = collection->databaseMode == QLatin1String("Memory")
+                                 ? QDir(QDir::cleanPath(collection->folder)).dirName()
+                                 : QFileInfo(collection->databaseFilePath).fileName();
+    sources.catalogSourcePaths = MdiPublish::catalogSourcePaths(m_connectionName);
+
+    stdout_stream << "Publishing for the read-only Macs into: " << folder << Qt::endl;
+    const MdiPublish::Result r = MdiPublish::run(sources, folder, QDateTime::currentDateTime(),
+        [this, &stdout_stream](int done, int total, const QString &item) {
+            if (verbose && !item.isEmpty())
+                stdout_stream << QStringLiteral("[%1/%2] ").arg(done + 1).arg(total) << item << Qt::endl;
+            return stopSignal() == 0 && !m_lockLost;
+        });
+    if (!r.ok()) {
+        QString reason;
+        switch (r.error) {
+        case MdiPublish::Error::NoDestination:     reason = "the folder does not exist"; break;
+        case MdiPublish::Error::InsideCollection:  reason = "the folder is inside the collection folder"; break;
+        case MdiPublish::Error::OnCatalogedSource: reason = "the folder is inside a catalog's source (" + r.detail + ")"; break;
+        case MdiPublish::Error::PublishedCopy:     reason = "the collection is itself a published copy"; break;
+        case MdiPublish::Error::NotEnoughSpace:
+            reason = QStringLiteral("%1 bytes of free space are needed, %2 are left").arg(r.needed).arg(r.available);
+            break;
+        case MdiPublish::Error::Stopped:           reason = "stopped"; break;
+        default:                                   reason = r.detail; break;
+        }
+        stderr_stream << "Error: Not published: " << reason << ". The copy published before is unchanged." << Qt::endl;
+        return stopSignal() != 0 ? 128 + stopSignal() : ExitError;
+    }
+    stdout_stream << kDoubleSeparator << Qt::endl;
+    stdout_stream << "PUBLISH SUMMARY" << Qt::endl;
+    stdout_stream << kDoubleSeparator << Qt::endl;
+    stdout_stream << "Published at: " << r.publishedAt.toString(Qt::ISODate) << Qt::endl;
+    stdout_stream << "Snapshots: " << r.written.join(", ") << Qt::endl;
+    stdout_stream << "Derived files copied: " << r.derivedCopied << ", unchanged: " << r.derivedUnchanged
+                  << ", not found at the source: " << r.derivedMissing << Qt::endl;
+    stdout_stream << "Left out of mdi_data.db: notes of " << r.cleaned.notes << " file(s), "
+                  << r.cleaned.people << " people, " << r.cleaned.links << " person-file links, "
+                  << r.cleaned.faces << " faces (" << r.cropsLeftOut << " face crops), "
+                  << r.cleaned.infoVectors << " information vectors" << Qt::endl;
+    stdout_stream << "Instant-index rows rebuilt from the cleaned information: " << r.cleaned.indexRows << Qt::endl;
+    stdout_stream << kDoubleSeparator << Qt::endl;
+    return ExitSuccess;
 }
