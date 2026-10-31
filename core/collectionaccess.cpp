@@ -35,6 +35,7 @@
 #include <QCryptographicHash>
 #include <QDebug>
 #include <algorithm>
+#include <cstring>
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -215,7 +216,7 @@ QString CollectionWriters::normalizeCode(const QString &typed)
             c = QLatin1Char('0');
         else if (c == QLatin1Char('I') || c == QLatin1Char('L'))
             c = QLatin1Char('1');
-        if (c.unicode() > 127 || !qstrchr(kCodeAlphabet, char(c.unicode())))
+        if (c.unicode() == 0 || c.unicode() > 127 || !std::strchr(kCodeAlphabet, char(c.unicode())))
             return QString();
         raw += c;
     }

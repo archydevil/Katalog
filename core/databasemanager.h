@@ -62,6 +62,20 @@ public:
      *        Callers are responsible for any UI feedback (busy cursor, dialogs).
      */
     static QSqlError runMigrations(const QString &connectionName, Collection *collection);
+
+    /**
+     * @brief Read-only open (fork, D43): true when runMigrations() would
+     *        change the collection (its schema older than 3.0, or, outside
+     *        Memory mode, the mdi_ tables missing or older).
+     */
+    static bool migrationNeeded(const QString &connectionName, Collection *collection);
+
+    /**
+     * @brief What a read-only open runs instead of runMigrations(): nothing is
+     *        written to the collection. Memory mode: the in-memory mdi_ tables
+     *        and the profiles of its file; File and Hosted: nothing.
+     */
+    static QSqlError prepareReadOnly(const QString &connectionName, Collection *collection);
 };
 
 #endif // DATABASEMANAGER_H

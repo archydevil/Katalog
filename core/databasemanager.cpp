@@ -137,3 +137,24 @@ QSqlError DatabaseManager::runMigrations(const QString &connectionName, Collecti
 
     return QSqlError();
 }
+//----------------------------------------------------------------------
+bool DatabaseManager::migrationNeeded(const QString &connectionName, Collection *collection)
+{
+    const QVersionNumber schemaVersion =
+        QVersionNumber::fromString(collection->loadDatabaseSchemaVersion());
+    if (schemaVersion < QVersionNumber::fromString("3.0"))
+        return true;
+    // Memory mode: the mdi_ tables are in memory, created at every open
+    return collection->databaseMode != "Memory"
+           && MdiSchema::storedVersion(connectionName) < MdiSchema::currentVersion;
+}
+//----------------------------------------------------------------------
+QSqlError DatabaseManager::prepareReadOnly(const QString &connectionName, Collection *collection)
+{
+    if (collection->databaseMode != "Memory")
+        return QSqlError();
+    QSqlError mdiErr = MdiSchema::ensure(connectionName);
+    if (mdiErr.type() != QSqlError::NoError) return mdiErr;
+    MdiProfile::loadFileToTable(connectionName, collection->folder);
+    return QSqlError();
+}
