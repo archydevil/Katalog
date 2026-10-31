@@ -4,59 +4,59 @@
 <context>
     <name>AppManager</name>
     <message>
-        <location filename="../qt_quick/appmanager.cpp" line="+190"/>
-        <location line="+112"/>
+        <location filename="../qt_quick/appmanager.cpp" line="+192"/>
+        <location line="+114"/>
         <location line="+16"/>
-        <location line="+7240"/>
+        <location line="+7264"/>
         <source>Search</source>
         <translation>खोज</translation>
     </message>
     <message>
-        <location line="-7364"/>
+        <location line="-7390"/>
         <source>Stopped</source>
         <translation>रोका गया</translation>
     </message>
     <message>
         <location line="+4"/>
         <location line="+24"/>
-        <location line="+100"/>
-        <location line="+5658"/>
+        <location line="+102"/>
+        <location line="+5661"/>
         <source>Evaluated</source>
         <translation>मूल्यांकन किया गया</translation>
     </message>
     <message>
-        <location line="-5780"/>
+        <location line="-5785"/>
         <location line="+16"/>
         <location line="+8"/>
-        <location line="+99"/>
+        <location line="+101"/>
         <source>Folders found</source>
         <translation>फ़ोल्डर मिले</translation>
     </message>
     <message>
-        <location line="-123"/>
+        <location line="-125"/>
         <location line="+16"/>
         <location line="+8"/>
-        <location line="+99"/>
+        <location line="+101"/>
         <source>Files found</source>
         <translation>फ़ाइलें मिलीं</translation>
     </message>
     <message>
-        <location line="-120"/>
+        <location line="-122"/>
         <location line="+9"/>
         <location line="+7"/>
-        <location line="+83"/>
-        <location line="+2343"/>
-        <location line="+447"/>
-        <location line="+155"/>
-        <location line="+482"/>
-        <location line="+1363"/>
+        <location line="+85"/>
+        <location line="+2368"/>
+        <location line="+379"/>
+        <location line="+158"/>
+        <location line="+492"/>
+        <location line="+1386"/>
         <location line="+28"/>
         <location line="+20"/>
-        <location line="+805"/>
+        <location line="+815"/>
         <location line="+33"/>
-        <location line="+611"/>
+        <location line="+620"/>
         <location line="+37"/>
-        <location line="+315"/>
+        <location line="+317"/>
         <location line="+11"/>
         <location line="+87"/>
         <location line="+29"/>
@@ -64,34 +64,37 @@
         <location line="+17"/>
         <location line="+37"/>
         <location line="+9"/>
-        <location line="+31"/>
-        <location line="+387"/>
-        <location line="+2118"/>
+        <location line="+32"/>
+        <location line="+396"/>
+        <location line="+2512"/>
         <location line="+17"/>
         <location line="+49"/>
         <location line="+52"/>
+        <location line="+152"/>
+        <location line="+43"/>
         <source>In Progress</source>
         <translation>प्रगति में</translation>
     </message>
     <message>
-        <location line="-9477"/>
-        <location line="+2801"/>
+        <location line="-10090"/>
+        <location line="+2758"/>
         <location line="+1"/>
-        <location line="+615"/>
+        <location line="+628"/>
         <location line="+1"/>
-        <location line="+2915"/>
-        <location line="+342"/>
+        <location line="+2957"/>
+        <location line="+344"/>
         <location line="+112"/>
         <location line="+53"/>
-        <location line="+47"/>
-        <location line="+723"/>
-        <location line="+1782"/>
+        <location line="+48"/>
+        <location line="+734"/>
+        <location line="+2174"/>
         <location line="+49"/>
+        <location line="+201"/>
         <source>Completed</source>
         <translation>पूर्ण हुआ</translation>
     </message>
     <message>
-        <location line="-8655"/>
+        <location line="-9265"/>
         <source>Empty database path provided</source>
         <translation>रिक्त डेटाबेस पथ प्रदान किया गया</translation>
     </message>
@@ -131,7 +134,7 @@
         <translation>स्थानीय डिस्क</translation>
     </message>
     <message>
-        <location line="+515"/>
+        <location line="+523"/>
         <source>search_results</source>
         <translation>खोज_परिणाम</translation>
     </message>
@@ -141,7 +144,7 @@
         <translation>खोज परिणाम</translation>
     </message>
     <message>
-        <location line="+283"/>
+        <location line="+286"/>
         <source>Case sensitive</source>
         <translation>केस संवेदनशील</translation>
     </message>
@@ -177,20 +180,20 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+5208"/>
-        <location line="+1909"/>
+        <location line="+5203"/>
+        <location line="+2204"/>
         <source>Size</source>
         <translation>आकार</translation>
     </message>
     <message>
-        <location line="-7116"/>
-        <location line="+7124"/>
+        <location line="-7406"/>
+        <location line="+7414"/>
         <location line="+72"/>
         <source>Date</source>
         <translation>दिनांक</translation>
     </message>
     <message>
-        <location line="-7195"/>
+        <location line="-7485"/>
         <source>Checksum</source>
         <translation>चेकसम</translation>
     </message>
@@ -220,7 +223,7 @@
         <translation>टैग: %1</translation>
     </message>
     <message>
-        <location line="+262"/>
+        <location line="+266"/>
         <source>Memory collection opened: %1</source>
         <translation>मेमोरी संग्रह खोला गया: %1</translation>
     </message>
@@ -245,13 +248,13 @@
         <translation>होस्टेड कनेक्शन विफल: %1</translation>
     </message>
     <message>
-        <location line="+240"/>
-        <location line="+3326"/>
+        <location line="+241"/>
+        <location line="+3303"/>
         <source>Provide a name for this new catalog.</source>
         <translation>इस नए कैटलॉग के लिए एक नाम दें।</translation>
     </message>
     <message>
-        <location line="-3324"/>
+        <location line="-3301"/>
         <source>Provide a path for this new catalog.</source>
         <translation>इस नए कैटलॉग के लिए एक पथ दें।</translation>
     </message>
@@ -280,28 +283,28 @@ Choose a different name and try again.</source>
     </message>
     <message>
         <location line="-20"/>
-        <location line="+2988"/>
+        <location line="+2962"/>
         <location line="+17"/>
-        <location line="+374"/>
-        <location line="+622"/>
-        <location line="+2249"/>
+        <location line="+378"/>
+        <location line="+631"/>
+        <location line="+2544"/>
         <source>A device operation is already running.</source>
         <translation>एक डिवाइस ऑपरेशन पहले से ही चल रहा है।</translation>
     </message>
     <message>
-        <location line="-6164"/>
-        <location line="+2474"/>
+        <location line="-6446"/>
+        <location line="+2442"/>
         <source>Create</source>
         <translation>बनाएं</translation>
     </message>
     <message>
-        <location line="-560"/>
+        <location line="-577"/>
         <source>Catalog creation was stopped.</source>
         <translation>कैटलॉग निर्माण रोक दिया गया।</translation>
     </message>
     <message>
         <location line="+34"/>
-        <location line="+26"/>
+        <location line="+27"/>
         <source>The selected device cannot be deleted as long as it has sub-devices.</source>
         <translation>चयनित डिवाइस को तब तक हटाया नहीं जा सकता जब तक इसमें उप-डिवाइस हैं।</translation>
     </message>
@@ -316,12 +319,12 @@ Choose a different name and try again.</source>
         <translation>डिलीट असफल</translation>
     </message>
     <message>
-        <location line="+136"/>
+        <location line="+147"/>
         <source>Virtual</source>
         <translation>वर्चुअल</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+29"/>
         <source>Storage</source>
         <translation>स्टोरेज</translation>
     </message>
@@ -331,13 +334,13 @@ Choose a different name and try again.</source>
         <translation>त्रुटि: %1</translation>
     </message>
     <message>
-        <location line="+242"/>
+        <location line="+246"/>
         <location line="+48"/>
         <source>Update</source>
         <translation>अपडेट</translation>
     </message>
     <message>
-        <location line="+253"/>
+        <location line="+256"/>
         <source>The selected device is not a catalog.</source>
         <translation>चयनित डिवाइस कैटलॉग नहीं है।</translation>
     </message>
@@ -352,8 +355,8 @@ Choose a different name and try again.</source>
         <translation>कैटलॉग को डिवाइस को असाइन करने में विफल।</translation>
     </message>
     <message>
-        <location line="+69"/>
-        <location line="+38"/>
+        <location line="+71"/>
+        <location line="+39"/>
         <source>Split failed: no catalogs were created.</source>
         <translation>विभाजन विफल: कोई कैटलॉग नहीं बनाया गया।</translation>
     </message>
@@ -362,7 +365,7 @@ Choose a different name and try again.</source>
         <translation type="vanished">%1 के लिए MIME प्रकारों की पुष्टि की जा रही है…</translation>
     </message>
     <message>
-        <location line="+494"/>
+        <location line="+498"/>
         <source>Device has no catalog.</source>
         <translation>डिवाइस में कोई कैटलॉग नहीं है।</translation>
     </message>
@@ -372,12 +375,12 @@ Choose a different name and try again.</source>
         <translation>चेकसम की पुष्टि की जा रही है: %1 / %2</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+31"/>
         <source>Failed to unassign device.</source>
         <translation>डिवाइस की असाइनमेंट हटाने में विफल।</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+14"/>
         <source>Could not open file.</source>
         <translation>फ़ाइल नहीं खोली जा सकी।</translation>
     </message>
@@ -397,8 +400,8 @@ Choose a different name and try again.</source>
         <translation>फ़ाइल नहीं खोली जा सकी: %1</translation>
     </message>
     <message>
-        <location line="-228"/>
-        <location line="+341"/>
+        <location line="-231"/>
+        <location line="+345"/>
         <source>There is already a catalog with this name: %1
 Choose a different name.</source>
         <translation>इस नाम का कैटलॉग पहले से मौजूद है: %1
@@ -460,18 +463,18 @@ Choose a different name.</source>
         <translation>हाँ</translation>
     </message>
     <message>
-        <location line="-839"/>
+        <location line="-846"/>
         <source>MIME verification failed:&lt;br/&gt;%1</source>
         <translation>MIME सत्यापन विफल:&lt;br/&gt;%1</translation>
     </message>
     <message>
-        <location line="+415"/>
+        <location line="+419"/>
         <location line="+33"/>
         <source>Verify MIME types</source>
         <translation>MIME प्रकारों को सत्यापित करें</translation>
     </message>
     <message>
-        <location line="+368"/>
+        <location line="+371"/>
         <location line="+1"/>
         <location line="+21"/>
         <location line="+1"/>
@@ -483,15 +486,15 @@ Choose a different name.</source>
         <translation type="vanished">इस ID के साथ एक स्टोरेज पहले से मौजूद है। कोई दूसरा ID चुनें।</translation>
     </message>
     <message>
-        <location line="-3418"/>
-        <location line="+87"/>
-        <location line="+3538"/>
-        <location line="+2799"/>
+        <location line="-3442"/>
+        <location line="+62"/>
+        <location line="+3593"/>
+        <location line="+3205"/>
         <source>Selected device is not a catalog</source>
         <translation>चयनित डिवाइस कैटलॉग नहीं है</translation>
     </message>
     <message>
-        <location line="-2469"/>
+        <location line="-2874"/>
         <source>Error: could not open collection</source>
         <translation>त्रुटि: संग्रह नहीं खोला जा सका</translation>
     </message>
@@ -501,7 +504,7 @@ Choose a different name.</source>
         <translation>स्कीमा संस्करण बेमेल। आयात रद्द। (%1)</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+19"/>
         <source>No source collection is open.</source>
         <translation>कोई स्रोत संग्रह खुला नहीं है।</translation>
     </message>
@@ -515,57 +518,58 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="-38"/>
-        <location line="+269"/>
-        <location line="+2472"/>
+        <location line="+270"/>
+        <location line="+2875"/>
         <location line="+49"/>
         <source>Files</source>
         <translation>फ़ाइलें</translation>
     </message>
     <message>
-        <location line="-2770"/>
+        <location line="-3174"/>
         <location line="+71"/>
         <location line="+57"/>
         <location line="+18"/>
         <location line="+4"/>
         <location line="+30"/>
-        <location line="+32"/>
-        <location line="+738"/>
-        <location line="+1784"/>
+        <location line="+33"/>
+        <location line="+749"/>
+        <location line="+2176"/>
         <location line="+70"/>
+        <location line="+189"/>
         <source>Error</source>
         <translation>त्रुटि</translation>
     </message>
     <message>
-        <location line="-2757"/>
+        <location line="-3350"/>
         <location line="+17"/>
         <location line="+29"/>
         <location line="+10"/>
         <location line="+17"/>
         <location line="+37"/>
         <location line="+9"/>
-        <location line="+2537"/>
+        <location line="+2941"/>
         <location line="+16"/>
         <location line="+9"/>
         <source>Export</source>
         <translation>निर्यात</translation>
     </message>
     <message>
-        <location line="-6583"/>
-        <location line="+616"/>
-        <location line="+2913"/>
-        <location line="+411"/>
+        <location line="-7044"/>
+        <location line="+629"/>
+        <location line="+2955"/>
+        <location line="+413"/>
         <location line="+26"/>
         <location line="+17"/>
         <location line="+50"/>
-        <location line="+684"/>
+        <location line="+696"/>
         <location line="+92"/>
-        <location line="+1766"/>
+        <location line="+2158"/>
         <location line="+11"/>
         <source>Cancelled</source>
         <translation>रद्द किया गया</translation>
     </message>
     <message>
-        <location line="-6819"/>
+        <location line="-7258"/>
         <source>Thumbnail</source>
         <translation>थंबनेल</translation>
     </message>
@@ -581,24 +585,24 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+6668"/>
+        <location line="+7107"/>
         <source>Video</source>
         <translation>वीडियो</translation>
     </message>
     <message>
-        <location line="-6668"/>
+        <location line="-7107"/>
         <location line="+1"/>
         <source>Clip</source>
         <translation>क्लिप</translation>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+6668"/>
+        <location line="+7107"/>
         <source>Audio</source>
         <translation>ऑडियो</translation>
     </message>
     <message>
-        <location line="-6667"/>
+        <location line="-7106"/>
         <source>Waveform</source>
         <translation>तरंगरूप</translation>
     </message>
@@ -658,7 +662,7 @@ Choose a different name.</source>
         <translation>आर्काइव की सामग्री</translation>
     </message>
     <message>
-        <location line="+53"/>
+        <location line="+56"/>
         <source>Provide a destination path for the previews and derived data.</source>
         <translation>पूर्वावलोकन और व्युत्पन्न डेटा के लिए एक गंतव्य पथ दें।</translation>
     </message>
@@ -668,14 +672,14 @@ Choose a different name.</source>
         <translation>ऐसा गंतव्य पथ चुनें जिसमें लिखा जा सके।</translation>
     </message>
     <message>
-        <location line="+121"/>
-        <location line="+160"/>
+        <location line="+96"/>
+        <location line="+163"/>
         <source>Enrichment</source>
         <translation>संवर्धन</translation>
     </message>
     <message>
-        <location line="-149"/>
-        <location line="+151"/>
+        <location line="-152"/>
+        <location line="+154"/>
         <source>Paused</source>
         <translation>रोका गया</translation>
     </message>
@@ -685,27 +689,27 @@ Choose a different name.</source>
         <translation>ड्राइव की प्रतीक्षा में</translation>
     </message>
     <message>
-        <location line="+3343"/>
+        <location line="+3395"/>
         <location line="+29"/>
         <source>Explore</source>
         <translation>अन्वेषण</translation>
     </message>
     <message>
-        <location line="-2888"/>
-        <location line="+2890"/>
-        <location line="+450"/>
+        <location line="-2930"/>
+        <location line="+2932"/>
+        <location line="+452"/>
         <location line="+10"/>
         <source>Loaded</source>
         <translation>लोड किया गया</translation>
     </message>
     <message>
-        <location line="-4176"/>
-        <location line="+6300"/>
+        <location line="-4211"/>
+        <location line="+6631"/>
         <source>Classification</source>
         <translation>वर्गीकरण</translation>
     </message>
     <message>
-        <location line="-6299"/>
+        <location line="-6630"/>
         <source>Reference documents</source>
         <translation>संदर्भ दस्तावेज़</translation>
     </message>
@@ -721,35 +725,35 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+6263"/>
+        <location line="+6594"/>
         <location line="+38"/>
         <source>Document study</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-6300"/>
+        <location line="-6631"/>
         <source>Proposals to approve</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+66"/>
         <source>The AI analysis needs at least %1 of free space on %2, which has %3 left.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+1681"/>
+        <location line="+1676"/>
         <source>Deleted: %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+818"/>
-        <location line="+38"/>
+        <location line="+839"/>
+        <location line="+39"/>
         <source>Split cancelled: the AI results could not be moved to the new catalogs. Nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-33"/>
-        <location line="+37"/>
+        <location line="-34"/>
+        <location line="+38"/>
         <source>Catalog split into %1 catalogs.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -795,12 +799,12 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+4"/>
-        <location line="+211"/>
+        <location line="+214"/>
         <source>The collection could not be changed. Nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-183"/>
+        <location line="-186"/>
         <source>%1 catalog(s), %2 file(s)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -860,12 +864,12 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+64"/>
+        <location line="+65"/>
         <source>Restored as it was before.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+26"/>
+        <location line="+27"/>
         <source>Version opened as a separate catalog: %1.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -876,13 +880,13 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+29"/>
+        <location line="+30"/>
         <source>At least two catalogs are needed to recompose.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-27"/>
-        <location line="+29"/>
+        <location line="-28"/>
+        <location line="+30"/>
         <source>These catalogs have no folder in common.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -897,18 +901,18 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+409"/>
-        <location line="+90"/>
+        <location line="+413"/>
+        <location line="+91"/>
         <source>Changes saved: %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+712"/>
+        <location line="+719"/>
         <source>The export folder must be empty.</source>
         <translation>निर्यात फ़ोल्डर खाली होना चाहिए।</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+48"/>
         <location line="+14"/>
         <location line="+19"/>
         <source>Collection Update</source>
@@ -920,63 +924,63 @@ Choose a different name.</source>
         <translation>कैटलॉग</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+33"/>
         <source>Not a Storage device.</source>
         <translation>स्टोरेज डिवाइस नहीं है।</translation>
     </message>
     <message>
-        <location line="+169"/>
-        <location line="+51"/>
+        <location line="+172"/>
+        <location line="+53"/>
         <source>Provide a link name.</source>
         <translation>एक लिंक नाम दें।</translation>
     </message>
     <message>
-        <location line="-49"/>
-        <location line="+51"/>
+        <location line="-51"/>
+        <location line="+53"/>
         <source>Select a source catalog first.</source>
         <translation>पहले स्रोत कैटलॉग चुनें।</translation>
     </message>
     <message>
-        <location line="-49"/>
-        <location line="+51"/>
+        <location line="-51"/>
+        <location line="+53"/>
         <source>Select a target catalog first.</source>
         <translation>पहले लक्ष्य कैटलॉग चुनें।</translation>
     </message>
     <message>
-        <location line="-49"/>
-        <location line="+51"/>
+        <location line="-51"/>
+        <location line="+53"/>
         <source>Select a different source or target (a device shall not be mapped to itself).</source>
         <translation>एक अलग स्रोत या लक्ष्य चुनें (एक डिवाइस को अपने आप पर मैप नहीं किया जा सकता)।</translation>
     </message>
     <message>
-        <location line="-47"/>
-        <location line="+14"/>
+        <location line="-49"/>
+        <location line="+15"/>
         <location line="+15"/>
         <source>Failed to create link.</source>
         <translation>लिंक बनाने में विफल।</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>Failed to update link.</source>
         <translation>लिंक अपडेट करने में विफल।</translation>
     </message>
     <message>
-        <location line="+109"/>
+        <location line="+112"/>
         <location line="+2"/>
-        <location line="+422"/>
+        <location line="+424"/>
         <source>Link not found.</source>
         <translation>लिंक नहीं मिला।</translation>
     </message>
     <message>
-        <location line="-409"/>
+        <location line="-411"/>
         <location line="+2"/>
-        <location line="+162"/>
+        <location line="+164"/>
         <location line="+257"/>
         <source>Both source and target must be Catalog devices.</source>
         <translation>स्रोत और लक्ष्य दोनों कैटलॉग डिवाइस होने चाहिए।</translation>
     </message>
     <message>
-        <location line="-381"/>
+        <location line="-383"/>
         <location line="+7"/>
         <source>Move</source>
         <translation>स्थानांतरित करें</translation>
@@ -990,7 +994,7 @@ Choose a different name.</source>
     <message>
         <location line="+9"/>
         <location line="+7"/>
-        <location line="+251"/>
+        <location line="+253"/>
         <source>Conflict</source>
         <translation>विरोध</translation>
     </message>
@@ -1040,12 +1044,12 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+7"/>
-        <location line="+1175"/>
+        <location line="+1459"/>
         <source>Report</source>
         <translation>रिपोर्ट</translation>
     </message>
     <message>
-        <location line="-1171"/>
+        <location line="-1455"/>
         <source>Conflicts</source>
         <translation>विरोध</translation>
     </message>
@@ -1075,7 +1079,7 @@ Choose a different name.</source>
         <translation>बैकअप प्रोफ़ाइल बनाई गई।</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+37"/>
         <source>A catalog update is already in progress. Please wait and try again.</source>
         <translation>कैटलॉग अपडेट पहले से चल रहा है। कृपया प्रतीक्षा करें और पुनः प्रयास करें।</translation>
     </message>
@@ -1091,23 +1095,72 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+236"/>
-        <location line="+75"/>
+        <location line="+212"/>
+        <location line="+297"/>
+        <location line="+77"/>
+        <location line="+18"/>
+        <location line="+14"/>
+        <location line="+103"/>
+        <location line="+24"/>
+        <location line="+21"/>
+        <location line="+26"/>
         <location line="+17"/>
-        <location line="+13"/>
-        <location line="+102"/>
-        <location line="+23"/>
-        <location line="+20"/>
-        <location line="+25"/>
-        <location line="+16"/>
-        <location line="+427"/>
-        <location line="+13"/>
-        <location line="+240"/>
+        <location line="+429"/>
+        <location line="+14"/>
+        <location line="+82"/>
+        <location line="+264"/>
         <source>The change could not be saved.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1096"/>
+        <location line="-1588"/>
+        <source>The collection is open read-only: this change is not possible.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Its database also needs an update for this version of Teca, made only where the collection can be changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>It is open on %1, in %2 (process %3).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+62"/>
+        <source>It is a copy published by %1 on %2, for the Macs that only read it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+25"/>
+        <location line="+138"/>
+        <source>This Mac is not among the Macs allowed to change it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-61"/>
+        <source>A code of 12 letters and digits is needed, as shown on the other Mac.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This code is already in the list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This code is not in the list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The last Mac in the list cannot be removed while protection is on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+174"/>
         <source>The enrichment is running: the transcripts can be cleaned once it ends or is stopped.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1122,13 +1175,13 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+93"/>
-        <location line="+113"/>
+        <location line="+94"/>
+        <location line="+116"/>
         <source>Select one or more files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+83"/>
         <source>Face recognition is not available for hosted collections.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1143,7 +1196,7 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+353"/>
+        <location line="+359"/>
         <source>Letter</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1239,12 +1292,12 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+445"/>
+        <location line="+553"/>
         <source>Other</source>
         <translation>अन्य</translation>
     </message>
     <message>
-        <location line="-431"/>
+        <location line="-539"/>
         <source>Contents</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1574,7 +1627,7 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <location line="+76"/>
+        <location line="+77"/>
         <source>%n proposal(s) left to approve: the file already has its own value for that field.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -1582,7 +1635,7 @@ Choose a different name.</source>
         </translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+188"/>
         <source>Web lookups are off for this collection.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1657,6 +1710,71 @@ Choose a different name.</source>
         <source>The copy could not be saved: %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location line="+53"/>
+        <source>A hosted collection cannot be published: its database is on its server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>The publish folder needs to be a folder that exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The publish folder needs to be outside the collection folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The publish folder needs to be outside the folders the catalogs are made from (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Publishing needs %1 of free space in the folder, which has %2 left.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Publishing was stopped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Not published: %1. The copy published before is unchanged.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+50"/>
+        <source>A publish folder is needed first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Publishing is already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Publish for the read-only Macs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Steps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Published in %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+175"/>
+        <source>Updated from %1 at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Catalog</name>
@@ -1686,7 +1804,7 @@ Choose a different name.</source>
         <translation>कैटलॉग</translation>
     </message>
     <message>
-        <location filename="../qt_quick/PageDevicesView.qml" line="+301"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="+302"/>
         <location filename="../core/catalog.cpp" line="+1527"/>
         <source>root</source>
         <translation>रूट</translation>
@@ -1720,7 +1838,7 @@ Choose a different name.</source>
 <context>
     <name>Collection</name>
     <message>
-        <location filename="../core/collection.cpp" line="+2787"/>
+        <location filename="../core/collection.cpp" line="+2827"/>
         <source>This folder contains Memory mode collection files, but you are currently in File mode.&lt;br/&gt;Switch to Memory mode or select a different folder.</source>
         <translation>इस फ़ोल्डर में मेमोरी मोड संग्रह फ़ाइलें हैं, लेकिन आप वर्तमान में फ़ाइल मोड में हैं।&lt;br/&gt;मेमोरी मोड पर स्विच करें या कोई भिन्न फ़ोल्डर चुनें।</translation>
     </message>
@@ -2287,7 +2405,7 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>Study the documents of this drive</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2544,6 +2662,11 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location line="+3"/>
+        <source>People, faces and notes are not in this published copy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location line="+2"/>
         <source>Nothing written yet: a title, an event, a place, the people in it…</source>
         <translation type="unfinished"></translation>
@@ -2584,12 +2707,12 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+32"/>
         <source>Approve</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+12"/>
         <source>Discard</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2639,12 +2762,12 @@ Choose a different name.</source>
         <translation>चेकसम</translation>
     </message>
     <message>
-        <location line="+79"/>
+        <location line="+80"/>
         <source>It is %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
         <source>Someone else…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2654,22 +2777,22 @@ Choose a different name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+14"/>
         <source>Not %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Remove the name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Ignore this face</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-520"/>
+        <location line="-530"/>
         <source>Show analysis</source>
         <translation>विश्लेषण दिखाएँ</translation>
     </message>
@@ -2677,7 +2800,7 @@ Choose a different name.</source>
 <context>
     <name>Main</name>
     <message>
-        <location filename="../qt_quick/Main.qml" line="+2432"/>
+        <location filename="../qt_quick/Main.qml" line="+2495"/>
         <source>Do you want to &lt;b&gt;delete&lt;/b&gt; this %1 device?&lt;br/&gt;&lt;br/&gt;Name: &lt;b&gt;%2&lt;/b&gt;</source>
         <translation>क्या आप इस %1 डिवाइस को &lt;b&gt;हटाना&lt;/b&gt; चाहते हैं?&lt;br/&gt;&lt;br/&gt;नाम: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
@@ -2685,27 +2808,27 @@ Choose a different name.</source>
         <location line="+97"/>
         <location line="+45"/>
         <location line="+156"/>
-        <location line="+330"/>
+        <location line="+331"/>
         <source>Yes</source>
         <translation>हाँ</translation>
     </message>
     <message>
-        <location line="-1751"/>
-        <location line="+27"/>
-        <location line="+136"/>
-        <location line="+989"/>
+        <location line="-1786"/>
+        <location line="+28"/>
+        <location line="+137"/>
+        <location line="+1021"/>
         <location line="+72"/>
         <location line="+283"/>
-        <location line="+1510"/>
-        <location line="+136"/>
-        <location filename="../qt_quick/PageContext.qml" line="+953"/>
-        <location filename="../qt_quick/OperationQueueView.qml" line="+414"/>
-        <location filename="../qt_quick/PageTagsForm.qml" line="+306"/>
+        <location line="+1516"/>
+        <location line="+137"/>
+        <location filename="../qt_quick/PageContext.qml" line="+957"/>
+        <location filename="../qt_quick/OperationQueueView.qml" line="+439"/>
+        <location filename="../qt_quick/PageTagsForm.qml" line="+308"/>
         <source>Cancel</source>
         <translation>रद्द करें</translation>
     </message>
     <message>
-        <location line="-2191"/>
+        <location line="-2198"/>
         <location line="+126"/>
         <location line="+104"/>
         <location line="+195"/>
@@ -2779,7 +2902,7 @@ Choose a different name.</source>
         <translation type="vanished">आंकड़े</translation>
     </message>
     <message>
-        <location line="-536"/>
+        <location line="-569"/>
         <location line="+1"/>
         <source>Tags</source>
         <translation>टैग्स</translation>
@@ -2793,7 +2916,7 @@ Choose a different name.</source>
         <translation type="vanished">दस्तावेज़</translation>
     </message>
     <message>
-        <location line="+643"/>
+        <location line="+676"/>
         <source>About</source>
         <translation>के बारे में</translation>
     </message>
@@ -2889,12 +3012,12 @@ Choose a different name.</source>
     <message>
         <location line="+9"/>
         <location line="+162"/>
-        <location line="+324"/>
+        <location line="+325"/>
         <source>No</source>
         <translation>नहीं</translation>
     </message>
     <message>
-        <location line="-452"/>
+        <location line="-453"/>
         <source>The catalog source path changed.</source>
         <translation>कैटलॉग स्रोत पथ बदल गया है।</translation>
     </message>
@@ -3128,12 +3251,12 @@ Choose a different name.</source>
     </message>
     <message>
         <location line="+21"/>
-        <location line="+746"/>
+        <location line="+748"/>
         <source>Analyse with AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-703"/>
+        <location line="-704"/>
         <source>The source folder does not contain any file.
 This could mean that the source is empty or the device is not mounted to this folder.
 Do you want to save it anyway (the catalog would be empty)?</source>
@@ -3158,7 +3281,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation>खोज</translation>
     </message>
     <message>
-        <location line="+954"/>
+        <location line="+959"/>
         <source>Numbers of: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3180,7 +3303,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="vanished">Katalog 3 में आपका स्वागत है। समाचार, प्रश्न और प्रतिक्रिया प्रोजेक्ट की चर्चाओं में साझा किए जाते हैं:</translation>
     </message>
     <message>
-        <location line="-1209"/>
+        <location line="-1214"/>
         <source>Name</source>
         <translation>नाम</translation>
     </message>
@@ -3196,13 +3319,13 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+7"/>
-        <location line="+130"/>
-        <location line="+696"/>
+        <location line="+131"/>
+        <location line="+698"/>
         <source>Stop</source>
         <translation>रोकें</translation>
     </message>
     <message>
-        <location line="-819"/>
+        <location line="-822"/>
         <source>Reset</source>
         <translation>रीसेट</translation>
     </message>
@@ -3215,15 +3338,15 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <location line="-335"/>
         <location line="+343"/>
         <location line="+50"/>
-        <location line="+111"/>
+        <location line="+112"/>
         <location line="+178"/>
         <location line="+330"/>
         <location line="+23"/>
         <location line="+52"/>
-        <location line="+67"/>
-        <location line="+110"/>
+        <location line="+69"/>
+        <location line="+112"/>
         <location line="+23"/>
-        <location line="+46"/>
+        <location line="+47"/>
         <source>Close</source>
         <translation>बंद करें</translation>
     </message>
@@ -3236,7 +3359,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
 </translation>
     </message>
     <message>
-        <location line="-1343"/>
+        <location line="-1349"/>
         <source>Copy version and system information</source>
         <translation>संस्करण और सिस्टम जानकारी कॉपी करें</translation>
     </message>
@@ -3294,7 +3417,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="vanished">सभी सक्रिय</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+81"/>
         <source>Snapshot</source>
         <translation>स्नैपशॉट</translation>
     </message>
@@ -3331,13 +3454,33 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation>कॉलम</translation>
     </message>
     <message>
-        <location line="-1706"/>
-        <location line="+2123"/>
+        <location line="-1708"/>
+        <location line="+2125"/>
         <source>Home</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-3068"/>
+        <location line="-4101"/>
+        <source>This collection is open read-only: search, browse and export work, changes are not possible.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The code of this Mac: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Copy</source>
+        <translation>कॉपी करें</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Copied</source>
+        <translation>कॉपी किया गया</translation>
+    </message>
+    <message>
+        <location line="+986"/>
         <source>Undo</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3402,13 +3545,13 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     <message>
         <location line="+1"/>
         <location line="+1"/>
-        <location line="+142"/>
+        <location line="+143"/>
         <location line="+1"/>
         <source>Notes</source>
         <translation>नोट्स</translation>
     </message>
     <message>
-        <location line="-106"/>
+        <location line="-107"/>
         <source>Delete this person?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3418,7 +3561,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+12"/>
         <source>Deleted.</source>
         <translation>डिलीट हो गया।</translation>
     </message>
@@ -3439,24 +3582,24 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+0"/>
-        <location line="+2330"/>
+        <location line="+2365"/>
         <source>Information</source>
         <translation>जानकारी</translation>
     </message>
     <message>
-        <location line="-2319"/>
+        <location line="-2354"/>
         <source>Only the fields filled in are applied to the %1 files; the others stay as each file has them. Tags and people are added.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+8"/>
         <location line="+1"/>
-        <location line="+131"/>
+        <location line="+160"/>
         <source>Title</source>
         <translation>शीर्षक</translation>
     </message>
     <message>
-        <location line="-130"/>
+        <location line="-159"/>
         <location line="+1"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
@@ -3464,26 +3607,26 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     <message>
         <location line="+1"/>
         <location line="+1"/>
-        <location line="+126"/>
+        <location line="+155"/>
         <source>Event</source>
         <translation>घटना</translation>
     </message>
     <message>
-        <location line="-125"/>
+        <location line="-154"/>
         <location line="+1"/>
-        <location line="+124"/>
+        <location line="+153"/>
         <source>Place</source>
         <translation>स्थान</translation>
     </message>
     <message>
-        <location line="-123"/>
+        <location line="-152"/>
         <location line="+1"/>
-        <location line="+122"/>
+        <location line="+151"/>
         <source>Date</source>
         <translation>दिनांक</translation>
     </message>
     <message>
-        <location line="-122"/>
+        <location line="-151"/>
         <source>e.g. 2015-07-12 or July 2015</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3500,14 +3643,14 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+613"/>
-        <location line="+2029"/>
+        <location line="+646"/>
+        <location line="+2031"/>
         <location filename="../qt_quick/PageHome.qml" line="+190"/>
         <source>People</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2641"/>
+        <location line="-2676"/>
         <source>Added to every file.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3523,7 +3666,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+48"/>
+        <location line="+49"/>
         <source>HTML page (*.html)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3534,7 +3677,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+49"/>
         <source>Proposals for this folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3554,7 +3697,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>Approve for %1 files</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3564,12 +3707,12 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Discard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+12"/>
         <source>Deduce dates and context for this drive</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3610,7 +3753,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+19"/>
         <source>Send these searches</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3622,14 +3765,14 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     <message>
         <location line="+24"/>
         <location line="+11"/>
-        <location line="+1940"/>
+        <location line="+1942"/>
         <location filename="../qt_quick/PageSearchResultsForm.qml" line="-390"/>
         <location line="+521"/>
         <source>All the drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1946"/>
+        <location line="-1948"/>
         <source>Change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3657,58 +3800,58 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1104"/>
+        <location line="+1105"/>
         <location filename="../qt_quick/PageStatisticsForm.qml" line="+451"/>
         <source>My drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1103"/>
+        <location line="-1104"/>
         <source>Catalogued drives and folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1619"/>
+        <location line="+1621"/>
         <source>Browse the archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1618"/>
+        <location line="-1620"/>
         <source>Folders, previews, details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1324"/>
+        <location line="+1325"/>
         <source>Search the drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1323"/>
+        <location line="-1324"/>
         <source>By name, content or meaning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+1934"/>
+        <location line="+1936"/>
         <location line="+236"/>
         <source>Add a drive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2169"/>
+        <location line="-2171"/>
         <source>Catalogue a drive or a folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+2050"/>
+        <location line="+2052"/>
         <source>Action history</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2049"/>
+        <location line="-2051"/>
         <source>Undo, earlier versions of the catalogs</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3724,24 +3867,24 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+2111"/>
+        <location line="+2113"/>
         <source>Archive knowledge</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2110"/>
+        <location line="-2112"/>
         <source>Context, glossary, documents</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+6"/>
         <location line="+26"/>
-        <location line="+2016"/>
+        <location line="+2018"/>
         <source>Work in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2041"/>
+        <location line="-2043"/>
         <source>Analysis, resources, history</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3752,30 +3895,30 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+2287"/>
+        <location line="+2293"/>
         <source>Archive in numbers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2286"/>
-        <location line="+2312"/>
+        <location line="-2292"/>
+        <location line="+2318"/>
         <source>Labels</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2311"/>
-        <location line="+2335"/>
+        <location line="-2317"/>
+        <location line="+2341"/>
         <source>Safety copies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2334"/>
-        <location line="+1466"/>
+        <location line="-2340"/>
+        <location line="+1467"/>
         <source>Manage drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-1443"/>
+        <location line="-1444"/>
         <source>AI analysis</source>
         <translation>AI विश्लेषण</translation>
     </message>
@@ -3801,12 +3944,12 @@ Do you want to save it anyway (the catalog would be empty)?</source>
     </message>
     <message>
         <location line="+542"/>
-        <location line="+755"/>
+        <location line="+756"/>
         <source>Update the connected drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-744"/>
+        <location line="-745"/>
         <source>Each connected catalog in %1 is read again from its drive and brought up to date. Catalogs whose drive is not connected are left as they are.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3831,8 +3974,8 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+657"/>
-        <location line="+234"/>
+        <location line="+658"/>
+        <location line="+235"/>
         <source>File details</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3907,18 +4050,18 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2411"/>
-        <location line="+2414"/>
+        <location line="-2417"/>
+        <location line="+2420"/>
         <source>%1 files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2594"/>
+        <location line="-2629"/>
         <source>Who made it</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+2597"/>
+        <location line="+2632"/>
         <source>AI: %1 files</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3938,7 +4081,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+37"/>
         <source>Edit Device</source>
         <translation>डिवाइस संपादित करें</translation>
     </message>
@@ -3956,24 +4099,24 @@ Do you want to save it anyway (the catalog would be empty)?</source>
 (इन परिवर्तनों को दर्शाने के लिए कैटलॉग को अपडेट करना आवश्यक है)</translation>
     </message>
     <message>
-        <location line="-2991"/>
-        <location line="+180"/>
-        <location line="+2700"/>
-        <location line="+136"/>
+        <location line="-3029"/>
+        <location line="+181"/>
+        <location line="+2735"/>
+        <location line="+138"/>
         <source>Save</source>
         <translation>सेव करें</translation>
     </message>
     <message>
-        <location line="-642"/>
+        <location line="-644"/>
         <location line="+1"/>
         <source>Up one folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-2359"/>
-        <location line="+23"/>
-        <location line="+1130"/>
-        <location line="+1852"/>
+        <location line="-2395"/>
+        <location line="+24"/>
+        <location line="+1163"/>
+        <location line="+1857"/>
         <source>Delete</source>
         <translation>डिलीट</translation>
     </message>
@@ -3982,12 +4125,12 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation type="vanished">बैकअप</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+104"/>
         <source>Add</source>
         <translation>जोड़ें</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
         <source>LuckyBackup</source>
         <translation>LuckyBackup</translation>
     </message>
@@ -4012,7 +4155,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation>बनाने और खोलने के लिए डेटाबेस चुनें:</translation>
     </message>
     <message>
-        <location filename="../qt_quick/main.cpp" line="+192"/>
+        <location filename="../qt_quick/main.cpp" line="+196"/>
         <source>Catalog your devices to search, analyze, and backup your files.</source>
         <translation>अपनी फ़ाइलों को खोजने, विश्लेषण करने और बैकअप लेने के लिए अपने उपकरणों को सूचीबद्ध करें।</translation>
     </message>
@@ -4337,7 +4480,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation>बैकअप प्रोफ़ाइल बनाई गई।</translation>
     </message>
     <message>
-        <location filename="../core/catalogjobstoppable.cpp" line="+270"/>
+        <location filename="../core/catalogjobstoppable.cpp" line="+293"/>
         <source>The file list is saved. Metadata and checksum scanning is incomplete and continues when the catalog is updated.</source>
         <translation>फ़ाइल सूची सहेज ली गई है। मेटाडेटा और चेकसम स्कैनिंग अधूरी है और कैटलॉग अपडेट होने पर जारी रहेगी।</translation>
     </message>
@@ -4352,7 +4495,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation>फ़ाइल सूची सहेज ली गई है। चेकसम स्कैनिंग अधूरी है और कैटलॉग अपडेट होने पर जारी रहेगी।</translation>
     </message>
     <message>
-        <location line="+1156"/>
+        <location line="+1170"/>
         <location filename="../core/catalogprogressmanager.cpp" line="-29"/>
         <source>Saving</source>
         <translation>सहेज रहा है</translation>
@@ -4692,7 +4835,7 @@ Do you want to save it anyway (the catalog would be empty)?</source>
         <translation>पूर्ण विस्तारित</translation>
     </message>
     <message>
-        <location filename="../core/device.cpp" line="+727"/>
+        <location filename="../core/device.cpp" line="+1048"/>
         <source>Do you want to &lt;span style=&apos;color: red&apos;;&gt;delete&lt;/span&gt; this %1 device?</source>
         <translation>क्या आप इस %1 डिवाइस को &lt;span style=&apos;color: red&apos;;&gt;डिलीट&lt;/span&gt; करना चाहते हैं?</translation>
     </message>
@@ -8469,7 +8612,7 @@ to the trash?</source>
         <translation>%1 / %2 (%3%)</translation>
     </message>
     <message>
-        <location filename="../core/storage.cpp" line="+255"/>
+        <location filename="../core/storage.cpp" line="+256"/>
         <source>No Path was provided for the Storage: %1. Edit the device to provide one and try again.</source>
         <translation>स्टोरेज के लिए कोई पथ नहीं दिया गया: %1. पथ देने के लिए डिवाइस संपादित करें और फिर से प्रयास करें।</translation>
     </message>
@@ -8600,7 +8743,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
 <context>
     <name>OperationQueueView</name>
     <message>
-        <location filename="../qt_quick/OperationQueueView.qml" line="-224"/>
+        <location filename="../qt_quick/OperationQueueView.qml" line="-229"/>
         <location line="+48"/>
         <location line="+65"/>
         <source>Stop</source>
@@ -8640,7 +8783,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>रोकें</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+45"/>
         <source>Queue</source>
         <translation>कतार</translation>
     </message>
@@ -9002,7 +9145,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="-10"/>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Clean now</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9026,7 +9169,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="vanished">लॉग</translation>
     </message>
     <message>
-        <location line="-341"/>
+        <location line="-342"/>
         <source>%1 tokens/s</source>
         <translation>%1 टोकन/से</translation>
     </message>
@@ -9074,12 +9217,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+1"/>
-        <location line="+647"/>
+        <location line="+648"/>
         <source>Errors: %1</source>
         <translation>त्रुटियाँ: %1</translation>
     </message>
     <message>
-        <location line="-619"/>
+        <location line="-620"/>
         <source>Exported to: %1</source>
         <translation>यहाँ निर्यात किया गया: %1</translation>
     </message>
@@ -9335,7 +9478,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>बैकअप पूर्वावलोकन</translation>
     </message>
     <message>
-        <location filename="../qt_quick/PageSelectionDelegate.qml" line="+287"/>
+        <location filename="../qt_quick/PageSelectionDelegate.qml" line="+288"/>
         <location filename="../qt_quick/PageBackupForm.qml" line="+12"/>
         <location line="+1"/>
         <location filename="../qt_quick/PageExploreFiles.qml" line="+576"/>
@@ -9348,7 +9491,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>संपादन</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
         <source>Duplicate</source>
         <translation>डुप्लिकेट करें</translation>
     </message>
@@ -9373,7 +9516,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>पहले से मौजूद: %1</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
         <source>Invert (swap source and target)</source>
         <translation>पलटें (स्रोत और लक्ष्य बदलें)</translation>
     </message>
@@ -9388,7 +9531,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>डिलीट</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>Delete link</source>
         <translation>लिंक हटाएँ</translation>
     </message>
@@ -9411,19 +9554,19 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>लिंक संपादित करें</translation>
     </message>
     <message>
-        <location line="+61"/>
-        <location line="+239"/>
+        <location line="+62"/>
+        <location line="+240"/>
         <source>Save</source>
         <translation>सेव करें</translation>
     </message>
     <message>
-        <location line="-232"/>
-        <location line="+238"/>
+        <location line="-233"/>
+        <location line="+239"/>
         <source>Cancel</source>
         <translation>रद्द करें</translation>
     </message>
     <message>
-        <location line="-120"/>
+        <location line="-121"/>
         <source>Name</source>
         <translation>नाम</translation>
     </message>
@@ -9728,7 +9871,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
 <context>
     <name>PageContext</name>
     <message>
-        <location filename="../qt_quick/PageContext.qml" line="-808"/>
+        <location filename="../qt_quick/PageContext.qml" line="-812"/>
         <source>Context saved</source>
         <translation>प्रसंग सहेजा गया</translation>
     </message>
@@ -9826,12 +9969,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="-366"/>
-        <location line="+708"/>
+        <location line="+712"/>
         <source>Remove</source>
         <translation>हटाएँ</translation>
     </message>
     <message>
-        <location line="-413"/>
+        <location line="-417"/>
         <location line="+85"/>
         <location line="+81"/>
         <source>Add</source>
@@ -9972,12 +10115,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+95"/>
         <source>Indexed</source>
         <translation>अनुक्रमित</translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+39"/>
         <source>Redoes only the classification of the files already analysed, from their descriptions and transcripts. Files already classified with this context are skipped.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9985,12 +10128,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <location line="+6"/>
         <location line="+35"/>
         <location line="+3"/>
-        <location line="+114"/>
+        <location line="+115"/>
         <source>Catalog</source>
         <translation>कैटलॉग</translation>
     </message>
     <message>
-        <location line="-139"/>
+        <location line="-140"/>
         <source>A saved context is needed first.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10031,14 +10174,14 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>इस कैटलॉग के लिए नोट्स</translation>
     </message>
     <message>
-        <location line="-608"/>
+        <location line="-611"/>
         <location line="+398"/>
         <source>Reference documents</source>
         <translation>संदर्भ दस्तावेज़</translation>
     </message>
     <message>
         <location line="+7"/>
-        <location line="+99"/>
+        <location line="+101"/>
         <source>%1 passages</source>
         <translation>%1 अंश</translation>
     </message>
@@ -10053,23 +10196,23 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>अनुक्रमण बाकी</translation>
     </message>
     <message>
-        <location line="-85"/>
+        <location line="-86"/>
         <source>Add files</source>
         <translation>फ़ाइलें जोड़ें</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Add folder</source>
         <translation>फ़ोल्डर जोड़ें</translation>
     </message>
     <message>
-        <location line="+115"/>
-        <location line="+147"/>
+        <location line="+116"/>
+        <location line="+148"/>
         <source>Re-interpret with the context</source>
         <translation>प्रसंग के साथ फिर से व्याख्या करें</translation>
     </message>
     <message>
-        <location line="-55"/>
+        <location line="-56"/>
         <source>Remove this reference document?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10079,7 +10222,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+71"/>
         <source>Folder</source>
         <translation>फ़ोल्डर</translation>
     </message>
@@ -10419,7 +10562,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>बाहर रखने के लिए पथ या नाम</translation>
     </message>
     <message>
-        <location line="+171"/>
+        <location line="+172"/>
         <source>What to analyse</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10439,7 +10582,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+11"/>
         <source>Stop</source>
         <translation>रोकें</translation>
     </message>
@@ -10468,19 +10611,19 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="vanished">बहिष्कृत करने के लिए पथ</translation>
     </message>
     <message>
-        <location line="-195"/>
+        <location line="-198"/>
         <location line="+100"/>
         <source>Add</source>
         <translation>जोड़ें</translation>
     </message>
     <message>
         <location line="-62"/>
-        <location line="+100"/>
+        <location line="+101"/>
         <source>Remove</source>
         <translation>हटाएँ</translation>
     </message>
     <message>
-        <location line="-78"/>
+        <location line="-79"/>
         <source>Global Parameters</source>
         <translation>वैश्विक पैरामीटर</translation>
     </message>
@@ -10538,12 +10681,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>डिवाइस</translation>
     </message>
     <message>
-        <location line="+348"/>
+        <location line="+350"/>
         <source>Type</source>
         <translation>प्रकार</translation>
     </message>
     <message>
-        <location line="-331"/>
+        <location line="-333"/>
         <source>Name</source>
         <translation>नाम</translation>
     </message>
@@ -10715,12 +10858,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="vanished">बहिष्कृत करने के लिए पथ</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Add</source>
         <translation>जोड़ें</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+43"/>
         <source>Remove</source>
         <translation>हटाएँ</translation>
     </message>
@@ -10834,7 +10977,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+4"/>
-        <location line="+88"/>
+        <location line="+89"/>
         <location line="+31"/>
         <location line="+74"/>
         <location line="+60"/>
@@ -10846,12 +10989,12 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="vanished">&lt;b&gt;%1&lt;/b&gt; को फ़ाइल प्रकार के अनुसार उप-कैटलॉग में विभाजित करें:</translation>
     </message>
     <message>
-        <location line="-200"/>
+        <location line="-201"/>
         <source>Verify then Split</source>
         <translation>सत्यापित करें और विभाजित करें</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+22"/>
         <source>Split without verifying</source>
         <translation>सत्यापन के बिना विभाजित करें</translation>
     </message>
@@ -10933,7 +11076,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>क्या आप इस %1 डिवाइस को &lt;b&gt;हटाना&lt;/b&gt; चाहते हैं?&lt;br/&gt;&lt;br/&gt;नाम: &lt;b&gt;%2&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="+735"/>
+        <location line="+736"/>
         <source>Yes</source>
         <translation>हाँ</translation>
     </message>
@@ -10950,7 +11093,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="vanished">कैटलॉग सूची</translation>
     </message>
     <message>
-        <location line="-483"/>
+        <location line="-484"/>
         <source>Filter from Selection</source>
         <translation>चयन से फ़िल्टर करें</translation>
     </message>
@@ -10976,7 +11119,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>कैटलॉग</translation>
     </message>
     <message>
-        <location line="-686"/>
+        <location line="-687"/>
         <source>Split done: %1 catalogs, with every file and its AI results.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11011,7 +11154,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+207"/>
+        <location line="+208"/>
         <source>MIME Verification Complete</source>
         <translation>MIME सत्यापन पूर्ण</translation>
     </message>
@@ -11067,13 +11210,13 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+32"/>
-        <location line="+181"/>
+        <location line="+182"/>
         <source>No devices</source>
         <translation>कोई डिवाइस नहीं</translation>
     </message>
     <message>
-        <location filename="../qt_quick/Main.qml" line="-2101"/>
-        <location filename="../qt_quick/PageDevicesView.qml" line="-531"/>
+        <location filename="../qt_quick/Main.qml" line="-2108"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="-532"/>
         <source>The files on the drive are not touched: only this catalog&apos;s list of files and its AI results leave the archive.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11085,17 +11228,17 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+7"/>
-        <location filename="../qt_quick/PageDevicesView.qml" line="-247"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="-248"/>
         <location line="+56"/>
-        <location line="+196"/>
+        <location line="+197"/>
         <source>A restore point is saved first, so this can be undone from Action history.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/PageDevicesView.qml" line="-251"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="-252"/>
         <location line="+56"/>
-        <location line="+196"/>
+        <location line="+197"/>
         <source>This collection keeps no restore points, so this cannot be undone.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11104,7 +11247,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     <name>PageDevicesViewDelegate</name>
     <message>
         <location line="-18"/>
-        <location filename="../qt_quick/PageDevicesView.qml" line="-478"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="-479"/>
         <location filename="../qt_quick/PageDevicesViewDelegate.qml" line="+83"/>
         <source>Virtual</source>
         <translation>वर्चुअल</translation>
@@ -11125,7 +11268,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="+376"/>
-        <location filename="../qt_quick/PageDevicesViewDelegate.qml" line="+34"/>
+        <location filename="../qt_quick/PageDevicesViewDelegate.qml" line="+35"/>
         <source>Update</source>
         <translation>अपडेट</translation>
     </message>
@@ -11145,7 +11288,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>फ़ोल्डर खोलें</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+7"/>
         <location line="+26"/>
         <source>Filelight</source>
         <translation>फाइललाइट</translation>
@@ -11161,22 +11304,22 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>MIME प्रकारों को सत्यापित करें</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+18"/>
         <source>Split catalog by sub-directory</source>
         <translation>उप-निर्देशिका द्वारा कैटलॉग विभाजित करें</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Split catalog by file type</source>
         <translation>फ़ाइल प्रकार द्वारा कैटलॉग विभाजित करें</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Add Virtual device</source>
         <translation>वर्चुअल डिवाइस जोड़ें</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Add Storage device</source>
         <translation>स्टोरेज डिवाइस जोड़ें</translation>
     </message>
@@ -11186,7 +11329,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>चयनित कैटलॉग असाइन करें</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Unassign this storage</source>
         <translation>इस स्टोरेज को अनासाइन करें</translation>
     </message>
@@ -11196,7 +11339,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>इस कैटलॉग को अनासाइन करें</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Delete this catalog</source>
         <translation>इस कैटलॉग को डिलीट करें</translation>
     </message>
@@ -11206,7 +11349,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>इस स्टोरेज को डिलीट करें</translation>
     </message>
     <message>
-        <location filename="../qt_quick/PageDevicesView.qml" line="+483"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="+484"/>
         <location filename="../qt_quick/PageDevicesViewDelegate.qml" line="+1"/>
         <source>Delete</source>
         <translation>डिलीट</translation>
@@ -11220,6 +11363,11 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <location line="+0"/>
         <source>Not connected</source>
         <translation>कनेक्टेड नहीं</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>On this Mac: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+5"/>
@@ -11257,7 +11405,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
         <translation>संक्षिप्त करें</translation>
     </message>
     <message>
-        <location filename="../qt_quick/PageDevicesView.qml" line="+730"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="+731"/>
         <location filename="../qt_quick/PageDevicesViewDelegate.qml" line="+13"/>
         <source>Actions</source>
         <translation>क्रियाएँ</translation>
@@ -11387,6 +11535,7 @@ Check that the source folder (%1) is correct, or that the device is mounted to t
     </message>
     <message>
         <location line="-742"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-862"/>
         <source>Folder not found.</source>
         <translation>फ़ोल्डर नहीं मिला।</translation>
     </message>
@@ -11636,12 +11785,12 @@ to the trash?</source>
     </message>
     <message>
         <location line="+17"/>
-        <location line="+140"/>
+        <location line="+143"/>
         <source>Join into one catalog</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-131"/>
+        <location line="-133"/>
         <source>Actions</source>
         <translation>क्रियाएँ</translation>
     </message>
@@ -11666,7 +11815,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>Open as a separate catalog</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11692,7 +11841,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Restore</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11917,7 +12066,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qt_quick/PageDevicesView.qml" line="-1104"/>
+        <location filename="../qt_quick/PageDevicesView.qml" line="-1106"/>
         <location filename="../qt_quick/PageHome.qml" line="-378"/>
         <location line="+143"/>
         <source>Browse</source>
@@ -12047,7 +12196,7 @@ to the trash?</source>
 <context>
     <name>PagePeople</name>
     <message>
-        <location filename="../qt_quick/PagePeople.qml" line="+181"/>
+        <location filename="../qt_quick/PagePeople.qml" line="+184"/>
         <location line="+57"/>
         <source>Unknown person</source>
         <translation type="unfinished"></translation>
@@ -12063,7 +12212,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+12"/>
         <source>People can still be added to photos by hand, from File details.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12095,7 +12244,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>People</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12105,7 +12254,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+8"/>
         <source>Name, role or organisation…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12140,17 +12289,17 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-246"/>
+        <location line="-248"/>
         <source>The analysis proposes who these faces are. Only the ones approved get the name; the others stay without one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+60"/>
+        <location line="+61"/>
         <source>A person chosen shows their photos, and the faces like theirs in the other photos.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+141"/>
         <source>Selecting one shows it in Browse the archive.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12170,12 +12319,12 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-378"/>
+        <location line="-386"/>
         <source>No similar face found. Approving more faces of this person helps.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+418"/>
+        <location line="+426"/>
         <source>Attribute to %1 (%2)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12196,12 +12345,12 @@ to the trash?</source>
     </message>
     <message>
         <location line="+5"/>
-        <location line="+152"/>
+        <location line="+153"/>
         <source>Done.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-140"/>
+        <location line="-141"/>
         <source>Faces without a name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12222,7 +12371,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-571"/>
+        <location line="-579"/>
         <source>Named.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12233,8 +12382,13 @@ to the trash?</source>
         <translation>अधिक क्रियाएँ</translation>
     </message>
     <message>
-        <location line="+117"/>
-        <location line="+340"/>
+        <location line="+59"/>
+        <source>People, faces and notes are not in this published copy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+64"/>
+        <location line="+342"/>
         <source>Ignore the selected (%1)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12291,7 +12445,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Ignore</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12321,7 +12475,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+14"/>
         <source>Face data</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12346,7 +12500,7 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>Delete</source>
         <translation>डिलीट</translation>
     </message>
@@ -12356,9 +12510,9 @@ to the trash?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="-124"/>
-        <location line="+54"/>
-        <location line="+74"/>
+        <location line="-127"/>
+        <location line="+55"/>
+        <location line="+76"/>
         <source>Cancel</source>
         <translation>रद्द करें</translation>
     </message>
@@ -12367,13 +12521,13 @@ to the trash?</source>
     <name>PageSearchForm</name>
     <message>
         <location filename="../qt_quick/PageSearchForm.qml" line="+586"/>
-        <location line="+729"/>
+        <location line="+731"/>
         <location line="+18"/>
         <source>Select a date</source>
         <translation>एक तिथि चुनें</translation>
     </message>
     <message>
-        <location line="-741"/>
+        <location line="-743"/>
         <source>Now</source>
         <translation>अभी</translation>
     </message>
@@ -12428,12 +12582,12 @@ to the trash?</source>
         <translation>खोज इतिहास</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Keep Last 10</source>
         <translation>अंतिम 10 रखें</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <location line="+651"/>
         <source>Clear</source>
         <translation>साफ़ करें</translation>
@@ -12566,7 +12720,7 @@ to the trash?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location filename="../qt_quick/appmanager.cpp" line="-7802"/>
+        <location filename="../qt_quick/appmanager.cpp" line="-7698"/>
         <source>Exact Phrase</source>
         <translation>सटीक वाक्य</translation>
     </message>
@@ -12638,12 +12792,12 @@ to the trash?</source>
         <translation>सभी</translation>
     </message>
     <message>
-        <location line="-802"/>
+        <location line="-804"/>
         <source>The local model is not reachable: %1</source>
         <translation>स्थानीय मॉडल तक नहीं पहुँचा जा सकता: %1</translation>
     </message>
     <message>
-        <location line="+468"/>
+        <location line="+470"/>
         <source>Teca searches its catalogs, so the drives can stay disconnected. By meaning, it also searches the descriptions and transcripts made by the AI; in the information, what was written about the files.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13486,12 +13640,12 @@ Errors: %3</source>
 <context>
     <name>PageSelectionDelegate</name>
     <message>
-        <location filename="../qt_quick/PageSelectionDelegate.qml" line="-145"/>
+        <location filename="../qt_quick/PageSelectionDelegate.qml" line="-146"/>
         <source>Search</source>
         <translation>खोज</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+14"/>
         <source>Update</source>
         <translation>अपडेट</translation>
     </message>
@@ -13511,7 +13665,7 @@ Errors: %3</source>
         <translation>संपादन</translation>
     </message>
     <message>
-        <location line="-144"/>
+        <location line="-145"/>
         <source>Virtual</source>
         <translation>वर्चुअल</translation>
     </message>
@@ -13536,7 +13690,7 @@ Errors: %3</source>
         <translation>कनेक्टेड नहीं</translation>
     </message>
     <message>
-        <location line="+260"/>
+        <location line="+261"/>
         <source>Collapse</source>
         <translation>संक्षिप्त करें</translation>
     </message>
@@ -13554,7 +13708,7 @@ Errors: %3</source>
         <translation>सेटिंग्स</translation>
     </message>
     <message>
-        <location line="+313"/>
+        <location line="+514"/>
         <source>Close</source>
         <translation>बंद करें</translation>
     </message>
@@ -13570,18 +13724,18 @@ Errors: %3</source>
     </message>
     <message>
         <location line="+4"/>
-        <location line="+217"/>
+        <location line="+562"/>
         <source>Memory</source>
         <translation>मेमोरी</translation>
     </message>
     <message>
-        <location line="-216"/>
-        <location line="+216"/>
+        <location line="-561"/>
+        <location line="+561"/>
         <source>File</source>
         <translation>फ़ाइल</translation>
     </message>
     <message>
-        <location line="-215"/>
+        <location line="-560"/>
         <source>Hosted</source>
         <translation>होस्ट किया गया</translation>
     </message>
@@ -13595,12 +13749,12 @@ Errors: %3</source>
     <message>
         <location line="+6"/>
         <location line="+1"/>
-        <location line="+741"/>
+        <location line="+1086"/>
         <source>(none)</source>
         <translation>(कोई नहीं)</translation>
     </message>
     <message>
-        <location line="-729"/>
+        <location line="-1074"/>
         <location line="+6"/>
         <location line="+6"/>
         <source>Edit</source>
@@ -13618,8 +13772,9 @@ Errors: %3</source>
     </message>
     <message>
         <location line="-271"/>
-        <location line="+282"/>
-        <location line="+125"/>
+        <location line="+283"/>
+        <location line="+221"/>
+        <location line="+248"/>
         <source>Select</source>
         <translation>चुनें</translation>
     </message>
@@ -13729,16 +13884,16 @@ Errors: %3</source>
         <translation>पथ</translation>
     </message>
     <message>
-        <location line="-552"/>
+        <location line="-897"/>
         <location line="+3"/>
         <location line="+2"/>
         <location line="+0"/>
-        <location line="+568"/>
+        <location line="+913"/>
         <source>Device</source>
         <translation>डिवाइस</translation>
     </message>
     <message>
-        <location line="-596"/>
+        <location line="-941"/>
         <source>Storage devices linked to a missing storage</source>
         <translation>लापता स्टोरेज से जुड़े स्टोरेज डिवाइस</translation>
     </message>
@@ -13818,11 +13973,13 @@ Errors: %3</source>
     </message>
     <message>
         <location line="+4"/>
+        <location line="+532"/>
         <source>Copied</source>
         <translation>कॉपी किया गया</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="-752"/>
+        <location line="+323"/>
         <source>Select a folder</source>
         <translation>एक फ़ोल्डर चुनें</translation>
     </message>
@@ -13832,7 +13989,11 @@ Errors: %3</source>
         <translation>निर्यात</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="-294"/>
+        <location line="+27"/>
+        <location line="+30"/>
+        <location line="+24"/>
+        <location line="+293"/>
         <source>Cancel</source>
         <translation>रद्द करें</translation>
     </message>
@@ -13857,7 +14018,7 @@ Errors: %3</source>
         <translation>मेमोरी मोड में निर्यात (csv)</translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+386"/>
         <source>Hosted database</source>
         <translation type="unfinished"></translation>
     </message>
@@ -13898,12 +14059,193 @@ Errors: %3</source>
         <translation>अपडेट</translation>
     </message>
     <message>
-        <location line="-358"/>
+        <location line="-703"/>
         <source>Application</source>
         <translation>अनुप्रयोग</translation>
     </message>
     <message>
-        <location line="+404"/>
+        <location line="-406"/>
+        <source>Use this folder on this Mac?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+888"/>
+        <source>Recorded path: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-887"/>
+        <location line="+895"/>
+        <source>On this Mac: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-894"/>
+        <location line="+840"/>
+        <source>Only this Mac uses it: the collection keeps the recorded path.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-836"/>
+        <location line="+848"/>
+        <source>Use this folder</source>
+        <translation>इस फ़ोल्डर का उपयोग करें</translation>
+    </message>
+    <message>
+        <location line="-826"/>
+        <source>Forget the path on this Mac?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This Mac looks for the drive at its recorded path again: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Forget</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Remove %1 from the list?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>This Mac will open the collection read-only from now on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>That Mac will open the collection read-only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <location line="+599"/>
+        <source>Remove</source>
+        <translation>हटाएँ</translation>
+    </message>
+    <message>
+        <location line="-580"/>
+        <source>Turn protection off?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Every Mac will be able to change the collection again. The list is kept for the next time.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Turn off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+512"/>
+        <source>Macs allowed to change the collection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>When protection is on, only the Macs in this list can change the collection; every other Mac opens it read-only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Protection on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Protection off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Only the Macs in the list can change the collection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+37"/>
+        <source>This Mac</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>Name</source>
+        <translation>नाम</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Add a Mac</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Code of this Mac</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Copy</source>
+        <translation>कॉपी करें</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Publish for the read-only Macs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A copy of this collection is written into a folder that you sync to the other Macs, for example with Syncthing; they open it read-only. People, faces and notes are not published.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Not published yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Folder</source>
+        <translation>फ़ोल्डर</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Publish again after updates and analyses</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Publish now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <location line="+66"/>
+        <source>Where is this drive on this Mac…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="-58"/>
+        <source>%1 is not at its recorded path. It seems to be at %2 on this Mac.</source>
+        <translation>%1 अपने दर्ज किए गए पथ पर नहीं है। यह इस Mac पर %2 पर प्रतीत होता है।</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Not now</source>
+        <translation>अभी नहीं</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Forget the path on this Mac</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location line="+241"/>
         <source>How Teca looks and behaves on this computer, and the AI tools it uses.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14335,7 +14677,7 @@ Errors: %3</source>
         <translation type="vanished">टैग जोड़ें</translation>
     </message>
     <message>
-        <location filename="../qt_quick/PageTagsForm.qml" line="-250"/>
+        <location filename="../qt_quick/PageTagsForm.qml" line="-252"/>
         <source>Labels</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14375,7 +14717,7 @@ Errors: %3</source>
         <translation>लेबल</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+20"/>
         <source>Label the folder</source>
         <translation type="unfinished"></translation>
     </message>
@@ -14518,7 +14860,7 @@ Errors: %3</source>
 <context>
     <name>QPlatformTheme</name>
     <message>
-        <location filename="../qt_quick/main.cpp" line="-167"/>
+        <location filename="../qt_quick/main.cpp" line="-171"/>
         <source>OK</source>
         <translation>ठीक है</translation>
     </message>

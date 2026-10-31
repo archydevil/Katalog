@@ -11,6 +11,7 @@ Cette page décrit toutes les fonctionnalités de l'écran **Paramètres** et co
   * [Informations sur l'application](#app-information) : version et fichier de configuration,
 * *Collection* :
   * [Collection et base de données](#collection-database) : la collection ouverte, son mode de données, l'[export vers un autre mode de données](#export), la version de la base de données et le contrôle qualité, et le dossier d'images,
+  * [Chemins des périphériques sur cet ordinateur](#device-paths-this-mac) : où cet ordinateur trouve chaque périphérique de la collection ouverte,
   * [Importation et synchronisation de la collection](#import-update) : importer des périphériques depuis une autre collection, ou mettre à jour ceux importés précédemment.
 
 *Paramètres* s'ouvre depuis le panneau latéral, par-dessus les autres pages, sur l'onglet *Application*. *Ouvrir... > Base de données hébergée...* dans le panneau latéral l'ouvre sur l'onglet *Collection*, avec le formulaire de connexion hébergée. *Fermer* (ou `Échap`) revient aux autres pages (voir [Interface](Interface)).
@@ -78,6 +79,9 @@ La section affiche :
   * en mode *Fichier*, il ouvre le fichier de base de données dans l'application qui lui est associée (par exemple [DB Browser for SQLite](https://sqlitebrowser.org)),
   * en mode *Mémoire*, il ouvre le dossier de la collection dans le gestionnaire de fichiers,
   * en mode *Hébergé*, il ouvre la base de données dans phpMyAdmin, à l'*URL phpMyAdmin* définie pour la connexion.
+
+#### Chemins des périphériques sur cet ordinateur {#device-paths-this-mac}
+Pour chaque périphérique Storage ou Catalog, *Where is this drive on this Mac…* permet de choisir son dossier local. Ce réglage est enregistré sur cet ordinateur pour la collection ouverte et ne modifie pas le chemin enregistré dans la collection. *Forget the path on this Mac* supprime le remplacement local. Si un autre emplacement est détecté, il est proposé ici et n'est appliqué qu'après confirmation.
 
 ### Modes de données {#database-memory-mode}
 Katalog propose 3 *modes de données*, c'est-à-dire 3 façons de stocker et de traiter les données d'une collection.

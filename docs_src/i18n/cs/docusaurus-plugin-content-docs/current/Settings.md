@@ -11,6 +11,7 @@ Tato stránka popisuje všechny funkce obrazovky **Nastavení** a jak je použí
   * [Informace o aplikaci](#app-information): verze a soubor s nastavením,
 * *Sbírka*:
   * [Sbírka a databáze](#collection-database): otevřená kolekce, její datový režim, [export do jiného datového režimu](#export), verze databáze a kontrola kvality a složka obrázků,
+  * [Cesty zařízení na tomto počítači](#device-paths-this-mac): kde tento počítač najde jednotlivá zařízení otevřené kolekce,
   * [Import a synchronizace sbírky](#import-update): import zařízení z jiné kolekce nebo aktualizace dříve importovaných zařízení.
 
 *Nastavení* se otevírá z postranního panelu, nad ostatními stránkami, na kartě *Aplikace*. *Otevřít... > Hostovaná databáze...* v postranním panelu je otevře na kartě *Sbírka* s formulářem pro hostované připojení. *Zavřít* (nebo `Esc`) se vrátí k ostatním stránkám (viz [Rozhraní](Interface)).
@@ -78,6 +79,9 @@ Sekce zobrazuje:
   * v režimu *Soubor* otevře databázový soubor v přidružené aplikaci (například [DB Browser for SQLite](https://sqlitebrowser.org)),
   * v režimu *Paměť* otevře složku kolekce ve správci souborů,
   * v režimu *Hostováno* otevře databázi v phpMyAdmin, na adrese *URL adresa phpMyAdmin* nastavené pro připojení.
+
+#### Cesty zařízení na tomto počítači {#device-paths-this-mac}
+Pro každé zařízení Storage nebo Catalog lze pomocí položky *Where is this drive on this Mac…* vybrat jeho místní složku. Nastavení se ukládá na tomto počítači pro otevřenou kolekci a nemění cestu uloženou v kolekci. Položka *Forget the path on this Mac* místní přemapování odstraní. Pokud je nalezeno jiné umístění, zobrazí se zde jako návrh a použije se až po potvrzení.
 
 ### Datové režimy {#database-memory-mode}
 Katalog nabízí 3 *datové režimy*, tedy způsoby ukládání a zpracování dat kolekce.

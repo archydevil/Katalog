@@ -1058,6 +1058,7 @@ ScrollablePageFitted {
                     delegate: ColumnLayout {
                         id: pathRemapRow
                         required property var modelData
+                        required property int index
                         Layout.fillWidth: true
                         spacing: Kirigami.Units.smallSpacing
 

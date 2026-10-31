@@ -11,6 +11,7 @@ This page describes all the features of the **Settings** screen and how to use t
   * [App information](#app-information): version and settings file,
 * *Collection*:
   * [Collection & Database](#collection-database): the open collection, its data mode, the [export to another data mode](#export), the database version and quality check, and the images folder,
+  * [Per-Mac device paths](#device-paths-this-mac): where this computer finds each device in the open collection,
   * [Collection Import & Synchronization](#import-update): import devices from another collection, or update previously imported ones.
 
 *Settings* opens from the drawer, over the other pages, on the *Application* tab. *Open... > Hosted Database...* in the drawer opens it on the *Collection* tab, with the hosted connection form. *Close* (or `Esc`) goes back to the other pages (see [Interface](Interface)).
@@ -78,6 +79,9 @@ The section shows:
   * in *File* mode, it opens the database file in the application associated with it (for example [DB Browser for SQLite](https://sqlitebrowser.org)),
   * in *Memory* mode, it opens the collection folder in the file manager,
   * in *Hosted* mode, it opens the database in phpMyAdmin, at the *phpMyAdmin URL* set for the connection.
+
+#### Device paths on this Mac {#device-paths-this-mac}
+For each Storage or Catalog device, *Where is this drive on this Mac…* lets you choose its local folder. The setting is stored on this computer for the open collection and does not change the path saved in the collection. *Forget the path on this Mac* removes the local remap. If another location is detected, it is suggested here and applied only after you confirm.
 
 ### Data modes {#database-memory-mode}
 Katalog provides 3 *data modes*, or ways of storing and handling the data of a collection.
