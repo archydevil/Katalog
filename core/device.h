@@ -160,6 +160,47 @@ public:
         // collection writes nothing to it. Process-wide; on by default.
         static void setActiveStateStored(bool stored);
         static bool activeStateStored();
+        // While it is not stored, the last probe of each device, which
+        // loadDeviceTree() shows instead of the stored value (D43, P3)
+        static bool probedActiveState(int deviceId, bool storedValue);
+
+        // Per-Mac remaps of device paths (fork, D43 (5), P3; MDI-F209,
+        // MDI-C66): where a drive recorded at one path is on this Mac. Kept in
+        // the app-wide settings file, per collection, never in the collection:
+        // device_path stays the only stored path (STI-C19). The table applied
+        // is process-wide, for the open collection, and read from any thread.
+        struct PathRemap {
+            int     deviceId = 0;
+            QString recordedPath;      // the device's path when the remap was made
+            QString localPath;         // where it is on this Mac
+            bool    current  = false;  // recordedPath is still the device's path
+        };
+        // This Mac's remaps of the open collection (collectionKey:
+        // Collection::settingsKey()), each marked current or not; the current
+        // ones are applied
+        static QList<PathRemap> loadPathRemaps(const QString &settingsFilePath,
+                                               const QString &collectionKey,
+                                               const QString &connectionName);
+        static void savePathRemap(const QString &settingsFilePath, const QString &collectionKey,
+                                  int deviceId, const QString &recordedPath, const QString &localPath);
+        static void removePathRemap(const QString &settingsFilePath, const QString &collectionKey,
+                                    int deviceId);
+        static void setPathRemaps(const QList<PathRemap> &remaps);   // the current ones are applied
+        static QList<PathRemap> pathRemaps();                        // those applied
+        // Where this device is on this Mac when remapped, else empty
+        static QString pathRemapOf(int deviceId);
+        // The one resolver: a recorded path — a device's path, or a folder or
+        // file beneath one — to where it is on this Mac; unchanged when no
+        // remap covers it. Every reach of a device's files goes through it.
+        static QString resolvePath(const QString &recordedPath);
+        static QString resolvedDevicePath(int deviceId, const QString &recordedPath);
+        QString resolvedPath() const;
+        // path, beneath fromRoot, moved beneath toRoot; unchanged otherwise
+        static QString rebasePath(const QString &path, const QString &fromRoot, const QString &toRoot);
+        // A folder on this Mac where a device that cannot be reached seems to
+        // be: a mounted volume or folder of the same name, or one holding a few
+        // of its catalogued files. Never applied by itself. Empty when none.
+        static QString suggestPathRemap(int deviceId, const QString &connectionName);
 
         void updateNumbersFromChildren();
         void updateParentsNumbers();

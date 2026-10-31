@@ -40,6 +40,8 @@
 #include <QSet>
 #include <QCoreApplication>
 #include <QStandardPaths>
+#include <QCryptographicHash>
+#include <QFileInfo>
 
 namespace {
 
@@ -110,6 +112,25 @@ QString Collection::resolveSettingsFilePath(const QString &appVersion)
 
     const QString homePath = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).value(0);
     return homePath + "/.config/" + settingsFileName;
+}
+
+//----------------------------------------------------------------------
+QString Collection::settingsKey(const QString &key) const
+{
+    // The derivation AppManager::collectionSettingsKey used, moved here so the
+    // command line reads the same keys (MDI-C66). A local path is made
+    // absolute and clean first, which leaves the window's paths unchanged and
+    // gives a command line run with a relative path the same key.
+    auto local = [](const QString &path) {
+        return path.isEmpty() ? path : QDir::cleanPath(QFileInfo(path).absoluteFilePath());
+    };
+    const QString where = databaseMode == QLatin1String("Hosted")
+                        ? databaseHostName + QLatin1Char('/') + databaseName
+                        : databaseMode == QLatin1String("Memory") ? local(folder)
+                                                                 : local(databaseFilePath);
+    const QByteArray id = QCryptographicHash::hash((databaseMode + QLatin1Char(':') + where).toUtf8(),
+                                                   QCryptographicHash::Sha1).toHex().left(16);
+    return key + QLatin1Char('/') + QString::fromLatin1(id);
 }
 
 //----------------------------------------------------------------------

@@ -9581,14 +9581,9 @@ QString AppManager::startDocumentStudy(int deviceId)
 QString AppManager::collectionSettingsKey(const QString &key) const
 {
     // The settings file is shared by every collection: a setting of one
-    // collection carries its identity (mode and where its database is)
-    const QString where = collection->databaseMode == QLatin1String("Hosted")
-                        ? collection->databaseHostName + QLatin1Char('/') + collection->databaseName
-                        : collection->databaseMode == QLatin1String("Memory") ? collection->folder
-                                                                             : collection->databaseFilePath;
-    const QByteArray id = QCryptographicHash::hash((collection->databaseMode + QLatin1Char(':') + where).toUtf8(),
-                                                   QCryptographicHash::Sha1).toHex().left(16);
-    return key + QLatin1Char('/') + QString::fromLatin1(id);
+    // collection carries its identity. Derived in core/, so the command line
+    // reads the same keys (MDI-C66)
+    return collection->settingsKey(key);
 }
 //----------------------------------------------------------------------
 bool AppManager::webSearchEnabled()

@@ -67,6 +67,11 @@ public:
 
     //Settings file used by the application of version appVersion (window and command line)
     static QString resolveSettingsFilePath(const QString &appVersion);
+    //A key of the app-wide settings file that belongs to this collection: the
+    //file is shared by every collection, so the key carries the collection's
+    //identity (mode and where its database is). The same for the window and
+    //the command line (fork, D43; MDI-C66). Set the mode and paths first.
+    QString settingsKey(const QString &key) const;
 
     //Collection lock (fork, D43): the lock file of a File- or Memory-mode
     //collection folder, the same for Teca and the command line (CollectionLock)
