@@ -2725,17 +2725,9 @@ void AppManager::savePendingEnrichmentProfile(int deviceId)
 bool AppManager::isPathWritable(const QString &path) const
 {
     // A destination that does not exist yet is accepted when the nearest
-    // existing folder above it can be written to: it is created when first used.
-    if (path.trimmed().isEmpty())
-        return false;
-    QFileInfo info(QDir::cleanPath(QFileInfo(path).absoluteFilePath()));
-    while (!info.exists()) {
-        const QString parent = info.absolutePath();
-        if (parent == info.absoluteFilePath())
-            return false;
-        info = QFileInfo(parent);
-    }
-    return info.isDir() && info.isWritable();
+    // existing folder above it can be written to: in core, shared with the
+    // command line (D43)
+    return MdiDiskSpace::isWritable(path);
 }
 //----------------------------------------------------------------------
 bool AppManager::isPathInside(const QString &path, const QString &parentPath) const
@@ -2830,55 +2822,11 @@ bool AppManager::saveEnrichmentProfile(int deviceId, const QVariantMap &values)
     return true;
 }
 //----------------------------------------------------------------------
-// Portable macOS build (fork, 2026-10-30): the external programs travel in
-// Teca.app/Contents/Helpers and the models in Contents/Resources/models. They
-// are the last resort: a path set in the settings, then the programs and
-// models already on the computer, come first.
-static QString bundledTool(const QString &found, const QString &program)
-{
-    if (!found.isEmpty())
-        return found;
-    const QFileInfo tool(QCoreApplication::applicationDirPath() + QStringLiteral("/../Helpers/") + program);
-    return tool.isExecutable() ? tool.canonicalFilePath() : QString();
-}
-static QString bundledModel(const QString &found, const QString &pattern, const QString &skipPrefix = QString())
-{
-    if (!found.isEmpty())
-        return found;
-    const QDir models(QCoreApplication::applicationDirPath() + QStringLiteral("/../Resources/models"));
-    // Largest first: the most capable model when several travel along
-    for (const QFileInfo &f : models.entryInfoList({pattern}, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Size))
-        if (skipPrefix.isEmpty() || !f.fileName().startsWith(skipPrefix))
-            return f.canonicalFilePath();
-    return QString();
-}
-
 QVariantMap AppManager::getEnrichmentTools()
 {
-    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
-    QVariantMap tools;
-    tools[QStringLiteral("ffmpeg")]    = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("ffmpeg"),    settings.value("MediaIntelligence/FfmpegPath").toString()), QStringLiteral("ffmpeg"));
-    tools[QStringLiteral("ffprobe")]   = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("ffprobe"),   settings.value("MediaIntelligence/FfprobePath").toString()), QStringLiteral("ffprobe"));
-    tools[QStringLiteral("pdftotext")] = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("pdftotext"), settings.value("MediaIntelligence/PdftotextPath").toString()), QStringLiteral("pdftotext"));
-    tools[QStringLiteral("whisper")]   = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("whisper-cli"), settings.value("MediaIntelligence/WhisperPath").toString()), QStringLiteral("whisper-cli"));
-    tools[QStringLiteral("whisperModel")] = bundledModel(MdiEnrichmentJob::findWhisperModel(settings.value("MediaIntelligence/WhisperModelPath").toString()),
-                                                         QStringLiteral("ggml-*.bin"), QStringLiteral("ggml-silero"));
-    tools[QStringLiteral("whisperVadModel")] = bundledModel(MdiEnrichmentJob::findWhisperVadModel(settings.value("MediaIntelligence/WhisperVadModelPath").toString()),
-                                                            QStringLiteral("ggml-silero-*.bin"));
-    tools[QStringLiteral("faceDetectorModel")]   = MdiFaces::findDetectorModel(settings.value("MediaIntelligence/FaceDetectorModelPath").toString());
-    tools[QStringLiteral("faceRecognizerModel")] = MdiFaces::findRecognizerModel(settings.value("MediaIntelligence/FaceRecognizerModelPath").toString());
-    tools[QStringLiteral("opencv")] = MdiFaces::openCvVersion();
-    // Dating and document study (fork, 2026-10-30): photo metadata, scanned pages
-    tools[QStringLiteral("exiv2")]     = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("exiv2"),     settings.value("MediaIntelligence/Exiv2Path").toString()), QStringLiteral("exiv2"));
-    tools[QStringLiteral("pdftoppm")]  = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("pdftoppm"),  settings.value("MediaIntelligence/PdftoppmPath").toString()), QStringLiteral("pdftoppm"));
-    tools[QStringLiteral("tesseract")] = bundledTool(MdiEnrichmentJob::findTool(QStringLiteral("tesseract"), settings.value("MediaIntelligence/TesseractPath").toString()), QStringLiteral("tesseract"));
-    tools[QStringLiteral("tessdata")]  = bundledModel(MdiDocument::findTessdata(settings.value("MediaIntelligence/TessdataPath").toString()),
-                                                      QStringLiteral("tessdata"));
-    tools[QStringLiteral("ollamaUrl")]   = settings.value("MediaIntelligence/OllamaUrl", QStringLiteral("http://localhost:11434")).toString();
-    tools[QStringLiteral("visionModel")] = settings.value("MediaIntelligence/VisionModel", QStringLiteral("gemma4")).toString();
-    tools[QStringLiteral("textModel")]   = settings.value("MediaIntelligence/TextModel",   QStringLiteral("gemma4")).toString();
-    tools[QStringLiteral("embedModel")]  = settings.value("MediaIntelligence/EmbedModel",  QStringLiteral("bge-m3")).toString();
-    return tools;
+    // In core, shared with the command line (D43): the settings file first,
+    // then the computer, then the programs and models of the portable build
+    return MdiEnrichmentJob::findTools(collection->settingsFilePath);
 }
 //----------------------------------------------------------------------
 QString AppManager::mdiAnalysisLabel(const QString &analysis) const
@@ -2973,41 +2921,15 @@ QString AppManager::startMdiJob(const MdiData::PendingJob &job, bool resumed)
                      QLocale().formattedDataSize(shortage.available));
     }
 
-    const QVariantMap tools = getEnrichmentTools();
-    MdiEnrichmentJob::Config config;
-    config.catalogId       = device.externalID;
-    config.catalogName     = device.name;
-    config.dataDbPath      = mdiDataPath();
-    config.destinationPath = profile.destinationPath;
-    config.settings        = profile.settings;
-    config.ffmpegPath      = tools.value(QStringLiteral("ffmpeg")).toString();
-    config.ffprobePath     = tools.value(QStringLiteral("ffprobe")).toString();
-    config.pdftotextPath   = tools.value(QStringLiteral("pdftotext")).toString();
-    config.whisperPath     = tools.value(QStringLiteral("whisper")).toString();
-    config.whisperModelPath = tools.value(QStringLiteral("whisperModel")).toString();
-    config.whisperVadModelPath     = tools.value(QStringLiteral("whisperVadModel")).toString();
-    config.faceDetectorModelPath   = tools.value(QStringLiteral("faceDetectorModel")).toString();
-    config.faceRecognizerModelPath = tools.value(QStringLiteral("faceRecognizerModel")).toString();
-    config.faceMatchThreshold      = faceMatchThreshold();
+    // Tools, models, language, face threshold and the domain context (D33):
+    // assembled in core, the same for the command line (D43)
+    MdiEnrichmentJob::Config config = MdiEnrichmentJob::analysisConfig(
+        getEnrichmentTools(), collection->settingsFilePath, device, mdiDataPath(), profile,
+        openMdiMainConnection() ? kMdiMainConnection : QString());
     config.facesOnly               = job.kind == QLatin1String("faces");
     // Dating or document study on its own (fork, 2026-10-30)
     if (job.kind == QLatin1String("dating") || job.kind == QLatin1String("document"))
         config.onlyAnalysis        = job.kind;
-    config.exiv2Path               = tools.value(QStringLiteral("exiv2")).toString();
-    config.pdftoppmPath            = tools.value(QStringLiteral("pdftoppm")).toString();
-    config.tesseractPath           = tools.value(QStringLiteral("tesseract")).toString();
-    config.tessdataDir             = tools.value(QStringLiteral("tessdata")).toString();
-    config.ollamaUrl       = tools.value(QStringLiteral("ollamaUrl")).toString();
-    config.visionModel     = tools.value(QStringLiteral("visionModel")).toString();
-    config.textModel       = tools.value(QStringLiteral("textModel")).toString();
-    config.embedModel      = tools.value(QStringLiteral("embedModel")).toString();
-    config.uiLanguageName  = QLocale::languageToString(QLocale(getCurrentLanguage()).language());
-    config.sourceRoot      = device.path;   // waited for when disconnected (MDI-F91)
-    // The collection's context and the catalog's notes (D33)
-    if (openMdiMainConnection()) {
-        config.context      = MdiContext::load(kMdiMainConnection, MdiContext::kCollectionScope);
-        config.catalogNotes = MdiContext::load(kMdiMainConnection, device.externalID).value("notes").toString();
-    }
     if (reinterpret) {
         if (MdiContext::isEmpty(config.context)) {
             qWarning() << "Re-interpretation without a context: not started";
@@ -8330,9 +8252,8 @@ QString AppManager::peopleStoreRefusal()
 //----------------------------------------------------------------------
 double AppManager::faceMatchThreshold()
 {
-    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
-    const double value = settings.value("MediaIntelligence/FaceMatchThreshold", MdiPeople::kDefaultMatchThreshold).toDouble();
-    return qBound(0.2, value, 0.9);
+    // In core, shared with the command line (D43)
+    return MdiEnrichmentJob::faceMatchThreshold(collection->settingsFilePath);
 }
 //----------------------------------------------------------------------
 void AppManager::reindexFileInfo(const QList<QPair<int, QString>> &files)

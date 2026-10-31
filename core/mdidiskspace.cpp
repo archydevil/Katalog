@@ -50,6 +50,22 @@ qint64 MdiDiskSpace::available(const QString &path)
     return storage.bytesAvailable();
 }
 
+bool MdiDiskSpace::isWritable(const QString &path)
+{
+    // A destination that does not exist yet is accepted when the nearest
+    // existing folder above it can be written to: it is created when first used.
+    if (path.trimmed().isEmpty())
+        return false;
+    QFileInfo info(QDir::cleanPath(QFileInfo(path).absoluteFilePath()));
+    while (!info.exists()) {
+        const QString parent = info.absolutePath();
+        if (parent == info.absoluteFilePath())
+            return false;
+        info = QFileInfo(parent);
+    }
+    return info.isDir() && info.isWritable();
+}
+
 MdiDiskSpace::Shortage MdiDiskSpace::firstShortage(const QStringList &paths, qint64 needed)
 {
     Shortage shortage;

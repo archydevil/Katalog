@@ -34,6 +34,7 @@
 
 #include <QString>
 #include <QJsonObject>
+#include <QList>
 
 class MdiProfile
 {
@@ -46,6 +47,8 @@ public:
     bool load(const QString &connectionName, int catalogDeviceId);
     bool save(const QString &connectionName);   // insert or replace the catalog's row
     static bool remove(const QString &connectionName, int catalogDeviceId);
+    // The catalogs that have a saved profile, by device ID (analyze_all, D43)
+    static QList<int> deviceIds(const QString &connectionName);
 
     // Memory mode persistence (tab-separated, like catalog_filter.csv)
     static QString memoryFilePath(const QString &collectionFolder);

@@ -59,6 +59,11 @@ public:
     // The first of paths whose volume has less than `needed` bytes free.
     // Empty paths are skipped; a volume whose space is unknown is not short.
     static Shortage firstShortage(const QStringList &paths, qint64 needed);
+
+    // A folder that can be written to, or that can be created in the nearest
+    // existing folder above it (the destination of the derived files);
+    // shared by the app and the command line (D43)
+    static bool isWritable(const QString &path);
 };
 
 #endif // MDIDISKSPACE_H

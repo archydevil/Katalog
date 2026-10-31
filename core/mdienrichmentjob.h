@@ -63,6 +63,8 @@
 #include <memory>
 
 class QProcess;
+class Device;
+class MdiProfile;
 
 class MdiEnrichmentJob : public QObject
 {
@@ -136,6 +138,24 @@ public:
     // whisper.cpp's voice-activity model (ggml-silero-*.bin) in the same
     // places; empty when none (the transcript then runs without --vad)
     static QString findWhisperVadModel(const QString &configuredPath = QString());
+
+    // Shared by the app and the command line (D43), so both run the same job:
+    // The programs, models and local AI endpoint a job uses (MDI-F20), keyed
+    // "ffmpeg", "whisperModel", "ollamaUrl"...: a path set in the settings
+    // file first, then the programs and models already on the computer, then
+    // the portable build's own (Teca.app/Contents/Helpers, Resources/models)
+    static QVariantMap findTools(const QString &settingsFilePath);
+    // The cosine from which a face is suggested as a person (settings file), bounded
+    static double faceMatchThreshold(const QString &settingsFilePath);
+    // Config of an analysis of one catalog with its saved profile: the tools
+    // of findTools(), the face threshold and the captions' language from the
+    // settings file, the catalog's source path (waited for, MDI-F91). With
+    // mdiConnection open on mdi_data.db, the collection's context and the
+    // catalog's notes as well (D33). The caller sets the kind of job (faces
+    // only, dating, re-interpretation) and the catalog stamp.
+    static Config analysisConfig(const QVariantMap &tools, const QString &settingsFilePath,
+                                 const Device &catalog, const QString &dataDbPath,
+                                 const MdiProfile &profile, const QString &mdiConnection = QString());
 
     // Unit-length embeddings of `texts` from an Ollama endpoint, in order; empty
     // on error. Synchronous: usable on any thread (the search query is

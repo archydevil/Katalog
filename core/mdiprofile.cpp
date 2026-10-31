@@ -99,6 +99,17 @@ bool MdiProfile::remove(const QString &connectionName, int catalogDeviceId)
     return query.exec();
 }
 
+QList<int> MdiProfile::deviceIds(const QString &connectionName)
+{
+    QList<int> ids;
+    QSqlQuery query(QSqlDatabase::database(connectionName));
+    if (!query.exec(QLatin1String("SELECT profile_device_id FROM mdi_profile ORDER BY profile_device_id")))
+        return ids;
+    while (query.next())
+        ids.append(query.value(0).toInt());
+    return ids;
+}
+
 QString MdiProfile::memoryFilePath(const QString &collectionFolder)
 {
     return collectionFolder + QStringLiteral("/mdi_profile.csv");

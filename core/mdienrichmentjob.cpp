@@ -36,6 +36,11 @@
 #include "core/mdidocument.h"
 #include "core/mdiproposals.h"
 #include "core/filechecksum.h"
+#include "core/device.h"
+#include "core/mdiprofile.h"
+#include <QCoreApplication>
+#include <QSettings>
+#include <QLocale>
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -353,6 +358,105 @@ QString MdiEnrichmentJob::findWhisperVadModel(const QString &configuredPath)
             return found.first().absoluteFilePath();
     }
     return QString();
+}
+
+//----------------------------------------------------------------------
+// Portable macOS build (fork, 2026-10-30): the external programs travel in
+// Teca.app/Contents/Helpers and the models in Contents/Resources/models. They
+// are the last resort: a path set in the settings, then the programs and
+// models already on the computer, come first.
+static QString bundledTool(const QString &found, const QString &program)
+{
+    if (!found.isEmpty())
+        return found;
+    const QFileInfo tool(QCoreApplication::applicationDirPath() + QStringLiteral("/../Helpers/") + program);
+    return tool.isExecutable() ? tool.canonicalFilePath() : QString();
+}
+static QString bundledModel(const QString &found, const QString &pattern, const QString &skipPrefix = QString())
+{
+    if (!found.isEmpty())
+        return found;
+    const QDir models(QCoreApplication::applicationDirPath() + QStringLiteral("/../Resources/models"));
+    // Largest first: the most capable model when several travel along
+    for (const QFileInfo &f : models.entryInfoList({pattern}, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Size))
+        if (skipPrefix.isEmpty() || !f.fileName().startsWith(skipPrefix))
+            return f.canonicalFilePath();
+    return QString();
+}
+
+QVariantMap MdiEnrichmentJob::findTools(const QString &settingsFilePath)
+{
+    QSettings settings(settingsFilePath, QSettings::IniFormat);
+    QVariantMap tools;
+    tools[QStringLiteral("ffmpeg")]    = bundledTool(findTool(QStringLiteral("ffmpeg"),    settings.value("MediaIntelligence/FfmpegPath").toString()), QStringLiteral("ffmpeg"));
+    tools[QStringLiteral("ffprobe")]   = bundledTool(findTool(QStringLiteral("ffprobe"),   settings.value("MediaIntelligence/FfprobePath").toString()), QStringLiteral("ffprobe"));
+    tools[QStringLiteral("pdftotext")] = bundledTool(findTool(QStringLiteral("pdftotext"), settings.value("MediaIntelligence/PdftotextPath").toString()), QStringLiteral("pdftotext"));
+    tools[QStringLiteral("whisper")]   = bundledTool(findTool(QStringLiteral("whisper-cli"), settings.value("MediaIntelligence/WhisperPath").toString()), QStringLiteral("whisper-cli"));
+    tools[QStringLiteral("whisperModel")] = bundledModel(findWhisperModel(settings.value("MediaIntelligence/WhisperModelPath").toString()),
+                                                         QStringLiteral("ggml-*.bin"), QStringLiteral("ggml-silero"));
+    tools[QStringLiteral("whisperVadModel")] = bundledModel(findWhisperVadModel(settings.value("MediaIntelligence/WhisperVadModelPath").toString()),
+                                                            QStringLiteral("ggml-silero-*.bin"));
+    tools[QStringLiteral("faceDetectorModel")]   = MdiFaces::findDetectorModel(settings.value("MediaIntelligence/FaceDetectorModelPath").toString());
+    tools[QStringLiteral("faceRecognizerModel")] = MdiFaces::findRecognizerModel(settings.value("MediaIntelligence/FaceRecognizerModelPath").toString());
+    tools[QStringLiteral("opencv")] = MdiFaces::openCvVersion();
+    // Dating and document study (fork, 2026-10-30): photo metadata, scanned pages
+    tools[QStringLiteral("exiv2")]     = bundledTool(findTool(QStringLiteral("exiv2"),     settings.value("MediaIntelligence/Exiv2Path").toString()), QStringLiteral("exiv2"));
+    tools[QStringLiteral("pdftoppm")]  = bundledTool(findTool(QStringLiteral("pdftoppm"),  settings.value("MediaIntelligence/PdftoppmPath").toString()), QStringLiteral("pdftoppm"));
+    tools[QStringLiteral("tesseract")] = bundledTool(findTool(QStringLiteral("tesseract"), settings.value("MediaIntelligence/TesseractPath").toString()), QStringLiteral("tesseract"));
+    tools[QStringLiteral("tessdata")]  = bundledModel(MdiDocument::findTessdata(settings.value("MediaIntelligence/TessdataPath").toString()),
+                                                      QStringLiteral("tessdata"));
+    tools[QStringLiteral("ollamaUrl")]   = settings.value("MediaIntelligence/OllamaUrl", QStringLiteral("http://localhost:11434")).toString();
+    tools[QStringLiteral("visionModel")] = settings.value("MediaIntelligence/VisionModel", QStringLiteral("gemma4")).toString();
+    tools[QStringLiteral("textModel")]   = settings.value("MediaIntelligence/TextModel",   QStringLiteral("gemma4")).toString();
+    tools[QStringLiteral("embedModel")]  = settings.value("MediaIntelligence/EmbedModel",  QStringLiteral("bge-m3")).toString();
+    return tools;
+}
+
+double MdiEnrichmentJob::faceMatchThreshold(const QString &settingsFilePath)
+{
+    QSettings settings(settingsFilePath, QSettings::IniFormat);
+    const double value = settings.value("MediaIntelligence/FaceMatchThreshold", MdiPeople::kDefaultMatchThreshold).toDouble();
+    return qBound(0.2, value, 0.9);
+}
+
+MdiEnrichmentJob::Config MdiEnrichmentJob::analysisConfig(const QVariantMap &tools, const QString &settingsFilePath,
+                                                          const Device &catalog, const QString &dataDbPath,
+                                                          const MdiProfile &profile, const QString &mdiConnection)
+{
+    Config config;
+    config.catalogId       = catalog.externalID;
+    config.catalogName     = catalog.name;
+    config.dataDbPath      = dataDbPath;
+    config.destinationPath = profile.destinationPath;
+    config.settings        = profile.settings;
+    config.ffmpegPath      = tools.value(QStringLiteral("ffmpeg")).toString();
+    config.ffprobePath     = tools.value(QStringLiteral("ffprobe")).toString();
+    config.pdftotextPath   = tools.value(QStringLiteral("pdftotext")).toString();
+    config.whisperPath     = tools.value(QStringLiteral("whisper")).toString();
+    config.whisperModelPath = tools.value(QStringLiteral("whisperModel")).toString();
+    config.whisperVadModelPath     = tools.value(QStringLiteral("whisperVadModel")).toString();
+    config.faceDetectorModelPath   = tools.value(QStringLiteral("faceDetectorModel")).toString();
+    config.faceRecognizerModelPath = tools.value(QStringLiteral("faceRecognizerModel")).toString();
+    config.faceMatchThreshold      = faceMatchThreshold(settingsFilePath);
+    config.exiv2Path               = tools.value(QStringLiteral("exiv2")).toString();
+    config.pdftoppmPath            = tools.value(QStringLiteral("pdftoppm")).toString();
+    config.tesseractPath           = tools.value(QStringLiteral("tesseract")).toString();
+    config.tessdataDir             = tools.value(QStringLiteral("tessdata")).toString();
+    config.ollamaUrl       = tools.value(QStringLiteral("ollamaUrl")).toString();
+    config.visionModel     = tools.value(QStringLiteral("visionModel")).toString();
+    config.textModel       = tools.value(QStringLiteral("textModel")).toString();
+    config.embedModel      = tools.value(QStringLiteral("embedModel")).toString();
+    // Captions in the language of the interface (Settings/Language, as the app reads it)
+    const QString language = QSettings(settingsFilePath, QSettings::IniFormat)
+                                 .value("Settings/Language", "en_US").toString();
+    config.uiLanguageName  = QLocale::languageToString(QLocale(language).language());
+    config.sourceRoot      = catalog.path;   // waited for when disconnected (MDI-F91)
+    // The collection's context and the catalog's notes (D33)
+    if (!mdiConnection.isEmpty()) {
+        config.context      = MdiContext::load(mdiConnection, MdiContext::kCollectionScope);
+        config.catalogNotes = MdiContext::load(mdiConnection, catalog.externalID).value("notes").toString();
+    }
+    return config;
 }
 
 //----------------------------------------------------------------------
