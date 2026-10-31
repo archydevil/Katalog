@@ -1,6 +1,15 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Shared cross-agent handoff
+
+Before resuming work, read [AGENTS.md](AGENTS.md) and
+[PROJECT_MEMORY.md](PROJECT_MEMORY.md). They provide the shared handoff for
+Claude Code, Copilot and Codex. Keep session decisions and verification status
+in the shared memory instead of duplicating them per assistant. The memory is
+not a specification and does not bypass the approval gates below.
+
 >
 > **PROMPT SHORTHANDS:**
 >
