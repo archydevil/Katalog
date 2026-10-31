@@ -207,8 +207,10 @@ Item {
         const info = appManager1.devicePathOnThisMac(deviceId)
         if (info.deviceId === undefined)
             return
+        // Where it is now, else where it was recorded, else the mounted volumes
         const start = info.localPath !== "" ? info.localPath
-                    : appManager1.pathExists(info.recordedPath) ? info.recordedPath : ""
+                    : appManager1.pathExists(info.recordedPath) ? info.recordedPath
+                    : String(info.recordedPath).startsWith("/Volumes/") ? "/Volumes" : ""
         root.pendingPathDevice = info
         applicationWindow().openFreshDialog(pathOnThisMacFolderComponent, start)
     }
