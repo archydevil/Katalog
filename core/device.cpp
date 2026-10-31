@@ -37,20 +37,317 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QMutex>
+#include <QReadWriteLock>
+#include <QSettings>
+#include <QStorageInfo>
+#include <QRegularExpression>
+#include <QTextStream>
+#include <QHash>
+#include <QSet>
+#include <algorithm>
 #include <atomic>
 
 namespace {
 std::atomic<bool> s_activeStateStored{true};   // false while the collection is read-only (D43)
+
+// The last probe of each device while it is not stored (read-only, D43)
+QMutex          s_probedMutex;
+QHash<int, bool> s_probedActive;
+
+// The remaps applied (P3), the longest recorded path first, so a folder
+// remapped inside a remapped drive wins over the drive
+QReadWriteLock           s_remapLock;
+QList<Device::PathRemap> s_remaps;
+
+// A device path as compared and stored: native separators made '/', no
+// trailing '/', roots kept (Catalog::normalizeSourcePath)
+QString normalizedDevicePath(const QString &path)
+{
+    return Catalog::normalizeSourcePath(QDir::fromNativeSeparators(path.trimmed()));
 }
+
+// A filesystem root ("/", "X:/") is never remapped: it would move every path
+bool isFilesystemRoot(const QString &path)
+{
+    return path == QLatin1String("/") || (path.length() == 3 && path.at(1) == QLatin1Char(':')
+                                          && path.at(2) == QLatin1Char('/'));
+}
+} // namespace
 
 void Device::setActiveStateStored(bool stored)
 {
     s_activeStateStored = stored;
+    // Probes of the collection being left are not those of the one opened
+    QMutexLocker locker(&s_probedMutex);
+    s_probedActive.clear();
 }
 
 bool Device::activeStateStored()
 {
     return s_activeStateStored;
+}
+
+bool Device::probedActiveState(int deviceId, bool storedValue)
+{
+    if (activeStateStored())
+        return storedValue;
+    QMutexLocker locker(&s_probedMutex);
+    return s_probedActive.value(deviceId, storedValue);
+}
+
+//----------------------------------------------------------------------
+// Per-Mac remaps of device paths (fork, D43 (5), P3)
+QList<Device::PathRemap> Device::loadPathRemaps(const QString &settingsFilePath,
+                                                const QString &collectionKey,
+                                                const QString &connectionName)
+{
+    QList<PathRemap> remaps;
+    // The devices' recorded paths, to tell a remap still current from one made
+    // for a path the collection no longer records
+    QHash<int, QString> devicePaths;
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
+    if (db.isOpen()) {
+        QSqlQuery query(db);
+        if (query.exec(QStringLiteral("SELECT device_id, device_path FROM device "
+                                      "WHERE device_type = 'Storage' OR device_type = 'Catalog'")))
+            while (query.next())
+                devicePaths.insert(query.value(0).toInt(), normalizedDevicePath(query.value(1).toString()));
+    }
+
+    QSettings settings(settingsFilePath, QSettings::IniFormat);
+    settings.beginGroup(collectionKey);
+    const QStringList groups = settings.childGroups();
+    for (const QString &group : groups) {
+        PathRemap remap;
+        remap.deviceId     = group.toInt();
+        remap.recordedPath = normalizedDevicePath(settings.value(group + QStringLiteral("/RecordedPath")).toString());
+        remap.localPath    = normalizedDevicePath(settings.value(group + QStringLiteral("/Path")).toString());
+        if (remap.deviceId <= 0 || remap.recordedPath.isEmpty() || remap.localPath.isEmpty())
+            continue;
+        remap.current = devicePaths.value(remap.deviceId) == remap.recordedPath
+                        && !isFilesystemRoot(remap.recordedPath);
+        remaps.append(remap);
+    }
+    settings.endGroup();
+
+    setPathRemaps(remaps);
+    return remaps;
+}
+
+void Device::savePathRemap(const QString &settingsFilePath, const QString &collectionKey,
+                           int deviceId, const QString &recordedPath, const QString &localPath)
+{
+    // New keys only: a settings file without them reads as before (MDI-C66)
+    QSettings settings(settingsFilePath, QSettings::IniFormat);
+    const QString base = collectionKey + QLatin1Char('/') + QString::number(deviceId) + QLatin1Char('/');
+    settings.setValue(base + QStringLiteral("RecordedPath"), normalizedDevicePath(recordedPath));
+    settings.setValue(base + QStringLiteral("Path"),         normalizedDevicePath(localPath));
+    settings.sync();
+}
+
+void Device::removePathRemap(const QString &settingsFilePath, const QString &collectionKey, int deviceId)
+{
+    QSettings settings(settingsFilePath, QSettings::IniFormat);
+    settings.remove(collectionKey + QLatin1Char('/') + QString::number(deviceId));
+    settings.sync();
+}
+
+void Device::setPathRemaps(const QList<PathRemap> &remaps)
+{
+    QList<PathRemap> applied;
+    for (const PathRemap &remap : remaps)
+        if (remap.current && !remap.recordedPath.isEmpty() && !remap.localPath.isEmpty()
+            && !isFilesystemRoot(remap.recordedPath))
+            applied.append(remap);
+    std::stable_sort(applied.begin(), applied.end(), [](const PathRemap &a, const PathRemap &b) {
+        return a.recordedPath.size() > b.recordedPath.size();
+    });
+    QWriteLocker locker(&s_remapLock);
+    s_remaps = applied;
+}
+
+QList<Device::PathRemap> Device::pathRemaps()
+{
+    QReadLocker locker(&s_remapLock);
+    return s_remaps;
+}
+
+QString Device::pathRemapOf(int deviceId)
+{
+    QReadLocker locker(&s_remapLock);
+    for (const PathRemap &remap : std::as_const(s_remaps))
+        if (remap.deviceId == deviceId)
+            return remap.localPath;
+    return QString();
+}
+
+QString Device::rebasePath(const QString &path, const QString &fromRoot, const QString &toRoot)
+{
+    if (fromRoot.isEmpty() || fromRoot == toRoot)
+        return path;
+    if (path == fromRoot)
+        return toRoot;
+    const QString prefix = fromRoot.endsWith(QLatin1Char('/')) ? fromRoot : fromRoot + QLatin1Char('/');
+    if (!path.startsWith(prefix))
+        return path;
+    const QString target = toRoot.endsWith(QLatin1Char('/')) ? toRoot.chopped(1) : toRoot;
+    return target + QLatin1Char('/') + path.mid(prefix.size());
+}
+
+QString Device::resolvePath(const QString &recordedPath)
+{
+    if (recordedPath.isEmpty())
+        return recordedPath;
+    QReadLocker locker(&s_remapLock);
+    for (const PathRemap &remap : std::as_const(s_remaps)) {
+        const QString resolved = rebasePath(recordedPath, remap.recordedPath, remap.localPath);
+        if (resolved != recordedPath || recordedPath == remap.recordedPath)
+            return resolved;
+    }
+    return recordedPath;
+}
+
+QString Device::resolvedDevicePath(int deviceId, const QString &recordedPath)
+{
+    const QString recorded = normalizedDevicePath(recordedPath);
+    {
+        // The device's own remap first, when two devices share a recorded path
+        QReadLocker locker(&s_remapLock);
+        for (const PathRemap &remap : std::as_const(s_remaps))
+            if (remap.deviceId == deviceId && remap.recordedPath == recorded)
+                return remap.localPath;
+    }
+    return resolvePath(recordedPath);
+}
+
+QString Device::resolvedPath() const
+{
+    return resolvedDevicePath(ID, path);
+}
+
+//----------------------------------------------------------------------
+QString Device::suggestPathRemap(int deviceId, const QString &connectionName)
+{
+    QSqlDatabase db = QSqlDatabase::database(connectionName);
+    if (!db.isOpen())
+        return QString();
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("SELECT device_path, device_type, device_external_id FROM device WHERE device_id = :id"));
+    query.bindValue(QStringLiteral(":id"), deviceId);
+    if (!query.exec() || !query.next())
+        return QString();
+    const QString recorded = normalizedDevicePath(query.value(0).toString());
+    const QString type     = query.value(1).toString();
+    const int externalId   = query.value(2).toInt();
+    if ((type != QLatin1String("Storage") && type != QLatin1String("Catalog"))
+        || recorded.isEmpty() || recorded == QLatin1String("EXPORT") || isFilesystemRoot(recorded)
+        || !QDir::isAbsolutePath(recorded) || !pathRemapOf(deviceId).isEmpty())
+        return QString();
+    // Reached as it is: nothing to suggest
+    const QString reached = resolvedDevicePath(deviceId, recorded);
+    if (QFileInfo::exists(reached) && !QDir(reached).isEmpty())
+        return QString();
+
+    // A few of its contents, relative to its path: a catalog's files, or the
+    // folders of the catalogs on a storage (cheap: at most five)
+    QStringList samples;
+    auto addSample = [&](const QString &path) {
+        const QString relative = rebasePath(normalizedDevicePath(path), recorded, QString());
+        if (relative != normalizedDevicePath(path) && relative.size() > 1 && samples.size() < 5)
+            samples.append(relative);   // starts with '/'
+    };
+    if (type == QLatin1String("Storage")) {
+        QSqlQuery children(db);
+        children.prepare(QStringLiteral("SELECT device_path FROM device WHERE device_parent_id = :id "
+                                        "AND device_type = 'Catalog'"));
+        children.bindValue(QStringLiteral(":id"), deviceId);
+        if (children.exec())
+            while (children.next() && samples.size() < 5)
+                addSample(children.value(0).toString());
+    } else {
+        QSqlQuery files(db);
+        files.prepare(QStringLiteral("SELECT file_full_path FROM file WHERE file_catalog_id = :catalog LIMIT 20"));
+        files.bindValue(QStringLiteral(":catalog"), externalId);
+        if (files.exec())
+            while (files.next() && samples.size() < 5)
+                addSample(files.value(0).toString());
+        if (samples.isEmpty()) {
+            // Memory mode: the files are in the catalog's .idx, not loaded yet
+            QSqlQuery idx(db);
+            idx.prepare(QStringLiteral("SELECT catalog_file_path FROM catalog WHERE catalog_id = :catalog"));
+            idx.bindValue(QStringLiteral(":catalog"), externalId);
+            QFile file(idx.exec() && idx.next() ? idx.value(0).toString() : QString());
+            if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                QTextStream in(&file);
+                for (int line = 0; line < 200 && !in.atEnd() && samples.size() < 5; ++line) {
+                    const QString text = in.readLine();
+                    if (!text.startsWith(QLatin1Char('<')))
+                        addSample(text.section(QLatin1Char('\t'), 0, 0));
+                }
+            }
+        }
+    }
+
+    // Where it could be: under each mounted volume, the recorded path with
+    // its first parts taken away (a volume renamed "UITS 1", a share mounted
+    // as its sub-folder, an rclone mount point), and under this Mac's home
+    // for a path in another user's home
+    const QStringList parts = recorded.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+    struct Candidate { QString path; bool sameName = false; };
+    QList<Candidate> candidates;
+    auto nameMatches = [](const QString &name, const QStorageInfo &volume) {
+        const QString base = QFileInfo(volume.rootPath()).fileName();
+        if (base.compare(name, Qt::CaseInsensitive) == 0 || volume.name().compare(name, Qt::CaseInsensitive) == 0)
+            return true;
+        static const QRegularExpression copyNumber(QStringLiteral("^(.+) \\d+$"));
+        const QRegularExpressionMatch m = copyNumber.match(base);
+        return m.hasMatch() && m.captured(1).compare(name, Qt::CaseInsensitive) == 0;
+    };
+    const QList<QStorageInfo> volumes = QStorageInfo::mountedVolumes();
+    for (const QStorageInfo &volume : volumes) {
+        const QString root = normalizedDevicePath(volume.rootPath());
+        if (root.isEmpty() || isFilesystemRoot(root))
+            continue;
+        for (int k = 1; k <= parts.size(); ++k) {
+            const QString rest = QStringList(parts.mid(k)).join(QLatin1Char('/'));
+            Candidate c;
+            c.path     = rest.isEmpty() ? root : root + QLatin1Char('/') + rest;
+            c.sameName = nameMatches(parts.at(k - 1), volume);
+            candidates.append(c);
+        }
+    }
+    const QString home = normalizedDevicePath(QDir::homePath());
+    if (parts.size() >= 2 && (parts.first() == QLatin1String("Users") || parts.first() == QLatin1String("home"))
+        && QFileInfo(home).fileName() != parts.at(1)) {
+        const QString rest = QStringList(parts.mid(2)).join(QLatin1Char('/'));
+        candidates.append({ rest.isEmpty() ? home : home + QLatin1Char('/') + rest, true });
+    }
+
+    QString best;
+    int bestHits = -1;
+    bool bestSameName = false;
+    QSet<QString> seen;
+    for (const Candidate &c : std::as_const(candidates)) {
+        if (c.path == recorded || seen.contains(c.path))
+            continue;
+        seen.insert(c.path);
+        if (!c.sameName && samples.isEmpty())
+            continue;   // nothing to recognise it by
+        if (!QFileInfo(c.path).isDir() || QDir(c.path).isEmpty())
+            continue;
+        int hits = 0;
+        for (const QString &relative : std::as_const(samples))
+            if (QFileInfo::exists(c.path + relative))
+                ++hits;
+        if (hits == 0 && !c.sameName)
+            continue;
+        if (hits > bestHits || (hits == bestHits && c.sameName && !bestSameName)) {
+            best = c.path;
+            bestHits = hits;
+            bestSameName = c.sameName;
+        }
+    }
+    return best;
 }
 
 void Device::loadDevice(QString connectionName){
@@ -643,16 +940,21 @@ void Device::updateParentsNumbers()
 bool Device::updateActiveState(QString connectionName)
 {//Update the Active value: verify that the path is active = the related drive is mounted
     if(path !=""){
-        QDir dir(path);
+        // Where the drive is on this Mac (per-Mac remap, D43 P3)
+        QDir dir(resolvedPath());
         active = dir.exists();
     }
     else {
         active = false;
     }
 
-    // Read-only collection (D43): probed, not stored
-    if (!activeStateStored())
+    // Read-only collection (D43): probed, not stored; the probe is what the
+    // device lists show
+    if (!activeStateStored()) {
+        QMutexLocker locker(&s_probedMutex);
+        s_probedActive.insert(ID, active);
         return false;
+    }
 
     // Write only when the probe disagrees with what is stored (DAS-C11). The
     // activation refresh probes local devices on every window activation, so an
@@ -1213,7 +1515,8 @@ QList<Device::DeviceTreeNode> Device::loadDeviceTree(const QString &connectionNa
         node.totalFileCount = query.value(6).toLongLong();
         node.totalSpace     = query.value(7).toLongLong();
         node.freeSpace      = query.value(8).toLongLong();
-        node.isActive       = query.value(9).toBool();
+        // Read-only: this Mac's last probe rather than the stored value (D43)
+        node.isActive       = probedActiveState(node.id, query.value(9).toBool());
         node.dateUpdated    = query.value(10).toString();
         node.groupId        = query.value(11).toInt();
         node.level          = query.value(12).toInt();

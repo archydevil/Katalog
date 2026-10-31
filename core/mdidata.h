@@ -64,6 +64,9 @@ public:
         qint64      fileSize = 0;      // source file at processing time (MDI-F13)
         QString     fileDate;
         QString     date;              // processing date, ISO 8601
+        // A derived file's absolute path, its root resolved by
+        // resolveDerivedRoot (the recorded root itself is kept unchanged)
+        QString     derivedPath(const QString &relative) const;
     };
 
     // One indexed text of a file for semantic search (MDI-F47): a summary,
@@ -94,6 +97,23 @@ public:
     // thread, and ensures its tables. False when the file cannot be opened.
     static bool open(const QString &connectionName, const QString &dbPath);
     static void close(const QString &connectionName);
+
+    // Stores opened read-only and immutable by open(): no table created, no
+    // journal mode changed, nothing written, no -wal or -shm (a published
+    // copy, fork D43, MDI-C64). Process-wide; an empty list clears it.
+    static void    setReadOnlyStores(const QStringList &dbPaths);
+    static bool    isReadOnlyStore(const QString &dbPath);
+    // The database name open() gives the connection for dbPath (a URI for a
+    // read-only store), to tell whether an open connection is on that file
+    static QString databaseNameFor(const QString &dbPath);
+
+    // Derived files found relative to the collection (fork D43, MDI-F207):
+    // a recorded derived root that does not exist on this computer resolves
+    // to <collection folder>/katalog_mdi when that folder exists (a published
+    // copy). Process-wide, set when a collection is opened; a per-computer
+    // remap (MDI-F208) is meant to apply before this fallback.
+    static void    setCollectionFolder(const QString &folder);
+    static QString resolveDerivedRoot(const QString &recordedRoot);
 
     static bool upsert(const QString &connectionName, const Datum &datum);
 
