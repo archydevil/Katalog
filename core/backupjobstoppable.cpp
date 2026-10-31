@@ -31,6 +31,7 @@
 */
 
 #include "backupjobstoppable.h"
+#include "device.h"   // Device::resolvePath (D43 P3)
 
 #include <QDateTime>
 #include <QDir>
@@ -248,7 +249,7 @@ void BackupJobStoppable::runBackup()
         // relative folder: /Photos/2024
         const QString relFolder    = entry.folderPath.mid(m_sourcePath.length());
         const QString targetFolder = m_targetPath + relFolder;
-        const QString sourceFile   = QDir(entry.folderPath).filePath(entry.fileName);
+        const QString sourceFile   = Device::resolvePath(QDir(entry.folderPath).filePath(entry.fileName));   // on this Mac (D43 P3)
         const QString targetFile   = QDir(targetFolder).filePath(entry.fileName);
 
         // Unexpected conflict: target file already exists despite catalog check
@@ -330,7 +331,7 @@ void BackupJobStoppable::runBackup()
 
             const QString relFolder    = entry.folderPath.mid(m_sourcePath.length());
             const QString targetFolder = m_targetPath + relFolder;
-            const QString sourceFile   = QDir(entry.folderPath).filePath(entry.fileName);
+            const QString sourceFile   = Device::resolvePath(QDir(entry.folderPath).filePath(entry.fileName));   // on this Mac (D43 P3)
             const QString targetFile   = QDir(targetFolder).filePath(entry.fileName);
 
             // Use filesystem dates for the direction check (more reliable than catalog dates).

@@ -497,11 +497,21 @@ BackupCompareResult CatalogDifferenceEngine::compareForBackup(
     if (sourceDrive) {
         // DRIVE mode: walk the source filesystem directly (independent of the source
         // catalog index, so it works even when "Update catalogs" is off).
+        // The drive is walked where it is on this Mac (per-Mac remap, D43 P3);
+        // the files found are named under its recorded path, as the catalog's
+        // are, so the backup computes the same relative folders
+        const QString sourceLocal = sourceDevice.resolvedPath();
         const StrictDifferenceResult r = compareStrictFromDrive(
-            sourceDevice.path, targetDevice.externalID, targetDevice.path, stopRequested);
+            sourceLocal, targetDevice.externalID, targetDevice.path, stopRequested);
         out.filesToCopy   = r.filesToCopy;
         out.fileConflicts = r.conflicts;
         out.skippedCount  = r.skippedCount;
+        if (sourceLocal != sourceDevice.path) {
+            for (DifferenceFileEntry &e : out.filesToCopy)
+                e.folderPath = Device::rebasePath(e.folderPath, sourceLocal, sourceDevice.path);
+            for (DifferenceFileEntry &e : out.fileConflicts)
+                e.folderPath = Device::rebasePath(e.folderPath, sourceLocal, sourceDevice.path);
+        }
     } else if (strictCopy) {
         const StrictDifferenceResult r = compareStrict(
             sourceDevice.externalID, targetDevice.externalID,

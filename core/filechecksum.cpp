@@ -32,6 +32,7 @@
 #include "filechecksum.h"
 #include <QtEndian>
 #include "catalog.h"
+#include "device.h"   // Device::resolvePath (D43 P3)
 #include <QFile>
 #include <QFileInfo>
 #include <QSqlQuery>
@@ -411,7 +412,9 @@ FileChecksum::CatalogVerificationResult FileChecksum::verifyCatalogChecksums(
         QString folderPath = query.value(1).toString();
         QString expectedChecksum = query.value(2).toString();
 
-        QString filePath = folderPath + "/" + fileName;
+        // Where the file is on this Mac (per-Mac remap, D43 P3); reported as recorded
+        const QString recordedPath = folderPath + "/" + fileName;
+        QString filePath = Device::resolvePath(recordedPath);
 
         processed++;
 
@@ -423,7 +426,7 @@ FileChecksum::CatalogVerificationResult FileChecksum::verifyCatalogChecksums(
         // Check if file exists
         if (!QFileInfo::exists(filePath)) {
             result.missing++;
-            result.missingFiles << filePath;
+            result.missingFiles << recordedPath;
             continue;
         }
 
@@ -440,7 +443,7 @@ FileChecksum::CatalogVerificationResult FileChecksum::verifyCatalogChecksums(
             result.verified++;
         } else {
             result.mismatches++;
-            result.mismatchedFiles << filePath;
+            result.mismatchedFiles << recordedPath;
         }
     }
 
