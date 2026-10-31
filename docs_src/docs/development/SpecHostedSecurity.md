@@ -75,4 +75,4 @@ dialog titles and the six strings (`HST-C3`).
 
 ## Fork note (archydevil/Katalog)
 
-A proposed extension of this page — Tailscale's `100.64.0.0/10` as private network, names classified by resolution, TLS off localhost, the Hosted password out of the settings file, read-only database users — is written in `SpecMediaIntelligenceBacklogNotes.md` (*P5*, rows `P5-H1`–`P5-H7`) for the fork owner's decision. **Nothing of it is decided**; the rows above stand unchanged until then.
+A proposed extension of this page — Tailscale's `100.64.0.0/10` as private network, names classified by resolution, TLS off localhost, the Hosted password out of the settings file, read-only database users — is written in `SpecMediaIntelligenceBacklogNotes.md` (*P5*, rows `P5-H1`–`P5-H7`) **accepted by the fork owner on 2026-10-31 (`SpecMediaIntelligence.md`, D45)** for K3 only; K2 keeps `HST-F1`–`F6` unchanged. The rows of this page are amended (`HST-C1`, `HST-C3`, `HST-C5`, the *Not in scope* line) when the permanent rows are written, before any code (`MDI-C68`).

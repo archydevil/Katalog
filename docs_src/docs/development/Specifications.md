@@ -45,7 +45,7 @@ specification and the code disagree, the specification is what was agreed.
 | [SpecLanguages](SpecLanguages.md) | LANGUAGES — INTERFACE LANGUAGE SELECTION | Approved | complete | — |
 | [SpecPageLayout](SpecPageLayout.md) | PAGE LAYOUT — SCROLLBAR MARGIN AND SECTION TITLES | Approved | planned | — |
 | [SpecMediaIntelligence](SpecMediaIntelligence.md) | MEDIA INTELLIGENCE — PREVIEWS, AI ENRICHMENT AND SEMANTIC SEARCH; K3 REDESIGN (D34) (fork only, K3) | Draft | partial | — |
-| [SpecMediaIntelligenceBacklogNotes](SpecMediaIntelligenceBacklogNotes.md) | MEDIA INTELLIGENCE — PROPOSALS NOT YET DECIDED (fork only) | Proposal | — | — |
+| [SpecMediaIntelligenceBacklogNotes](SpecMediaIntelligenceBacklogNotes.md) | MEDIA INTELLIGENCE — PROPOSALS NOT YET DECIDED (fork only) | P5 decided (D45) | — | — |
 | [SpecMimeVerification](SpecMimeVerification.md) | MIME VERIFICATION — VERIFY MIME TYPES ON A CATALOG | Approved | planned | — |
 | [SpecOperationQueue](SpecOperationQueue.md) | OPERATION Queue | Specified | — | — |
 | [SpecProgressReport](SpecProgressReport.md) | Progress Reporting | — | — | — |

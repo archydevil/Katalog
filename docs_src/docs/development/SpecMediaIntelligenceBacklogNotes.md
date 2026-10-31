@@ -6,18 +6,22 @@ description: Designs written for the fork owner's decision, kept out of the requ
 
 # MEDIA INTELLIGENCE — PROPOSALS NOT YET DECIDED
 
-![Status](https://img.shields.io/badge/Status-Proposal-orange) ![Fork](https://img.shields.io/badge/Fork-archydevil%2FKatalog-blue)
+![Status](https://img.shields.io/badge/Status-P5%20decided%20(D45)-brightgreen) ![Fork](https://img.shields.io/badge/Fork-archydevil%2FKatalog-blue)
 
-Proposals for `SpecMediaIntelligence.md`, written before the fork owner decides
-them. **Nothing here is a requirement.** No row of this page authorises code:
-the specifications gate returns **NOT IN SPEC** for any change built on a
-proposal below until the owner decides it, and the decision is then recorded as
-a `D*` row of `SpecMediaIntelligence.md` with permanent `MDI-*` IDs. The IDs
-here (`P5-*`) are provisional and are retired when that happens.
+Designs for `SpecMediaIntelligence.md`, written for the fork owner's decision.
+**Nothing here is a requirement by itself.** A design is authority only once a
+`D*` row of `SpecMediaIntelligence.md` records the owner's decision on it; even
+then, its permanent `MDI-*` rows, new core methods, DDL and strings are listed
+and approved before code is written (`MDI-C14`, `MDI-C68`). The IDs here
+(`P5-*`) are provisional and are retired when the permanent rows exist.
+
+| Design | Decision |
+| --- | --- |
+| P5 — AI data in Hosted mode | **Accepted 2026-10-31 by the fork owner ("accetto le risposte proposte"), recorded as D45** with every proposed answer of the open points (a)–(l) below. |
 
 ---
 
-## P5 — AI data in Hosted mode (proposed 2026-10-31) {#p5}
+## P5 — AI data in Hosted mode (proposed 2026-10-31, decided D45) {#p5}
 
 The design for D43 (7), the *second road*: a Hosted collection with AI data and
 read-only readers. `MDI-C68` requires it to be designed and listed before P5
@@ -43,7 +47,7 @@ slots it fills. Pointed to from `Q76`. Its security part extends
    — which this design reuses as specified there (P2a is `[Planned]`; code
    exists but is not yet recorded as built, a DRIFT noted in `Q76`).
 
-### Summary (the decision the owner is asked to take)
+### Summary (what D45 decides)
 
 | # | Proposal |
 | --- | --- |
@@ -110,9 +114,9 @@ upstream row it amends.
 - P5-F1/F2/F3/F4 — hub publishes; a second computer takes the published folder, sees the AI data, reloads on a new snapshot (`MDI-F206`), cannot run a job; its catalogs stay live from the server.
 - P5-F6 — two authorised Macs with writing users edit different devices at once: both changes persist.
 
-### Open points for the owner (mirrored as `Q76`)
+### Open points — decided with D45 (the owner accepted every proposed answer)
 
-| | Point | Proposed answer |
+| | Point | Decided answer |
 | --- | --- | --- |
 | (a) | One road or two: the AI data on readers lags behind the hub by the publish cadence (`MDI-F205`), as on road 1. Accept, or want live AI data (then the tables go on the server — the cost above)? | Accept the lag; not in P5. |
 | (b) | K2 and `validateHostname()` (P5-H6): gate the new classes to K3, or change K2 too? | Gate to K3; `MDI-C1` kept. |
