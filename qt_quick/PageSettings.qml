@@ -82,7 +82,69 @@ ScrollablePageFitted {
         invalidHostMessage.visible = (check === "invalid")
     }
 
+    // Macs allowed to change the collection (D43): true on success, else the
+    // reason stays at the top of the card
+    function writersResult(error) {
+        writersMessage.text    = error
+        writersMessage.visible = error !== ""
+        return error === ""
+    }
+
     // ── Dialogs ────────────────────────────────────────────────────────
+
+    // Writers (D43): removing a Mac, and turning protection off, ask first
+    Kirigami.PromptDialog {
+        id: removeWriterDialog
+        property var writer: ({})
+        function ask(w) { writer = w; open() }
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Remove %1 from the list?").arg(removeWriterDialog.writer.name || "")
+        subtitle: removeWriterDialog.writer.thisComputer
+                  ? qsTr("This Mac will open the collection read-only from now on.")
+                  : qsTr("That Mac will open the collection read-only.")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Remove")
+                icon.name: "list-remove"
+                onTriggered: {
+                    const error = appManager1.removeAuthorisedWriter(removeWriterDialog.writer.code)
+                    removeWriterDialog.close()
+                    pageSettingsRoot.writersResult(error)
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: removeWriterDialog.close()
+            }
+        ]
+    }
+    Kirigami.PromptDialog {
+        id: protectionOffDialog
+        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
+        padding: Kirigami.Units.largeSpacing * 2
+        title: qsTr("Turn protection off?")
+        subtitle: qsTr("Every Mac will be able to change the collection again. The list is kept for the next time.")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: qsTr("Turn off")
+                icon.name: "object-unlocked"
+                onTriggered: {
+                    const error = appManager1.setWritersProtection(false)
+                    protectionOffDialog.close()
+                    pageSettingsRoot.writersResult(error)
+                }
+            },
+            Kirigami.Action {
+                text: qsTr("Cancel")
+                icon.name: "dialog-cancel"
+                onTriggered: protectionOffDialog.close()
+            }
+        ]
+    }
 
     // Quality Check report, SpecQualityCheck.md phase 1: read-only, reports only.
     Kirigami.Dialog {
@@ -550,6 +612,7 @@ ScrollablePageFitted {
                         Controls.TextField {
                             id: imageFolderField
                             text: appManager1.imageFolderPath
+                            readOnly: appManager1.readOnly   // read-only collection (D43)
                             Layout.fillWidth: true
                             Layout.preferredHeight: 40
                             onEditingFinished: appManager1.imageFolderPath = text
@@ -557,9 +620,160 @@ ScrollablePageFitted {
                         KButton {
                             text: qsTr("Select")
                             icon.name: "edit-select"
+                            enabled: !appManager1.readOnly   // read-only collection (D43)
                             onClicked: {
                                 applicationWindow().openFreshDialog(imageFolderDialogComponent, imageFolderField.text.trim())
                             }
+                        }
+                    }
+                }
+            }
+
+            // ── Macs allowed to change the collection (fork, D43) ──────────
+            // Off by default. On: only the Macs listed change the collection,
+            // every other one opens it read-only and shows its own code, to
+            // be added here on a Mac of the list.
+            KCard {
+                id: writersCard
+                Layout.fillWidth: true
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+                    KSectionHeader {
+                        level: 3
+                        title: qsTr("Macs allowed to change the collection")
+                        description: qsTr("When protection is on, only the Macs in this list can change the collection; every other Mac opens it read-only.")
+                    }
+                    KInfoTag {
+                        Layout.alignment: Qt.AlignTop
+                        text: appManager1.writersProtection ? qsTr("Protection on") : qsTr("Protection off")
+                        tone: appManager1.writersProtection ? "ok" : "neutral"
+                    }
+                }
+
+                // Blocking validation error of the last change (SpecValidationRules)
+                Kirigami.InlineMessage {
+                    id: writersMessage
+                    Layout.fillWidth: true
+                    type: Kirigami.MessageType.Warning
+                    showCloseButton: true
+                    visible: false
+                }
+
+                Controls.Switch {
+                    id: protectionSwitch
+                    text: qsTr("Only the Macs in the list can change the collection")
+                    checked: appManager1.writersProtection
+                    enabled: !appManager1.readOnly
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: pageSettingsRoot.fitWidth(implicitWidth)
+                    onToggled: {
+                        const turnOn = checked
+                        // Shows the saved state: on at once, off once confirmed
+                        checked = Qt.binding(() => appManager1.writersProtection)
+                        if (turnOn)
+                            pageSettingsRoot.writersResult(appManager1.setWritersProtection(true))
+                        else
+                            protectionOffDialog.open()
+                    }
+                }
+
+                // The list: name, code, this Mac, Remove
+                Repeater {
+                    model: appManager1.authorisedWriters
+                    delegate: RowLayout {
+                        id: writerRow
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: 10
+                        Controls.Label {
+                            Layout.fillWidth: true
+                            text: writerRow.modelData.name
+                            elide: Text.ElideRight
+                            color: KTheme.text
+                        }
+                        Controls.Label {
+                            text: writerRow.modelData.code
+                            font.family: KTheme.mono
+                            color: KTheme.text2
+                        }
+                        KInfoTag {
+                            visible: writerRow.modelData.thisComputer
+                            text: qsTr("This Mac")
+                            tone: "info"
+                        }
+                        KButton {
+                            variant: "link"
+                            text: qsTr("Remove")
+                            icon.name: "list-remove"
+                            enabled: !appManager1.readOnly
+                            onClicked: removeWriterDialog.ask(writerRow.modelData)
+                        }
+                    }
+                }
+
+                Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: KTheme.line }
+
+                // Add a Mac by the code it shows
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.smallSpacing
+                    Controls.TextField {
+                        id: newWriterCode
+                        width: Kirigami.Units.gridUnit * 10
+                        placeholderText: "XXXX-XXXX-XXXX"
+                        font.family: KTheme.mono
+                        enabled: !appManager1.readOnly
+                        onTextEdited: writersMessage.visible = false
+                    }
+                    Controls.TextField {
+                        id: newWriterName
+                        width: Kirigami.Units.gridUnit * 10
+                        placeholderText: qsTr("Name")
+                        enabled: !appManager1.readOnly
+                        onTextEdited: writersMessage.visible = false
+                    }
+                    KButton {
+                        text: qsTr("Add a Mac")
+                        icon.name: "list-add"
+                        enabled: !appManager1.readOnly && newWriterCode.text.trim().length > 0
+                        onClicked: {
+                            if (pageSettingsRoot.writersResult(
+                                    appManager1.addAuthorisedWriter(newWriterCode.text, newWriterName.text))) {
+                                newWriterCode.text = ""
+                                newWriterName.text = ""
+                            }
+                        }
+                    }
+                }
+
+                // This Mac's code, to add it on a Mac of the list
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 10
+                    Controls.Label {
+                        text: qsTr("Code of this Mac")
+                        color: KTheme.text2
+                    }
+                    Controls.Label {
+                        text: appManager1.thisComputerCode
+                        font.family: KTheme.mono
+                        font.weight: Font.DemiBold
+                        color: KTheme.text
+                    }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        text: appManager1.thisComputerName
+                        elide: Text.ElideRight
+                        color: KTheme.text3
+                    }
+                    KButton {
+                        text: qsTr("Copy")
+                        icon.name: "edit-copy"
+                        onClicked: {
+                            appManager1.copyToClipboard(appManager1.thisComputerCode)
+                            applicationWindow().showPassiveNotification(qsTr("Copied"))
                         }
                     }
                 }
@@ -714,7 +928,7 @@ ScrollablePageFitted {
                             variant: "tonal"
                             text: qsTr("Import")
                             icon.name: "document-import"
-                            enabled: !appManager1.importIsRunning && (
+                            enabled: !appManager1.readOnly && !appManager1.importIsRunning && (
                                 importModeCombo.currentIndex === 2
                                     ? importPathField.text.length > 0
                                     : importDeviceCombo.selectedDeviceName.length > 0
@@ -746,7 +960,7 @@ ScrollablePageFitted {
                         KButton {
                             text: qsTr("Update")
                             icon.name: "view-refresh"
-                            enabled: importModeCombo.currentIndex < 2 && importUpdateSourceCombo.count > 0 && !appManager1.importIsRunning
+                            enabled: !appManager1.readOnly && (importModeCombo.currentIndex < 2 && importUpdateSourceCombo.count > 0 && !appManager1.importIsRunning)
                             onClicked: appManager1.updateAllImportsFromSource(importUpdateSourceCombo.currentText)
                         }
                     }

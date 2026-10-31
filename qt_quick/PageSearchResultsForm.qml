@@ -393,7 +393,7 @@ ColumnLayout {
                 visible: !pageSearchResults_column.listsOnly
                 icon.name: "document-export"
                 text: qsTr("Run process on all results")
-                enabled: (pageSearchResults_column.searchProps.filesFoundNumber ?? 0) > 0
+                enabled: !appManager1.readOnly && ((pageSearchResults_column.searchProps.filesFoundNumber ?? 0) > 0)
                 onClicked: {
                     let action = batchActionCombo.currentValue
                     if (action === "---") return

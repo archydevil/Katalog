@@ -42,11 +42,11 @@
 #include <QEventLoop>
 #include <QTimer>
 #include <QDateTime>
-#include <QLockFile>
 #include <QVariantMap>
 #include <memory>
 
 #include "collection.h"
+#include "collectionaccess.h"
 #include "device.h"
 #include "database.h"
 #include "search.h"
@@ -124,8 +124,13 @@ private:
     // Collection lock (.teca.lock), held while an action writes to the
     // collection: update_catalog, update_all_active, analyze, analyze_all
     bool actionWritesCollection() const;
-    int  lockCollection();   // 0, or the exit code of the refusal (message printed)
-    std::unique_ptr<QLockFile> m_collectionLock;
+    // 0, or the exit code of the refusal (message printed). Also refuses
+    // when this computer is not among the collection's writers.
+    int  lockCollection(const QString &databaseMode, const QString &databaseFilePath);
+    void refreshCollectionLock();   // every CollectionLock::kRefreshSeconds
+    std::unique_ptr<CollectionLock> m_collectionLock;
+    QTimer *m_lockRefreshTimer = nullptr;
+    bool m_lockLost = false;   // taken over by another process: the analysis stops
     int  m_initExitCode = 0;   // set when initializeDatabase() refused for a reason of its own
 
     // AI analysis

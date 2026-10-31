@@ -727,12 +727,14 @@ ColumnLayout {
         // of a position hard-coded for KDE (SpecValidationRules D1/D2).
         footer: Controls.DialogButtonBox {
             Controls.Button {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 text: qsTr("Keep Last 10")
                 icon.name: "edit-delete"
                 Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.ActionRole
                 onClicked: keepLastHistoryConfirmDialog.open()
             }
             Controls.Button {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 text: qsTr("Clear")
                 icon.name: "edit-delete"
                 Controls.DialogButtonBox.buttonRole: Controls.DialogButtonBox.ActionRole

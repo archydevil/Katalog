@@ -107,6 +107,7 @@ Kirigami.ScrollablePage {
             text: qsTr("This document has not been studied yet. The study runs with the AI analysis of its drive (Study of the documents), on this computer.")
             actions: [
                 Kirigami.Action {
+                    enabled: !appManager1.readOnly   // read-only collection (D43)
                     text: qsTr("Study the documents of this drive")
                     icon.name: "media-playback-start"
                     onTriggered: {

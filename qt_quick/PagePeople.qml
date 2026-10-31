@@ -287,7 +287,7 @@ ColumnLayout {
         KButton {
             variant: "primary"
             icon.name: "dialog-ok-apply"
-            enabled: people.pickedIds(people.pending).length > 0
+            enabled: !appManager1.readOnly && (people.pickedIds(people.pending).length > 0)
             text: qsTr("Approve the selected (%1)").arg(people.pickedIds(people.pending).length)
             onClicked: {
                 // Each face goes to the person proposed for it
@@ -307,7 +307,7 @@ ColumnLayout {
         KButton {
             variant: "secondary"
             icon.name: "dialog-cancel"
-            enabled: people.pickedIds(people.pending).length > 0
+            enabled: !appManager1.readOnly && (people.pickedIds(people.pending).length > 0)
             text: qsTr("Not them")
             onClicked: {
                 const error = appManager1.rejectFaces(people.pickedIds(people.pending))
@@ -562,7 +562,7 @@ ColumnLayout {
             KButton {
                 variant: "primary"
                 icon.name: "dialog-ok-apply"
-                enabled: people.pickedIds(people.similar).length > 0
+                enabled: !appManager1.readOnly && (people.pickedIds(people.similar).length > 0)
                 text: qsTr("Attribute to %1 (%2)").arg(people.current.name || "").arg(people.pickedIds(people.similar).length)
                 onClicked: {
                     const error = appManager1.confirmFaces(people.pickedIds(people.similar), people.currentId)
@@ -582,7 +582,7 @@ ColumnLayout {
             KButton {
                 variant: "secondary"
                 icon.name: "dialog-cancel"
-                enabled: people.pickedIds(people.similar).length > 0
+                enabled: !appManager1.readOnly && (people.pickedIds(people.similar).length > 0)
                 text: qsTr("Not %1").arg(people.current.name || "")
                 onClicked: {
                     // facesChanged follows: the page asks for the similar faces again
@@ -731,6 +731,7 @@ ColumnLayout {
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
             Kirigami.Action {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 text: qsTr("Ignore")
                 icon.name: "view-hidden"
                 onTriggered: {
@@ -774,7 +775,7 @@ ColumnLayout {
             KButton {
                 variant: "primary"
                 icon.name: "media-playback-start"
-                enabled: faceDrive.currentIndex >= 0
+                enabled: !appManager1.readOnly && (faceDrive.currentIndex >= 0)
                 text: qsTr("Find the faces")
                 onClicked: people.notify(appManager1.startFaceAnalysis(faceDrive.currentValue),
                                          qsTr("The faces are looked for in the background: Work in progress shows how it goes."))
@@ -809,6 +810,7 @@ ColumnLayout {
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
             Kirigami.Action {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 text: qsTr("Delete")
                 icon.name: "edit-delete"
                 onTriggered: {

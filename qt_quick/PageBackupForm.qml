@@ -383,7 +383,7 @@ ColumnLayout {
                 variant:   "primary"
                 text:      qsTr("Run listed links")
                 icon.name: "media-playback-start"
-                enabled:   root.canStart && root.runnableListedIds().length > 0
+                enabled:   !appManager1.readOnly && root.canStart && root.runnableListedIds().length > 0
                 onClicked: runListedDialog.open()
             }
             Controls.CheckBox {
@@ -735,7 +735,7 @@ ColumnLayout {
                         variant:   "tonal"
                         text:      mappingCard.isArchive ? qsTr("Run Archive") : qsTr("Run Backup")
                         icon.name: "media-playback-start"
-                        enabled:   mappingCard.modelData.sourceActive && mappingCard.modelData.targetActive
+                        enabled:   !appManager1.readOnly && (mappingCard.modelData.sourceActive && mappingCard.modelData.targetActive)
                                    && root.canStart
                         onClicked: {
                             // State is set by onRunningBackupMappingIdChanged, which
@@ -788,6 +788,7 @@ ColumnLayout {
                                 onTriggered: root.requestEditMapping(mappingCard.modelData)
                             }
                             Controls.MenuItem {
+                                enabled: !appManager1.readOnly   // read-only collection (D43)
                                 text: qsTr("Duplicate")
                                 icon.name: "edit-copy"
                                 onTriggered: {
@@ -813,6 +814,7 @@ ColumnLayout {
                                 }
                             }
                             Controls.MenuItem {
+                                enabled: !appManager1.readOnly   // read-only collection (D43)
                                 text: qsTr("Invert (swap source and target)")
                                 icon.name: "object-flip-horizontal"
                                 onTriggered: {
@@ -830,6 +832,7 @@ ColumnLayout {
                             Controls.MenuItem {
                                 text: qsTr("Delete")
                                 icon.name: "edit-delete"
+                                enabled: !appManager1.readOnly   // read-only collection (D43)
                                 onTriggered: deleteDialog.open()
                             }
                         }

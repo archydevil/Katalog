@@ -754,6 +754,7 @@ ColumnLayout {
             standardButtons: Kirigami.Dialog.NoButton
             customFooterActions: [
                 Kirigami.Action {
+                    enabled: !appManager1.readOnly   // read-only collection (D43)
                     text: qsTr("Clean now")
                     icon.name: "edit-clear"
                     onTriggered: {

@@ -8,7 +8,7 @@ version: "3.0"
 Cette page décrit les fonctionnalités et options disponibles en ligne de commande qui peuvent être exécutées depuis la console.
 Sans avoir besoin de l'interface graphique, certaines tâches peuvent donc être automatisées.
 
-Ces commandes fonctionnent actuellement uniquement sous **Linux**.
+Ces commandes fonctionnent sous **Linux** et **macOS**.
 
 ![Sortie de l'aide en ligne de commande affichant les actions et options disponibles](/img/k2/commandlines_01_help.png)
 
@@ -29,6 +29,10 @@ Les exemples de cette page utilisent `Katalog` comme nom de commande. La façon 
 - **AppImage** : placer les actions et options après le fichier AppImage.
   ```bash
   ./Katalog_linux_v3.0-qt6.AppImage list_catalogs
+  ```
+- **macOS** (Teca, application portable) : le programme se trouve dans l'application.
+  ```bash
+  /Applications/Teca.app/Contents/MacOS/Teca list_catalogs
   ```
 
 Pour taper `Katalog` comme dans les exemples, définir un alias, par exemple dans `~/.bashrc` :
@@ -100,6 +104,44 @@ Katalog search [OPTIONS]
 ```bash
 Katalog search --text "vacances" --type image --limit 100
 ```
+
+### `analyze`
+Lance l'analyse IA d'un catalogue avec le profil d'analyse enregistré pour lui dans Teca : aperçus, légendes, transcriptions, résumés et les autres analyses que le profil sélectionne, dans le même ordre que dans l'application. Comme dans l'application, l'analyse est incrémentale : ce qui est déjà analysé n'est pas refait, et une analyse arrêtée reprend là où elle s'est terminée.
+
+**Utilisation :**
+```bash
+Katalog analyze <deviceID> [OPTIONS]
+```
+
+**Arguments :**
+- `deviceID` - L'ID de l'appareil du catalogue à analyser
+
+**Exemple :**
+```bash
+Katalog analyze 5
+```
+
+Chaque étape exécutée affiche une ligne : le numéro du fichier, l'analyse, son résultat et le fichier. Une étape dont le programme ou le modèle manque (par exemple le modèle whisper.cpp pour les transcriptions) est ignorée, avec la raison sur sa ligne. Les étapes IA ont besoin d'Ollama en marche sur cet ordinateur : quand il est injoignable, elles échouent et sont refaites à l'analyse suivante.
+
+La source du catalogue doit être connectée. Un disque non connecté n'est pas attendu : le catalogue n'est pas analysé, et l'exécution suivante le reprend.
+
+### `analyze_all`
+Lance l'analyse IA de chaque catalogue qui a un profil d'analyse enregistré, l'un après l'autre, et affiche un résumé à la fin. Un catalogue dont le disque n'est pas connecté est ignoré et compté dans le résumé.
+
+**Utilisation :**
+```bash
+Katalog analyze_all [OPTIONS]
+```
+
+**Exemple :**
+```bash
+Katalog analyze_all --collection "/chemin/vers/collection"
+```
+
+### Verrou de la collection et arrêt
+`update_catalog`, `update_all_active`, `analyze` et `analyze_all` détiennent le verrou de la collection pendant leur exécution (le fichier `.teca.lock` dans le dossier de la collection). Ils ne s'exécutent pas tant que Teca a la collection ouverte ou qu'une autre exécution en ligne de commande l'utilise : ils se terminent avec le code de sortie 3 et ne modifient rien.
+
+Ctrl+C, ou un arrêt envoyé par le système (SIGTERM), termine proprement une analyse : les analyses déjà faites sont conservées, et l'exécution suivante reprend.
 
 ## Options Générales
 
@@ -264,7 +306,11 @@ Katalog search --no-history --text "nouveaufichier"
 ## Codes de Sortie
 
 - **0** : Succès
-- **1** : Erreur ou échec
+- **1** : Erreur ou échec (option ou action invalide, collection introuvable, catalogue non mis à jour ou non analysé)
+- **2** : Analyse faite, mais certaines étapes ont échoué (par exemple Ollama injoignable) ; elles sont refaites la fois suivante
+- **3** : La collection est utilisée par Teca ou par une autre exécution en ligne de commande ; rien n'a été fait
+- **4** : Cet ordinateur ne peut pas écrire dans la collection ; rien n'a été fait
+- **130** / **143** : Analyse arrêtée par Ctrl+C (SIGINT) ou par SIGTERM ; les analyses déjà faites sont conservées
 - **-1** : Code interne pour continuer en mode GUI (non retourné à l'utilisateur)
 
 ## Exemples
@@ -324,6 +370,57 @@ Mettre à jour les catalogues dans une collection spécifique :
 ```bash
 Katalog --collection "/chemin/vers/collection" update_all_active
 ```
+
+## Exécution planifiée (macOS)
+Un Mac qui reste allumé peut tenir les catalogues à jour et analysés tout seul, par exemple chaque nuit, pour que les autres Mac reçoivent une copie à jour. Teca n'installe aucun planificateur : macOS lance les commandes avec **launchd**.
+
+Ce fichier, enregistré sous `~/Library/LaunchAgents/local.teca.nightly.plist`, met à jour les catalogues actifs puis analyse chaque catalogue qui a un profil enregistré, chaque nuit à 02:30. `USERNAME` désigne le nom d'utilisateur macOS.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.teca.nightly</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>/Applications/Teca.app/Contents/MacOS/Teca update_all_active; /Applications/Teca.app/Contents/MacOS/Teca analyze_all</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>2</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/USERNAME/Library/Logs/teca-nightly.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/USERNAME/Library/Logs/teca-nightly.log</string>
+</dict>
+</plist>
+```
+
+Il est chargé une fois avec :
+```bash
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/local.teca.nightly.plist
+```
+
+Une exécution peut être lancée tout de suite, pour la vérifier, avec :
+```bash
+launchctl kickstart gui/$(id -u)/local.teca.nightly
+```
+
+Bon à savoir :
+- Sans `--collection`, les commandes utilisent la dernière collection ouverte dans Teca. Avec `--collection "/chemin/vers/collection"` après chaque action, elles utilisent celle-ci.
+- Le `;` entre les deux commandes lance l'analyse même quand une mise à jour a échoué.
+- Le Mac doit être allumé et son utilisateur connecté : un LaunchAgent s'exécute dans la session de l'utilisateur. Ollama doit être en marche pour les étapes IA.
+- Tant que Teca a la collection ouverte, les deux commandes se terminent avec le code de sortie 3 et ne modifient rien.
+- Une exécution planifiée ne peut pas répondre aux questions de macOS sur l'accès aux dossiers et aux disques externes. Quand les catalogues sont sur des disques externes ou dans des dossiers protégés, Teca a besoin de cet accès à l'avance, dans **Réglages Système > Confidentialité et sécurité** (Accès complet au disque, ou Fichiers et dossiers).
+- Chaque exécution écrit ses lignes et son résumé dans le fichier journal ; les codes de sortie sont listés plus haut.
 
 ## Notes
 

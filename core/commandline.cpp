@@ -575,7 +575,7 @@ bool CommandLineHandler::initializeDatabase()
     // The collection lock, before anything is written (D43): an action that
     // writes does not run while Teca or another command line run holds it
     if (actionWritesCollection()) {
-        m_initExitCode = lockCollection();
+        m_initExitCode = lockCollection(databaseMode, databaseFilePath);
         if (m_initExitCode != 0)
             return false;
     }
@@ -1713,14 +1713,6 @@ void onStopSignal(int signalNumber)
     std::signal(signalNumber, SIG_DFL);
 }
 
-// TODO(D43 P1): take the path from P1's core helper for the collection lock
-// once it is in core/collection.h (expected Collection::lockFilePath(folder)):
-// same file, ".teca.lock" in the collection folder, held with QLockFile
-QString collectionLockPath(const QString &folder)
-{
-    return QDir(folder).filePath(QStringLiteral(".teca.lock"));
-}
-
 const QString kCliMdiConnection = QStringLiteral("cli_mdi");
 const QString kSeparator = QStringLiteral("-----------------------------------------------------------------------");
 const QString kDoubleSeparator = QStringLiteral("=======================================================================");
@@ -1745,51 +1737,70 @@ bool CommandLineHandler::actionWritesCollection() const
         || requestedAction == QLatin1String("analyze_all");
 }
 
-int CommandLineHandler::lockCollection()
+int CommandLineHandler::lockCollection(const QString &databaseMode, const QString &databaseFilePath)
 {
-    if (collection->folder.isEmpty())
-        return 0;   // a hosted collection has no folder to hold the lock in
-
-    // TODO(D43 P1): refuse with ExitNotWritable when the collection's
-    // protection says this computer may not write to it. P1's core answer to
-    // "may this Mac write?" is not in core yet; until then only a folder
-    // that cannot be written to is refused (PermissionError below).
+    // The lock and the writers of a File- or Memory-mode collection (D43);
+    // a hosted collection has no folder to hold them in
+    if (databaseMode == QLatin1String("Hosted") || collection->folder.isEmpty())
+        return 0;
 
     QTextStream stderr_stream(stderr);
-    const QString path = collectionLockPath(collection->folder);
-    m_collectionLock = std::make_unique<QLockFile>(path);
-    // Held for the whole run, maybe hours: stale only when its owner is gone,
-    // never because of its age
-    m_collectionLock->setStaleLockTime(0);
-    if (m_collectionLock->tryLock(0)) {
+    const QString path = Collection::lockFilePath(collection->folder);
+
+    // A protected collection is changed only by its writers, read from its
+    // files before anything is opened for writing
+    const bool mayWrite = databaseMode == QLatin1String("Memory")
+                              ? CollectionWriters::mayThisComputerWriteFolder(collection->folder)
+                              : CollectionWriters::mayThisComputerWriteFile(databaseFilePath);
+    if (!mayWrite) {
+        stderr_stream << "Error: This computer is not among the writers of this collection, so it may not change it."
+                      << " Nothing was done." << Qt::endl;
+        return ExitNotWritable;
+    }
+
+    // The same lock as Teca's window (CollectionLock), kept young while the
+    // run lasts so that no other computer takes it over
+    m_collectionLock = std::make_unique<CollectionLock>();
+    switch (m_collectionLock->acquire(collection->folder)) {
+    case CollectionLock::Result::Acquired:
+        m_lockRefreshTimer = new QTimer(this);
+        m_lockRefreshTimer->setInterval(CollectionLock::kRefreshSeconds * 1000);
+        connect(m_lockRefreshTimer, &QTimer::timeout, this, &CommandLineHandler::refreshCollectionLock);
+        m_lockRefreshTimer->start();
         if (verbose) {
             QTextStream stdout_stream(stdout);
             stdout_stream << "Collection lock taken: " << path << Qt::endl;
         }
         return 0;
-    }
-
-    const QLockFile::LockError error = m_collectionLock->error();
-    qint64 pid = 0;
-    QString hostName, appName;
-    if (error == QLockFile::LockFailedError)
-        m_collectionLock->getLockInfo(&pid, &hostName, &appName);
-    m_collectionLock.reset();
-
-    if (error == QLockFile::LockFailedError) {
+    case CollectionLock::Result::HeldElsewhere:
         stderr_stream << "Error: The collection is in use by Teca or by another command line run"
-                      << " (process " << pid << " on " << hostName << "). Nothing was done." << Qt::endl;
+                      << " (" << m_collectionLock->holderApp() << ", process " << m_collectionLock->holderPid()
+                      << " on " << m_collectionLock->holderHost() << "). Nothing was done." << Qt::endl;
         stderr_stream << "Lock file: " << path << Qt::endl;
+        m_collectionLock.reset();
         return ExitCollectionInUse;
+    case CollectionLock::Result::NotPossible:
+        break;
     }
-    if (error == QLockFile::PermissionError) {
-        stderr_stream << "Error: The collection folder cannot be written to, so this computer may not change the collection."
-                      << " Nothing was done." << Qt::endl;
-        stderr_stream << "Lock file: " << path << Qt::endl;
-        return ExitNotWritable;
-    }
-    stderr_stream << "Error: The collection lock could not be taken: " << path << Qt::endl;
-    return ExitError;
+    // The folder cannot hold a lock file (a read-only share, for instance)
+    m_collectionLock.reset();
+    stderr_stream << "Error: The collection folder cannot be written to, so this computer may not change the collection."
+                  << " Nothing was done." << Qt::endl;
+    stderr_stream << "Lock file: " << path << Qt::endl;
+    return ExitNotWritable;
+}
+
+void CommandLineHandler::refreshCollectionLock()
+{
+    if (!m_collectionLock || m_lockLost || m_collectionLock->refresh())
+        return;
+    // Taken over by another process (this computer slept longer than the
+    // lock lasts, for instance): the analysis stops, nothing more is written
+    m_lockLost = true;
+    QTextStream stderr_stream(stderr);
+    stderr_stream << "Error: The collection lock was taken over"
+                  << " (" << m_collectionLock->holderApp() << ", process " << m_collectionLock->holderPid()
+                  << " on " << m_collectionLock->holderHost() << "): the analysis stops." << Qt::endl;
 }
 
 bool CommandLineHandler::prepareAnalysis()
@@ -1994,9 +2005,14 @@ CommandLineHandler::AnalysisOutcome CommandLineHandler::analyzeCatalog(int devic
     // step it abandons is not recorded (MDI-F10) and runs again next time
     QTimer signalPoll;
     connect(&signalPoll, &QTimer::timeout, &loop, [&]() {
-        if (stopSignal() != 0 && !stopAsked) {
+        if (stopAsked)
+            return;
+        if (stopSignal() != 0) {
             stopAsked = true;
             stdout_stream << "Stop requested: the analyses done so far are kept, the next run continues." << Qt::endl;
+            job->requestStop();
+        } else if (m_lockLost) {
+            stopAsked = true;   // the lock is another process's now (message printed)
             job->requestStop();
         }
     });
@@ -2043,7 +2059,7 @@ int CommandLineHandler::cmd_analyze(int deviceId)
     switch (analyzeCatalog(deviceId, tools, true)) {
     case AnalysisOutcome::Done:             return ExitSuccess;
     case AnalysisOutcome::DoneWithFailures: return ExitAnalysisFailures;
-    case AnalysisOutcome::Stopped:          return 128 + stopSignal();
+    case AnalysisOutcome::Stopped:          return m_lockLost ? ExitCollectionInUse : 128 + stopSignal();
     case AnalysisOutcome::DriveAway:
     case AnalysisOutcome::NotRun:           break;
     }
@@ -2073,7 +2089,7 @@ int CommandLineHandler::cmd_analyzeAll()
     QStringList notAnalyzed;
     bool stopped = false;
     for (int i = 0; i < deviceIDs.size() && !stopped; ++i) {
-        if (stopSignal() != 0) {
+        if (stopSignal() != 0 || m_lockLost) {
             stopped = true;
             break;
         }
@@ -2112,7 +2128,7 @@ int CommandLineHandler::cmd_analyzeAll()
     stdout_stream << kDoubleSeparator << Qt::endl;
 
     if (stopped)
-        return 128 + stopSignal();
+        return m_lockLost ? ExitCollectionInUse : 128 + stopSignal();
     if (!notAnalyzed.isEmpty())
         return ExitError;
     return withFailures > 0 ? ExitAnalysisFailures : ExitSuccess;

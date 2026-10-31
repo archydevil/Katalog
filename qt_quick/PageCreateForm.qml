@@ -885,6 +885,7 @@ ColumnLayout {
                     variant: "secondary"
                     icon.name: "list-add"
                     text: qsTr("Add")
+                    enabled: !appManager1.readOnly   // read-only collection (D43)
                     onClicked: {
                         var p = appManager1.normalizeSourcePath(create_lineEdit_FolderToExclude.text)
                         if (p !== "") {
@@ -971,8 +972,10 @@ ColumnLayout {
             variant: "primary"
             icon.name: "document-save"
             text: qsTr("Catalogue the drive")
-            // Always enabled: a creation requested while another operation
-            // runs is queued rather than refused (SpecOperationQueue.md).
+            // Enabled while another operation runs: the creation is queued
+            // rather than refused (SpecOperationQueue.md); not in a read-only
+            // collection (D43)
+            enabled: !appManager1.readOnly
             onClicked: pageCreateForm.triggerCreate()
         }
         KButton {

@@ -113,6 +113,7 @@ ColumnLayout {
                 variant: "primary"
                 icon.name: "folder-sync"
                 text: qsTr("Join into one catalog")
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 onClicked: recomposeDialog.ask(groupCard.modelData.proposal)
             }
         }
@@ -180,6 +181,7 @@ ColumnLayout {
                     }
                     KInfoTag { text: qsTr("%1 files").arg(history.count(modelData.files)) }
                     KButton {
+                        enabled: !appManager1.readOnly   // read-only collection (D43)
                         variant: "link"
                         text: qsTr("Open as a separate catalog")
                         Accessible.description: modelData.name
@@ -221,6 +223,7 @@ ColumnLayout {
         padding: Kirigami.Units.largeSpacing * 2   // room inside the design-system surface
         customFooterActions: [
             Kirigami.Action {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 text: qsTr("Restore")
                 icon.name: "view-history"
                 onTriggered: {
@@ -273,7 +276,7 @@ ColumnLayout {
             Kirigami.Action {
                 text: qsTr("Join")
                 icon.name: "folder-sync"
-                enabled: recomposeName.text.trim() !== ""
+                enabled: !appManager1.readOnly && (recomposeName.text.trim() !== "")
                 onTriggered: {
                     const ids = (recomposeDialog.proposal.catalogs || []).map(c => c.deviceId)
                     const error = appManager1.recomposeCatalogs(ids, recomposeName.text.trim())

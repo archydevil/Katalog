@@ -34,6 +34,7 @@
 #include "core/mdihtmlexport.h"
 #include "core/mdidiskspace.h"
 #include "core/mdiarchivecopy.h"
+#include "core/collectionaccess.h"
 #include <QElapsedTimer>
 #include <QThread>
 #include <QThread>
@@ -295,8 +296,10 @@ void AppManager::executeSearch()
     else
         searchObject->selectedDeviceIDList.append(0);
 
-    // Save criteria to history table before search (mirrors SearchManager::startSearchJobStoppable)
-    searchObject->saveSearchHistoryToTable(m_connectionName);
+    // Save criteria to history table before search (mirrors SearchManager::startSearchJobStoppable);
+    // a read-only collection keeps no history of its searches (D43)
+    if (!getReadOnly())
+        searchObject->saveSearchHistoryToTable(m_connectionName);
 
     m_searchIsRunning = true;
     m_searchStatusText = StatusBarMessageBuilder().setOperation(tr("Search")).setStatus(tr("In Progress")).build();
@@ -338,7 +341,8 @@ void AppManager::executeSearch()
     emit searchCatalogsFoundChanged();
 
     // Persist history to CSV file (no-op for File/Hosted modes — guarded inside the method)
-    collection->saveSearchHistoryTableToFile();
+    if (!getReadOnly())
+        collection->saveSearchHistoryTableToFile();
 
 }
 //----------------------------------------------------------------------
@@ -492,20 +496,24 @@ QString AppManager::startDatabase()
 {
     const QString conn = m_connectionName;
 
+    // Who may change it, before anything is opened (D43)
+    prepareCollectionAccess();
     QSqlError err = DatabaseManager::connect(conn, collection);
     if (err.type() != QSqlError::NoError) {
         qWarning() << "startDatabase failed:" << err.text();
         return "startDatabase: " + err.text();
     }
+    confirmCollectionAccess();
 
-    QSqlError migErr = DatabaseManager::runMigrations(conn, collection);
-    if (migErr.type() != QSqlError::NoError)
-        qWarning() << "startDatabase: migrations failed (non-fatal):" << migErr.text();
+    // Migrations, or nothing written when read-only (D43)
+    openCollectionDatabase(conn);
 
-    collection->insertPhysicalStorageGroup();
-    // Catalogs a split left without a date (fixed since): dated once, so the
-    // instant-search index stops rebuilding them at every launch
-    collection->repairUndatedCatalogs();
+    if (!getReadOnly()) {
+        collection->insertPhysicalStorageGroup();
+        // Catalogs a split left without a date (fixed since): dated once, so the
+        // instant-search index stops rebuilding them at every launch
+        collection->repairUndatedCatalogs();
+    }
     initializeDeviceListModel();
     selectedDevice->loadDevice(conn);
     emit databaseModeChanged();
@@ -696,6 +704,8 @@ void AppManager::setBiggerIconSize(bool value)
 //----------------------------------------------------------------------
 void AppManager::refreshDeviceActiveOnActivation()
 {
+    // Back from sleep: the collection lock may have been taken over (D43)
+    refreshCollectionLock();
     if (!getRefreshDeviceStatusOnActivation())
         return;
 
@@ -1328,17 +1338,19 @@ bool AppManager::reconnectToDatabase()
     m_mdiWaiting.clear();          // waiting enrichments name devices of that collection
     m_mdiIndexCatalogId = -1;      // previews are re-read from the new collection folder
 
+    // Who may change the collection opened now: its lock, its writers (D43)
+    prepareCollectionAccess();
     QSqlError err = DatabaseManager::reconnect(conn, collection);
     if (err.type() != QSqlError::NoError) {
         lastDatabaseError = err.text();
         qWarning() << "AppManager::reconnectToDatabase failed:" << lastDatabaseError;
+        m_collectionLock->release();   // the caller may go back to the previous one
         return false;
     }
+    confirmCollectionAccess();
 
-    QSqlError migErr = DatabaseManager::runMigrations(conn, collection);
-    if (migErr.type() != QSqlError::NoError) {
-        qWarning() << "AppManager::reconnectToDatabase: migrations failed (non-fatal):" << migErr.text();
-    }
+    // Migrations, or nothing written when read-only (D43)
+    openCollectionDatabase(conn);
 
     if (collection->databaseMode == "File" && !collection->databaseFilePath.isEmpty())
         collection->folder = QFileInfo(collection->databaseFilePath).absolutePath();
@@ -1346,8 +1358,10 @@ bool AppManager::reconnectToDatabase()
     lastDatabaseError.clear();
     collection->setConnectionName(conn);
     collection->loadImageFolderPath();
-    collection->insertPhysicalStorageGroup();
-    collection->repairUndatedCatalogs();   // see startDatabase()
+    if (!getReadOnly()) {
+        collection->insertPhysicalStorageGroup();
+        collection->repairUndatedCatalogs();   // see startDatabase()
+    }
 
     // Opening a different collection: reset the selection to the default root
     // (Physical Group, guaranteed to exist by insertPhysicalStorageGroup above).
@@ -1695,6 +1709,7 @@ QString AppManager::exportSearchResultsToCSV()
 //----------------------------------------------------------------------
 QString AppManager::exportSearchResultsAsCatalog()
 {
+    if (getReadOnly()) return QString();   // read-only collection (D43)
     if (!searchObject || searchObject->fileNames.isEmpty())
         return QString();
 
@@ -1801,7 +1816,7 @@ QVariantMap AppManager::batchVerifyChecksums()
             if (actual.isEmpty()) { ++errors; continue; }
 
             if (stored.isEmpty()) {
-                if (catalogId > 0)
+                if (catalogId > 0 && !getReadOnly())   // read-only: computed, not saved (D43)
                     FileChecksum::updateFileChecksum(m_connectionName,
                                                     catalogId, fileName, folder, actual, "SHA256");
                 ++calculated;
@@ -1822,6 +1837,7 @@ QVariantMap AppManager::batchVerifyChecksums()
 //----------------------------------------------------------------------
 QVariantMap AppManager::batchGetMetadata()
 {
+    if (getReadOnly()) return QVariantMap{ { QStringLiteral("error"), readOnlyRefusal() }, { QStringLiteral("total"), 0 }, { QStringLiteral("updated"), 0 }, { QStringLiteral("skipped"), 0 }, { QStringLiteral("errors"), 0 } };   // read-only collection (D43)
     int total = 0, updated = 0, skipped = 0, errors = 0;
 
     if (searchObject) {
@@ -1924,7 +1940,7 @@ QString AppManager::calculateAndSaveChecksum(const QString &filePath, const QStr
     if (!QFileInfo::exists(filePath))
         return QString();
     QString checksum = FileChecksum::calculateChecksum(filePath, QCryptographicHash::Sha256);
-    if (!checksum.isEmpty() && catalogId > 0)
+    if (!checksum.isEmpty() && catalogId > 0 && !getReadOnly())   // read-only: not saved (D43)
         FileChecksum::updateFileChecksum(m_connectionName, catalogId, fileName, folderPath, checksum, "SHA256");
     return checksum;
 }
@@ -2075,11 +2091,13 @@ QVariantMap AppManager::restoreSearchHistory(const QString &dateTime)
 //----------------------------------------------------------------------
 void AppManager::clearSearchHistory()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     collection->clearSearchHistory(m_connectionName);
 }
 //----------------------------------------------------------------------
 void AppManager::keepLastSearchHistory(int count)
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     collection->keepLastSearchHistory(count, m_connectionName);
 }
 //----------------------------------------------------------------------
@@ -2115,6 +2133,7 @@ QVariantList AppManager::getTagEntries(const QString &filterName) const
 //----------------------------------------------------------------------
 bool AppManager::createTag(const QString &name, const QString &path)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     bool ok = collection->createTag(name, path, QString(), QDateTime::currentDateTime());
     if (ok) emit tagsChanged();
     return ok;
@@ -2122,6 +2141,7 @@ bool AppManager::createTag(const QString &name, const QString &path)
 //----------------------------------------------------------------------
 bool AppManager::deleteTag(int tagID)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     bool ok = collection->deleteTag(tagID);
     if (ok) emit tagsChanged();
     return ok;
@@ -2549,6 +2569,7 @@ QString AppManager::createCatalog(const QString &name, const QString &path,
                                    const QString &includeChecksum,
                                    const QStringList &perCatalogExcludes)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     m_lastCreateRequestDeviceId = 0;
 
     // A search is a blocking call on this same thread that keeps the UI alive by
@@ -2690,6 +2711,7 @@ QString AppManager::createCatalogWithEnrichment(const QString &name, const QStri
                                                 const QStringList &perCatalogExcludes,
                                                 const QVariantMap &enrichmentProfile)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     // The wizard reaches creation only through the standard entry point (MDI-C2).
     const QString error = createCatalog(name, path, storageId, fileType, includeSubDir,
                                         includeHidden, includeSymlinks, isFullDevice,
@@ -2791,6 +2813,9 @@ bool AppManager::openMdiMainConnection()
     // Read side of mdi_data.db on the main thread; the runner has its own
     // connection on its thread (MDI-C4). Reopened when the collection changes.
     const QString path = mdiDataPath();
+    // A read-only collection without AI data does not get one (D43)
+    if (getReadOnly() && !QFileInfo::exists(path))
+        return false;
     if (QSqlDatabase::contains(kMdiMainConnection)) {
         QSqlDatabase db = QSqlDatabase::database(kMdiMainConnection, false);
         if (db.isOpen() && db.databaseName() == path)
@@ -2811,6 +2836,7 @@ QVariantMap AppManager::getEnrichmentProfile(int deviceId)
 //----------------------------------------------------------------------
 bool AppManager::saveEnrichmentProfile(int deviceId, const QVariantMap &values)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     MdiProfile profile;
     profile.deviceId        = deviceId;
     profile.destinationPath = values.value(QStringLiteral("destinationPath")).toString();
@@ -2859,6 +2885,7 @@ QString AppManager::mdiAnalysisLabel(const QString &analysis) const
 //----------------------------------------------------------------------
 QString AppManager::startEnrichment(int deviceId, bool resumed)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     MdiData::PendingJob job;
     job.deviceId = deviceId;
     return startMdiJob(job, resumed);
@@ -2866,6 +2893,7 @@ QString AppManager::startEnrichment(int deviceId, bool resumed)
 //----------------------------------------------------------------------
 QString AppManager::startReinterpretation(int deviceId, const QString &folder, const QString &fileType)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     MdiData::PendingJob job;
     job.deviceId = deviceId;
     job.kind     = QStringLiteral("reinterpret");
@@ -2876,6 +2904,7 @@ QString AppManager::startReinterpretation(int deviceId, const QString &folder, c
 //----------------------------------------------------------------------
 QString AppManager::startMdiJob(const MdiData::PendingJob &job, bool resumed)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     // One job at a time; another waits its turn, and the same work already
     // running or waiting is not added twice (MDI-F16): same catalog, kind
     // and scope. Stored transcripts being cleaned: the job waits for it too.
@@ -2944,6 +2973,7 @@ QString AppManager::startMdiJob(const MdiData::PendingJob &job, bool resumed)
 //----------------------------------------------------------------------
 QString AppManager::startQuickHash(int deviceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     // A quick-hash pass waits behind any running job (MDI-F16)
     if (m_mdiJob) {
         if (!m_quickHashWaiting.contains(deviceId)) {
@@ -3098,6 +3128,7 @@ QString AppManager::launchMdiJob(Device &device, MdiEnrichmentJob::Config config
 //----------------------------------------------------------------------
 void AppManager::startNextEnrichment()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // Jobs whose source is reachable first, in their order; then the
     // quick-hash passes; then the jobs that will wait for their drive (MDI-F92)
     if (m_transcriptCleanThread)
@@ -3208,6 +3239,7 @@ void AppManager::stepAsideIfWaiting()
 //----------------------------------------------------------------------
 void AppManager::saveMdiJobs()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // The running job (unless it is leaving the list or its collection), then
     // the waiting ones, in mdi_data.db of the collection open (MDI-C28)
     if (!openMdiMainConnection())
@@ -3228,6 +3260,7 @@ void AppManager::saveMdiJobs()
 //----------------------------------------------------------------------
 void AppManager::restoreMdiJobs()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // Jobs not finished when this collection was last open (MDI-F12): one
     // paused then, or using a provider not on this computer, comes back
     // paused (D6, D31); the others continue by themselves, and one whose
@@ -3285,6 +3318,7 @@ QVariantMap AppManager::getContext()
 //----------------------------------------------------------------------
 bool AppManager::saveContext(const QVariantMap &context)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     // A changed context re-runs nothing by itself (MDI-F99): new files use it,
     // the others are re-interpreted on request
     return openMdiMainConnection()
@@ -3303,6 +3337,7 @@ QString AppManager::getCatalogNotes(int deviceId)
 //----------------------------------------------------------------------
 bool AppManager::saveCatalogNotes(int deviceId, const QString &notes)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     Device device;
     device.ID = deviceId;
     device.loadDevice(m_connectionName);
@@ -3506,6 +3541,7 @@ void AppManager::waitForHomeCount()
 //----------------------------------------------------------------------
 void AppManager::draftContext(int deviceId)
 {
+    if (getReadOnly()) { emit contextDraftReady(QVariantMap(), readOnlyRefusal()); return; }   // read-only collection (D43)
     // What the draft reads: the catalog's folders (by number of files) and a
     // sample of its descriptions, gathered here; the model answers on a
     // worker thread (MDI-F97). Nothing is saved: the page fills its fields.
@@ -3603,6 +3639,7 @@ QVariantList AppManager::knowledgeDocuments()
 //----------------------------------------------------------------------
 int AppManager::addKnowledgePaths(const QVariantList &urls)
 {
+    if (getReadOnly()) return 0;   // read-only collection (D43)
     // Referenced, never copied or modified (MDI-F104)
     QStringList paths;
     for (const QVariant &u : urls) {
@@ -3620,6 +3657,7 @@ int AppManager::addKnowledgePaths(const QVariantList &urls)
 //----------------------------------------------------------------------
 bool AppManager::removeKnowledgeDocument(int documentId)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     // From the knowledge base only: the file itself stays where it is
     const bool removed = openMdiMainConnection() && MdiKnowledge::removeDocument(kMdiMainConnection, documentId);
     emit knowledgeStateChanged();
@@ -3628,6 +3666,7 @@ bool AppManager::removeKnowledgeDocument(int documentId)
 //----------------------------------------------------------------------
 void AppManager::startKnowledgeIndexing()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // Its own runner instance and thread: enrichment keeps going (MDI-C33)
     if (m_kbJob) {
         m_kbPending = true;
@@ -3843,6 +3882,7 @@ QVariantMap AppManager::mdiToolsInfo()
 //----------------------------------------------------------------------
 void AppManager::scheduleQuickHashes()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // Right after a creation or an update, while the disk is still connected:
     // every catalog whose quick hashes do not cover its current state, when
     // its source is reachable (owner's decision; SQLite collections)
@@ -3858,6 +3898,7 @@ void AppManager::scheduleQuickHashes()
 //----------------------------------------------------------------------
 void AppManager::scheduleFtsIndexing()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     scheduleQuickHashes();
     if (collection->databaseMode == QLatin1String("Hosted"))
         return;   // FTS5 is SQLite only; Hosted searches as before
@@ -4522,6 +4563,7 @@ QVariantMap AppManager::checkDeviceDeleteAllowed(int deviceId) const
 //----------------------------------------------------------------------
 QString AppManager::deleteDevice(int deviceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString conn = m_connectionName;
     Device dev;
     dev.ID = deviceId;
@@ -4695,6 +4737,7 @@ QVariantList AppManager::getDeviceList(const QString &viewFilter, int scopeDevic
 //----------------------------------------------------------------------
 int AppManager::addDeviceVirtual(int parentId)
 {
+    if (getReadOnly()) return -1;   // read-only collection (D43)
     const QString conn = m_connectionName;
     Device parent;
     parent.ID = parentId;
@@ -4720,6 +4763,7 @@ int AppManager::addDeviceVirtual(int parentId)
 //----------------------------------------------------------------------
 int AppManager::addDeviceStorage(int parentId)
 {
+    if (getReadOnly()) return -1;   // read-only collection (D43)
     const QString conn = m_connectionName;
     Device parent;
     parent.ID = parentId;
@@ -4871,6 +4915,7 @@ bool AppManager::isDeviceQueuedOrRunning(int deviceId) const
 //----------------------------------------------------------------------
 void AppManager::enqueueOperation(int deviceId, bool isCreate, const QString &deviceName)
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // A device can appear once: re-requesting one already queued or running
     // leaves the queue untouched rather than doubling the work.
     if (isDeviceQueuedOrRunning(deviceId))
@@ -4887,6 +4932,7 @@ void AppManager::enqueueOperation(int deviceId, bool isCreate, const QString &de
 void AppManager::enqueueReplaceRoot(int deviceId, const QString &deviceName,
                                     const QString &previousPath, const QString &newPath)
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     if (isDeviceQueuedOrRunning(deviceId))
         return;
 
@@ -4969,6 +5015,7 @@ void AppManager::scheduleNextOperation()
 //----------------------------------------------------------------------
 void AppManager::startNextDeviceUpdate()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     if (m_pendingDeviceUpdates.isEmpty()) {
         m_deviceUpdateIsRunning = false;
         m_isBatchUpdate         = false;
@@ -5191,6 +5238,7 @@ QVariantMap AppManager::buildBatchUpdateReport(const QList<qint64> &results)
 //----------------------------------------------------------------------
 void AppManager::updateDevice(int deviceId)
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // Refused, not queued, while a search runs: nothing drains the queue when a
     // search ends, so a queued entry would be stranded. Queuing across operation
     // types is a separate decision that has not been taken.
@@ -5217,6 +5265,7 @@ void AppManager::updateDevice(int deviceId)
 //----------------------------------------------------------------------
 int AppManager::updateAllActiveDevices(bool showEachReport)
 {
+    if (getReadOnly()) return 0;   // read-only collection (D43)
     const QString conn = m_connectionName;
 
     // Scope: catalogs under the currently selected device (same as what the Catalogs
@@ -5305,6 +5354,7 @@ void AppManager::gentleStopDeviceUpdate()
 //----------------------------------------------------------------------
 QString AppManager::assignCatalogToDevice(int catalogDeviceId, int virtualDeviceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString conn = m_connectionName;
 
     Device catalogDev;
@@ -5341,6 +5391,7 @@ void AppManager::launchFilelight(int deviceId)
 //----------------------------------------------------------------------
 QVariantMap AppManager::recordDevicesSnapshot()
 {
+    if (getReadOnly()) return QVariantMap{ { QStringLiteral("error"), readOnlyRefusal() } };   // read-only collection (D43)
     const QString conn = m_connectionName;
 
     // In Memory mode the statistics_device table is empty until loaded from
@@ -5371,6 +5422,7 @@ QVariantMap AppManager::recordDevicesSnapshot()
 //----------------------------------------------------------------------
 QString AppManager::splitCatalogBySubDirectory(int deviceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = catalogChangeRefusal({ deviceId });
     if (!refusal.isEmpty())
         return refusal;
@@ -5402,6 +5454,7 @@ QString AppManager::splitCatalogBySubDirectory(int deviceId)
 //----------------------------------------------------------------------
 void AppManager::splitCatalogByFileType(int deviceId, bool verifyFirst)
 {
+    if (getReadOnly()) { emit splitCompleted(false, readOnlyRefusal()); return; }   // read-only collection (D43)
     const QString refusal = catalogChangeRefusal({ deviceId });
     if (!refusal.isEmpty()) {
         emit splitCompleted(false, refusal);
@@ -5724,6 +5777,7 @@ QVariantList AppManager::historyForDevice(int deviceId)
 //----------------------------------------------------------------------
 QString AppManager::restoreHistoryEntry(int entryId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     if (!historyAvailable())
         return historyErrorText(CatalogHistory::Disabled);
     int restorePoint = 0;
@@ -5752,6 +5806,7 @@ QString AppManager::restoreHistoryEntry(int entryId)
 //----------------------------------------------------------------------
 QString AppManager::openHistoryVersion(int entryId, int catalogId, const QString &nameSuffix)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     if (!historyAvailable())
         return historyErrorText(CatalogHistory::Disabled);
     const QString refusal = catalogChangeRefusal({});
@@ -5804,6 +5859,7 @@ QVariantMap AppManager::recomposeProposal(int deviceId)
 //----------------------------------------------------------------------
 QString AppManager::recomposeCatalogs(const QVariantList &deviceIds, const QString &name)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     QList<int> ids;
     for (const QVariant &v : deviceIds)
         ids << v.toInt();
@@ -5839,6 +5895,7 @@ QString AppManager::recomposeCatalogs(const QVariantList &deviceIds, const QStri
 //----------------------------------------------------------------------
 void AppManager::verifyMimeTypes(int deviceId)
 {
+    if (getReadOnly()) { emit mimeVerificationFinished(-1, QString(), readOnlyRefusal()); return; }   // read-only collection (D43)
     Device *dev = new Device();
     dev->ID = deviceId;
     dev->loadDevice(m_connectionName);
@@ -5965,6 +6022,7 @@ QVariantMap AppManager::verifyDeviceChecksums(int deviceId)
 //----------------------------------------------------------------------
 QString AppManager::unassignDevice(int deviceId, int parentId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString conn = m_connectionName;
     if (!Device::unassignFromDevice(deviceId, parentId, conn))
         return tr("Failed to unassign device.");
@@ -5977,6 +6035,7 @@ QString AppManager::unassignDevice(int deviceId, int parentId)
 //----------------------------------------------------------------------
 QString AppManager::importFromVVV(const QString &path)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     QFile sourceFile(path);
 
     if (!sourceFile.open(QIODevice::ReadOnly))
@@ -6145,6 +6204,7 @@ QVariantMap AppManager::getDeviceDetails(int deviceId) const
 //----------------------------------------------------------------------
 QString AppManager::saveDeviceBasicFields(int deviceId, const QString &name, int parentId, const QString &path, const QString &comment)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString conn = m_connectionName;
     Device dev;
     dev.ID = deviceId;
@@ -6303,6 +6363,7 @@ QString AppManager::saveCatalogOptions(int deviceId, const QString &fileType, bo
                                         const QString &includeMetadata, const QString &includeChecksum,
                                         bool isFullDevice)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString conn = m_connectionName;
     Device dev;
     dev.ID = deviceId;
@@ -6337,6 +6398,7 @@ QString AppManager::saveCatalogOptions(int deviceId, const QString &fileType, bo
 //----------------------------------------------------------------------
 QString AppManager::saveStorageDetails(int deviceId, const QVariantMap &fields)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString conn = m_connectionName;
     Device dev;
     dev.ID = deviceId;
@@ -6386,6 +6448,7 @@ QString AppManager::saveStorageDetails(int deviceId, const QVariantMap &fields)
 //----------------------------------------------------------------------
 void AppManager::triggerDeviceRescan(int deviceId)
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // Delegate rather than drive the manager directly. Calling
     // updateDeviceHierarchy() here set no running flag, so the activity panel
     // never showed the work and nothing reported its progress or completion;
@@ -6396,6 +6459,7 @@ void AppManager::triggerDeviceRescan(int deviceId)
 //----------------------------------------------------------------------
 void AppManager::triggerStoragePathReplace(int deviceId, const QString &previousPath, const QString &newPath)
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // Requested through the queue, exactly like a device update (DSR-C6): driving
     // DeviceUpdateManager directly set no running flag, so the replacement was
     // invisible in the activity panel and could start on top of another operation.
@@ -6435,6 +6499,7 @@ QStringList AppManager::getDeviceExcludeFolders(int deviceId) const
 //----------------------------------------------------------------------
 bool AppManager::addDeviceExcludeFolder(int deviceId, const QString &path)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     Device dev;
     dev.ID = deviceId;
     dev.loadDevice(m_connectionName);
@@ -6446,6 +6511,7 @@ bool AppManager::addDeviceExcludeFolder(int deviceId, const QString &path)
 //----------------------------------------------------------------------
 bool AppManager::removeDeviceExcludeFolder(int deviceId, const QString &path)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     Device dev;
     dev.ID = deviceId;
     dev.loadDevice(m_connectionName);
@@ -6787,6 +6853,7 @@ QString AppManager::getImageFolderPath() const
 //----------------------------------------------------------------------
 void AppManager::setImageFolderPath(const QString &path)
 {
+    if (getReadOnly()) { emit imageFolderPathChanged(); return; }   // read-only collection (D43)
     if (collection->imageFolderPath == path)
         return;
     collection->imageFolderPath = path;
@@ -6852,6 +6919,7 @@ void AppManager::openImportSource(const QString &path)
 //----------------------------------------------------------------------
 QString AppManager::importDevice(int srcDeviceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     if (!m_importer || !m_importer->isSourceOpen())
         return tr("No source collection is open.");
 
@@ -7083,6 +7151,7 @@ void AppManager::exportToMemoryMode(const QString &folderPath)
 //----------------------------------------------------------------------
 QString AppManager::updateAllImportsFromSource(const QString &path)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     if (!m_importer)
         m_importer = new CollectionImporter(collection, this);
 
@@ -7166,6 +7235,7 @@ QString AppManager::formatDataSizeDelta(qlonglong bytes) const
 //----------------------------------------------------------------------
 QVariantMap AppManager::refreshStorageFromDisk(int deviceId)
 {
+    if (getReadOnly()) return QVariantMap{ { QStringLiteral("error"), readOnlyRefusal() } };   // read-only collection (D43)
     QVariantMap r;
     const QString conn = m_connectionName;
     Device dev;
@@ -7223,6 +7293,7 @@ QStringList AppManager::getExcludeDirectories() const
 //----------------------------------------------------------------------
 bool AppManager::addExcludeDirectory(const QString &path)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     if (path.trimmed().isEmpty()) return false;
     bool ok = collection->addExcludeDirectory(path.trimmed());
     if (ok) emit excludeDirectoriesChanged();
@@ -7231,6 +7302,7 @@ bool AppManager::addExcludeDirectory(const QString &path)
 //----------------------------------------------------------------------
 void AppManager::removeExcludeDirectory(const QString &path)
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     collection->removeExcludeDirectory(path);
     emit excludeDirectoriesChanged();
 }
@@ -7341,6 +7413,7 @@ QString AppManager::createBackupMapping(const QString &name, const QString &type
     int sourceId, int targetId, bool strictCopy,
     const QString &conflictMode, bool sourceDrive, bool includeEmptyDirs)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     if (name.trimmed().isEmpty())
         return tr("Provide a link name.");
     if (sourceId <= 0)
@@ -7361,6 +7434,7 @@ QString AppManager::createBackupMapping(const QString &name, const QString &type
 //----------------------------------------------------------------------
 QString AppManager::duplicateBackupMapping(int mappingId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     // SpecBackup.md BKP-F22 / BKP-C13: adapter-only, no core code. The copy is
     // read with getMappingById() and written with the existing createMapping().
     BackupMappingManager manager(m_connectionName);
@@ -7392,6 +7466,7 @@ QString AppManager::updateBackupMapping(int mappingId, const QString &name, cons
     int sourceId, int targetId, bool strictCopy,
     const QString &conflictMode, bool sourceDrive, bool includeEmptyDirs)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     if (name.trimmed().isEmpty())
         return tr("Provide a link name.");
     if (sourceId <= 0)
@@ -7412,6 +7487,7 @@ QString AppManager::updateBackupMapping(int mappingId, const QString &name, cons
 //----------------------------------------------------------------------
 bool AppManager::deleteBackupMapping(int mappingId)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     BackupMappingManager manager(m_connectionName);
     if (!manager.deleteMapping(mappingId))
         return false;
@@ -7422,6 +7498,7 @@ bool AppManager::deleteBackupMapping(int mappingId)
 //----------------------------------------------------------------------
 bool AppManager::invertBackupMapping(int mappingId)
 {
+    if (getReadOnly()) return false;   // read-only collection (D43)
     BackupMappingManager manager(m_connectionName);
     if (!manager.invertMapping(mappingId))
         return false;
@@ -7455,7 +7532,8 @@ void AppManager::exportBackupLinkToCsv(int mappingId)
 //----------------------------------------------------------------------
 void AppManager::beginBackupPreview(int mappingId)
 {
-    if (updateBeforeBackup()) {
+    // Read-only collection (D43): the preview compares the catalogs as they are
+    if (updateBeforeBackup() && !getReadOnly()) {
         m_previewAfterUpdateMappingId = mappingId;
         prepareCatalogsForMapping(mappingId);   // threaded update; chains to runPreviewCompare on completion
         return;
@@ -7622,6 +7700,7 @@ void AppManager::runPreviewCompare(int mappingId)
 //----------------------------------------------------------------------
 void AppManager::runBackup(int mappingId)
 {
+    if (getReadOnly()) { emit backupNotification(readOnlyRefusal(), true); return; }   // read-only collection (D43)
     if (m_backupJob) return;
 
     // Claimed here rather than in executeBackupJob() so the card is marked running for
@@ -7649,6 +7728,7 @@ void AppManager::setRunningBackupMappingId(int mappingId)
 //----------------------------------------------------------------------
 void AppManager::runListedBackups(const QVariantList &mappingIds)
 {
+    if (getReadOnly()) { emit backupNotification(readOnlyRefusal(), true); return; }   // read-only collection (D43)
     // One sequence at a time; a second request while one runs is ignored rather than
     // appended, so the confirmed list is always the list that runs (SpecBackup.md BKP-F18).
     if (m_backupJob || !m_pendingBackupMappings.isEmpty())
@@ -8037,6 +8117,7 @@ void AppManager::setUpdateBeforeBackup(bool v)
 // runBackup() uses this internally; QML preview page calls it directly.
 void AppManager::prepareCatalogsForMapping(int mappingId)
 {
+    if (getReadOnly()) { emit catalogsForMappingPrepared(mappingId, false, readOnlyRefusal()); return; }   // read-only collection (D43)
     if (m_catalogUpdateForBackupRunning) {
         emit catalogsForMappingPrepared(mappingId, false,
             tr("A catalog update is already in progress. Please wait and try again."));
@@ -8250,6 +8331,251 @@ QString AppManager::peopleStoreRefusal()
     return QString();
 }
 //----------------------------------------------------------------------
+// Read-only collection and its writers (fork, D43) ---------------------
+//----------------------------------------------------------------------
+QString AppManager::readOnlyRefusal() const
+{
+    if (!getReadOnly())
+        return QString();
+    return tr("The collection is open read-only: this change is not possible.");
+}
+//----------------------------------------------------------------------
+QString AppManager::getReadOnlyReason() const
+{
+    QStringList parts = m_readOnlyCauses.values();
+    if (getReadOnly() && m_migrationSkipped)
+        parts << tr("Its database also needs an update for this version of Teca, made only where the collection can be changed.");
+    return parts.join(QLatin1Char(' '));
+}
+//----------------------------------------------------------------------
+bool AppManager::getReadOnlyNotAuthorised() const
+{
+    return m_readOnlyCauses.contains(int(ReadOnlyCause::NotAuthorised));
+}
+//----------------------------------------------------------------------
+void AppManager::setReadOnlyCause(ReadOnlyCause cause, const QString &text)
+{
+    if (text.isEmpty())
+        m_readOnlyCauses.remove(int(cause));
+    else
+        m_readOnlyCauses.insert(int(cause), text);
+}
+//----------------------------------------------------------------------
+QString AppManager::lockHolderText(const QString &host, qint64 pid, const QString &app) const
+{
+    return tr("It is open on %1, in %2 (process %3).")
+        .arg(host.isEmpty() ? QStringLiteral("?") : host,
+             app.isEmpty() ? QStringLiteral("Teca") : app,
+             QString::number(pid));
+}
+//----------------------------------------------------------------------
+void AppManager::prepareCollectionAccess()
+{
+    if (!m_collectionLock) {
+        m_collectionLock = new CollectionLock();
+        // Released when the application ends; a crash leaves it stale (CollectionLock)
+        connect(qApp, &QCoreApplication::aboutToQuit, this, [this]() {
+            if (m_collectionLock)
+                m_collectionLock->release();
+        });
+        m_lockRefreshTimer = new QTimer(this);
+        m_lockRefreshTimer->setInterval(CollectionLock::kRefreshSeconds * 1000);
+        connect(m_lockRefreshTimer, &QTimer::timeout, this, &AppManager::refreshCollectionLock);
+        m_lockRefreshTimer->start();
+    }
+    m_collectionLock->release();   // the collection being left
+    m_readOnlyCauses.clear();
+    m_migrationSkipped = false;
+
+    // The collection about to be opened, read as Database::initialize() reads it
+    QSettings settings(collection->settingsFilePath, QSettings::IniFormat);
+    QString mode = settings.value("Settings/databaseMode").toString();
+    if (mode.isEmpty())
+        mode = QStringLiteral("File");
+    QString folder;
+    bool mayWrite = true;
+    if (mode == QLatin1String("File")) {
+        const QString path = settings.value("Settings/DatabaseFilePath").toString();
+        if (!path.isEmpty())
+            folder = QFileInfo(path).absolutePath();
+        mayWrite = CollectionWriters::mayThisComputerWriteFile(path);
+    } else if (mode == QLatin1String("Memory")) {
+        folder = collection->folder.isEmpty() ? settings.value("LastCollectionFolder").toString()
+                                              : collection->folder;
+        mayWrite = CollectionWriters::mayThisComputerWriteFolder(folder);
+    }
+
+    // A computer that may not change it does not take the lock: it would keep
+    // an authorised one out
+    if (!mayWrite) {
+        setReadOnlyCause(ReadOnlyCause::NotAuthorised, tr("This Mac is not among the Macs allowed to change it."));
+    } else if (!folder.isEmpty()) {
+        switch (m_collectionLock->acquire(folder)) {
+        case CollectionLock::Result::Acquired:
+            break;
+        case CollectionLock::Result::HeldElsewhere:
+            setReadOnlyCause(ReadOnlyCause::LockedElsewhere,
+                             lockHolderText(m_collectionLock->holderHost(), m_collectionLock->holderPid(),
+                                            m_collectionLock->holderApp()));
+            break;
+        case CollectionLock::Result::NotPossible:
+            qWarning() << "Collection lock not taken in" << folder;
+            break;
+        }
+    }
+    // Read by Database::initialize() and the Memory-mode load
+    collection->readOnly     = getReadOnly();
+    collection->openReadOnly = !mayWrite && mode == QLatin1String("File");
+}
+//----------------------------------------------------------------------
+void AppManager::confirmCollectionAccess()
+{
+    // Hosted collections are known only now; File and Memory are confirmed
+    if (!getReadOnlyNotAuthorised() && !CollectionWriters(collection).mayThisComputerWrite())
+        setReadOnlyCause(ReadOnlyCause::NotAuthorised, tr("This Mac is not among the Macs allowed to change it."));
+    applyReadOnlyState();
+}
+//----------------------------------------------------------------------
+void AppManager::applyReadOnlyState()
+{
+    const bool readOnly = getReadOnly();
+    collection->readOnly = readOnly;
+    // Probed, not stored, except in the in-memory copy of a Memory collection
+    Device::setActiveStateStored(!readOnly || collection->databaseMode == QLatin1String("Memory"));
+    if (readOnly) {
+        qInfo() << "Collection open read-only:" << m_readOnlyCauses.values().join(QLatin1Char(' '));
+        if (m_collectionLock && m_collectionLock->isHeld())
+            m_collectionLock->release();
+        // Work that writes ends; the list of jobs stays as it was saved
+        if (m_mdiJob) {
+            m_mdiKeepPending = true;
+            m_mdiJob->requestStop();
+        }
+        m_mdiHeld.clear();
+        stopFtsIndexing();
+        stopKnowledgeIndexing();
+    }
+    emit readOnlyChanged();
+    emit writersChanged();
+}
+//----------------------------------------------------------------------
+void AppManager::openCollectionDatabase(const QString &conn)
+{
+    if (getReadOnly()) {
+        // Nothing written on open (D43): no migration; one that is needed is
+        // said in the reason instead
+        m_migrationSkipped = DatabaseManager::migrationNeeded(conn, collection);
+        const QSqlError err = DatabaseManager::prepareReadOnly(conn, collection);
+        if (err.type() != QSqlError::NoError)
+            qWarning() << "Read-only open:" << err.text();
+        if (m_migrationSkipped) {
+            qInfo() << "Read-only collection: schema update not made";
+            emit readOnlyChanged();
+        }
+        return;
+    }
+    const QSqlError migErr = DatabaseManager::runMigrations(conn, collection);
+    if (migErr.type() != QSqlError::NoError)
+        qWarning() << "Migrations failed (non-fatal):" << migErr.text();
+}
+//----------------------------------------------------------------------
+void AppManager::refreshCollectionLock()
+{
+    if (!m_collectionLock || !m_collectionLock->isHeld() || m_collectionLock->refresh())
+        return;
+    // No longer this process's: removed (taken again when free), or taken
+    // over while this computer slept. Changes stop until the collection is
+    // opened again: what is in memory may be older than what the other wrote.
+    const QString host = m_collectionLock->holderHost();
+    const qint64  pid  = m_collectionLock->holderPid();
+    const QString app  = m_collectionLock->holderApp();
+    const CollectionLock::Result again = m_collectionLock->acquire(m_collectionLock->folder());
+    if (again == CollectionLock::Result::Acquired && pid == 0)
+        return;
+    if (again == CollectionLock::Result::Acquired)
+        m_collectionLock->release();
+    if (again == CollectionLock::Result::HeldElsewhere)
+        setReadOnlyCause(ReadOnlyCause::LockedElsewhere,
+                         lockHolderText(m_collectionLock->holderHost(), m_collectionLock->holderPid(),
+                                        m_collectionLock->holderApp()));
+    else
+        setReadOnlyCause(ReadOnlyCause::LockedElsewhere, lockHolderText(host, pid, app));
+    qWarning() << "Collection lock lost: the collection is now read-only";
+    applyReadOnlyState();
+}
+//----------------------------------------------------------------------
+QString AppManager::writersChangeText(int change) const
+{
+    switch (CollectionWriters::Change(change)) {
+    case CollectionWriters::Change::Ok:            return QString();
+    case CollectionWriters::Change::InvalidCode:   return tr("A code of 12 letters and digits is needed, as shown on the other Mac.");
+    case CollectionWriters::Change::AlreadyListed: return tr("This code is already in the list.");
+    case CollectionWriters::Change::NotListed:     return tr("This code is not in the list.");
+    case CollectionWriters::Change::LastWriter:    return tr("The last Mac in the list cannot be removed while protection is on.");
+    case CollectionWriters::Change::Failed:        break;
+    }
+    return tr("The change could not be saved.");
+}
+//----------------------------------------------------------------------
+bool AppManager::getWritersProtection() const
+{
+    return CollectionWriters(collection).protectionOn();
+}
+//----------------------------------------------------------------------
+QVariantList AppManager::getAuthorisedWriters() const
+{
+    QVariantList list;
+    const QList<CollectionWriters::Writer> writers = CollectionWriters(collection).writers();
+    for (const CollectionWriters::Writer &w : writers)
+        list << QVariantMap{ { QStringLiteral("code"), w.code },
+                             { QStringLiteral("name"), w.name },
+                             { QStringLiteral("thisComputer"), w.thisComputer } };
+    return list;
+}
+//----------------------------------------------------------------------
+QString AppManager::getThisComputerCode() const
+{
+    return CollectionWriters::thisComputerCode();
+}
+//----------------------------------------------------------------------
+QString AppManager::getThisComputerName() const
+{
+    return CollectionWriters::thisComputerName();
+}
+//----------------------------------------------------------------------
+QString AppManager::setWritersProtection(bool on)
+{
+    if (getReadOnly())
+        return readOnlyRefusal();
+    const CollectionWriters::Change change = CollectionWriters(collection).setProtection(on);
+    emit writersChanged();
+    return writersChangeText(int(change));
+}
+//----------------------------------------------------------------------
+QString AppManager::addAuthorisedWriter(const QString &code, const QString &name)
+{
+    if (getReadOnly())
+        return readOnlyRefusal();
+    const CollectionWriters::Change change = CollectionWriters(collection).addWriter(code, name);
+    emit writersChanged();
+    return writersChangeText(int(change));
+}
+//----------------------------------------------------------------------
+QString AppManager::removeAuthorisedWriter(const QString &code)
+{
+    if (getReadOnly())
+        return readOnlyRefusal();
+    CollectionWriters writers(collection);
+    const CollectionWriters::Change change = writers.removeWriter(code);
+    // This computer removed from the list: read-only from now on
+    if (change == CollectionWriters::Change::Ok && !writers.mayThisComputerWrite()) {
+        setReadOnlyCause(ReadOnlyCause::NotAuthorised, tr("This Mac is not among the Macs allowed to change it."));
+        applyReadOnlyState();
+    }
+    emit writersChanged();
+    return writersChangeText(int(change));
+}
+//----------------------------------------------------------------------
 double AppManager::faceMatchThreshold()
 {
     // In core, shared with the command line (D43)
@@ -8258,6 +8584,7 @@ double AppManager::faceMatchThreshold()
 //----------------------------------------------------------------------
 void AppManager::reindexFileInfo(const QList<QPair<int, QString>> &files)
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // Files of a collection left meanwhile are not written to the new one's store
     if (m_infoIndexPath != mdiDataPath()) {
         m_infoIndexPending.clear();
@@ -8271,6 +8598,7 @@ void AppManager::reindexFileInfo(const QList<QPair<int, QString>> &files)
 //----------------------------------------------------------------------
 void AppManager::runInfoIndexing()
 {
+    if (getReadOnly()) return;   // read-only collection (D43)
     // The changed files' text in the instant index, and their "info" vector
     // for search by meaning (local embedding model only, as for the runner;
     // nothing when none is configured or reachable). Never on the UI thread.
@@ -8353,6 +8681,7 @@ void AppManager::stopPeopleWorkers()
 //----------------------------------------------------------------------
 QVariantMap AppManager::cleanTranscripts()
 {
+    if (getReadOnly()) return QVariantMap{ { QStringLiteral("error"), readOnlyRefusal() }, { QStringLiteral("started"), false } };   // read-only collection (D43)
     QVariantMap result{ { QStringLiteral("started"), false } };
     // The runner writes the same data: the cleaning waits for it to end
     if (m_mdiJob) {
@@ -8453,6 +8782,7 @@ QVariantMap AppManager::fileInfo(int catalogId, const QString &fullPath)
 //----------------------------------------------------------------------
 QString AppManager::setFileInfo(const QVariantList &files, const QVariantMap &fields)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8525,6 +8855,7 @@ QVariantMap AppManager::person(int personId)
 //----------------------------------------------------------------------
 int AppManager::savePerson(const QVariantMap &values)
 {
+    if (getReadOnly()) return -1;   // read-only collection (D43)
     if (!peopleStoreRefusal().isEmpty())
         return -1;
     MdiPeople::Person p;
@@ -8550,6 +8881,7 @@ int AppManager::savePerson(const QVariantMap &values)
 //----------------------------------------------------------------------
 QString AppManager::deletePerson(int personId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8566,6 +8898,7 @@ QString AppManager::deletePerson(int personId)
 //----------------------------------------------------------------------
 QString AppManager::addPeopleToFiles(const QVariantList &files, const QVariantList &personIds)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8582,6 +8915,7 @@ QString AppManager::addPeopleToFiles(const QVariantList &files, const QVariantLi
 //----------------------------------------------------------------------
 QString AppManager::removePersonFromFile(int personId, int catalogId, const QString &fullPath)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8677,6 +9011,7 @@ QVariantList AppManager::facesInFile(int catalogId, const QString &fullPath)
 //----------------------------------------------------------------------
 QString AppManager::confirmFaces(const QVariantList &faceIds, int personId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8700,6 +9035,7 @@ QString AppManager::confirmFaces(const QVariantList &faceIds, int personId)
 //----------------------------------------------------------------------
 QString AppManager::rejectFaces(const QVariantList &faceIds)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8722,6 +9058,7 @@ QString AppManager::rejectFaces(const QVariantList &faceIds)
 //----------------------------------------------------------------------
 QString AppManager::clearFaceData()
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8745,6 +9082,7 @@ QString AppManager::clearFaceData()
 //----------------------------------------------------------------------
 QString AppManager::ignoreFaces(const QVariantList &faceIds)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8767,6 +9105,7 @@ QString AppManager::ignoreFaces(const QVariantList &faceIds)
 //----------------------------------------------------------------------
 QString AppManager::clearFace(int faceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -8974,6 +9313,7 @@ void AppManager::runFaceWorker()
 //----------------------------------------------------------------------
 QString AppManager::startFaceAnalysis(int deviceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString reason = facesUnavailableReason();
     if (!reason.isEmpty())
         return reason;
@@ -9183,6 +9523,7 @@ QVariantList AppManager::proposalsForFolder(int catalogId, const QString &folder
 //----------------------------------------------------------------------
 QString AppManager::acceptProposals(const QVariantList &proposalIds, bool replaceOwnValues)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -9207,6 +9548,7 @@ QString AppManager::acceptProposals(const QVariantList &proposalIds, bool replac
 //----------------------------------------------------------------------
 QString AppManager::rejectProposals(const QVariantList &proposalIds)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -9217,6 +9559,7 @@ QString AppManager::rejectProposals(const QVariantList &proposalIds)
 //----------------------------------------------------------------------
 QString AppManager::startDating(int deviceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     const QString refusal = peopleStoreRefusal();
     if (!refusal.isEmpty())
         return refusal;
@@ -9228,6 +9571,7 @@ QString AppManager::startDating(int deviceId)
 //----------------------------------------------------------------------
 QString AppManager::startDocumentStudy(int deviceId)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     MdiData::PendingJob job;
     job.deviceId = deviceId;
     job.kind     = QStringLiteral("document");
@@ -9281,6 +9625,7 @@ QVariantList AppManager::pendingWebQueries(int deviceId)
 //----------------------------------------------------------------------
 QString AppManager::runWebQueries(int deviceId, const QVariantList &queries)
 {
+    if (getReadOnly()) return readOnlyRefusal();   // read-only collection (D43)
     if (!webSearchEnabled())
         return tr("Web lookups are off for this collection.");
     if (m_webThread)

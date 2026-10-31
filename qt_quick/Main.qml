@@ -72,6 +72,35 @@ Kirigami.ApplicationWindow {
     // The pages end where the panel begins: nothing on them hides under it
     pageStack.anchors.bottomMargin: activityPanel.height
 
+    // Read-only collection (fork, D43): one message over every page, beside
+    // the drawer like the activity panel below them. It says why; on a Mac
+    // that is not allowed, it gives the code to add on an allowed one.
+    Kirigami.InlineMessage {
+        id: readOnlyBanner
+        anchors.left:   root.pageStack.left
+        anchors.right:  root.pageStack.right
+        anchors.bottom: root.pageStack.top
+        z: 1
+        visible: appManager1.readOnly
+        type: Kirigami.MessageType.Information
+        text: qsTr("This collection is open read-only: search, browse and export work, changes are not possible.")
+              + " " + appManager1.readOnlyReason
+              + (appManager1.readOnlyNotAuthorised
+                 ? " " + qsTr("The code of this Mac: %1").arg(appManager1.thisComputerCode) : "")
+        actions: [
+            Kirigami.Action {
+                visible: appManager1.readOnlyNotAuthorised
+                text: qsTr("Copy")
+                icon.name: "edit-copy"
+                onTriggered: {
+                    appManager1.copyToClipboard(appManager1.thisComputerCode)
+                    root.showPassiveNotification(qsTr("Copied"))
+                }
+            }
+        ]
+    }
+    pageStack.anchors.topMargin: readOnlyBanner.visible ? readOnlyBanner.height : 0
+
     // Re-probe device active status when the user comes back to Katalog, so a
     // drive connected or removed meanwhile shows correctly. Off by default and
     // gated on the mount table, so this is normally a no-op — see
@@ -1323,6 +1352,7 @@ Kirigami.ApplicationWindow {
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
             Kirigami.Action {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 text: qsTr("Delete")
                 icon.name: "edit-delete"
                 onTriggered: {
@@ -1466,6 +1496,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: qsTr("Save")
                 icon.name: "document-save"
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 onTriggered: fileInfoDialog.save()
             },
             Kirigami.Action {
@@ -1621,12 +1652,14 @@ Kirigami.ApplicationWindow {
                         Layout.fillWidth: true
                         spacing: 8
                         KButton {
+                            enabled: !appManager1.readOnly   // read-only collection (D43)
                             variant: "primary"
                             icon.name: "dialog-ok-apply"
                             text: qsTr("Approve for %1 files").arg(group.modelData.fileCount)
                             onClicked: showPassiveNotification(appManager1.acceptProposals(group.modelData.proposalIds) || qsTr("Approved."))
                         }
                         KButton {
+                            enabled: !appManager1.readOnly   // read-only collection (D43)
                             variant: "link"
                             text: qsTr("Discard")
                             onClicked: appManager1.rejectProposals(group.modelData.proposalIds)
@@ -1637,6 +1670,7 @@ Kirigami.ApplicationWindow {
             // Deduce again for the whole drive: dates, events and places, as
             // proposals (runs in the background, Work in progress shows it)
             KButton {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 variant: folderProposalsDialog.groups.length > 0 ? "secondary" : "primary"
                 icon.name: "tools-wizard"
                 text: qsTr("Deduce dates and context for this drive")
@@ -1690,6 +1724,7 @@ Kirigami.ApplicationWindow {
                     }
                 }
                 KButton {
+                    enabled: !appManager1.readOnly   // read-only collection (D43)
                     visible: folderProposalsDialog.askingWeb && folderProposalsDialog.queries.length > 0
                     variant: "primary"
                     icon.name: "internet-web-browser"
@@ -3011,6 +3046,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: qsTr("Analyse with AI")
                 icon.name: "tools-wizard"
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 onTriggered: enrichmentDialog.start()
             }
         ]
@@ -3537,8 +3573,9 @@ Kirigami.ApplicationWindow {
                 text:        qsTr("Update the connected drives")
                 icon.name:   "media-playlist-repeat"
                 displayHint: Kirigami.DisplayHint.KeepVisible
-                // Always enabled: requests are queued while an operation runs
-                // (SpecOperationQueue.md).
+                // Enabled while an operation runs: requests are queued
+                // (SpecOperationQueue.md); not in a read-only collection (D43)
+                enabled: !appManager1.readOnly
                 onTriggered: devUpdateAllDialog.open()
             },
             Kirigami.Action {
@@ -3551,7 +3588,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: qsTr("Snapshot")
                 icon.name: "camera-photo"
-                enabled: !appManager1.deviceUpdateIsRunning && !appManager1.searchIsRunning
+                enabled: !appManager1.readOnly && (!appManager1.deviceUpdateIsRunning && !appManager1.searchIsRunning)
                 onTriggered: {
                     var result = appManager1.recordDevicesSnapshot()
                     devSnapshotDialog.data = result
@@ -3561,7 +3598,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: qsTr("Insert Virtual Group")
                 icon.name: "folder-new"
-                enabled: !appManager1.deviceUpdateIsRunning && !appManager1.searchIsRunning
+                enabled: !appManager1.readOnly && (!appManager1.deviceUpdateIsRunning && !appManager1.searchIsRunning)
                 onTriggered: {
                     var newId = appManager1.addDeviceVirtual(0)
                     if (newId > 0) {
@@ -3575,7 +3612,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: qsTr("Add Storage")
                 icon.name: "drive-harddisk"
-                enabled: !appManager1.deviceUpdateIsRunning && !appManager1.searchIsRunning
+                enabled: !appManager1.readOnly && (!appManager1.deviceUpdateIsRunning && !appManager1.searchIsRunning)
                 onTriggered: {
                     var newId = appManager1.addDeviceStorage(0)
                     if (newId > 0) {
@@ -3757,7 +3794,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: qsTr("Analyse with AI")
                 icon.name: "tools-wizard"
-                enabled: exploreFolders.openedDeviceId > 0
+                enabled: !appManager1.readOnly && exploreFolders.openedDeviceId > 0
                 onTriggered: enrichmentDialog.openFor(exploreFolders.openedDeviceId,
                                                       exploreFiles.catalogPath,
                                                       exploreFiles.catalogName)
@@ -4165,14 +4202,14 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 icon.name: "document-save"
                 text: qsTr("Save")
-                enabled: pageContext_form.dirty
+                enabled: !appManager1.readOnly && pageContext_form.dirty
                 onTriggered: pageContext_form.save()
             },
             Kirigami.Action {
                 // Classification only, for files already analysed (MDI-F103)
                 icon.name: "view-refresh"
                 text: qsTr("Re-interpret with the context")
-                enabled: pageContext_form.hasSavedContext && !pageContext_form.dirty
+                enabled: !appManager1.readOnly && pageContext_form.hasSavedContext && !pageContext_form.dirty
                          && pageContext_form.catalogDeviceId >= 0
                 onTriggered: pageContext_form.openReinterpret()
             },
@@ -4233,8 +4270,10 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: qsTr("Catalogue the drive")
                 icon.name: "document-save"
-                // Always enabled: a creation requested while another operation
-                // runs is queued rather than refused (SpecOperationQueue.md).
+                // Enabled while another operation runs: the creation is queued
+                // rather than refused (SpecOperationQueue.md); not in a
+                // read-only collection (D43)
+                enabled: !appManager1.readOnly
                 onTriggered: pageCreate_formLayout_Create.triggerCreate()
             },
             Kirigami.Action {
@@ -4302,11 +4341,13 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: qsTr("Save")
                 icon.name: "document-save"
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 onTriggered: pageDeviceEdit_form.triggerSave()
             },
             Kirigami.Action {
                 text: qsTr("Delete")
                 icon.name: "edit-delete"
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 onTriggered: {
                     var check = appManager1.checkDeviceDeleteAllowed(pageDeviceEdit_form.deviceId)
                     if (!check.allowed) {
@@ -4410,6 +4451,7 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text:      qsTr("Add")
                 icon.name: "list-add"
+                enabled:   !appManager1.readOnly   // read-only collection (D43)
                 onTriggered: root.showLayer(backupMappingFormComponent)
             },
             Kirigami.Action {

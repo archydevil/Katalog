@@ -570,6 +570,7 @@ Rectangle {
                                 Layout.fillWidth: true
                                 spacing: 8
                                 KButton {
+                                    enabled: !appManager1.readOnly   // read-only collection (D43)
                                     variant: "tonal"
                                     icon.name: "dialog-ok-apply"
                                     text: qsTr("Approve")
@@ -582,6 +583,7 @@ Rectangle {
                                     }
                                 }
                                 KButton {
+                                    enabled: !appManager1.readOnly   // read-only collection (D43)
                                     variant: "link"
                                     text: qsTr("Discard")
                                     Accessible.description: inspector.fieldName(proposal.modelData.field) + " " + proposal.modelData.value
@@ -883,6 +885,7 @@ Rectangle {
         id: faceMenu
         property var face: ({})
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             visible: (faceMenu.face.suggestedPersonId || 0) > 0 && faceMenu.face.status !== "confirmed"
             height: visible ? implicitHeight : 0
             text: qsTr("It is %1").arg(faceMenu.face.suggestedName || "")
@@ -890,6 +893,7 @@ Rectangle {
             onTriggered: appManager1.confirmFaces([faceMenu.face.faceId], faceMenu.face.suggestedPersonId)
         }
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text: faceMenu.face.status === "confirmed" ? qsTr("Someone else…") : qsTr("Who is it?…")
             icon.name: "list-add"
             onTriggered: {
@@ -901,6 +905,7 @@ Rectangle {
             }
         }
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             visible: (faceMenu.face.suggestedPersonId || 0) > 0 && faceMenu.face.status === "suggested"
             height: visible ? implicitHeight : 0
             text: qsTr("Not %1").arg(faceMenu.face.suggestedName || "")
@@ -908,6 +913,7 @@ Rectangle {
             onTriggered: appManager1.rejectFaces([faceMenu.face.faceId])
         }
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             visible: faceMenu.face.status === "confirmed"
             height: visible ? implicitHeight : 0
             text: qsTr("Remove the name")
@@ -917,6 +923,7 @@ Rectangle {
         // Not a face, or nobody to name: no longer proposed nor grouped on
         // People. It stays framed here, where "Who is it?…" can still name it.
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             visible: faceMenu.face.status === "unknown" || faceMenu.face.status === "suggested"
             height: visible ? implicitHeight : 0
             text: qsTr("Ignore this face")

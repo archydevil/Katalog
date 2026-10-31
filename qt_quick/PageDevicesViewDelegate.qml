@@ -116,6 +116,7 @@ Kirigami.AbstractCard {
         // K2 has NO separator between the header and the first action items.
         // Update: Catalog only if active; Storage and Virtual always
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text: qsTr("Update")
             icon.name: "media-playlist-repeat"
             visible: (card.devType === "Catalog" && card.devActive)
@@ -164,7 +165,7 @@ Kirigami.AbstractCard {
             text: qsTr("Verify MIME types")
             icon.name: "document-edit-verify"
             visible: card.devType === "Catalog"
-            enabled: card.devActive && !appManager1.deviceUpdateIsRunning
+            enabled: !appManager1.readOnly && (card.devActive && !appManager1.deviceUpdateIsRunning)
                      && !appManager1.catalogIsCreating && !appManager1.searchIsRunning
                      && !appManager1.exploreLoadIsRunning   // OPQ-F20
             onTriggered: card.verifyMimeRequested(card.devId)
@@ -178,12 +179,14 @@ Kirigami.AbstractCard {
         }
         Controls.MenuSeparator { visible: card.devType === "Catalog" }
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text: qsTr("Split catalog by sub-directory")
             icon.name: "edit-cut"
             visible: card.devType === "Catalog"
             onTriggered: card.splitSubDirRequested(card.devId, card.devName)
         }
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text: qsTr("Split catalog by file type")
             icon.name: "edit-cut"
             visible: card.devType === "Catalog"
@@ -193,12 +196,14 @@ Kirigami.AbstractCard {
         // Virtual section: separator, then virtual device actions
         Controls.MenuSeparator { visible: card.devType === "Virtual" }
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text: qsTr("Add Virtual device")
             icon.name: "document-new"
             visible: card.devType === "Virtual"
             onTriggered: card.addVirtualChildRequested(card.devId)
         }
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text: qsTr("Add Storage device")
             icon.name: "document-new"
             visible: card.devType === "Virtual" && card.devGroupId === 0
@@ -208,19 +213,21 @@ Kirigami.AbstractCard {
             text: qsTr("Assign selected catalog")
             icon.name: "document-new"
             visible: card.devType === "Virtual" && card.devGroupId !== 0
-            enabled: appManager1.selectedDeviceType === "Catalog"
+            enabled: !appManager1.readOnly && (appManager1.selectedDeviceType === "Catalog")
             onTriggered: card.assignCatalogRequested(card.devId)
         }
 
         // Separator before Unassign/Delete (always visible after all type-specific items)
         Controls.MenuSeparator {}
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text: card.devType === "Storage" ? qsTr("Unassign this storage") : qsTr("Unassign this catalog")
             icon.name: "edit-cut"
             visible: card.canUnassign
             onTriggered: card.unassignRequested(card.devId, card.devParent, card.devName)
         }
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text: card.devType === "Catalog" ? qsTr("Delete this catalog")
                 : card.devType === "Storage" ? qsTr("Delete this storage")
                 : qsTr("Delete")

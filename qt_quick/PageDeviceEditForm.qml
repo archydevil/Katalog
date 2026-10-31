@@ -526,6 +526,7 @@ ColumnLayout {
                     }
                 }
                 KButton {
+                    enabled: !appManager1.readOnly   // read-only collection (D43)
                     variant: "secondary"
                     icon.name: "list-add"
                     text: qsTr("Add")
@@ -567,6 +568,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                         }
                         IconButton {
+                            enabled: !appManager1.readOnly   // read-only collection (D43)
                             icon.name: "edit-delete"; flat: true
                             implicitWidth: 40
                             implicitHeight: 40
@@ -608,7 +610,7 @@ ColumnLayout {
                 // Reads the device from the database, so a path only typed into the
                 // form is invisible to it. Disabled until the path has been saved,
                 // rather than being clickable and appearing to do nothing.
-                enabled: root.originalPath !== ""
+                enabled: !appManager1.readOnly && (root.originalPath !== "")
                 onClicked: {
                     var updated = appManager1.refreshStorageFromDisk(root.deviceId)
                     if (updated.error === "") {

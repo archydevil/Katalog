@@ -120,6 +120,7 @@ ColumnLayout {
         }
 
         KButton {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             Layout.alignment: Qt.AlignRight
             variant: "primary"
             icon.name: "tag"
@@ -295,6 +296,7 @@ ColumnLayout {
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
             Kirigami.Action {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 text: qsTranslate("Main", "Remove")
                 icon.name: "edit-delete"
                 onTriggered: {

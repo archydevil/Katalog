@@ -86,6 +86,8 @@ class BackupJobStoppable;
 class QThread;
 
 class MdiSystemMonitor;
+class CollectionLock;   // core/collectionaccess.h (D43)
+class QTimer;
 class AppManager : public QObject
 {
     Q_OBJECT
@@ -207,6 +209,16 @@ class AppManager : public QObject
     Q_PROPERTY(bool    deviceUpdateIsRunning  READ getDeviceUpdateIsRunning  NOTIFY deviceUpdateStateChanged)
     Q_PROPERTY(QString deviceUpdateStatusText READ getDeviceUpdateStatusText NOTIFY deviceUpdateStatusChanged)
     Q_PROPERTY(bool    isFirstRun             READ isFirstRun                NOTIFY firstRunChanged)
+    // Read-only collection (fork, D43): open in another process, or this
+    // computer is not among its writers. Every write is refused (readOnlyRefusal).
+    Q_PROPERTY(bool    readOnly              READ getReadOnly              NOTIFY readOnlyChanged)
+    Q_PROPERTY(QString readOnlyReason        READ getReadOnlyReason        NOTIFY readOnlyChanged)
+    Q_PROPERTY(bool    readOnlyNotAuthorised READ getReadOnlyNotAuthorised NOTIFY readOnlyChanged)
+    // Computers allowed to change the collection (Settings, D43)
+    Q_PROPERTY(bool         writersProtection READ getWritersProtection NOTIFY writersChanged)
+    Q_PROPERTY(QVariantList authorisedWriters READ getAuthorisedWriters NOTIFY writersChanged)
+    Q_PROPERTY(QString      thisComputerCode  READ getThisComputerCode  CONSTANT)
+    Q_PROPERTY(QString      thisComputerName  READ getThisComputerName  CONSTANT)
 
 public:
     explicit AppManager(QObject *parent = nullptr);
@@ -259,6 +271,19 @@ public slots:
 
     // Collection management
     Q_INVOKABLE QString getDatabaseMode() const;
+
+    // Read-only collection and its writers (fork, D43). The three changes
+    // return "" on success, else the reason.
+    bool         getReadOnly() const { return !m_readOnlyCauses.isEmpty(); }
+    QString      getReadOnlyReason() const;
+    bool         getReadOnlyNotAuthorised() const;
+    bool         getWritersProtection() const;
+    QVariantList getAuthorisedWriters() const;
+    QString      getThisComputerCode() const;
+    QString      getThisComputerName() const;
+    Q_INVOKABLE QString setWritersProtection(bool on);
+    Q_INVOKABLE QString addAuthorisedWriter(const QString &code, const QString &name);
+    Q_INVOKABLE QString removeAuthorisedWriter(const QString &code);
     Q_INVOKABLE QString getCollectionFolder() const;
     Q_INVOKABLE void openDatabaseFile();
     Q_INVOKABLE void openCollectionMemory(const QString &folder);
@@ -980,6 +1005,9 @@ signals:
     void undoAvailable(int entryId, const QString &message);
     // mismatchCount < 0 means the verification failed with errorMessage
     void mimeVerificationFinished(int mismatchCount, const QString &reportPath, const QString &errorMessage);
+    // Read-only collection (D43)
+    void readOnlyChanged();
+    void writersChanged();
 
 private:
     // Memory-mode Explore load (EXP-F28 to EXP-F32, EXP-C22 to EXP-C24)
@@ -1160,6 +1188,27 @@ private:
     QList<QPair<int, QString>> m_infoIndexPending;   // files whose info changed: instant index + "info" vectors
     QString           m_infoIndexPath;                // the mdi_data.db they belong to
     QString peopleStoreRefusal();                     // empty when mdi_data.db is open for them
+    // Read-only collection (fork, D43). One text per cause, readOnly while any
+    // is set. The collection lock is held only while it can be changed.
+    enum class ReadOnlyCause {
+        LockedElsewhere = 1,   // another process holds the collection lock
+        NotAuthorised   = 2    // protection on, this computer not in the list
+        // P2 hook: PublishedCopy = 3 — a published copy is opened read-only;
+        // its text goes through setReadOnlyCause like the two above.
+    };
+    QMap<int, QString> m_readOnlyCauses;
+    bool               m_migrationSkipped = false;   // read-only: the update of its database is not made
+    CollectionLock    *m_collectionLock   = nullptr;
+    QTimer            *m_lockRefreshTimer = nullptr;
+    QString readOnlyRefusal() const;                  // "" when the collection can be changed
+    void    setReadOnlyCause(ReadOnlyCause cause, const QString &text);   // empty text clears it
+    void    applyReadOnlyState();                     // core flags, lock, running work, notify
+    void    prepareCollectionAccess();                // before connecting: writers from the files, then the lock
+    void    confirmCollectionAccess();                // after connecting: writers from the database (Hosted too)
+    void    openCollectionDatabase(const QString &conn);   // migrations, or the read-only preparation
+    void    refreshCollectionLock();                  // every CollectionLock::kRefreshSeconds
+    QString lockHolderText(const QString &host, qint64 pid, const QString &app) const;
+    QString writersChangeText(int change) const;      // CollectionWriters::Change in words, "" for Ok
     double  faceMatchThreshold();
     void    reindexFileInfo(const QList<QPair<int, QString>> &files);
     void    runInfoIndexing();

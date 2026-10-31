@@ -8,7 +8,7 @@ version: "3.0"
 Tato stránka popisuje dostupné funkce a možnosti příkazové řádky, které lze spouštět z konzole.
 Bez potřeby grafického rozhraní lze tedy automatizovat některé úkoly.
 
-Tyto příkazy aktuálně fungují pouze pod **Linuxem**.
+Tyto příkazy fungují pod **Linuxem** a **macOS**.
 
 ![Výstup nápovědy příkazové řádky zobrazující dostupné akce a možnosti](/img/k2/commandlines_01_help.png)
 
@@ -29,6 +29,10 @@ Příklady na této stránce používají jako název příkazu `Katalog`. Způs
 - **AppImage**: akce a možnosti se zadávají za soubor AppImage.
   ```bash
   ./Katalog_linux_v3.0-qt6.AppImage list_catalogs
+  ```
+- **macOS** (Teca, přenosná aplikace): program je uvnitř aplikace.
+  ```bash
+  /Applications/Teca.app/Contents/MacOS/Teca list_catalogs
   ```
 
 Chcete-li psát `Katalog` jako v příkladech, definujte alias, například v `~/.bashrc`:
@@ -100,6 +104,44 @@ Katalog search [MOŽNOSTI]
 ```bash
 Katalog search --text "dovolená" --type image --limit 100
 ```
+
+### `analyze`
+Spustí AI analýzu jednoho katalogu s profilem analýzy, který je pro něj uložen v aplikaci Teca: náhledy, popisky, přepisy, shrnutí a další analýzy, které profil vybírá, ve stejném pořadí jako v aplikaci. Stejně jako v aplikaci je analýza přírůstková: co už je analyzováno, se znovu nedělá, a zastavená analýza pokračuje tam, kde skončila.
+
+**Použití:**
+```bash
+Katalog analyze <deviceID> [MOŽNOSTI]
+```
+
+**Argumenty:**
+- `deviceID` - ID zařízení katalogu k analýze
+
+**Příklad:**
+```bash
+Katalog analyze 5
+```
+
+Každý provedený krok vypíše jeden řádek: číslo souboru, analýzu, její výsledek a soubor. Krok, kterému chybí program nebo model (například model whisper.cpp pro přepisy), se přeskočí a důvod je uveden na jeho řádku. Kroky AI potřebují na tomto počítači spuštěnou Ollamu: když není dostupná, selžou a provedou se znovu při další analýze.
+
+Zdroj katalogu musí být připojen. Na nepřipojený disk se nečeká: katalog se neanalyzuje a další spuštění v něm pokračuje.
+
+### `analyze_all`
+Spustí AI analýzu každého katalogu, který má uložený profil analýzy, jeden po druhém, a na konci vypíše shrnutí. Katalog, jehož disk není připojen, se přeskočí a započítá do shrnutí.
+
+**Použití:**
+```bash
+Katalog analyze_all [MOŽNOSTI]
+```
+
+**Příklad:**
+```bash
+Katalog analyze_all --collection "/cesta/ke/kolekci"
+```
+
+### Zámek kolekce a zastavení
+`update_catalog`, `update_all_active`, `analyze` a `analyze_all` drží po dobu běhu zámek kolekce (soubor `.teca.lock` ve složce kolekce). Nespustí se, dokud má Teca kolekci otevřenou nebo dokud ji používá jiné spuštění z příkazové řádky: skončí s návratovým kódem 3 a nic nezmění.
+
+Ctrl+C nebo zastavení zaslané systémem (SIGTERM) ukončí analýzu čistě: dosud provedené analýzy zůstanou zachovány a další spuštění pokračuje.
 
 ## Obecné Možnosti
 
@@ -264,7 +306,11 @@ Katalog search --no-history --text "novýsoubor"
 ## Návratové Kódy
 
 - **0**: Úspěch
-- **1**: Chyba nebo selhání
+- **1**: Chyba nebo selhání (neplatná možnost nebo akce, kolekce nenalezena, katalog neaktualizován nebo neanalyzován)
+- **2**: Analýza provedena, ale některé kroky selhaly (například Ollama nebyla dostupná); provedou se znovu příště
+- **3**: Kolekci používá Teca nebo jiné spuštění z příkazové řádky; nic nebylo provedeno
+- **4**: Tento počítač nesmí do kolekce zapisovat; nic nebylo provedeno
+- **130** / **143**: Analýza zastavena pomocí Ctrl+C (SIGINT) nebo SIGTERM; dosud provedené analýzy zůstanou zachovány
 - **-1**: Interní kód pro pokračování v GUI režimu (nevrací se uživateli)
 
 ## Příklady
@@ -324,6 +370,57 @@ Aktualizovat katalogy v konkrétní kolekci:
 ```bash
 Katalog --collection "/cesta/ke/kolekci" update_all_active
 ```
+
+## Plánované spouštění (macOS)
+Mac, který zůstává zapnutý, může sám udržovat katalogy aktuální a analyzované, například každou noc, aby ostatní Macy dostávaly aktuální kopii. Teca neinstaluje žádný plánovač: macOS spouští příkazy pomocí **launchd**.
+
+Tento soubor, uložený jako `~/Library/LaunchAgents/local.teca.nightly.plist`, aktualizuje aktivní katalogy a poté analyzuje každý katalog s uloženým profilem, každou noc ve 02:30. `USERNAME` označuje uživatelské jméno v macOS.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.teca.nightly</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>/Applications/Teca.app/Contents/MacOS/Teca update_all_active; /Applications/Teca.app/Contents/MacOS/Teca analyze_all</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>2</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/USERNAME/Library/Logs/teca-nightly.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/USERNAME/Library/Logs/teca-nightly.log</string>
+</dict>
+</plist>
+```
+
+Jednou se načte pomocí:
+```bash
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/local.teca.nightly.plist
+```
+
+Spuštění lze pro kontrolu vyvolat hned pomocí:
+```bash
+launchctl kickstart gui/$(id -u)/local.teca.nightly
+```
+
+Dobré vědět:
+- Bez `--collection` příkazy používají kolekci naposledy otevřenou v aplikaci Teca. S `--collection "/cesta/ke/kolekci"` za každou akcí používají tuto kolekci.
+- Znak `;` mezi oběma příkazy spustí analýzu i tehdy, když aktualizace selhala.
+- Mac musí být zapnutý a jeho uživatel přihlášený: LaunchAgent běží v relaci uživatele. Pro kroky AI musí být spuštěná Ollama.
+- Dokud má Teca kolekci otevřenou, oba příkazy skončí s návratovým kódem 3 a nic nezmění.
+- Plánované spuštění nemůže odpovědět na dotazy macOS na přístup ke složkám a externím diskům. Když jsou katalogy na externích discích nebo v chráněných složkách, potřebuje Teca tento přístup předem, v **Nastavení systému > Soukromí a zabezpečení** (Plný přístup k disku, nebo Soubory a složky).
+- Každé spuštění zapíše své řádky a shrnutí do souboru protokolu; návratové kódy jsou uvedeny výše.
 
 ## Poznámky
 

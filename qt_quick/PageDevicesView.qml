@@ -372,7 +372,7 @@ Item {
                     text: qsTr("Verify then Split")
                     icon.name: "dialog-ok"
                     Layout.fillWidth: true
-                    enabled: splitFileTypeDialog.deviceActive
+                    enabled: !appManager1.readOnly && (splitFileTypeDialog.deviceActive)
                     onClicked: {
                         var id = splitFileTypeDialog.deviceId
                         splitFileTypeDialog.close()
@@ -390,6 +390,7 @@ Item {
                     wrapMode: Text.WordWrap
                 }
                 Controls.Button {
+                    enabled: !appManager1.readOnly   // read-only collection (D43)
                     text: qsTr("Split without verifying")
                     icon.name: "edit-cut"
                     Layout.fillWidth: true

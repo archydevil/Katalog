@@ -152,6 +152,7 @@ Kirigami.AbstractCard {
         }
 
         Controls.MenuItem {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text:      qsTr("Update")
             icon.name: "media-playlist-repeat"
             // Match K2 (mainwindow_tab_filters.cpp): Update is available for Storage and

@@ -721,12 +721,14 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
                     KButton {
+                        enabled: !appManager1.readOnly   // read-only collection (D43)
                         variant: "tonal"
                         icon.name: "document-open"
                         text: qsTr("Add files")
                         onClicked: documentsDialog.open()
                     }
                     KButton {
+                        enabled: !appManager1.readOnly   // read-only collection (D43)
                         variant: "secondary"
                         icon.name: "folder-open"
                         text: qsTr("Add folder")
@@ -819,6 +821,7 @@ ColumnLayout {
                                     }
                                 }
                                 RemoveButton {
+                                    enabled: !appManager1.readOnly   // read-only collection (D43)
                                     onClicked: {
                                         removeDocumentDialog.documentId    = documentRow.modelData.id
                                         removeDocumentDialog.documentTitle = documentRow.modelData.title
@@ -900,7 +903,7 @@ ColumnLayout {
                         variant: "secondary"
                         icon.name: "tools-wizard"
                         text: qsTr("Draft from the catalog")
-                        enabled: pageContext.catalogDeviceId >= 0 && !pageContext.drafting
+                        enabled: !appManager1.readOnly && (pageContext.catalogDeviceId >= 0 && !pageContext.drafting)
                         onClicked: pageContext.draft()
                     }
                     Controls.BusyIndicator {
@@ -942,6 +945,7 @@ ColumnLayout {
         standardButtons: Kirigami.Dialog.NoButton
         customFooterActions: [
             Kirigami.Action {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 text: qsTr("Remove")
                 icon.name: "list-remove"
                 onTriggered: {

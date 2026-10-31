@@ -77,6 +77,7 @@ ScrollablePageFitted {
 
     actions: [
         Kirigami.Action {
+            enabled: !appManager1.readOnly   // read-only collection (D43)
             text:        qsTr("Save")
             icon.name:   "document-save"
             displayHint: Kirigami.DisplayHint.KeepVisible
@@ -314,6 +315,7 @@ ScrollablePageFitted {
             Layout.bottomMargin: KTheme.gap
             spacing: 8
             KButton {
+                enabled: !appManager1.readOnly   // read-only collection (D43)
                 variant: "primary"
                 icon.name: "document-save"
                 text: qsTr("Save")
