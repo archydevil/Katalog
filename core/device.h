@@ -155,6 +155,11 @@ public:
         // can tell an activation that found something from one that did not
         // (SpecDeviceActiveStatus.md DAS-O4).
         bool updateActiveState(QString connectionName);
+        // Read-only collection (fork, D43): the active state is still probed
+        // but no longer stored, so a computer that may not change the
+        // collection writes nothing to it. Process-wide; on by default.
+        static void setActiveStateStored(bool stored);
+        static bool activeStateStored();
 
         void updateNumbersFromChildren();
         void updateParentsNumbers();

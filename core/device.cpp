@@ -37,6 +37,21 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QMutex>
+#include <atomic>
+
+namespace {
+std::atomic<bool> s_activeStateStored{true};   // false while the collection is read-only (D43)
+}
+
+void Device::setActiveStateStored(bool stored)
+{
+    s_activeStateStored = stored;
+}
+
+bool Device::activeStateStored()
+{
+    return s_activeStateStored;
+}
 
 void Device::loadDevice(QString connectionName){
     QElapsedTimer totalTimer;
@@ -634,6 +649,10 @@ bool Device::updateActiveState(QString connectionName)
     else {
         active = false;
     }
+
+    // Read-only collection (D43): probed, not stored
+    if (!activeStateStored())
+        return false;
 
     // Write only when the probe disagrees with what is stored (DAS-C11). The
     // activation refresh probes local devices on every window activation, so an
