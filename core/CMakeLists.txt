@@ -1,5 +1,6 @@
 set(CORE_HEADERS
     collection.h
+    collectionaccess.h
     commandline.h
     catalog.h
     database.h
@@ -59,6 +60,7 @@ set(CORE_HEADERS
 
 set(CORE_SOURCES
     collection.cpp
+    collectionaccess.cpp
     commandline.cpp
     catalog.cpp
     database.cpp

@@ -31,6 +31,7 @@
 #include "database.h"
 #include <QRegularExpression>
 #include "collection.h"
+#include "collectionaccess.h"
 #include <QSettings>
 #include <QFile>
 #include <QDebug>
@@ -562,7 +563,13 @@ QSqlError Database::initialize(const QString &connectionName, Collection *collec
         }
         else {
             db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
-            db.setDatabaseName(collection->databaseFilePath);
+            if (collection->openReadOnly) {
+                // Read-only open (fork, D43): nothing written, no -wal or -shm
+                db.setConnectOptions(QLatin1String(CollectionWriters::kReadOnlyConnectOptions));
+                db.setDatabaseName(CollectionWriters::readOnlyDatabaseName(collection->databaseFilePath));
+            } else {
+                db.setDatabaseName(collection->databaseFilePath);
+            }
         }
     }
     else if (collection->databaseMode == "Hosted") {

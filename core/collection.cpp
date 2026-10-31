@@ -112,6 +112,12 @@ QString Collection::resolveSettingsFilePath(const QString &appVersion)
     return homePath + "/.config/" + settingsFileName;
 }
 
+//----------------------------------------------------------------------
+QString Collection::lockFilePath(const QString &folder)
+{
+    return QDir(folder).filePath(QStringLiteral(".teca.lock"));
+}
+
 //Database Schema Version--------------------------------------------------------
 QString Collection::loadDatabaseSchemaVersion()
 {
@@ -233,6 +239,7 @@ void Collection::generateCollectionFilesPaths()
 
 void Collection::generateCollectionFiles()
 {
+    if (readOnly) return;   // read-only open: no file written (D43)
     if(databaseMode=="Memory"){
         //Device.csv
         QFile deviceFile(deviceFilePath);
@@ -1346,6 +1353,7 @@ void Collection::loadCatalogFilterFileToTable()
 //File saving ----------------------------------------------------------
 void Collection::saveDeviceTableToFile()
 {
+    if (readOnly) return;   // read-only open: no file written (D43)
     if (databaseMode == "Memory"){
         QFile deviceFile(deviceFilePath);
 
@@ -1436,6 +1444,7 @@ void Collection::saveDeviceTableToFile()
 //----------------------------------------------------------------------
 void Collection::saveStorageTableToFile()
 {
+    if (readOnly) return;   // read-only open: no file written (D43)
     if (databaseMode=="Memory"){
         //Prepare export file
         QFile storageFile(storageFilePath);
@@ -1509,6 +1518,7 @@ void Collection::saveStorageTableToFile()
 //----------------------------------------------------------------------
 void Collection::saveStatiticsTableToFile()
 {
+    if (readOnly) return;   // read-only open: no file written (D43)
     if(databaseMode=="Memory"){
         //Prepare export file
         QFile statisticsFile(statisticsDeviceFilePath);
@@ -1564,6 +1574,7 @@ void Collection::saveStatiticsTableToFile()
 //----------------------------------------------------------------------
 void Collection::saveParameterTableToFile()
 {
+    if (readOnly) return;   // read-only open: no file written (D43)
     if(databaseMode=="Memory"){
         //Prepare export file
         QFile parameterFile(parameterFilePath);
@@ -1626,6 +1637,7 @@ void Collection::clearSearchHistory(const QString &connectionName)
 //----------------------------------------------------------------------
 void Collection::saveSearchHistoryTableToFile()
 {//To keep forward compatibility, new field shall be added at the end of the column list, not in the order of the table
+    if (readOnly) return;   // read-only open: no file written (D43)
     if(databaseMode=="Memory"){
         //Prepare export
         QFile searchFile(searchHistoryFilePath);
@@ -1775,6 +1787,7 @@ void Collection::saveSearchHistoryTableToFile()
 //----------------------------------------------------------------------
 void Collection::saveTagTableToFile()
 {
+    if (readOnly) return;   // read-only open: no file written (D43)
     if(databaseMode=="Memory"){
         //Prepare export file
         QFile tagFile(tagFilePath);
@@ -1820,6 +1833,7 @@ void Collection::saveTagTableToFile()
 //----------------------------------------------------------------------
 void Collection::saveMappingTableToFile()
 {
+    if (readOnly) return;   // read-only open: no file written (D43)
     if(databaseMode=="Memory"){
         //Prepare export file
         QFile mappingFile(mappingFilePath);
@@ -1880,6 +1894,7 @@ void Collection::saveMappingTableToFile()
 //----------------------------------------------------------------------
 void Collection::saveCatalogFilterTableToFile()
 {
+    if (readOnly) return;   // read-only open: no file written (D43)
     if (databaseMode == "Memory") {
         QFile filterFile(catalogFilterFilePath);
         QTextStream out(&filterFile);

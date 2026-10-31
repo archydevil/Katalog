@@ -68,6 +68,16 @@ public:
     //Settings file used by the application of version appVersion (window and command line)
     static QString resolveSettingsFilePath(const QString &appVersion);
 
+    //Collection lock (fork, D43): the lock file of a File- or Memory-mode
+    //collection folder, the same for Teca and the command line (CollectionLock)
+    static QString lockFilePath(const QString &folder);
+    //Read-only open (fork, D43). readOnly: no file of the collection is
+    //written (Memory-mode saves and missing files). openReadOnly: File mode
+    //opens the SQLite file read-only and immutable (no -wal or -shm either).
+    //Set before connecting.
+    bool readOnly     = false;
+    bool openReadOnly = false;
+
     QString loadDatabaseSchemaVersion();
     void setDatabaseSchemaVersion();
     QString imageFolderPath;

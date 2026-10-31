@@ -33,6 +33,8 @@
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QDebug>
+#include <algorithm>
 #include <QDateTime>
 #include <QFile>
 #include <QFileInfo>
@@ -41,6 +43,8 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSysInfo>
+#include <QTextStream>
+#include <QUrl>
 #include <QtEndian>
 #include <chrono>
 
@@ -266,6 +270,81 @@ bool CollectionWriters::mayThisComputerWrite() const
         return true;
     const QList<Writer> list = writers();
     return std::any_of(list.cbegin(), list.cend(), [](const Writer &w) { return w.thisComputer; });
+}
+//----------------------------------------------------------------------
+bool CollectionWriters::allows(bool protection, const QStringList &codes)
+{
+    if (!protection)
+        return true;
+    const QString own = thisComputerCode();
+    return std::any_of(codes.cbegin(), codes.cend(),
+                       [&own](const QString &code) { return normalizeCode(code) == own; });
+}
+//----------------------------------------------------------------------
+QString CollectionWriters::readOnlyDatabaseName(const QString &path)
+{
+    // immutable: SQLite neither locks nor reads or creates the -wal and -shm
+    // files; what another computer has not yet checkpointed is not seen
+    return QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath()).toString(QUrl::FullyEncoded)
+           + QStringLiteral("?mode=ro&immutable=1");
+}
+//----------------------------------------------------------------------
+bool CollectionWriters::mayThisComputerWriteFile(const QString &databaseFilePath)
+{
+    if (databaseFilePath.isEmpty() || !QFileInfo::exists(databaseFilePath))
+        return true;
+    const QString conn = QStringLiteral("tecaWritersCheck");
+    bool protection = false;
+    QStringList codes;
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), conn);
+        db.setConnectOptions(QLatin1String(kReadOnlyConnectOptions));
+        db.setDatabaseName(readOnlyDatabaseName(databaseFilePath));
+        if (db.open()) {
+            QSqlQuery query(db);
+            if (query.exec(QLatin1String(R"(
+                    SELECT parameter_name, parameter_type, parameter_value1
+                    FROM parameter
+                    WHERE parameter_type IN ('collection', 'authorised_writer')
+                )"))) {
+                while (query.next()) {
+                    const QString type = query.value(1).toString();
+                    if (type == kWriterType)
+                        codes << query.value(0).toString();
+                    else if (query.value(0).toString() == kProtectionName)
+                        protection = query.value(2).toString() == QLatin1String("true");
+                }
+            }
+            db.close();
+        }
+    }
+    QSqlDatabase::removeDatabase(conn);
+    return allows(protection, codes);
+}
+//----------------------------------------------------------------------
+bool CollectionWriters::mayThisComputerWriteFolder(const QString &memoryFolder)
+{
+    // parameters.csv: header line, then name, type, value1, value2 by tabs
+    QFile file(memoryFolder + QStringLiteral("/parameters.csv"));
+    if (memoryFolder.isEmpty() || !file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return true;
+    bool protection = false;
+    QStringList codes;
+    QTextStream in(&file);
+    in.readLine();
+    while (true) {
+        const QString line = in.readLine();
+        if (line.isNull())
+            break;
+        const QStringList fields = line.split(QLatin1Char('\t'));
+        if (fields.size() < 3)
+            continue;
+        if (fields.at(1) == kWriterType)
+            codes << fields.at(0);
+        else if (fields.at(1) == QLatin1String("collection") && fields.at(0) == kProtectionName)
+            protection = fields.at(2) == QLatin1String("true");
+    }
+    return allows(protection, codes);
 }
 //----------------------------------------------------------------------
 bool CollectionWriters::insertWriter(const QString &code, const QString &name)
