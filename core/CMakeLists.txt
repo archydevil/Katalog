@@ -150,6 +150,35 @@ else()
     message(STATUS "OpenCV not found: face recognition disabled")
 endif()
 
+# Fork (D44, owner's decision of 2026-10-31): encrypted face and people layers
+# for read-only Macs. libcrypto gives AES-256-GCM, X25519, HKDF and Argon2id;
+# Argon2id needs OpenSSL 3.2 or later at run time (a 3.0/3.1 build compiles,
+# and the layers then report that Argon2id is missing). On macOS the reader
+# key lives in the login keychain behind Touch ID or the Mac password.
+find_package(OpenSSL 3.0 QUIET COMPONENTS Crypto)
+if (NOT OPENSSL_FOUND AND APPLE AND NOT OPENSSL_ROOT_DIR AND NOT DEFINED ENV{OPENSSL_ROOT_DIR})
+    # Homebrew's OpenSSL is keg-only on some Macs (CI runners): its own prefix
+    foreach (_teca_ssl /opt/homebrew/opt/openssl /opt/homebrew/opt/openssl@3
+                       /usr/local/opt/openssl /usr/local/opt/openssl@3)
+        if (EXISTS "${_teca_ssl}/include/openssl/evp.h")
+            set(OPENSSL_ROOT_DIR "${_teca_ssl}")
+            break()
+        endif()
+    endforeach()
+endif()
+find_package(OpenSSL 3.0 REQUIRED COMPONENTS Crypto)
+message(STATUS "OpenSSL ${OPENSSL_VERSION}: encrypted layers (${OPENSSL_CRYPTO_LIBRARY})")
+target_sources(katalog-core PRIVATE tecacrypto.h tecacrypto.cpp platform/mackeychain.h)
+target_link_libraries(katalog-core PRIVATE OpenSSL::Crypto)
+if (APPLE)
+    target_sources(katalog-core PRIVATE platform/mackeychain.mm)
+    set_source_files_properties(platform/mackeychain.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+    target_link_libraries(katalog-core PRIVATE
+        "-framework Foundation" "-framework Security" "-framework LocalAuthentication")
+else()
+    target_sources(katalog-core PRIVATE platform/mackeychain_other.cpp)
+endif()
+
 target_include_directories(katalog-core
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC  ${CMAKE_SOURCE_DIR}
