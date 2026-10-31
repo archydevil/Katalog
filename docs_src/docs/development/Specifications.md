@@ -20,6 +20,7 @@ specification and the code disagree, the specification is what was agreed.
 | [SpecBackup](SpecBackup.md) | BACKUP | Draft | complete | — |
 | [SpecBackupLuckyBackupProfile](SpecBackupLuckyBackupProfile.md) | BACKUP — GENERATE LUCKYBACKUP PROFILE | Available | complete | — |
 | [SpecCardsAndTables](SpecCardsAndTables.md) | CARDS, TABLES AND TREES — SHARED DISPLAY CONVENTIONS | Approved | planned | — |
+| [SpecCleanRoomNotes](SpecCleanRoomNotes.md) | CLEAN-ROOM REWRITE — PROTOCOL AND SPECIFICATION SANITISATION (plan B, fork only) | Plan B | — | — |
 | [SpecCatalogChecksum](SpecCatalogChecksum.md) | CATALOG — FILE CHECKSUM | Available | — | — |
 | [SpecCatalogIncludeExclude](SpecCatalogIncludeExclude.md) | Spec: Catalog Include / Exclude Rules | — | — | — |
 | [SpecCatalogMetadata](SpecCatalogMetadata.md) | CATALOG — FILE METADATA | — | — | — |
@@ -55,6 +56,7 @@ specification and the code disagree, the specification is what was agreed.
 | [SpecSearchResultsFilters](SpecSearchResultsFilters.md) | SEARCH RESULTS — QUICK FILTER AND CATALOGS FILTER | Approved | planned | — |
 | [SpecSelection](SpecSelection.md) | SELECTION — SELECTED DEVICE | Approved | planned | — |
 | [SpecSettingsPage](SpecSettingsPage.md) | SETTINGS PAGE — APPLICATION AND COLLECTION TABS | Approved | planned | — |
+| [SpecTecaApi](SpecTecaApi.md) | TECA API — LOCAL HTTP INTERFACE FOR OTHER APPLICATIONS (fork only, K3) | Draft | planned | — |
 | [SpecStorageIdentity](SpecStorageIdentity.md) | STORAGE Identity | Approved | planned | [TestStorageIdentity](TestStorageIdentity.md) |
 | [SpecTheme](SpecTheme.md) | Theme, colour derivation and icon size | Draft | partial | — |
 | [SpecTypography](SpecTypography.md) | TYPOGRAPHY — TEXT SIZE DERIVED FROM THE SYSTEM FONT | Approved | partial | — |
