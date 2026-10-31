@@ -10486,6 +10486,7 @@ void AppManager::watchPublishedCopy()
     if (!m_publishedWatcher->directories().isEmpty())
         m_publishedWatcher->removePaths(m_publishedWatcher->directories());
     m_publishedRefusedAt = QDateTime();
+    m_publishedRefusedFiles.clear();
     if (folder.isEmpty()) {
         m_publishedPoll->stop();
         m_publishedLoadedAt = QDateTime();
@@ -10516,6 +10517,15 @@ void AppManager::checkPublishedCopy()
     // Sizes here, the SHA-256 on a worker: a half-synced set is never opened
     if (!MdiPublish::isComplete(m_publishedFolder, marker, false))
         return;
+    // Files found different before are hashed again only once they change
+    QString files;
+    for (const MdiPublish::FileEntry &f : marker.files) {
+        const QFileInfo info(QDir(m_publishedFolder).filePath(f.name));
+        files += f.name + QLatin1Char(' ') + QString::number(info.size()) + QLatin1Char(' ')
+                 + QString::number(info.lastModified().toMSecsSinceEpoch()) + QLatin1Char('\n');
+    }
+    if (marker.publishedAt == m_publishedRefusedAt && files == m_publishedRefusedFiles)
+        return;
     // What reads the collection on this thread ends first
     if (getSearchIsRunning() || getExploreLoadIsRunning() || getHtmlExportRunning() || m_infoSearchBusy) {
         QTimer::singleShot(5000, this, &AppManager::checkPublishedCopy);
@@ -10523,14 +10533,15 @@ void AppManager::checkPublishedCopy()
     }
     m_publishedChecking = true;
     const QString folder = m_publishedFolder;
-    m_publishedCheckThread = QThread::create([this, folder, marker]() {
+    m_publishedCheckThread = QThread::create([this, folder, marker, files]() {
         const bool complete = MdiPublish::isComplete(folder, marker, true);
-        QMetaObject::invokeMethod(this, [this, folder, marker, complete]() {
+        QMetaObject::invokeMethod(this, [this, folder, marker, files, complete]() {
             m_publishedChecking = false;
             if (folder != m_publishedFolder)
                 return;   // another collection was opened meanwhile
             if (!complete) {
-                m_publishedRefusedAt = marker.publishedAt;   // still arriving: the next check looks again
+                m_publishedRefusedAt    = marker.publishedAt;   // still arriving: looked at again once they change
+                m_publishedRefusedFiles = files;
                 qInfo() << "Published copy: a newer one is arriving, not complete yet";
                 return;
             }
