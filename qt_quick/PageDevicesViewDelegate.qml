@@ -31,9 +31,6 @@ Kirigami.AbstractCard {
     signal addStorageChildRequested(int parentId)
     signal assignCatalogRequested(int virtualDeviceId)
     signal filelightRequested(int deviceId)
-    // Where the drive is on this Mac (per-Mac remap, D43 P3)
-    signal pathOnThisMacRequested(int deviceId)
-    signal forgetPathOnThisMacRequested(int deviceId)
 
     readonly property int    devId:        modelData.deviceId
     readonly property int    devParent:    modelData.parentId
@@ -74,14 +71,6 @@ Kirigami.AbstractCard {
 
     // A catalog of saved search results has no drive behind it (path "EXPORT")
     readonly property bool isSavedResults: devType === "Catalog" && devPath === "EXPORT"
-
-    // A drive or folder with a path of its own can be placed on this Mac
-    // (per-Mac remap, D43 P3); a filesystem root cannot. It is this Mac's
-    // setting, not the collection's, so a read-only Mac can use it too.
-    readonly property bool canPlaceOnThisMac: (devType === "Storage" || devType === "Catalog")
-                                              && devPath.length > 0 && !isSavedResults
-                                              && devPath !== "/" && !/^[A-Za-z]:\/?$/.test(devPath)
-    readonly property string pathOnThisMac: modelData.localPath || ""
 
     background: Rectangle {
         radius: KTheme.radiusCard
@@ -154,20 +143,6 @@ Kirigami.AbstractCard {
             visible: card.devPath.length > 0 && card.devPath !== "EXPORT"
             onTriggered: appManager1.openDeviceFolder(card.devId)
         }
-        // Where the drive is on this Mac (D43 P3)
-        Controls.MenuItem {
-            text: qsTr("Where is this drive on this Mac…")
-            icon.name: "folder-open"
-            visible: card.canPlaceOnThisMac
-            onTriggered: card.pathOnThisMacRequested(card.devId)
-        }
-        Controls.MenuItem {
-            text: qsTr("Forget the path on this Mac")
-            icon.name: "edit-undo"
-            visible: card.canPlaceOnThisMac && card.modelData.ownPathRemap === true
-            onTriggered: card.forgetPathOnThisMacRequested(card.devId)
-        }
-
         // Storage: Filelight with NO separator before it (K2 structure)
         Controls.MenuItem {
             text: qsTr("Filelight")

@@ -194,32 +194,7 @@ Item {
         devices = appManager1.getDeviceList(viewFilter, scope)
         // Fully expanded on every load, matching the tree table (DVP-F25).
         collapsedCardIds = ({})
-        // A drive not at its recorded path that seems to be elsewhere on this
-        // Mac: offered, never applied by itself (D43 P3)
-        pathSuggestion = appManager1.devicePathSuggestion()
     }
-
-    // ── Where a drive is on this Mac (per-Mac remap, D43 P3) ───────────────
-    // Kept in this Mac's settings, never in the collection: a read-only Mac
-    // can place its drives too. Chosen with a folder picker, then confirmed.
-    property var pathSuggestion: ({})
-    function askPathOnThisMac(deviceId) {
-        const info = appManager1.devicePathOnThisMac(deviceId)
-        if (info.deviceId === undefined)
-            return
-        // Where it is now, else where it was recorded, else the mounted volumes
-        const start = info.localPath !== "" ? info.localPath
-                    : appManager1.pathExists(info.recordedPath) ? info.recordedPath
-                    : String(info.recordedPath).startsWith("/Volumes/") ? "/Volumes" : ""
-        root.pendingPathDevice = info
-        applicationWindow().openFreshDialog(pathOnThisMacFolderComponent, start)
-    }
-    function confirmPathOnThisMac(info, localPath) {
-        pathOnThisMacDialog.device    = info
-        pathOnThisMacDialog.localPath = localPath
-        pathOnThisMacDialog.open()
-    }
-    property var pendingPathDevice: ({})
 
     // A selection change while this page is hidden only marks the list stale:
     // getDeviceList() re-probes every device's path, and running it on each
@@ -305,74 +280,6 @@ Item {
     Component.onCompleted: refreshDevices()
 
     // ── Dialogs ────────────────────────────────────────────────────────────
-
-    // Where a drive is on this Mac (D43 P3): the folder, then the decision
-    Component {   // a fresh dialog per open (openFreshDialog)
-        id: pathOnThisMacFolderComponent
-        FolderDialog {
-            onAccepted: root.confirmPathOnThisMac(root.pendingPathDevice,
-                            appManager1.normalizeSourcePath(appManager1.pathFromFileUrl(selectedFolder.toString())))
-        }
-    }
-
-    Kirigami.PromptDialog {
-        id: pathOnThisMacDialog
-        property var    device: ({})
-        property string localPath: ""
-        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
-        padding: Kirigami.Units.largeSpacing * 2
-        title: qsTr("Use this folder on this Mac?")
-        subtitle: qsTr("Recorded path: %1").arg(pathOnThisMacDialog.device.recordedPath || "") + "\n"
-                  + qsTr("On this Mac: %1").arg(pathOnThisMacDialog.localPath) + "\n\n"
-                  + qsTr("Only this Mac uses it: the collection keeps the recorded path.")
-        standardButtons: Kirigami.Dialog.NoButton
-        customFooterActions: [
-            Kirigami.Action {
-                text: qsTr("Use this folder")
-                icon.name: "dialog-ok"
-                onTriggered: {
-                    const error = appManager1.setDevicePathOnThisMac(pathOnThisMacDialog.device.deviceId,
-                                                                     pathOnThisMacDialog.localPath)
-                    pathOnThisMacDialog.close()
-                    if (error !== "")
-                        applicationWindow().showPassiveNotification(error)
-                    // The list reloads by itself (deviceListChanged)
-                }
-            },
-            Kirigami.Action {
-                text: qsTr("Cancel")
-                icon.name: "dialog-cancel"
-                onTriggered: pathOnThisMacDialog.close()
-            }
-        ]
-    }
-
-    Kirigami.PromptDialog {
-        id: forgetPathOnThisMacDialog
-        property var device: ({})
-        function ask(deviceId) { device = appManager1.devicePathOnThisMac(deviceId); open() }
-        background: Rectangle { color: KTheme.surface; radius: KTheme.radiusCard; border.width: 1; border.color: KTheme.line }
-        padding: Kirigami.Units.largeSpacing * 2
-        title: qsTr("Forget the path on this Mac?")
-        subtitle: qsTr("This Mac looks for the drive at its recorded path again: %1")
-                  .arg(forgetPathOnThisMacDialog.device.recordedPath || "")
-        standardButtons: Kirigami.Dialog.NoButton
-        customFooterActions: [
-            Kirigami.Action {
-                text: qsTr("Forget")
-                icon.name: "edit-undo"
-                onTriggered: {
-                    appManager1.forgetDevicePathOnThisMac(forgetPathOnThisMacDialog.device.deviceId)
-                    forgetPathOnThisMacDialog.close()
-                }
-            },
-            Kirigami.Action {
-                text: qsTr("Cancel")
-                icon.name: "dialog-cancel"
-                onTriggered: forgetPathOnThisMacDialog.close()
-            }
-        ]
-    }
 
     // A split says plainly what it does, what stays and how it is undone
     Controls.Dialog {
@@ -760,32 +667,6 @@ Item {
             text: qsTr("Where drives and catalogs are grouped, edited and kept up to date.")
         }
 
-        // A drive not at its recorded path that seems to be elsewhere on this
-        // Mac (D43 P3): a gentle offer, confirmed before anything is kept
-        Kirigami.InlineMessage {
-            Layout.fillWidth: true
-            visible: (root.pathSuggestion.deviceId || 0) > 0
-            type: Kirigami.MessageType.Information
-            text: qsTr("%1 is not at its recorded path. It seems to be at %2 on this Mac.")
-                  .arg(root.pathSuggestion.name || "").arg(root.pathSuggestion.localPath || "")
-            actions: [
-                Kirigami.Action {
-                    text: qsTr("Use this folder")
-                    icon.name: "dialog-ok"
-                    onTriggered: root.confirmPathOnThisMac(appManager1.devicePathOnThisMac(root.pathSuggestion.deviceId),
-                                                           root.pathSuggestion.localPath)
-                },
-                Kirigami.Action {
-                    text: qsTr("Not now")
-                    icon.name: "dialog-close"
-                    onTriggered: {
-                        appManager1.dismissDevicePathSuggestion(root.pathSuggestion.deviceId)
-                        root.pathSuggestion = appManager1.devicePathSuggestion()
-                    }
-                }
-            ]
-        }
-
         // Filter bar. An ActionToolBar rather than a plain row: narrowing the
         // window used to clip controls out of sight, and this is the same
         // mechanism the page toolbar uses - what no longer fits moves into the
@@ -1095,9 +976,6 @@ Item {
                     appManager1.launchFilelight(id)
                 }
 
-                // Where the drive is on this Mac (D43 P3)
-                onPathOnThisMacRequested:       (id) => root.askPathOnThisMac(id)
-                onForgetPathOnThisMacRequested: (id) => forgetPathOnThisMacDialog.ask(id)
             }
         }
 
@@ -1539,7 +1417,5 @@ Item {
             }
         }
         onFilelightRequested: (id) => appManager1.launchFilelight(id)
-        onPathOnThisMacRequested:       (id) => root.askPathOnThisMac(id)
-        onForgetPathOnThisMacRequested: (id) => forgetPathOnThisMacDialog.ask(id)
     }
 }
